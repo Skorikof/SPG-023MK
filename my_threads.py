@@ -129,7 +129,7 @@ class Reader(QRunnable):
 
                     self.signals.read_result.emit(rr)
 
-                    time.sleep(0.01)
+                    time.sleep(0.1)
 
             except Exception as e:
                 txt = 'ERROR in thread Reader - {}'.format(e)
@@ -137,8 +137,8 @@ class Reader(QRunnable):
 
     def start_read(self, request):
         self.dev_id = request.get('dev_id')
-        self.start_reg = request.get('start_reg_read')
-        self.count_reg = request.get('count_reg_read')
+        self.start_reg = request.get('reg_read')
+        self.count_reg = request.get('read_count')
         self.is_run = True
 
     def stop_read(self):

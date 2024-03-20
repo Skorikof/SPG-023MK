@@ -15,6 +15,8 @@ class AppWindow(QMainWindow):
 
         self.win_set = SetWindow(self.model)
 
+        self._create_statusbar_ui()
+
         self.operators = None
 
         self.start_param()
@@ -26,9 +28,13 @@ class AppWindow(QMainWindow):
         self.model.threadpool.waitForDone()
         self.close()
 
+    def _create_statusbar_ui(self):
+        self.statusbar = self.statusBar()
+        self.statusbar.showMessage('Подключение к контроллеру')
+
     def status_bar_ui(self, txt_bar):
         try:
-            self.statusBar().showMessage(txt_bar)
+            self.statusbar.showMessage(txt_bar)
 
         except Exception as e:
             self.model.save_log('error', str(e))
@@ -38,8 +44,6 @@ class AppWindow(QMainWindow):
         self.init_signals()
         self.ui.main_stackedWidget.setCurrentIndex(0)
         self.ui.message_btn_frame.setVisible(False)
-
-        # self.win_set.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)

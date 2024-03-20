@@ -24,11 +24,11 @@ class WinSignals(QObject):
 class Model:
     def __init__(self):
         self.data_response = {}
+        self.force = []
         self.signals = WinSignals()
 
         self.set_connect = PrgSettings().connect
         self.set_regs = PrgSettings().registers
-        self.set_state = PrgSettings().state
         self.threadpool = QThreadPool()
 
         self.log_writer = None
@@ -173,25 +173,39 @@ class Model:
 
     def reader_result(self, rr):
         try:
-            print('read_compleate')
-            self.set_state['force'] = self.magnitude_effort(rr[0], rr[1])
-            self.set_state['amort_move'] = self.movement_amount(rr[2])
+            txt_log = 'read regs is done'
+            self.status_bar_msg(txt_log)
+            self.set_regs['force_now'] = self.magnitude_effort(rr[0], rr[1])
+            self.set_regs['amort_move'] = self.movement_amount(rr[2])
             self.register_state(rr[3])
             self.switch_state(rr[5])
-            self.set_state['traverse_move'] = self.movement_amount(rr[6])
-            self.set_state['temperature'] = self.temperature_value(rr[7], rr[8])
-            self.set_state['alarm_force'] = self.emergency_force(rr[10], rr[11])
+            self.set_regs['traverse_move'] = self.movement_amount(rr[6])
+            self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
+            self.set_regs['alarm_force'] = self.emergency_force(rr[10], rr[11])
             self.signals.read_finish.emit()
+
+            if self.set_regs.get('cycle_force') == 1:
+                self.fill_data_for_graph()
 
         except Exception as e:
             txt_log = 'ERROR in model/reader_result - {}'.format(e)
             self.status_bar_msg(txt_log)
             self.save_log('error', str(e))
 
+    def fill_data_for_graph(self):
+        try:
+            self.set_regs['force_list'].append(self.set_regs.get('force_now'))
+            self.set_regs['amort_move_list'].append(self.set_regs.get('amort_move'))
+
+        except Exception as e:
+            txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)
+            self.status_bar_msg(txt_log)
+            self.save_log('error', str(e))
+
     def init_writer(self):
         try:
-            start_reg = self.set_regs.get('start_reg_write')
-            values = self.set_regs.get('values_write')
+            start_reg = self.set_regs.get('reg_write')
+            values = self.set_regs.get('write_values')
             dev_id = self.set_regs.get('dev_id')
             self.writer = Writer(client=self.set_connect['client'],
                                  cst=cst,
@@ -216,15 +230,15 @@ class Model:
 
     def write_reg_state(self):
         try:
-            self.set_regs['start_reg_write'] = self.set_regs.get('state_reg')
+            self.set_regs['reg_write'] = self.set_regs.get('reg_state')
             res = 0
-            res_list = []
+            values = []
             for i in range(16):
                 res = res + self.set_regs.get('list_state')[i] * 2 ** i
 
-            res_list.append(res)
+            values.append(res)
 
-            self.set_regs['values_write'] = res_list
+            self.set_regs['write_values'] = values
 
             self.init_writer()
             time.sleep(0.5)
@@ -247,16 +261,16 @@ class Model:
 
     def motor_write_len_command(self):
         try:
+            value = []
             self.flag_write = False
-            while self.set_state.get('state_freq') == 1:
+            while self.set_regs.get('state_freq') == 1:
                 time.sleep(0.1)
             # if self.set_state.get('state_freq') == '1':
             #     time.sleep(0.1)
             #     self.motor_write_len_command()
-            self.set_regs['start_reg_write'] = self.set_regs.get('reg_len_freq')
-            value = []
+            self.set_regs['reg_write'] = self.set_regs.get('reg_len_freq')
             value.append(self.set_regs.get('len_freq_msg'))
-            self.set_regs['values_write'] = value
+            self.set_regs['write_values'] = value
 
             # while not self.flag_write:
             self.init_writer()
@@ -274,12 +288,12 @@ class Model:
     def motor_write_command(self):
         try:
             self.flag_write = False
-            while self.set_state.get('state_freq') == 1:
+            while self.set_regs.get('state_freq') == 1:
                 time.sleep(0.1)
             # if self.set_state.get('state_freq') == '1':
             #     time.sleep(0.1)
             #     self.motor_write_command()
-            self.set_regs['start_reg_write'] = self.set_regs.get('start_reg_freq_buffer')
+            self.set_regs['reg_write'] = self.set_regs.get('reg_freq_buffer')
             # while not self.flag_write:
             self.init_writer()
             time.sleep(0.5)
@@ -293,7 +307,7 @@ class Model:
         try:
             command = command + self.calc_crc(command)
             values = self.calc_values_write(command)
-            self.set_regs['values_write'] = values
+            self.set_regs['write_values'] = values
 
             self.motor_write_len_command()
 
@@ -305,7 +319,7 @@ class Model:
     def write_frequency(self):
         try:
             adr_freq = str(self.set_regs.get('adr_freq'))
-            freq = self.set_state.get('frequency')
+            freq = self.set_regs.get('frequency')
             freq_hex = hex(freq)[2:].zfill(4)
             freq_hex = '0' + adr_freq + '06010D' + freq_hex
             self.motor_command(freq_hex)
@@ -380,7 +394,9 @@ class Model:
     def magnitude_effort(self, low_reg, big_reg):
         """Текущая величина усилия"""
         try:
-            val_temp = unpack('f', pack('<HH', big_reg, low_reg))[0]
+            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 0)
+
+            self.force.append(val_temp)
 
             return val_temp
 
@@ -406,18 +422,19 @@ class Model:
         try:
             temp = bin(register)[2:].zfill(16)
             bits = ''.join(reversed(temp))
-            self.set_state['cycle_force'] = bits[0]
-            self.set_regs['list_state'][0] = int(bits[0])
-            self.set_state['lost_control'] = bits[3]
-            self.set_regs['list_state'][3] = int(bits[3])
-            self.set_state['excess_force'] = bits[4]
-            self.set_regs['list_state'][4] = int(bits[4])
-            self.set_state['safety_fence'] = bits[8]
-            self.set_regs['list_state'][8] = int(bits[8])
-            self.set_state['state_freq'] = bits[11]
-            self.set_regs['list_state'][11] = int(bits[11])
-            self.set_state['state_force'] = bits[12]
-            self.set_regs['list_state'][12] = int(bits[12])
+            temp_list = [x for x in self.set_regs.get('list_state')]
+            self.set_regs['cycle_force'] = bits[0]
+            temp_list[0] = int(bits[0])
+            self.set_regs['lost_control'] = bits[3]
+            temp_list[3] = int(bits[3])
+            self.set_regs['excess_force'] = bits[4]
+            temp_list[4] = int(bits[4])
+            self.set_regs['safety_fence'] = bits[8]
+            temp_list[8] = int(bits[8])
+            self.set_regs['state_freq'] = bits[11]
+            temp_list[11] = int(bits[11])
+            self.set_regs['state_force'] = bits[12]
+            temp_list[12] = int(bits[12])
 
         except Exception as e:
             txt_log = 'ERROR in model/register_state - {}'.format(e)
@@ -439,14 +456,15 @@ class Model:
         try:
             temp = bin(register)[2:].zfill(16)
             bits = ''.join(reversed(temp))
-            self.set_state['safety_fence'] = bits[0]
-            self.set_state['traverse_block_1'] = bits[1]
-            self.set_state['traverse_block_2'] = bits[2]
-            self.set_state['test_launch'] = bits[3]
-            self.set_state['alarm_highest_position'] = bits[8]
-            self.set_state['alarm_lowest_position'] = bits[9]
-            self.set_state['highest_position'] = bits[12]
-            self.set_state['lowest_position'] = bits[13]
+
+            self.set_regs['safety_fence'] = bits[0]
+            self.set_regs['traverse_block_1'] = bits[1]
+            self.set_regs['traverse_block_2'] = bits[2]
+            self.set_regs['test_launch'] = bits[3]
+            self.set_regs['alarm_highest_position'] = bits[8]
+            self.set_regs['alarm_lowest_position'] = bits[9]
+            self.set_regs['highest_position'] = bits[12]
+            self.set_regs['lowest_position'] = bits[13]
 
         except Exception as e:
             txt_log = 'ERROR in model/switch_state - {}'.format(e)
@@ -456,7 +474,7 @@ class Model:
     def temperature_value(self, low_reg, big_reg):
         """Величина температуры с модуля МВ-110-224-2А"""
         try:
-            val_temp = unpack('f', pack('<HH', big_reg, low_reg))[0]
+            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
 
             return val_temp
 
@@ -490,7 +508,7 @@ class Model:
     def buffer_freq(self, registers):
         """Буфер ПЧ"""
         try:
-            self.set_state['buffer_freq'] = registers
+            self.set_regs['buffer_freq'] = registers
 
         except Exception as e:
             txt_log = 'ERROR in model/buffer_freq - {}'.format(e)
@@ -510,7 +528,7 @@ class Model:
     def buffer_force(self, registers):
         """Буфер датчика силы"""
         try:
-            self.set_state['buffer_force'] = registers
+            self.set_regs['buffer_force'] = registers
 
         except Exception as e:
             txt_log = 'ERROR in model/buffer_force - {}'.format(e)
@@ -520,7 +538,7 @@ class Model:
     def buffer_data(self, registers):
         """Буфер данных"""
         try:
-            self.set_state['buffer_data'] = registers
+            self.set_regs['buffer_data'] = registers
 
         except Exception as e:
             txt_log = 'ERROR in model/buffer_data - {}'.format(e)

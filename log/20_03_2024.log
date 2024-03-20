@@ -1,0 +1,122 @@
+2024-03-20 13:25:39.728 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:25:39.733 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:26:21.757 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8288, value -> [8], dev_id -> 1
+2024-03-20 13:26:21.819 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8288, dev_id -> 1
+2024-03-20 13:26:21.866 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8289, dev_id -> 1
+2024-03-20 13:26:21.866 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8289, value -> [8], dev_id -> 1
+2024-03-20 13:28:31.498 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8288, value -> [8], dev_id -> 1
+2024-03-20 13:28:31.517 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8288, dev_id -> 1
+2024-03-20 13:28:32.773 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8289, value -> [8], dev_id -> 1
+2024-03-20 13:28:32.805 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8289, dev_id -> 1
+2024-03-20 13:28:59.171 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8288, value -> [8], dev_id -> 1
+2024-03-20 13:28:59.171 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8288, dev_id -> 1
+2024-03-20 13:28:59.539 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8289, value -> [8], dev_id -> 1
+2024-03-20 13:28:59.554 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [8] in reg -> 8289, dev_id -> 1
+2024-03-20 13:29:53.444 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:29:53.444 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:29:55.153 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:29:55.153 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:44.197 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:30:44.872 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:30:44.875 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 0, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:44.945 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:30:47.991 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:30:48.007 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 0, value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:48.007 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:30:48.007 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 1, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:48.007 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:48.022 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:30:48.022 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:30:48.116 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:16.885 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:17.635 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:31:18.041 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 0, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:18.150 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:20.068 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 0, value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:20.177 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:31:21.083 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 1, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:21.198 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:23.103 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 1, value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:23.213 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:31:24.119 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 2, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:24.228 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:26.134 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 2, value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:26.244 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:31:27.150 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 3, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:27.259 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:29.180 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 3, value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:29.290 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:31:30.194 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Attempts write: 4, value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:30.303 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 13:31:31.318 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:31:31.318 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:32:39.829 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 13:32:39.829 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 13:32:40.813 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 13:32:40.813 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[118] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 14:04:31.372 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 14:04:31.389 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 14:05:54.555 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 14:05:54.562 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 14:05:55.598 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 14:05:55.615 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 14:06:33.273 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 14:06:33.274 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 14:07:23.739 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [256], dev_id -> 1
+2024-03-20 14:07:23.756 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [256] in reg -> 8195, dev_id -> 1
+2024-03-20 14:07:27.335 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [257] in reg -> 8195, dev_id -> 1
+2024-03-20 14:07:27.336 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [257], dev_id -> 1
+2024-03-20 14:10:09.142 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4352], dev_id -> 1
+2024-03-20 14:10:09.142 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4352] in reg -> 8195, dev_id -> 1
+2024-03-20 14:10:10.828 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4353], dev_id -> 1
+2024-03-20 14:10:10.829 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4353] in reg -> 8195, dev_id -> 1
+2024-03-20 14:10:13.415 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4352] in reg -> 8195, dev_id -> 1
+2024-03-20 14:10:13.416 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4352], dev_id -> 1
+2024-03-20 14:10:30.940 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4353] in reg -> 8195, dev_id -> 1
+2024-03-20 14:10:30.943 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4353], dev_id -> 1
+2024-03-20 14:10:56.976 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4352], dev_id -> 1
+2024-03-20 14:10:56.985 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4352] in reg -> 8195, dev_id -> 1
+2024-03-20 14:11:07.088 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4353], dev_id -> 1
+2024-03-20 14:11:07.100 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4353] in reg -> 8195, dev_id -> 1
+2024-03-20 14:11:40.473 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [4352], dev_id -> 1
+2024-03-20 14:11:40.481 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [4352] in reg -> 8195, dev_id -> 1
+2024-03-20 14:12:09.237 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 14:12:09.243 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 14:14:34.996 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 14:14:35.019 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 14:14:36.147 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 14:14:36.147 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 14:15:05.370 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 14:15:05.370 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:11:30.576 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:11:30.582 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:14:53.868 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:14:53.869 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:14:55.170 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:14:55.170 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:17:45.866 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:17:45.866 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:17:48.435 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:17:48.436 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:17:52.329 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:17:52.336 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:17:54.614 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:17:54.623 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:00.082 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:18:00.100 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:02.847 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:18:02.854 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:05.337 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:18:05.338 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:08.720 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:18:08.729 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:09.745 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:18:09.745 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:10.710 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [1] in reg -> 8195, dev_id -> 1
+2024-03-20 16:18:10.710 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [1], dev_id -> 1
+2024-03-20 16:20:57.676 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8195, value -> [0], dev_id -> 1
+2024-03-20 16:20:57.676 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [0] in reg -> 8195, dev_id -> 1
+2024-03-20 16:21:24.001 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [8] in reg -> 8288, dev_id -> 1
+2024-03-20 16:21:24.004 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8288, value -> [8], dev_id -> 1
+2024-03-20 16:21:24.004 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Writer, start_adr -> 8289, value -> [8], dev_id -> 1
+2024-03-20 16:21:24.006 - [D:\Stands\SPG-023MK\model.py].thread_log_msg[119] - Complite write value [8] in reg -> 8289, dev_id -> 1
