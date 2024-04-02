@@ -118,6 +118,12 @@ class ExecWin(QMainWindow):
     def operator_delete(self):
         try:
             ind = self.operators.current_index
+
+            name = self.operators.names[ind]
+            rank = self.operators.ranks[ind]
+            txt_log = 'Operator is delete - {}, {}'.format(rank, name)
+            self.model.save_log('info', txt_log)
+
             self.operators.delete_operator(ind)
 
             self.operator_update()
@@ -136,6 +142,8 @@ class ExecWin(QMainWindow):
                 name = win_diag.name_le.text()
                 rank = win_diag.rank_le.text()
                 if len(name) > 0 and len(rank) > 0:
+                    txt_log = 'Operator is added - {}, {}'.format(rank, name)
+                    self.model.save_log('info', txt_log)
                     self.operators.add_operator(name, rank)
                     self.operator_update()
                 else:
@@ -155,6 +163,9 @@ class ExecWin(QMainWindow):
 
             self.model.set_state['operator']['name'] = name
             self.model.set_state['operator']['rank'] = rank
+
+            txt_log = 'Operator is select - {}, {}'.format(rank, name)
+            self.model.save_log('info', txt_log)
 
             self.close()
 

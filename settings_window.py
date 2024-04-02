@@ -161,10 +161,14 @@ class SetWindow(QMainWindow):
     def read_start_ui(self):
         self.ui.btn_read.setText('ОСТАНОВИТЬ')
         self.ui.btn_connect.setEnabled(False)
+        txt_log = 'Чтение контроллера запущено'
+        self.statusbar.showMessage(txt_log)
 
     def read_stop_ui(self):
         self.ui.btn_read.setText('ЧИТАТЬ')
         self.ui.btn_connect.setEnabled(True)
+        txt_log = 'Чтение контроллера остановлено'
+        self.statusbar.showMessage(txt_log)
 
     def select_engine(self):
         rbtn = self.sender()

@@ -120,6 +120,8 @@ class Model:
             client.close()
             self.set_connect['client'] = None
             self.set_connect['connect'] = False
+            txt_log = 'Контроллер отключен'
+            self.status_bar_msg(txt_log)
 
     def thread_log_msg(self, txt_log):
         print(txt_log)
@@ -184,7 +186,7 @@ class Model:
 
     def reader_result(self, rr):
         try:
-            txt_log = 'read regs is done'
+            txt_log = 'Идёт чтение контроллера'
             self.status_bar_msg(txt_log)
             self.set_regs['force_now'] = self.magnitude_effort(rr[0], rr[1])
             self.set_regs['amort_move'] = self.movement_amount(rr[2])
