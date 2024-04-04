@@ -444,7 +444,7 @@ QPushButton:pressed
           <item>
            <widget class="QStackedWidget" name="main_stackedWidget">
             <property name="currentIndex">
-             <number>5</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="start_page_1">
              <layout class="QGridLayout" name="gridLayout_12">
@@ -1443,17 +1443,36 @@ QPushButton:pressed
                  <property name="spacing">
                   <number>5</number>
                  </property>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="specif_choice_label">
+                   <property name="maximumSize">
+                    <size>
+                     <width>485</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>18</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Выберите амортизатор:</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="2">
                   <widget class="QComboBox" name="specif_choice_comboBox">
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
+                     <width>485</width>
                      <height>60</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>16777215</width>
+                     <width>485</width>
                      <height>60</height>
                     </size>
                    </property>
@@ -1464,12 +1483,18 @@ QPushButton:pressed
                     </font>
                    </property>
                    <property name="editable">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="specif_choice_label">
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="specif_data_label3">
+                   <property name="maximumSize">
+                    <size>
+                     <width>485</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -1477,7 +1502,7 @@ QPushButton:pressed
                     </font>
                    </property>
                    <property name="text">
-                    <string>Выберите гаситель колебаний:</string>
+                    <string>Тип испытания:</string>
                    </property>
                   </widget>
                  </item>
@@ -1485,13 +1510,13 @@ QPushButton:pressed
                   <widget class="QComboBox" name="specif_type_test_comboBox">
                    <property name="minimumSize">
                     <size>
-                     <width>0</width>
+                     <width>300</width>
                      <height>60</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>16777215</width>
+                     <width>300</width>
                      <height>60</height>
                     </size>
                    </property>
@@ -1502,21 +1527,18 @@ QPushButton:pressed
                     </font>
                    </property>
                    <property name="editable">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="specif_data_label3">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Тип испытания:</string>
-                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Лабороторное</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Конвеерное</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
                 </layout>
@@ -1546,8 +1568,8 @@ QPushButton:pressed
                  <property name="spacing">
                   <number>5</number>
                  </property>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="specif_data_label">
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="specif_data_label_3">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -1555,7 +1577,64 @@ QPushButton:pressed
                     </font>
                    </property>
                    <property name="text">
-                    <string>Наименование:</string>
+                    <string>Длина в разжатом состоянии, мм:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="8" column="0">
+                  <widget class="QLabel" name="specif_data_label8">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>16</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Максимальная температура, ℃:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QLineEdit" name="specif_speed_lineEdit">
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>18</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="0">
+                  <widget class="QLabel" name="specif_data_label6">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>16</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Минимальное усилие отбоя, Н:</string>
                    </property>
                   </widget>
                  </item>
@@ -1590,6 +1669,68 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
+                 <item row="4" column="1">
+                  <widget class="QLineEdit" name="specif_min_comp_lineEdit">
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>18</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="1">
+                  <widget class="QLineEdit" name="specif_max_comp_lineEdit">
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>18</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="1" column="0">
                   <widget class="QLabel" name="specif_data_label_2">
                    <property name="font">
@@ -1603,8 +1744,21 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="1">
-                  <widget class="QLineEdit" name="specif_min_length_lineEdit">
+                 <item row="7" column="0">
+                  <widget class="QLabel" name="specif_data_label7">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>16</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Максимальное усилие отбоя, Н:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="8" column="1">
+                  <widget class="QLineEdit" name="specif_max_temp_lineEdit">
                    <property name="minimumSize">
                     <size>
                      <width>300</width>
@@ -1613,7 +1767,7 @@ QPushButton:pressed
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>150</width>
+                     <width>300</width>
                      <height>50</height>
                     </size>
                    </property>
@@ -1634,21 +1788,8 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="0">
-                  <widget class="QLabel" name="specif_data_label_3">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Длина в разжатом состоянии, мм:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="1">
-                  <widget class="QLineEdit" name="specif_max_length_lineEdit">
+                 <item row="7" column="1">
+                  <widget class="QLineEdit" name="specif_max_recoil_lineEdit">
                    <property name="minimumSize">
                     <size>
                      <width>300</width>
@@ -1657,95 +1798,7 @@ QPushButton:pressed
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>150</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>18</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="specif_data_label_4">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Высота необходимого кронштейна, мм:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="1">
-                  <widget class="QLineEdit" name="specif_bracket_height_lineEdit">
-                   <property name="minimumSize">
-                    <size>
                      <width>300</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>150</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>18</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="0">
-                  <widget class="QLabel" name="specif_data_label2">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Скорость испытания, м/с:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="1">
-                  <widget class="QLineEdit" name="specif_speed_lineEdit">
-                   <property name="minimumSize">
-                    <size>
-                     <width>300</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>150</width>
                      <height>50</height>
                     </size>
                    </property>
@@ -1767,50 +1820,6 @@ QPushButton:pressed
                   </widget>
                  </item>
                  <item row="5" column="0">
-                  <widget class="QLabel" name="specif_data_label4">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Минимальное усилие сжатия, Н:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="1">
-                  <widget class="QLineEdit" name="specif_min_comp_lineEdit">
-                   <property name="minimumSize">
-                    <size>
-                     <width>300</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>150</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>18</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="0">
                   <widget class="QLabel" name="specif_data_label5">
                    <property name="font">
                     <font>
@@ -1823,8 +1832,21 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
-                 <item row="6" column="1">
-                  <widget class="QLineEdit" name="specif_max_comp_lineEdit">
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="specif_data_label2">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>16</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Скорость испытания, м/с:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="specif_min_length_lineEdit">
                    <property name="minimumSize">
                     <size>
                      <width>300</width>
@@ -1833,7 +1855,7 @@ QPushButton:pressed
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>150</width>
+                     <width>300</width>
                      <height>50</height>
                     </size>
                    </property>
@@ -1854,8 +1876,8 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
-                 <item row="7" column="0">
-                  <widget class="QLabel" name="specif_data_label6">
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="specif_data_label4">
                    <property name="font">
                     <font>
                      <family>Arial</family>
@@ -1863,11 +1885,24 @@ QPushButton:pressed
                     </font>
                    </property>
                    <property name="text">
-                    <string>Минимальное усилие отбоя, Н:</string>
+                    <string>Минимальное усилие сжатия, Н:</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="7" column="1">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="specif_data_label">
+                   <property name="font">
+                    <font>
+                     <family>Arial</family>
+                     <pointsize>16</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Наименование:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="1">
                   <widget class="QLineEdit" name="specif_min_recoil_lineEdit">
                    <property name="minimumSize">
                     <size>
@@ -1877,7 +1912,7 @@ QPushButton:pressed
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>150</width>
+                     <width>300</width>
                      <height>50</height>
                     </size>
                    </property>
@@ -1898,21 +1933,8 @@ QPushButton:pressed
                    </property>
                   </widget>
                  </item>
-                 <item row="8" column="0">
-                  <widget class="QLabel" name="specif_data_label7">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Максимальное усилие отбоя, Н:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="8" column="1">
-                  <widget class="QLineEdit" name="specif_max_recoil_lineEdit">
+                 <item row="2" column="1">
+                  <widget class="QLineEdit" name="specif_max_length_lineEdit">
                    <property name="minimumSize">
                     <size>
                      <width>300</width>
@@ -1921,51 +1943,7 @@ QPushButton:pressed
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>150</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>18</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string/>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="9" column="0">
-                  <widget class="QLabel" name="specif_data_label8">
-                   <property name="font">
-                    <font>
-                     <family>Arial</family>
-                     <pointsize>16</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Максимальная температура, ℃:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="9" column="1">
-                  <widget class="QLineEdit" name="specif_max_temp_lineEdit">
-                   <property name="minimumSize">
-                    <size>
                      <width>300</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>150</width>
                      <height>50</height>
                     </size>
                    </property>

@@ -10,7 +10,7 @@ base_dir = os.path.dirname(__file__)
 class Signals(QObject):
     thread_log = pyqtSignal(str)
     thread_err = pyqtSignal(str)
-    read_result = pyqtSignal(tuple)
+    read_result = pyqtSignal(tuple, str)
     write_finish = pyqtSignal(bool)
 
 
@@ -210,9 +210,19 @@ class Reader(QRunnable):
         self.is_run = False
         self.client = None
         self.cst = None
+        self.read_tag = ''
         self.start_reg = None
         self.count_reg = None
         self.dev_id = None
+        self.reg_buffer = None
+        self.buffer_count = None
+        self.time_start = 0
+        self.flag_start_test = True
+        self.num_rec = 0
+        self.count_rec = 0
+        self.buffer_all = None
+        self.result = []
+        self.time_proc = []
 
     @pyqtSlot()
     def run(self):
@@ -221,12 +231,57 @@ class Reader(QRunnable):
                 if not self.is_run:
                     time.sleep(0.001)
                 else:
-                    rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
-                                             self.start_reg, self.count_reg)
+                    if self.read_tag == 'reg':
+                        rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
+                                                 self.start_reg, self.count_reg)
 
-                    self.signals.read_result.emit(rr)
+                        self.signals.read_result.emit(rr, self.read_tag)
 
-                    time.sleep(0.01)
+                        time.sleep(0.01)
+
+                    elif self.read_tag == 'buffer':
+                        self.time_start = time.monotonic()
+                        rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
+                                                 self.reg_buffer, self.buffer_count * 5)
+
+                        if len(rr) == self.buffer_count * 5:
+                            for i in range(0, self.buffer_count):
+                                flag_add = False
+                                ind = 5 * i
+                                if self.flag_start_test:
+                                    flag_add = True
+                                    self.flag_start_test = False
+                                else:
+                                    if abs(rr[ind] - self.buffer_count) == 1:
+                                        flag_add = True
+
+                                if flag_add:
+                                    self.buffer_count = rr[ind]
+                                    self.reg_buffer += 5
+                                    self.num_rec += 1
+                                    self.count_rec += 1
+                                    for j in range(len(rr)):
+                                        self.result.append(rr[j])
+                                else:
+                                    break
+
+                            delta_r = 16384 + 3000 * 5 - self.reg_buffer
+                            if delta_r <= 0:
+                                if delta_r < 0:
+                                    print('Выход за пределы буфера')
+                                self.num_rec = 0
+                                self.count_reg = 20
+                                self.reg_buffer = 0x4000
+                            else:
+                                if delta_r >= 5 * self.buffer_count:
+                                    self.count_reg = 20
+                                else:
+                                    self.count_reg = int(delta_r / 5)
+
+                            self.time_proc.append(round(time.monotonic() - self.time_start, 6))
+
+                        else:
+                            self.signals.thread_err.emit(str(rr))
 
             except Exception as e:
                 txt = 'ERROR in thread Reader - {}'.format(e)
@@ -236,8 +291,17 @@ class Reader(QRunnable):
         self.client = client
         self.cst = cst
         self.dev_id = request.get('dev_id')
+        self.read_tag = request.get('read_tag')
         self.start_reg = request.get('reg_read')
         self.count_reg = request.get('read_count')
+        self.reg_buffer = request.get('reg_buffer')
+        self.buffer_count = request.get('buffer_count')
+        self.buffer_all = request.get('buffer_all')
+        self.time_proc = []
+
+        self.num_rec = 0
+        self.count_rec = 0
+        self.result = []
         self.is_run = True
 
     def stop_read(self):

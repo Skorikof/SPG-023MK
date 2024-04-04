@@ -177,28 +177,32 @@ class Model:
         self.count_msg = 0
         client = self.set_connect.get('client')
         self.signals.read_start.emit(client, cst, self.set_regs)
+        txt_log = 'Чтение контроллера запущено'
+        self.status_bar_msg(txt_log)
 
     def reader_stop(self):
         self.signals.read_stop.emit()
+        txt_log = 'Чтение контроллера остановлено'
+        self.status_bar_msg(txt_log)
 
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def reader_result(self, rr):
+    def reader_result(self, rr, tag):
         try:
-            txt_log = 'Идёт чтение контроллера'
-            self.status_bar_msg(txt_log)
-            self.set_regs['force_now'] = self.magnitude_effort(rr[0], rr[1])
-            self.set_regs['amort_move'] = self.movement_amount(rr[2])
-            self.register_state(rr[3])
-            self.set_regs['counter_time'] = self.counter_time(rr[4])
-            self.switch_state(rr[5])
-            self.set_regs['traverse_move'] = self.movement_amount(rr[6])
-            self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
-            self.set_regs['force_alarm'] = self.emergency_force(rr[10], rr[11])
+            if tag == 'reg':
+                self.set_regs['force_now'] = self.magnitude_effort(rr[0], rr[1])
+                self.set_regs['amort_move'] = self.movement_amount(rr[2])
+                self.register_state(rr[3])
+                self.set_regs['counter_time'] = self.counter_time(rr[4])
+                self.switch_state(rr[5])
+                self.set_regs['traverse_move'] = self.movement_amount(rr[6])
+                self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
+                self.set_regs['force_alarm'] = self.emergency_force(rr[10], rr[11])
 
             self.count_msg += 1
-            print(self.count_msg)
+            txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
+            self.status_bar_msg(txt_log)
 
             self.signals.read_finish.emit()
 

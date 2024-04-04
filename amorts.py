@@ -22,11 +22,14 @@ class DataAmort(object):
 
 class Amort:
     def __init__(self):
+        self.names = []
+        self.current_index = -1
         self.struct = StructAmort()
         self.config = configparser.ConfigParser()
 
     def update_amort_list(self):
         try:
+            self.names = []
             self.struct.amorts.clear()
             self.config.read("amorts.ini")
             index_d = -1
@@ -38,6 +41,7 @@ class Amort:
                         temp_val = self.config.get(section, key)
                         if key == 'name':
                             self.struct.amorts[index_d].name_d = temp_val
+                            self.names.append(temp_val)
                         if key == 'min_length':
                             self.struct.amorts[index_d].min_length = int(temp_val)
                         if key == 'max_length':

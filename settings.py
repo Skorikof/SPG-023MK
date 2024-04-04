@@ -38,7 +38,8 @@ class PrgSettings:
             self.registers['reg_force_buffer'] = 0x2081
             self.registers['force_buffer_count'] = 16
             self.registers['reg_buffer'] = 0x4000
-            self.registers['buffer_count'] = 15000
+            self.registers['buffer_count'] = 20
+            self.registers['buffer_all'] = 15000
 
             self.registers['force_now'] = 0
             self.registers['force_list'] = []
@@ -64,6 +65,7 @@ class PrgSettings:
             self.registers['red_light'] = 0
 
             self.state['operator'] = {'name': '', 'rank': ''}
+            self.state['type_test'] = ''
 
         except Exception as e:
             print(str(e))

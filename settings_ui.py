@@ -14,7 +14,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         SettingsWindow.setObjectName("SettingsWindow")
-        SettingsWindow.resize(650, 668)
+        SettingsWindow.resize(610, 655)
+        SettingsWindow.setMinimumSize(QtCore.QSize(610, 655))
+        SettingsWindow.setMaximumSize(QtCore.QSize(610, 655))
         SettingsWindow.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.centralwidget = QtWidgets.QWidget(SettingsWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -35,7 +37,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt2.setObjectName("lbl_txt2")
         self.btn_exit = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_exit.setGeometry(QtCore.QRect(530, 560, 100, 50))
+        self.btn_exit.setGeometry(QtCore.QRect(480, 560, 100, 50))
         self.btn_exit.setMinimumSize(QtCore.QSize(100, 50))
         self.btn_exit.setMaximumSize(QtCore.QSize(100, 50))
         font = QtGui.QFont()

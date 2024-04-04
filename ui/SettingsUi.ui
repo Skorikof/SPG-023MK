@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
-    <height>668</height>
+    <width>610</width>
+    <height>655</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>610</width>
+    <height>655</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>610</width>
+    <height>655</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Debug</string>
@@ -67,7 +79,7 @@
    <widget class="QPushButton" name="btn_exit">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>480</x>
       <y>560</y>
       <width>100</width>
       <height>50</height>
@@ -1970,7 +1982,7 @@ QPushButton:hover
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>650</width>
+     <width>610</width>
      <height>21</height>
     </rect>
    </property>

@@ -1,6 +1,7 @@
 from mainui import Ui_MainWindow
 from settings_window import SetWindow
 from executors_win import ExecWin
+from amorts import Amort
 from PyQt5.QtWidgets import QMainWindow, QFrame, QLabel
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.Qt import QFont
@@ -27,6 +28,7 @@ class AppWindow(QMainWindow):
         self._create_statusbar_ui()
 
         self.operators = None
+        self.amorts = None
 
         self.start_param()
 
@@ -48,15 +50,15 @@ class AppWindow(QMainWindow):
 
         self.lbl_info_H = QLabel("Перемещение,(мм):")
         self.lbl_info_H.setStyleSheet('border: 0);')
-        self.lbl_info_H.setFont(QFont('Calibri', 16))
+        self.lbl_info_H.setFont(QFont('Calibri', 14))
 
         self.lbl_info_Traverse = QLabel("Траверса, (мм):")
         self.lbl_info_Traverse.setStyleSheet('border: 0);')
-        self.lbl_info_Traverse.setFont(QFont('Calibri', 16))
+        self.lbl_info_Traverse.setFont(QFont('Calibri', 14))
 
         self.lbl_info_executor = QLabel("Оператор:")
         self.lbl_info_executor.setStyleSheet('border: 0);')
-        self.lbl_info_executor.setFont(QFont('Calibri', 16))
+        self.lbl_info_executor.setFont(QFont('Calibri', 14))
 
         self.statusBar().reformat()
         self.statusBar().setStyleSheet('border: 0; background-color: #FFF8DC;')
@@ -101,6 +103,8 @@ class AppWindow(QMainWindow):
 
     def btn_main_stop_clicked(self):
         try:
+            self.ui.main_stackedWidget.setCurrentIndex(0)
+            self.ui.stack_start_label.setText('ЖМАКНУТА\nБОЛЬШАЯ\nКРАСНАЯ\nКНОПКА!!!')
             client = self.model.set_connect.get('client')
             if client:
                 self.model.set_regs['adr_freq'] = 1
@@ -108,8 +112,6 @@ class AppWindow(QMainWindow):
                 self.model.set_regs['adr_freq'] = 2
                 self.model.motor_stop()
                 self.model.reader_stop()
-                self.ui.main_stackedWidget.setCurrentIndex(0)
-                self.ui.stack_start_label.setText('ЖМАКНУТА\nБОЛЬШАЯ\nКРАСНАЯ\nКНОПКА!!!')
 
         except Exception as e:
             txt_log = 'ERROR in view/btn_main_stop_clicked - {}'.format(e)
@@ -135,6 +137,7 @@ class AppWindow(QMainWindow):
 
     def specif_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(3)
+        self.specif_page_update()
 
     def test_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(2)
@@ -152,3 +155,54 @@ class AppWindow(QMainWindow):
         self.ui.main_stackedWidget.setEnabled(True)
         self.ui.main_btn_frame.setEnabled(True)
         self.win_set.hide()
+
+    def specif_page_update(self):
+        try:
+            self.amorts = Amort()
+            self.amorts.update_amort_list()
+            self.ui.specif_choice_comboBox.clear()
+            self.ui.specif_add_btn.setEnabled(True)
+            if len(self.amorts.config.sections()) == 0:
+                self.ui.specif_continue_btn.setEnabled(False)
+                self.ui.specif_del_btn.setEnabled(False)
+                self.specif_page_clear()
+
+            else:
+                self.ui.specif_choice_comboBox.addItems(self.amorts.names)
+                self.ui.specif_choice_comboBox.setCurrentIndex(0)
+                self.amorts.current_index = 0
+                self.ui.specif_choice_comboBox.activated[int].connect(self.amort_select)
+                self.amort_select(self.amorts.current_index)
+                self.ui.specif_continue_btn.setEnabled(True)
+                self.ui.specif_del_btn.setEnabled(True)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/specif_page_update - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def specif_page_clear(self):
+        try:
+            self.ui.specif_name_lineEdit.setText('')
+            self.ui.specif_min_length_lineEdit.setText('')
+            self.ui.specif_max_length_lineEdit.setText('')
+            self.ui.specif_speed_lineEdit.setText('')
+            self.ui.specif_min_comp_lineEdit.setText('')
+            self.ui.specif_max_comp_lineEdit.setText('')
+            self.ui.specif_min_recoil_lineEdit.setText('')
+            self.ui.specif_max_recoil_lineEdit.setText('')
+            self.ui.specif_max_temp_lineEdit.setText('')
+
+        except Exception as e:
+            txt_log = 'ERROR in view/specif_page_clear - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def amort_select(self, index):
+        try:
+            print(index)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/amort_select - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
