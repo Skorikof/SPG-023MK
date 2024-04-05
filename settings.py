@@ -66,6 +66,15 @@ class PrgSettings:
 
             self.state['operator'] = {'name': '', 'rank': ''}
             self.state['type_test'] = ''
+            self.state['flag_start'] = False
+            self.state['flag_full_cycle'] = False
+            self.state['start_pos'] = 0
+            self.state['flag_min_pos'] = False
+            self.state['min_pos'] = 0
+            self.state['flag_max_pos'] = False
+            self.state['max_pos'] = 0
+            self.state['max_comp'] = 0
+            self.state['max_recoil'] = 0
 
         except Exception as e:
             print(str(e))

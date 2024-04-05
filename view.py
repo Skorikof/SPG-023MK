@@ -200,7 +200,16 @@ class AppWindow(QMainWindow):
 
     def amort_select(self, index):
         try:
-            print(index)
+            self.amorts.current_index = index
+            self.ui.specif_name_lineEdit.setText(str(self.amorts.struct.amorts[index].name_a))
+            self.ui.specif_min_length_lineEdit.setText(str(self.amorts.struct.amorts[index].min_length))
+            self.ui.specif_max_length_lineEdit.setText(str(self.amorts.struct.amorts[index].max_length))
+            self.ui.specif_speed_lineEdit.setText(str(self.amorts.struct.amorts[index].speed))
+            self.ui.specif_min_comp_lineEdit.setText(str(self.amorts.struct.amorts[index].min_comp))
+            self.ui.specif_max_comp_lineEdit.setText(str(self.amorts.struct.amorts[index].max_comp))
+            self.ui.specif_min_recoil_lineEdit.setText(str(self.amorts.struct.amorts[index].min_recoil))
+            self.ui.specif_max_recoil_lineEdit.setText(str(self.amorts.struct.amorts[index].max_recoil))
+            self.ui.specif_max_temp_lineEdit.setText(str(self.amorts.struct.amorts[index].max_temper))
 
         except Exception as e:
             txt_log = 'ERROR in view/amort_select - {}'.format(e)

@@ -200,6 +200,9 @@ class Model:
                 self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
                 self.set_regs['force_alarm'] = self.emergency_force(rr[10], rr[11])
 
+                if self.set_regs.get('cycle_force') == '1':
+                    self.fill_data_for_graph()
+
             self.count_msg += 1
             txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
             self.status_bar_msg(txt_log)
@@ -217,7 +220,12 @@ class Model:
             move = self.set_regs.get('amort_move')
             self.set_regs['force_list'].append(force)
             self.set_regs['amort_move_list'].append(move)
-            print('data added in graph')
+
+            x = [1,2,3,4,5,6,7,8,9,10]
+            y = [1,2,3,4,5,6,7,8,9,10]
+
+            self.set_regs['x'] = x
+            self.set_regs['y'] = y
 
         except Exception as e:
             txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)

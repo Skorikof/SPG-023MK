@@ -823,9 +823,36 @@ class Ui_SettingsWindow(object):
 "}\n"
 "")
         self.btn_read.setObjectName("btn_read")
+        self.btn_test = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_test.setGeometry(QtCore.QRect(30, 480, 100, 60))
+        self.btn_test.setMinimumSize(QtCore.QSize(100, 60))
+        self.btn_test.setMaximumSize(QtCore.QSize(100, 60))
+        self.btn_test.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_test.setCheckable(False)
+        self.btn_test.setChecked(False)
+        self.btn_test.setObjectName("btn_test")
         SettingsWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(SettingsWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 650, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 610, 21))
         self.menubar.setObjectName("menubar")
         SettingsWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(SettingsWindow)
@@ -837,7 +864,7 @@ class Ui_SettingsWindow(object):
 
     def retranslateUi(self, SettingsWindow):
         _translate = QtCore.QCoreApplication.translate
-        SettingsWindow.setWindowTitle(_translate("SettingsWindow", "Debug"))
+        SettingsWindow.setWindowTitle(_translate("SettingsWindow", "HandDebug"))
         self.lbl_txt2.setText(_translate("SettingsWindow", "Усилие (кгс):"))
         self.btn_exit.setText(_translate("SettingsWindow", "ВЫХОД"))
         self.lbl_txt1.setText(_translate("SettingsWindow", "Время (мс):"))
@@ -874,3 +901,4 @@ class Ui_SettingsWindow(object):
 "усилие (кгс):"))
         self.btn_connect.setText(_translate("SettingsWindow", "ПОДКЛЮЧИТЬСЯ"))
         self.btn_read.setText(_translate("SettingsWindow", "ЧИТАТЬ"))
+        self.btn_test.setText(_translate("SettingsWindow", "ТЕСТ"))

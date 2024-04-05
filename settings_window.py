@@ -69,6 +69,7 @@ class SetWindow(QMainWindow):
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
+        self.ui.btn_test.clicked.connect(self.btn_test_clicked)
         self.ui.btn_connect.clicked.connect(self.do_connect)
         self.ui.btn_read.clicked.connect(self.read_controller)
         self.ui.rbtn_traverse.toggled.connect(self.select_engine)
@@ -279,6 +280,11 @@ class SetWindow(QMainWindow):
         self.ui.lineEdit_F_alarm.setText(str(self.model.set_regs.get('force_alarm')))
         self.update_color_switch(self.model.set_regs)
 
+        if self.model.set_regs.get('cycle_force') == '1':
+            x = self.model.set_regs.get('x')
+            y = self.model.set_regs.get('y')
+            self.graph_ui.data_line_test.setData(x, y)
+
     def update_color_switch(self, state):
         try:
             self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(state.get('cycle_force')))
@@ -317,5 +323,16 @@ class SetWindow(QMainWindow):
 
         except Exception as e:
             txt_log = 'ERROR in settings_window/set_color_fram - {}'.format(e)
+            self.statusbar.showMessage(txt_log)
+            self.model.save_log('error', str(e))
+
+    def btn_test_clicked(self):
+        try:
+            self.model.change_list_state(0, 1)
+            self.graph_ui.clear_graph()
+            self.graph_ui.show()
+
+        except Exception as e:
+            txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
             self.statusbar.showMessage(txt_log)
             self.model.save_log('error', str(e))

@@ -8,7 +8,7 @@ class StructAmort(object):
 
 class DataAmort(object):
     def __init__(self):
-        self.name_d = ''
+        self.name_a = ''
         self.min_length = 0
         self.max_length = 0
         self.speed = 0
@@ -40,7 +40,7 @@ class Amort:
                     for key in self.config[section]:
                         temp_val = self.config.get(section, key)
                         if key == 'name':
-                            self.struct.amorts[index_d].name_d = temp_val
+                            self.struct.amorts[index_d].name_a = temp_val
                             self.names.append(temp_val)
                         if key == 'min_length':
                             self.struct.amorts[index_d].min_length = int(temp_val)
