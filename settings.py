@@ -43,6 +43,7 @@ class PrgSettings:
 
             self.registers['force_now'] = 0
             self.registers['force_list'] = []
+            self.registers['amort_move'] = 0
             self.registers['amort_move_list'] = []
             self.registers['force_alarm'] = 2000
             self.registers['cycle_force'] = 0
@@ -66,8 +67,9 @@ class PrgSettings:
 
             self.state['operator'] = {'name': '', 'rank': ''}
             self.state['type_test'] = ''
-            self.state['flag_start'] = False
+            self.state['direction'] = None
             self.state['flag_full_cycle'] = False
+            self.state['flag_start_pos'] = False
             self.state['start_pos'] = 0
             self.state['flag_min_pos'] = False
             self.state['min_pos'] = 0

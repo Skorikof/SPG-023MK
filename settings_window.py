@@ -92,6 +92,7 @@ class SetWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.read_finish.connect(self.update_win)
+        self.model.signals.update_graph.connect(self.update_graph)
 
     def do_connect(self):
         try:
@@ -113,6 +114,7 @@ class SetWindow(QMainWindow):
     def connect_ui(self):
         self.ui.btn_connect.setText('ОТКЛЮЧИТЬСЯ')
         self.ui.btn_read.setEnabled(True)
+        self.ui.btn_test.setEnabled(True)
         self.ui.btn_motor_main_start.setEnabled(True)
         self.ui.btn_motor_main_stop.setEnabled(True)
         self.ui.btn_motor_up.setEnabled(True)
@@ -130,6 +132,7 @@ class SetWindow(QMainWindow):
     def disconnect_ui(self):
         self.ui.btn_connect.setText('ПОДКЛЮЧИТЬСЯ')
         self.ui.btn_read.setEnabled(False)
+        self.ui.btn_test.setEnabled(False)
         self.ui.btn_motor_main_start.setEnabled(False)
         self.ui.btn_motor_main_stop.setEnabled(False)
         self.ui.btn_motor_up.setEnabled(False)
@@ -280,11 +283,6 @@ class SetWindow(QMainWindow):
         self.ui.lineEdit_F_alarm.setText(str(self.model.set_regs.get('force_alarm')))
         self.update_color_switch(self.model.set_regs)
 
-        if self.model.set_regs.get('cycle_force') == '1':
-            x = self.model.set_regs.get('x')
-            y = self.model.set_regs.get('y')
-            self.graph_ui.data_line_test.setData(x, y)
-
     def update_color_switch(self, state):
         try:
             self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(state.get('cycle_force')))
@@ -328,11 +326,50 @@ class SetWindow(QMainWindow):
 
     def btn_test_clicked(self):
         try:
+            temp = self.ui.btn_test.text()
+            if temp == 'ТЕСТ':
+                self.test_start()
+
+            elif temp == 'СТОП':
+                self.test_stop()
+
+        except Exception as e:
+            txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
+            self.statusbar.showMessage(txt_log)
+            self.model.save_log('error', str(e))
+
+    def test_start(self):
+        try:
+            self.model.set_state['flag_start_pos'] = False
+            self.ui.btn_test.setText('СТОП')
+            self.model.reader_start()
             self.model.change_list_state(0, 1)
             self.graph_ui.clear_graph()
             self.graph_ui.show()
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
+            txt_log = 'ERROR in settings_window/test_start - {}'.format(e)
+            self.statusbar.showMessage(txt_log)
+            self.model.save_log('error', str(e))
+
+    def test_stop(self):
+        try:
+            self.ui.btn_test.setText('ТЕСТ')
+            self.model.change_list_state(0, 0)
+
+        except Exception as e:
+            txt_log = 'ERROR in settings_window/test_stop - {}'.format(e)
+            self.statusbar.showMessage(txt_log)
+            self.model.save_log('error', str(e))
+
+    def update_graph(self):
+        try:
+            self.graph_ui.clear_graph()
+            x = self.model.set_regs.get('amort_move_list')
+            y = self.model.set_regs.get('force_list')
+            self.graph_ui.data_line_test.setData(x, y)
+
+        except Exception as e:
+            txt_log = 'ERROR in settings_window/update_graph - {}'.format(e)
             self.statusbar.showMessage(txt_log)
             self.model.save_log('error', str(e))

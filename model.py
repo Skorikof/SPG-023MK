@@ -1,4 +1,6 @@
 import inspect
+import random
+
 import serial
 import crcmod
 import numpy as np
@@ -19,12 +21,12 @@ class WinSignals(QObject):
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal()
+    update_graph = pyqtSignal()
 
 
 class Model:
     def __init__(self):
         self.data_response = {}
-        self.force = []
         self.signals = WinSignals()
 
         self.set_connect = PrgSettings().connect
@@ -200,8 +202,8 @@ class Model:
                 self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
                 self.set_regs['force_alarm'] = self.emergency_force(rr[10], rr[11])
 
-                if self.set_regs.get('cycle_force') == '1':
-                    self.fill_data_for_graph()
+                self.remember_start_pos()
+                self.fill_data_for_graph()
 
             self.count_msg += 1
             txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
@@ -214,21 +216,84 @@ class Model:
             self.status_bar_msg(txt_log)
             self.save_log('error', str(e))
 
+    # FIXME
     def fill_data_for_graph(self):
         try:
+            direction = self.set_state.get('direction')
             force = self.set_regs.get('force_now')
             move = self.set_regs.get('amort_move')
-            self.set_regs['force_list'].append(force)
-            self.set_regs['amort_move_list'].append(move)
+            start_pos = self.set_state.get('start_pos')
 
-            x = [1,2,3,4,5,6,7,8,9,10]
-            y = [1,2,3,4,5,6,7,8,9,10]
+            if move != start_pos:
+                if move < start_pos:
+                    direction = 'down'
+                    self.set_state['direction'] = 'down'
+                elif move > start_pos:
+                    direction = 'up'
+                    self.set_state['direction'] = 'up'
 
-            self.set_regs['x'] = x
-            self.set_regs['y'] = y
+                self.set_regs['force_list'].append(force)
+                self.set_regs['amort_move_list'].append(move)
+
+            else:
+                if direction == 'down':
+                    min_pos = min(self.set_regs.get('amort_move_list'))
+                    max_recoil = max(self.set_regs.get('force_list'))
+                    self.set_state['min_pos'] = min_pos
+                    self.set_state['flag_min_pos'] = True
+
+                elif direction == 'up':
+                    max_pos = max(self.set_regs.get('amort_move_list'))
+                    max_comp = max(self.set_regs.get('force_list'))
+                    self.set_state['max_pos'] = max_pos
+                    self.set_state['flag_max_pos'] = True
+
+                else:
+                    pass
+
+            if self.set_state.get('flag_max_pos') and self.set_state('flag_min_pos'):
+                self.set_state['flag_full_cycle'] = True
+                self.flag_full_cycle()
 
         except Exception as e:
             txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)
+            self.status_bar_msg(txt_log)
+            self.save_log('error', str(e))
+
+    def clear_data_graph(self):
+        try:
+            self.set_regs['force_list'].clear()
+            self.set_regs['amort_move_list'].clear()
+
+        except Exception as e:
+            txt_log = 'ERROR in model/clear_data_graph - {}'.format(e)
+            self.status_bar_msg(txt_log)
+            self.save_log('error', str(e))
+
+    def remember_start_pos(self):
+        try:
+            flag = self.set_state.get('flag_start_pos')
+            if not flag:
+                pos = self.set_regs.get('amort_move')
+                self.set_state['start_pos'] = pos
+                self.set_state['flag_start_pos'] = True
+
+        except Exception as e:
+            txt_log = 'ERROR in model/remember_start_pos - {}'.format(e)
+            self.status_bar_msg(txt_log)
+            self.save_log('error', str(e))
+
+    def flag_full_cycle(self):
+        try:
+            self.set_state['direction'] = None
+            self.set_state['flag_min_pos'] = False
+            self.set_state['flag_max_pos'] = False
+            self.set_state['flag_full_cycle'] = False
+            self.signals.update_graph.emit()
+            self.clear_data_graph()
+
+        except Exception as e:
+            txt_log = 'ERROR in model/flag_full_cycle - {}'.format(e)
             self.status_bar_msg(txt_log)
             self.save_log('error', str(e))
 
@@ -396,8 +461,6 @@ class Model:
         """Текущая величина усилия"""
         try:
             val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 0)
-
-            self.force.append(val_temp)
 
             return val_temp
 
