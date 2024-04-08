@@ -69,7 +69,7 @@ class SetWindow(QMainWindow):
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
-        self.ui.btn_test.clicked.connect(self.btn_test_clicked)
+        # self.ui.btn_test.clicked.connect(self.btn_test_clicked)
         self.ui.btn_connect.clicked.connect(self.do_connect)
         self.ui.btn_read.clicked.connect(self.read_controller)
         self.ui.rbtn_traverse.toggled.connect(self.select_engine)
@@ -92,7 +92,7 @@ class SetWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.read_finish.connect(self.update_win)
-        self.model.signals.update_graph.connect(self.update_graph)
+        # self.model.signals.update_graph.connect(self.update_graph)
 
     def do_connect(self):
         try:
@@ -324,52 +324,55 @@ class SetWindow(QMainWindow):
             self.statusbar.showMessage(txt_log)
             self.model.save_log('error', str(e))
 
-    def btn_test_clicked(self):
-        try:
-            temp = self.ui.btn_test.text()
-            if temp == 'ТЕСТ':
-                self.test_start()
-
-            elif temp == 'СТОП':
-                self.test_stop()
-
-        except Exception as e:
-            txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
-
-    def test_start(self):
-        try:
-            self.model.set_state['flag_start_pos'] = False
-            self.ui.btn_test.setText('СТОП')
-            self.model.reader_start()
-            self.model.change_list_state(0, 1)
-            self.graph_ui.clear_graph()
-            self.graph_ui.show()
-
-        except Exception as e:
-            txt_log = 'ERROR in settings_window/test_start - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
-
-    def test_stop(self):
-        try:
-            self.ui.btn_test.setText('ТЕСТ')
-            self.model.change_list_state(0, 0)
-
-        except Exception as e:
-            txt_log = 'ERROR in settings_window/test_stop - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
-
-    def update_graph(self):
-        try:
-            self.graph_ui.clear_graph()
-            x = self.model.set_regs.get('amort_move_list')
-            y = self.model.set_regs.get('force_list')
-            self.graph_ui.data_line_test.setData(x, y)
-
-        except Exception as e:
-            txt_log = 'ERROR in settings_window/update_graph - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+    # def btn_test_clicked(self):
+    #     try:
+    #         temp = self.ui.btn_test.text()
+    #         if temp == 'ТЕСТ':
+    #             self.test_start()
+    #
+    #         elif temp == 'СТОП':
+    #             self.test_stop()
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
+    #         self.statusbar.showMessage(txt_log)
+    #         self.model.save_log('error', str(e))
+    #
+    # def test_start(self):
+    #     try:
+    #         self.model.set_state['flag_start_pos'] = False
+    #         self.ui.btn_test.setText('СТОП')
+    #         self.model.reader_start()
+    #         self.model.change_list_state(0, 1)
+    #         self.click_btn_motor_start()
+    #         self.graph_ui.clear_graph()
+    #         self.graph_ui.show()
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in settings_window/test_start - {}'.format(e)
+    #         self.statusbar.showMessage(txt_log)
+    #         self.model.save_log('error', str(e))
+    #
+    # def test_stop(self):
+    #     try:
+    #         self.ui.btn_test.setText('ТЕСТ')
+    #         self.model.change_list_state(0, 0)
+    #         self.click_btn_motor_main_stop()
+    #         self.model.set_state['flag_start_pos'] = False
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in settings_window/test_stop - {}'.format(e)
+    #         self.statusbar.showMessage(txt_log)
+    #         self.model.save_log('error', str(e))
+    #
+    # def update_graph(self):
+    #     try:
+    #         self.graph_ui.clear_graph()
+    #         x = self.model.set_regs.get('amort_move_list')
+    #         y = self.model.set_regs.get('force_list')
+    #         self.graph_ui.data_line_test.setData(x, y)
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in settings_window/update_graph - {}'.format(e)
+    #         self.statusbar.showMessage(txt_log)
+    #         self.model.save_log('error', str(e))

@@ -25,7 +25,6 @@ class PrgSettings:
             self.registers['write_tag'] = 'reg'
             self.registers['reg_read'] = 0x2000
             self.registers['read_count'] = 12
-            self.registers['read_tag'] = 'reg'
             self.registers['reg_state'] = 0x2003
             self.registers['list_state'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 

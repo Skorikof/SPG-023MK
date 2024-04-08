@@ -1,5 +1,6 @@
 import time
 import os
+from struct import pack, unpack
 from datetime import datetime
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 
@@ -10,7 +11,7 @@ base_dir = os.path.dirname(__file__)
 class Signals(QObject):
     thread_log = pyqtSignal(str)
     thread_err = pyqtSignal(str)
-    read_result = pyqtSignal(tuple, str)
+    read_result = pyqtSignal(object, str)
     write_finish = pyqtSignal(bool)
 
 
@@ -208,20 +209,28 @@ class Reader(QRunnable):
         super(Reader, self).__init__()
         self.cycle = True
         self.is_run = False
+
         self.client = None
         self.cst = None
+
         self.read_tag = ''
         self.start_reg = None
         self.count_reg = None
         self.dev_id = None
+
         self.reg_buffer = None
         self.buffer_count = None
         self.time_start = 0
-        self.flag_start_test = True
+        self.flag_start_test = False
+        self.flag_emit_data_test = False
         self.num_rec = 0
         self.count_rec = 0
         self.buffer_all = None
-        self.result = []
+        self.result = dict()
+        self.values_time = []
+        self.values_f = []
+        self.values_move = []
+        self.values_state = []
         self.time_proc = []
 
     @pyqtSlot()
@@ -236,8 +245,6 @@ class Reader(QRunnable):
                                                  self.start_reg, self.count_reg)
 
                         self.signals.read_result.emit(rr, self.read_tag)
-
-                        time.sleep(0.01)
 
                     elif self.read_tag == 'buffer':
                         self.time_start = time.monotonic()
@@ -260,8 +267,16 @@ class Reader(QRunnable):
                                     self.reg_buffer += 5
                                     self.num_rec += 1
                                     self.count_rec += 1
-                                    for j in range(len(rr)):
-                                        self.result.append(rr[j])
+
+                                    self.values_time.append(rr[ind])
+                                    temp = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
+                                    self.values_f.append(temp)
+
+                                    temp = round(0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
+                                    self.values_move.append(temp)
+
+                                    self.values_state.append(rr[ind + 4])
+
                                 else:
                                     break
 
@@ -287,21 +302,44 @@ class Reader(QRunnable):
                 txt = 'ERROR in thread Reader - {}'.format(e)
                 self.signals.thread_err.emit(txt)
 
-    def start_read(self, client, cst, request):
-        self.client = client
-        self.cst = cst
-        self.dev_id = request.get('dev_id')
-        self.read_tag = request.get('read_tag')
-        self.start_reg = request.get('reg_read')
-        self.count_reg = request.get('read_count')
+    def start_test(self, request):
+        self.read_tag = 'buffer'
         self.reg_buffer = request.get('reg_buffer')
         self.buffer_count = request.get('buffer_count')
         self.buffer_all = request.get('buffer_all')
+
+        self.values_time = []
+        self.values_f = []
+        self.values_move = []
+        self.values_state = []
+
         self.time_proc = []
 
         self.num_rec = 0
         self.count_rec = 0
-        self.result = []
+        self.result = {}
+        self.flag_start_test = True
+        self.flag_emit_data_test = True
+
+    def stop_test(self):
+        if self.flag_emit_data_test:
+            self.flag_emit_data_test = False
+            self.result['count'] = self.values_time
+            self.result['force'] = self.values_f
+            self.result['move'] = self.values_move
+            self.result['state'] = self.values_state
+            self.result['time'] = self.time_proc
+            self.signals.read_result.emit(self.result, self.read_tag)
+        self.read_tag = 'reg'
+
+    def start_read(self, client, cst, request):
+        self.client = client
+        self.cst = cst
+        self.dev_id = request.get('dev_id')
+        self.start_reg = request.get('reg_read')
+        self.count_reg = request.get('read_count')
+        self.read_tag = 'reg'
+
         self.is_run = True
 
     def stop_read(self):

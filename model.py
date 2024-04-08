@@ -21,6 +21,7 @@ class WinSignals(QObject):
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal()
+    read_result_buffer = pyqtSignal(dict)
     update_graph = pyqtSignal()
 
 
@@ -190,26 +191,32 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def reader_result(self, rr, tag):
+    def reader_result(self, res, tag):
         try:
-            if tag == 'reg':
-                self.set_regs['force_now'] = self.magnitude_effort(rr[0], rr[1])
-                self.set_regs['amort_move'] = self.movement_amount(rr[2])
-                self.register_state(rr[3])
-                self.set_regs['counter_time'] = self.counter_time(rr[4])
-                self.switch_state(rr[5])
-                self.set_regs['traverse_move'] = self.movement_amount(rr[6])
-                self.set_regs['temperature'] = self.temperature_value(rr[7], rr[8])
-                self.set_regs['force_alarm'] = self.emergency_force(rr[10], rr[11])
+            if tag == 'buffer':
+                self.signals.read_result_buffer.emit(res)
 
-                self.remember_start_pos()
-                self.fill_data_for_graph()
+            if tag == 'reg':
+                self.set_regs['force_now'] = self.magnitude_effort(res[0], res[1])
+                self.set_regs['amort_move'] = self.movement_amount(res[2])
+                self.register_state(res[3])
+                self.set_regs['counter_time'] = self.counter_time(res[4])
+                self.switch_state(res[5])
+                self.set_regs['traverse_move'] = self.movement_amount(res[6])
+                self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
+                self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
+
+            # if self.set_regs.get('cycle_force') == '1':
+            #     self.remember_start_pos()
+            #     self.fill_data_for_graph()
 
             self.count_msg += 1
             txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
             self.status_bar_msg(txt_log)
 
             self.signals.read_finish.emit()
+            if self.count_msg == 10000:
+                self.count_msg = 0
 
         except Exception as e:
             txt_log = 'ERROR in model/reader_result - {}'.format(e)
@@ -217,85 +224,85 @@ class Model:
             self.save_log('error', str(e))
 
     # FIXME
-    def fill_data_for_graph(self):
-        try:
-            direction = self.set_state.get('direction')
-            force = self.set_regs.get('force_now')
-            move = self.set_regs.get('amort_move')
-            start_pos = self.set_state.get('start_pos')
-
-            if move != start_pos:
-                if move < start_pos:
-                    direction = 'down'
-                    self.set_state['direction'] = 'down'
-                elif move > start_pos:
-                    direction = 'up'
-                    self.set_state['direction'] = 'up'
-
-                self.set_regs['force_list'].append(force)
-                self.set_regs['amort_move_list'].append(move)
-
-            else:
-                if direction == 'down':
-                    min_pos = min(self.set_regs.get('amort_move_list'))
-                    max_recoil = max(self.set_regs.get('force_list'))
-                    self.set_state['min_pos'] = min_pos
-                    self.set_state['flag_min_pos'] = True
-
-                elif direction == 'up':
-                    max_pos = max(self.set_regs.get('amort_move_list'))
-                    max_comp = max(self.set_regs.get('force_list'))
-                    self.set_state['max_pos'] = max_pos
-                    self.set_state['flag_max_pos'] = True
-
-                else:
-                    pass
-
-            if self.set_state.get('flag_max_pos') and self.set_state('flag_min_pos'):
-                self.set_state['flag_full_cycle'] = True
-                self.flag_full_cycle()
-
-        except Exception as e:
-            txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
-
-    def clear_data_graph(self):
-        try:
-            self.set_regs['force_list'].clear()
-            self.set_regs['amort_move_list'].clear()
-
-        except Exception as e:
-            txt_log = 'ERROR in model/clear_data_graph - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
-
-    def remember_start_pos(self):
-        try:
-            flag = self.set_state.get('flag_start_pos')
-            if not flag:
-                pos = self.set_regs.get('amort_move')
-                self.set_state['start_pos'] = pos
-                self.set_state['flag_start_pos'] = True
-
-        except Exception as e:
-            txt_log = 'ERROR in model/remember_start_pos - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
-
-    def flag_full_cycle(self):
-        try:
-            self.set_state['direction'] = None
-            self.set_state['flag_min_pos'] = False
-            self.set_state['flag_max_pos'] = False
-            self.set_state['flag_full_cycle'] = False
-            self.signals.update_graph.emit()
-            self.clear_data_graph()
-
-        except Exception as e:
-            txt_log = 'ERROR in model/flag_full_cycle - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+    # def fill_data_for_graph(self):
+    #     try:
+    #         direction = self.set_state.get('direction')
+    #         force = self.set_regs.get('force_now')
+    #         move = self.set_regs.get('amort_move')
+    #         start_pos = self.set_state.get('start_pos')
+    #
+    #         if move != start_pos - 0.1 or move != start_pos + 0.1:
+    #             if move < start_pos:
+    #                 direction = 'down'
+    #                 self.set_state['direction'] = 'down'
+    #             elif move > start_pos:
+    #                 direction = 'up'
+    #                 self.set_state['direction'] = 'up'
+    #
+    #             self.set_regs['force_list'].append(force)
+    #             self.set_regs['amort_move_list'].append(move)
+    #
+    #         else:
+    #             if direction == 'down':
+    #                 min_pos = min(self.set_regs.get('amort_move_list'))
+    #                 max_recoil = max(self.set_regs.get('force_list'))
+    #                 self.set_state['min_pos'] = min_pos
+    #                 self.set_state['flag_min_pos'] = True
+    #
+    #             elif direction == 'up':
+    #                 max_pos = max(self.set_regs.get('amort_move_list'))
+    #                 max_comp = max(self.set_regs.get('force_list'))
+    #                 self.set_state['max_pos'] = max_pos
+    #                 self.set_state['flag_max_pos'] = True
+    #
+    #             else:
+    #                 pass
+    #
+    #         if self.set_state.get('flag_max_pos') and self.set_state.get('flag_min_pos'):
+    #             self.set_state['flag_full_cycle'] = True
+    #             self.flag_full_cycle()
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)
+    #         self.status_bar_msg(txt_log)
+    #         self.save_log('error', str(e))
+    #
+    # def clear_data_graph(self):
+    #     try:
+    #         self.set_regs['force_list'].clear()
+    #         self.set_regs['amort_move_list'].clear()
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in model/clear_data_graph - {}'.format(e)
+    #         self.status_bar_msg(txt_log)
+    #         self.save_log('error', str(e))
+    #
+    # def remember_start_pos(self):
+    #     try:
+    #         flag = self.set_state.get('flag_start_pos')
+    #         if not flag:
+    #             pos = self.set_regs.get('amort_move')
+    #             self.set_state['start_pos'] = pos
+    #             self.set_state['flag_start_pos'] = True
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in model/remember_start_pos - {}'.format(e)
+    #         self.status_bar_msg(txt_log)
+    #         self.save_log('error', str(e))
+    #
+    # def flag_full_cycle(self):
+    #     try:
+    #         self.set_state['direction'] = None
+    #         self.set_state['flag_min_pos'] = False
+    #         self.set_state['flag_max_pos'] = False
+    #         self.set_state['flag_full_cycle'] = False
+    #         self.signals.update_graph.emit()
+    #         self.clear_data_graph()
+    #
+    #     except Exception as e:
+    #         txt_log = 'ERROR in model/flag_full_cycle - {}'.format(e)
+    #         self.status_bar_msg(txt_log)
+    #         self.save_log('error', str(e))
 
     def init_writer(self):
         try:
