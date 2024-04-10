@@ -25,7 +25,7 @@ class Controller:
         os.chdir(current_dir)
         if not os.path.exists('archive'):
             os.mkdir('archive')
-        elif not os.path.exists('log'):
+        if not os.path.exists('log'):
             os.mkdir('log')
 
     def init_signals(self):

@@ -1,4 +1,4 @@
-import configparser
+from configparser import ConfigParser
 
 
 class PrgSettings:
@@ -7,7 +7,7 @@ class PrgSettings:
             self.connect = dict()
             self.registers = dict()
             self.state = dict()
-            config = configparser.ConfigParser()
+            config = ConfigParser()
             config.read('settings.ini')
             self.connect['COM'] = 'COM' + config['ComPort']['NumberPort']
             temp_val = config['ComPort']['PortSettings']

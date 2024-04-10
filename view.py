@@ -23,7 +23,7 @@ class AppWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.win_set = SetWindow(self.model)
-        self.win_exec = ExecWin(self.model)
+        self.win_exec = ExecWin()
 
         self._create_statusbar_ui()
 
@@ -91,6 +91,9 @@ class AppWindow(QMainWindow):
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.win_exec.signals.closed.connect(self.close_win_operator)
+        self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
+        self.win_exec.signals.log_err.connect(self.log_msg_err_slot)
+        self.win_exec.signals.operator_select.connect(self.operator_select)
         self.win_set.signals.closed.connect(self.close_win_settings)
 
     def init_buttons(self):
@@ -100,6 +103,12 @@ class AppWindow(QMainWindow):
         self.ui.main_test_btn.clicked.connect(self.specif_page)
         self.ui.main_hand_debug_btn.clicked.connect(self.open_win_settings)
         self.ui.main_archive_btn.clicked.connect(self.archive_page)
+
+    def log_msg_info_slot(self, txt_log):
+        self.model.save_log('info', txt_log)
+
+    def log_msg_err_slot(self, txt_log):
+        self.model.save_log('error', txt_log)
 
     def btn_main_stop_clicked(self):
         try:
@@ -124,16 +133,17 @@ class AppWindow(QMainWindow):
         self.win_exec.operator_ui()
         self.win_exec.show()
 
+    def operator_select(self, name, rank):
+        self.model.set_state['operator']['name'] = name
+        self.model.set_state['operator']['rank'] = rank
+
+        if len(name) > 0 and len(rank) > 0:
+            self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
+
     def close_win_operator(self):
-        self.lbl_info_executor.clear()
         self.ui.main_stackedWidget.setEnabled(True)
         self.ui.main_btn_frame.setEnabled(True)
         self.win_exec.hide()
-
-        name = self.model.set_state.get('operator')['name']
-        rank = self.model.set_state.get('operator')['rank']
-        if len(name) > 0 and len(rank) > 0:
-            self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
 
     def specif_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(3)
