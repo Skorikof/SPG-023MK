@@ -19,7 +19,7 @@ class WinSignals(QObject):
     read_start = pyqtSignal(object, object, object)
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
-    read_finish = pyqtSignal()
+    read_finish = pyqtSignal(dict)
     read_result_buffer = pyqtSignal(dict)
     update_graph = pyqtSignal()
 
@@ -213,7 +213,7 @@ class Model:
             txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
             self.status_bar_msg(txt_log)
 
-            self.signals.read_finish.emit()
+            self.signals.read_finish.emit(self.set_regs)
             if self.count_msg == 10000:
                 self.count_msg = 0
 

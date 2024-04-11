@@ -1,162 +1,167 @@
 from PyQt5.QtWidgets import QMainWindow, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal
-from executors_ui import Ui_ExecutorWindow
-from operators import Operators
-from my_dialog import OperatorDialog
+from amorts_ui import Ui_AmortsWindow
+from amorts import Amort
+from my_dialog import AmortDialog
 
 
 class WinSignals(QObject):
     closed = pyqtSignal()
     log_msg = pyqtSignal(str)
     log_err = pyqtSignal(str)
-    operator_select = pyqtSignal(str, str)
+    amort_select = pyqtSignal(object)
 
 
-class ExecWin(QMainWindow):
+class AmortWin(QMainWindow):
     signals = WinSignals()
 
     def __init__(self):
-        super(ExecWin, self).__init__()
+        super(AmortWin, self).__init__()
         try:
             self.action = ''
-            self.new_operator = {}
-            self.operators = None
+            self.amorts = None
             self.win_diag = None
-            self.ui = Ui_ExecutorWindow()
+            self.ui = Ui_AmortsWindow()
             self.ui.setupUi(self)
             self.hide()
-            self.init_ui()
             self._create_statusbar_set()
-
+            self.init_ui()
             self.init_buttons()
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/__init__ - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/__init__ - {}'.format(e)
+            self.signals.log_err.emit(txt_log)
+
+    def init_ui(self):
+        try:
+            self.ui.frame_quest.setVisible(False)
+            self.ui.frame_warning.setVisible(False)
+            self.amort_init()
+
+        except Exception as e:
+            txt_log = 'ERROR in amorts_win/init_ui - {}'.format(e)
+            self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
     def closeEvent(self, event):
         self.signals.closed.emit()
 
-    def init_ui(self):
-        try:
-            self.ui.frame_main.setVisible(True)
-            self.ui.frame_quest.setVisible(False)
-            self.ui.frame_warning.setVisible(False)
-            self.ui.btn_cancel_select.setVisible(False)
-            self.operator_init()
-
-        except Exception as e:
-            txt_log = 'ERROR in executors_win/init_ui - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
-
     def _create_statusbar_set(self):
         self.statusbar = self.statusBar()
-        self.statusbar.showMessage('Окно менеджмента операторов стенда')
+        self.statusbar.showMessage('Окно менеджмента амортизаторов')
 
     def statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/statusbar_set_ui - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/statusbar_set_ui - {}'.format(e)
             self.signals.log_err.emit(txt_log)
 
     def init_buttons(self):
-        self.ui.btn_exit.clicked.connect(self.close)
-        self.ui.btn_del.clicked.connect(self.btn_del_click)
-        self.ui.btn_add.clicked.connect(self.operator_add)
-        self.ui.btn_ok_select.clicked.connect(self.operator_ok)
-        self.ui.btn_ok_quest.clicked.connect(self.ok_question)
-        self.ui.btn_cancel_quest.clicked.connect(self.cancel_question)
-        self.ui.btn_ok_warning.clicked.connect(self.ok_warning)
+        pass
 
-    def operator_init(self):
+    def amort_init(self):
         try:
-            self.operators = Operators()
-            self.operator_update()
+            self.amorts = Amort()
+            self.amorts_update()
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_init - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/amort_init - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def operator_update(self):
+    def amorts_update(self):
         try:
-            self.operators.update_list()
+            self.amorts.update_amort_list()
             self.ui.combo_Names.clear()
-            if len(self.operators.config.sections()) == 0:
-                self.ui.btn_ok_select.setEnabled(False)
+            if len(self.amorts.config.sections()) == 0:
+                self.ui.btn_ok.setEnabled(False)
                 self.ui.btn_del.setEnabled(False)
-                self.ui.lbl_name.setText('')
-                self.ui.lbl_rank.setText('')
-                self.signals.operator_select.emit('', '')
+                self.amorts_ui_clear()
 
             else:
-                self.ui.combo_Names.addItems(self.operators.names)
+                self.ui.combo_Names.addItems(self.amorts.names)
                 self.ui.combo_Names.setCurrentIndex(0)
-                self.operators.current_index = 0
-                self.ui.combo_Names.activated[int].connect(self.operator_select)
-                self.operator_select(self.operators.current_index)
-                self.ui.btn_ok_select.setEnabled(True)
+                self.amorts.current_index = 0
+                self.ui.combo_Names.activated[int].connect(self.amort_select)
+                self.amort_select(0)
+                self.ui.btn_ok.setEnabled(True)
                 self.ui.btn_del.setEnabled(True)
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_update - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/amorts_update - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def operator_select(self, ind):
+    def amorts_ui_clear(self):
         try:
-            self.operators.current_index = ind
-            name = self.operators.names[ind]
-            rank = self.operators.ranks[ind]
-
-            self.ui.lbl_name.setText(name)
-            self.ui.lbl_rank.setText(rank)
+            self.ui.lbl_length_min.setText('')
+            self.ui.lbl_length_max.setText('')
+            self.ui.lbl_comp_min.setText('')
+            self.ui.lbl_comp_max.setText('')
+            self.ui.lbl_recoil_min.setText('')
+            self.ui.lbl_recoil_max.setText('')
+            self.ui.lbl_temper.setText('')
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_select - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/amorts_ui_clear - {}'.format(e)
+            self.statusbar_set_ui(txt_log)
+            self.signals.log_err.emit(txt_log)
+
+    def amort_select(self, index):
+        try:
+            self.amorts.current_index = index
+
+            self.ui.lbl_length_min.setText(str(self.amorts.struct.amorts[index].min_length))
+            self.ui.lbl_length_max.setText(str(self.amorts.struct.amorts[index].max_length))
+            self.ui.lbl_comp_min.setText(str(self.amorts.struct.amorts[index].min_comp))
+            self.ui.lbl_comp_max.setText(str(self.amorts.struct.amorts[index].max_comp))
+            self.ui.lbl_recoil_min.setText(str(self.amorts.struct.amorts[index].min_recoil))
+            self.ui.lbl_recoil_max.setText(str(self.amorts.struct.amorts[index].max_recoil))
+            self.ui.lbl_temper.setText(str(self.amorts.struct.amorts[index].max_temper))
+
+        except Exception as e:
+            txt_log = 'ERROR in amorts_win/amort_select - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
     def btn_del_click(self):
         try:
             self.action = 'del'
-            ind = self.operators.current_index
-            self.ui.txt_quest.setText('Вы действительно хотите<BR>удалить исполнителя<BR>' +
-                                      self.operators.names[ind] + ' ' + self.operators.ranks[ind] +
-                                      '<BR>из списка?')
+            ind = self.amorts.current_index
+            self.ui.txt_quest.setText('Вы действительно хотите<BR>удалить амортизатор<BR>' +
+                                      self.amorts.names[ind] + '<BR>из списка?')
             self.set_frame_question(True)
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/btn_del_click - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/btn_del_click - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def operator_delete(self):
+    def amort_delete(self):
         try:
-            ind = self.operators.current_index
+            ind = self.amorts.current_index
 
-            name = self.operators.names[ind]
-            rank = self.operators.ranks[ind]
-            txt_log = 'Operator is delete - {}, {}'.format(rank, name)
+            name = self.amorts.names[ind]
+            txt_log = 'Amort is delete - {}'.format(name)
             self.signals.log_msg.emit(txt_log)
 
-            self.operators.delete_operator(ind)
+            self.amorts.delete_amort(ind)
 
-            self.operator_update()
+            self.amorts_update()
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_delete - {}'.format(e)
-            self.status_bar_ui(txt_log)
+            txt_log = 'ERROR in amorts_win/amort_delete - {}'.format(e)
+            self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def operator_add(self):
+    # FIXME
+    def amort_add(self):
         try:
             self.new_operator.clear()
             dialog = QDialog()
-            win_diag = OperatorDialog()
+            win_diag = AmortDialog()
             win_diag.setupUi(dialog)
             if dialog.exec_():
                 name = win_diag.name_le.text()
@@ -183,30 +188,32 @@ class ExecWin(QMainWindow):
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def operator_ok(self):
+    # FIXME
+    def amort_ok(self):
         try:
-            name = self.ui.lbl_name.text()
-            rank = self.ui.lbl_rank.text()
+            name = self.ui.combo_Names.text()
 
-            self.signals.operator_select.emit(name, rank)
+            # self.signals.operator_select.emit(name, rank)
 
-            txt_log = 'Operator is select - {}, {}'.format(rank, name)
+            txt_log = 'Amort is select - {}'.format(name)
             self.signals.log_msg.emit(txt_log)
 
             self.close()
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_ok - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/amort_ok - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
     def set_frame_question(self, bool_val):
         self.ui.frame_quest.setVisible(bool_val)
-        self.ui.frame_main.setVisible(not bool_val)
+        self.ui.frame_quest.move(20, 60)
+        self.ui.frame_btn.setEnabled(not bool_val)
 
     def set_frame_warning(self, bool_val):
         self.ui.frame_warning.setVisible(bool_val)
-        self.ui.frame_main.setVisible(not bool_val)
+        self.ui.frame_warning.move(20, 60)
+        self.ui.frame_btn.setVisible(not bool_val)
 
     def ok_warning(self):
         self.set_frame_warning(False)
@@ -214,11 +221,11 @@ class ExecWin(QMainWindow):
     def ok_question(self):
         try:
             if self.action == 'del':
-                self.operator_delete()
+                self.amort_delete()
                 self.set_frame_question(False)
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/ok_question - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/ok_question - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
@@ -227,20 +234,20 @@ class ExecWin(QMainWindow):
             self.set_frame_question(False)
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/cancel_question - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/cancel_question - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
     def check_concurrence_name(self):
         try:
             flag_add = True
-            for name in self.operators.names:
-                if name.upper() == self.new_operator.get('name').upper():
+            for name in self.amorts.names:
+                if name.upper() == self.new_amort.get('name').upper():
                     flag_add = False
 
             return flag_add
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/check_concurrence_name - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/check_concurrence_name - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)

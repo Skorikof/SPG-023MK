@@ -7,6 +7,7 @@ import time
 
 class WinSignals(QObject):
     closed = pyqtSignal()
+    log_err = pyqtSignal(str)
 
 
 class SetWindow(QMainWindow):
@@ -24,8 +25,7 @@ class SetWindow(QMainWindow):
 
         except Exception as e:
             txt_log = 'ERROR in settings_window/__init__ - {}'.format(e)
-            self.model.status_bar_msg(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def smap_line_edit(self):
         smap = QSignalMapper(self)
@@ -64,8 +64,7 @@ class SetWindow(QMainWindow):
 
         except Exception as e:
             txt_log = 'ERROR in settings_window/statusbar_set_ui - {}'.format(e)
-            self.model.status_bar_msg(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
@@ -109,7 +108,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/do_connect - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def connect_ui(self):
         self.ui.btn_connect.setText('ОТКЛЮЧИТЬСЯ')
@@ -160,7 +159,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/reda_controller - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def read_start_ui(self):
         self.ui.btn_read.setText('ОСТАНОВИТЬ')
@@ -191,7 +190,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/write_frequency - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def click_btn_motor_up(self):
         self.model.set_regs['adr_freq'] = 2
@@ -226,7 +225,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/write_alarm_force - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def btn_set_doclick(self):
         try:
@@ -272,16 +271,16 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/btn_set_doclick - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
-    def update_win(self):
-        self.ui.lcdTime.display(self.model.set_regs.get('counter_time'))
-        self.ui.lcdF.display(self.model.set_regs.get('force_now'))
-        self.ui.lcdH.display(self.model.set_regs.get('amort_move'))
-        self.ui.lcdH_T.display(self.model.set_regs.get('traverse_move'))
-        self.ui.lcdTemp.display(self.model.set_regs.get('temperature'))
-        self.ui.lineEdit_F_alarm.setText(str(self.model.set_regs.get('force_alarm')))
-        self.update_color_switch(self.model.set_regs)
+    def update_win(self, result):
+        self.ui.lcdTime.display(result.get('counter_time'))
+        self.ui.lcdF.display(result.get('force_now'))
+        self.ui.lcdH.display(result.get('amort_move'))
+        self.ui.lcdH_T.display(result.get('traverse_move'))
+        self.ui.lcdTemp.display(result.get('temperature'))
+        self.ui.lineEdit_F_alarm.setText(str(result.get('force_alarm')))
+        self.update_color_switch(result)
 
     def update_color_switch(self, state):
         try:
@@ -303,7 +302,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/update_color_switch - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     def set_color_fram(self, bit, rev=False):
         try:
@@ -322,7 +321,7 @@ class SetWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in settings_window/set_color_fram - {}'.format(e)
             self.statusbar.showMessage(txt_log)
-            self.model.save_log('error', str(e))
+            self.signals.log_err.emit(txt_log)
 
     # def btn_test_clicked(self):
     #     try:

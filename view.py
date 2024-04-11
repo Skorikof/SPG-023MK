@@ -11,7 +11,7 @@ class VLine(QFrame):
     # a simple VLine, like the one you get from designer
     def __init__(self):
         super(VLine, self).__init__()
-        self.setFrameShape(self.VLine|self.Sunken)
+        self.setFrameShape(self.VLine | self.Sunken)
 
 
 class AppWindow(QMainWindow):
@@ -82,6 +82,20 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.model.save_log('error', str(e))
 
+    def update_statusbar_data(self, result):
+        try:
+            txt = 'Усилие, кгс: {}'.format(result.get('force_now'))
+            self.lbl_info_F.setText(txt)
+            txt = 'Перемещение, мм: {}'.format(result.get('amort_move'))
+            self.lbl_info_H.setText(txt)
+            txt = 'Траверса, мм: {}'.format(result.get('traverse_move'))
+            self.lbl_info_Traverse.setText(txt)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/update_statusbar_data - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
     def start_param(self):
         self.init_buttons()
         self.init_signals()
@@ -90,11 +104,13 @@ class AppWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
+        self.model.signals.read_finish.connect(self.update_statusbar_data)
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_exec.signals.log_err.connect(self.log_msg_err_slot)
         self.win_exec.signals.operator_select.connect(self.operator_select)
         self.win_set.signals.closed.connect(self.close_win_settings)
+        self.win_set.signals.log_err.connect(self.log_msg_err_slot)
 
     def init_buttons(self):
         self.ui.main_close_btn.clicked.connect(self.closeEvent)
@@ -130,7 +146,6 @@ class AppWindow(QMainWindow):
     def open_win_operator(self):
         self.ui.main_stackedWidget.setEnabled(False)
         self.ui.main_btn_frame.setEnabled(False)
-        self.win_exec.operator_ui()
         self.win_exec.show()
 
     def operator_select(self, name, rank):
@@ -165,63 +180,3 @@ class AppWindow(QMainWindow):
         self.ui.main_stackedWidget.setEnabled(True)
         self.ui.main_btn_frame.setEnabled(True)
         self.win_set.hide()
-
-    def specif_page_update(self):
-        try:
-            self.amorts = Amort()
-            self.amorts.update_amort_list()
-            self.ui.specif_choice_comboBox.clear()
-            self.ui.specif_add_btn.setEnabled(True)
-            if len(self.amorts.config.sections()) == 0:
-                self.ui.specif_continue_btn.setEnabled(False)
-                self.ui.specif_del_btn.setEnabled(False)
-                self.specif_page_clear()
-
-            else:
-                self.ui.specif_choice_comboBox.addItems(self.amorts.names)
-                self.ui.specif_choice_comboBox.setCurrentIndex(0)
-                self.amorts.current_index = 0
-                self.ui.specif_choice_comboBox.activated[int].connect(self.amort_select)
-                self.amort_select(self.amorts.current_index)
-                self.ui.specif_continue_btn.setEnabled(True)
-                self.ui.specif_del_btn.setEnabled(True)
-
-        except Exception as e:
-            txt_log = 'ERROR in view/specif_page_update - {}'.format(e)
-            self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
-
-    def specif_page_clear(self):
-        try:
-            self.ui.specif_name_lineEdit.setText('')
-            self.ui.specif_min_length_lineEdit.setText('')
-            self.ui.specif_max_length_lineEdit.setText('')
-            self.ui.specif_speed_lineEdit.setText('')
-            self.ui.specif_min_comp_lineEdit.setText('')
-            self.ui.specif_max_comp_lineEdit.setText('')
-            self.ui.specif_min_recoil_lineEdit.setText('')
-            self.ui.specif_max_recoil_lineEdit.setText('')
-            self.ui.specif_max_temp_lineEdit.setText('')
-
-        except Exception as e:
-            txt_log = 'ERROR in view/specif_page_clear - {}'.format(e)
-            self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
-
-    def amort_select(self, index):
-        try:
-            self.amorts.current_index = index
-            self.ui.specif_name_lineEdit.setText(str(self.amorts.struct.amorts[index].name_a))
-            self.ui.specif_min_length_lineEdit.setText(str(self.amorts.struct.amorts[index].min_length))
-            self.ui.specif_max_length_lineEdit.setText(str(self.amorts.struct.amorts[index].max_length))
-            self.ui.specif_speed_lineEdit.setText(str(self.amorts.struct.amorts[index].speed))
-            self.ui.specif_min_comp_lineEdit.setText(str(self.amorts.struct.amorts[index].min_comp))
-            self.ui.specif_max_comp_lineEdit.setText(str(self.amorts.struct.amorts[index].max_comp))
-            self.ui.specif_min_recoil_lineEdit.setText(str(self.amorts.struct.amorts[index].min_recoil))
-            self.ui.specif_max_recoil_lineEdit.setText(str(self.amorts.struct.amorts[index].max_recoil))
-            self.ui.specif_max_temp_lineEdit.setText(str(self.amorts.struct.amorts[index].max_temper))
-
-        except Exception as e:
-            txt_log = 'ERROR in view/amort_select - {}'.format(e)
-            self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
