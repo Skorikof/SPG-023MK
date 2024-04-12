@@ -79,11 +79,11 @@ class OperatorDialog(object):
 class AmortDialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(490, 470)
+        Dialog.resize(490, 520)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(320, 430, 156, 23))
+        self.buttonBox.setGeometry(QtCore.QRect(310, 480, 156, 23))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.label = QtWidgets.QLabel(Dialog)
         self.label.setGeometry(QtCore.QRect(40, 10, 100, 40))
@@ -237,10 +237,29 @@ class AmortDialog(object):
         self.max_temper.setFont(font)
         self.max_temper.setAlignment(QtCore.Qt.AlignCenter)
         self.max_temper.setObjectName("max_temper")
+        self.label_9 = QtWidgets.QLabel(Dialog)
+        self.label_9.setGeometry(QtCore.QRect(20, 420, 290, 40))
+        self.label_9.setMinimumSize(QtCore.QSize(100, 0))
+        self.label_9.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(14)
+        self.label_9.setFont(font)
+        self.label_9.setObjectName("label_9")
+        self.speed = QtWidgets.QLineEdit(Dialog)
+        self.speed.setGeometry(QtCore.QRect(360, 420, 110, 40))
+        self.speed.setMinimumSize(QtCore.QSize(0, 0))
+        self.speed.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(18)
+        self.speed.setFont(font)
+        self.speed.setAlignment(QtCore.Qt.AlignCenter)
+        self.speed.setObjectName("speed")
 
         self.retranslateUi(Dialog)
-        self.buttonBox.accepted.connect(Dialog.accept)  # type: ignore
-        self.buttonBox.rejected.connect(Dialog.reject)  # type: ignore
+        self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
+        self.buttonBox.rejected.connect(Dialog.reject) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -248,23 +267,18 @@ class AmortDialog(object):
         Dialog.setWindowTitle(_translate("Dialog", "Добавление амортизатора"))
         self.label.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Название:</p></body></html>"))
         self.length_min.setText(_translate("Dialog", "0"))
-        self.label_2.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Длина в сжатом состоянии (мм)</p></body></html>"))
-        self.label_3.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Длина в расжатом состоянии (мм)</p></body></html>"))
-        self.label_4.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Минимальное усилие сжатия (кгс)</p></body></html>"))
-        self.label_5.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Максимальное усилие сжатия (кгс)</p></body></html>"))
-        self.label_6.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Минимальное усилие отбоя (кгс)</p></body></html>"))
-        self.label_7.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Максимальное усилие отбоя (кгс)</p></body></html>"))
-        self.label_8.setText(_translate("Dialog",
-                                        "<html><head/><body><p align=\"right\">Максимальная температура (℃)</p></body></html>"))
+        self.label_2.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Длина в сжатом состоянии (мм)</p></body></html>"))
+        self.label_3.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Длина в расжатом состоянии (мм)</p></body></html>"))
+        self.label_4.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Минимальное усилие сжатия (кгс)</p></body></html>"))
+        self.label_5.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Максимальное усилие сжатия (кгс)</p></body></html>"))
+        self.label_6.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Минимальное усилие отбоя (кгс)</p></body></html>"))
+        self.label_7.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Максимальное усилие отбоя (кгс)</p></body></html>"))
+        self.label_8.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Максимальная температура (℃)</p></body></html>"))
         self.length_max.setText(_translate("Dialog", "0"))
         self.comp_min.setText(_translate("Dialog", "0"))
         self.comp_max.setText(_translate("Dialog", "0"))
         self.recoil_min.setText(_translate("Dialog", "0"))
         self.recoil_max.setText(_translate("Dialog", "0"))
         self.max_temper.setText(_translate("Dialog", "0"))
+        self.label_9.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Скорость испытания (м/с)</p></body></html>"))
+        self.speed.setText(_translate("Dialog", "0"))

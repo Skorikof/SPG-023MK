@@ -259,6 +259,21 @@ QPushButton:pressed
           <enum>QFrame::Sunken</enum>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QPushButton" name="main_operator_btn">
             <property name="minimumSize">
@@ -363,54 +378,29 @@ QPushButton:pressed
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_f">
+           <widget class="QPushButton" name="main_amorts_btn">
+            <property name="minimumSize">
+             <size>
+              <width>250</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>250</width>
+              <height>120</height>
+             </size>
+            </property>
             <property name="font">
              <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
+              <family>Arial Black</family>
+              <pointsize>18</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
              </font>
             </property>
             <property name="text">
-             <string>Усилие, Н</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLCDNumber" name="lcdNumber_f">
-            <property name="minimumSize">
-             <size>
-              <width>207</width>
-              <height>61</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_s">
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Перемещение, мм</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLCDNumber" name="lcdNumber_s">
-            <property name="minimumSize">
-             <size>
-              <width>207</width>
-              <height>61</height>
-             </size>
+             <string>АМОРТИЗАТОРЫ</string>
             </property>
            </widget>
           </item>

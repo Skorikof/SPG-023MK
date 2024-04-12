@@ -11,12 +11,12 @@ class DataAmort(object):
         self.name_a = ''
         self.min_length = 0
         self.max_length = 0
-        self.speed = 0
         self.min_comp = 0
         self.max_comp = 0
         self.min_recoil = 0
         self.max_recoil = 0
         self.max_temper = 0
+        self.speed = 0
         self.beta = 0
 
 
@@ -46,8 +46,6 @@ class Amort:
                             self.struct.amorts[index_d].min_length = int(temp_val)
                         if key == 'max_length':
                             self.struct.amorts[index_d].max_length = int(temp_val)
-                        if key == 'speed':
-                            self.struct.amorts[index_d].speed = float(temp_val)
                         if key == 'min_comp':
                             self.struct.amorts[index_d].min_comp = int(temp_val)
                         if key == 'max_comp':
@@ -58,6 +56,8 @@ class Amort:
                             self.struct.amorts[index_d].max_recoil = int(temp_val)
                         if key == 'max_temper':
                             self.struct.amorts[index_d].max_temper = int(temp_val)
+                        if key == 'speed':
+                            self.struct.amorts[index_d].speed = float(temp_val)
 
                 except Exception as e:
                     print(str(e))
@@ -67,20 +67,6 @@ class Amort:
 
     def delete_amort(self, index_del):
         try:
-            # txt_temp = 'name = {}, min_length = {},' \
-            #            'max_length = {},speed = {},' \
-            #            'min_compression = {}, max_compression = {},' \
-            #            'min_recoil = {}, max_recoil = {},' \
-            #            'max_temper = {}'.format(self.struct.dampers[index_del].name_d,
-            #                                     self.struct.dampers[index_del].min_length,
-            #                                     self.struct.dampers[index_del].max_length,
-            #                                     self.struct.dampers[index_del].speed,
-            #                                     self.struct.dampers[index_del].min_comp,
-            #                                     self.struct.dampers[index_del].max_comp,
-            #                                     self.struct.dampers[index_del].min_recoil,
-            #                                     self.struct.dampers[index_del].max_recoil,
-            #                                     self.struct.dampers[index_del].max_temper)
-            # self.logger.info('DAMPER is deleted: ' + txt_temp)
             self.struct.amorts.pop(index_del)
             self.config.clear()
 
@@ -88,23 +74,22 @@ class Amort:
                 nam_section = 'Amort' + str(i)
                 self.config.add_section(nam_section)
 
-                self.config.set(nam_section, 'name', self.struct.amorts[i].name_d)
+                self.config.set(nam_section, 'name', self.struct.amorts[i].name_a)
                 self.config.set(nam_section, 'min_length', str(self.struct.amorts[i].min_length))
                 self.config.set(nam_section, 'max_length', str(self.struct.amorts[i].max_length))
 
-                self.config.set(nam_section, 'speed', str(self.struct.amorts[i].speed))
                 self.config.set(nam_section, 'min_comp', str(self.struct.amorts[i].min_comp))
                 self.config.set(nam_section, 'max_comp', str(self.struct.amorts[i].max_comp))
 
                 self.config.set(nam_section, 'min_recoil', str(self.struct.amorts[i].min_recoil))
                 self.config.set(nam_section, 'max_recoil', str(self.struct.amorts[i].max_recoil))
                 self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
+                self.config.set(nam_section, 'speed', str(self.struct.amorts[i].speed))
 
             with open('amorts.ini', "w") as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
-            # self.logger.error(e)
             print('Ошибки в файле amorts.ini {}'.format(e))
 
     def add_amort(self, obj):
@@ -113,32 +98,20 @@ class Amort:
             nam_section = 'Amort' + str(max_rec)
             self.config.add_section(nam_section)
 
-            self.config.set(nam_section, 'name', obj.name_d)
-            self.config.set(nam_section, 'min_length', str(obj.min_length))
-            self.config.set(nam_section, 'max_length', str(obj.max_length))
+            self.config.set(nam_section, 'name', obj.get('name'))
+            self.config.set(nam_section, 'min_length', obj.get('len_min'))
+            self.config.set(nam_section, 'max_length', obj.get('len_max'))
 
-            self.config.set(nam_section, 'speed', str(obj.speed))
-            self.config.set(nam_section, 'min_comp', str(obj.min_comp))
-            self.config.set(nam_section, 'max_comp', str(obj.max_comp))
+            self.config.set(nam_section, 'min_comp', obj.get('comp_min'))
+            self.config.set(nam_section, 'max_comp', obj.get('comp_max'))
 
-            self.config.set(nam_section, 'min_recoil', str(obj.min_recoil))
-            self.config.set(nam_section, 'max_recoil', str(obj.max_recoil))
-            self.config.set(nam_section, 'max_temper', str(obj.max_temper))
+            self.config.set(nam_section, 'min_recoil', obj.get('recoil_min'))
+            self.config.set(nam_section, 'max_recoil', obj.get('recoil_max'))
+            self.config.set(nam_section, 'max_temper', obj.get('max_temper'))
+            self.config.set(nam_section, 'speed', obj.get('speed'))
+
             with open('amorts.ini', 'w') as configfile:
                 self.config.write(configfile)
 
-            # txt_temp = 'name = {}, min_length = {},' \
-            #            'max_length = {}, speed = {},' \
-            #            'min_compression = {},max_compression = {},' \
-            #            'min_recoil = {}, max_recoil = {},' \
-            #            'max_temper = {}'.format(obj.name_d, obj.min_length,
-            #                                     obj.max_length, obj.speed,
-            #                                     obj.min_comp, obj.max_comp,
-            #                                     obj.min_recoil, obj.max_recoil,
-            #                                     obj.max_temper)
-            #
-            # self.logger.info('DAMPER is added: ' + txt_temp)
-
         except Exception as e:
-            # self.logger.error(e)
             print('Ошибки в файле amorts.ini {}'.format(e))

@@ -20,6 +20,7 @@ class AmortWin(QMainWindow):
         try:
             self.action = ''
             self.amorts = None
+            self.new_amort = dict()
             self.win_diag = None
             self.ui = Ui_AmortsWindow()
             self.ui.setupUi(self)
@@ -59,7 +60,13 @@ class AmortWin(QMainWindow):
             self.signals.log_err.emit(txt_log)
 
     def init_buttons(self):
-        pass
+        self.ui.btn_exit.clicked.connect(self.close)
+        self.ui.btn_del.clicked.connect(self.btn_del_click)
+        self.ui.btn_add.clicked.connect(self.amort_add)
+        self.ui.btn_ok.clicked.connect(self.amort_ok)
+        self.ui.btn_ok_quest.clicked.connect(self.ok_question)
+        self.ui.btn_cancel_quest.clicked.connect(self.cancel_question)
+        self.ui.btn_ok_warning.clicked.connect(self.ok_warning)
 
     def amort_init(self):
         try:
@@ -103,6 +110,7 @@ class AmortWin(QMainWindow):
             self.ui.lbl_recoil_min.setText('')
             self.ui.lbl_recoil_max.setText('')
             self.ui.lbl_temper.setText('')
+            self.ui.lbl_speed.setText('')
 
         except Exception as e:
             txt_log = 'ERROR in amorts_win/amorts_ui_clear - {}'.format(e)
@@ -120,6 +128,7 @@ class AmortWin(QMainWindow):
             self.ui.lbl_recoil_min.setText(str(self.amorts.struct.amorts[index].min_recoil))
             self.ui.lbl_recoil_max.setText(str(self.amorts.struct.amorts[index].max_recoil))
             self.ui.lbl_temper.setText(str(self.amorts.struct.amorts[index].max_temper))
+            self.ui.lbl_speed.setText(str(self.amorts.struct.amorts[index].speed))
 
         except Exception as e:
             txt_log = 'ERROR in amorts_win/amort_select - {}'.format(e)
@@ -142,9 +151,21 @@ class AmortWin(QMainWindow):
     def amort_delete(self):
         try:
             ind = self.amorts.current_index
+            name = self.amorts.struct.amorts[ind].name_a
+            len_min = self.amorts.struct.amorts[ind].min_length
+            len_max = self.amorts.struct.amorts[ind].max_length
+            comp_min = self.amorts.struct.amorts[ind].min_comp
+            comp_max = self.amorts.struct.amorts[ind].max_comp
+            recoil_min = self.amorts.struct.amorts[ind].min_recoil
+            recoil_max = self.amorts.struct.amorts[ind].max_recoil
+            max_temper = self.amorts.struct.amorts[ind].max_temper
+            speed = self.amorts.struct.amorts[ind].speed
 
-            name = self.amorts.names[ind]
-            txt_log = 'Amort is delete - {}'.format(name)
+            txt_log = 'Amort is delete -> name - {}, len_min - {}, len_max - {}, comp_min - {}, comp_max - {},' \
+                      'recoil_min - {}, recoil_max - {}, max_temper - {}, speed - {}'.format(name, len_min, len_max,
+                                                                                             comp_min, comp_max,
+                                                                                             recoil_min, recoil_max,
+                                                                                             max_temper, speed)
             self.signals.log_msg.emit(txt_log)
 
             self.amorts.delete_amort(ind)
@@ -156,46 +177,64 @@ class AmortWin(QMainWindow):
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    # FIXME
     def amort_add(self):
         try:
-            self.new_operator.clear()
+            self.new_amort.clear()
             dialog = QDialog()
             win_diag = AmortDialog()
             win_diag.setupUi(dialog)
             if dialog.exec_():
-                name = win_diag.name_le.text()
-                rank = win_diag.rank_le.text()
-                if len(name) > 0 and len(rank) > 0:
-                    self.new_operator['name'] = name
-                    self.new_operator['rank'] = rank
-                    flag_add = self.check_concurrence_name()
-                    if flag_add:
-                        txt_log = 'Operator is added - {}, {}'.format(rank, name)
-                        self.signals.log_msg.emit(txt_log)
-                        self.operators.add_operator(name, rank)
-                        self.operator_update()
-                    else:
-                        self.ui.txt_warning.setText('Такой оператор<BR>уже имеется в списке')
-                        self.set_frame_warning(True)
+                self.new_amort['name'] = win_diag.name_le.text()
+                self.new_amort['len_min'] = win_diag.length_min.text()
+                self.new_amort['len_max'] = win_diag.length_max.text()
+                self.new_amort['comp_min'] = win_diag.comp_min.text()
+                self.new_amort['comp_max'] = win_diag.comp_max.text()
+                self.new_amort['recoil_min'] = win_diag.recoil_min.text()
+                self.new_amort['recoil_max'] = win_diag.recoil_max.text()
+                self.new_amort['max_temper'] = win_diag.max_temper.text()
+                self.new_amort['speed'] = win_diag.speed.text()
+
+                flag_add = self.check_concurrence_name()
+                if flag_add:
+                    txt_log = 'Amort is added -'
+                    for k, v in self.new_amort:
+                        txt_log = txt_log + ' ' + k + ' - ' + v
+                    self.signals.log_msg.emit(txt_log)
+                    self.amorts.add_amort(self.new_amort)
+                    self.amorts_update()
                 else:
-                    pass
+                    self.ui.txt_warning.setText('Такой амортизатор<BR>уже имеется в списке')
+                    self.set_frame_warning(True)
+
             else:
                 pass
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/operator_add - {}'.format(e)
+            txt_log = 'ERROR in executors_win/amort_add - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    # FIXME
     def amort_ok(self):
         try:
-            name = self.ui.combo_Names.text()
+            ind = self.amorts.current_index
+            name = self.amorts.struct.amorts[ind].name_a
+            len_min = self.amorts.struct.amorts[ind].min_length
+            len_max = self.amorts.struct.amorts[ind].max_length
+            comp_min = self.amorts.struct.amorts[ind].min_comp
+            comp_max = self.amorts.struct.amorts[ind].max_comp
+            recoil_min = self.amorts.struct.amorts[ind].min_recoil
+            recoil_max = self.amorts.struct.amorts[ind].max_recoil
+            max_temper = self.amorts.struct.amorts[ind].max_temper
+            speed = self.amorts.struct.amorts[ind].speed
 
-            # self.signals.operator_select.emit(name, rank)
+            self.signals.amort_select.emit(self.amorts.struct.amorts[ind])
 
-            txt_log = 'Amort is select - {}'.format(name)
+            txt_log = 'Amort is select -> name - {}, len_min - {}, len_max - {}, comp_min - {}, comp_max - {},' \
+                      'recoil_min - {}, recoil_max - {}, max_temper - {}, speed - {}'.format(name, len_min, len_max,
+                                                                                             comp_min, comp_max,
+                                                                                             recoil_min, recoil_max,
+                                                                                             max_temper, speed)
+
             self.signals.log_msg.emit(txt_log)
 
             self.close()

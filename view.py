@@ -1,7 +1,7 @@
 from mainui import Ui_MainWindow
 from settings_window import SetWindow
 from executors_win import ExecWin
-from amorts import Amort
+from amorts_win import AmortWin
 from PyQt5.QtWidgets import QMainWindow, QFrame, QLabel
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.Qt import QFont
@@ -24,11 +24,12 @@ class AppWindow(QMainWindow):
 
         self.win_set = SetWindow(self.model)
         self.win_exec = ExecWin()
+        self.win_amort = AmortWin()
 
         self._create_statusbar_ui()
 
         self.operators = None
-        self.amorts = None
+        self.amort = None
 
         self.start_param()
 
@@ -109,6 +110,10 @@ class AppWindow(QMainWindow):
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_exec.signals.log_err.connect(self.log_msg_err_slot)
         self.win_exec.signals.operator_select.connect(self.operator_select)
+        self.win_amort.signals.closed.connect(self.close_win_amort)
+        self.win_amort.signals.log_msg.connect(self.log_msg_info_slot)
+        self.win_amort.signals.log_err.connect(self.log_msg_err_slot)
+        self.win_amort.signals.amort_select.connect(self.amort_select)
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_set.signals.log_err.connect(self.log_msg_err_slot)
 
@@ -119,6 +124,7 @@ class AppWindow(QMainWindow):
         self.ui.main_test_btn.clicked.connect(self.specif_page)
         self.ui.main_hand_debug_btn.clicked.connect(self.open_win_settings)
         self.ui.main_archive_btn.clicked.connect(self.archive_page)
+        self.ui.main_amorts_btn.clicked.connect(self.open_win_amort)
 
     def log_msg_info_slot(self, txt_log):
         self.model.save_log('info', txt_log)
@@ -160,9 +166,21 @@ class AppWindow(QMainWindow):
         self.ui.main_btn_frame.setEnabled(True)
         self.win_exec.hide()
 
+    def open_win_amort(self):
+        self.ui.main_stackedWidget.setEnabled(False)
+        self.ui.main_btn_frame.setEnabled(False)
+        self.win_amort.show()
+
+    def amort_select(self, obj):
+        self.amort = obj
+
+    def close_win_amort(self):
+        self.ui.main_stackedWidget.setEnabled(True)
+        self.ui.main_btn_frame.setEnabled(True)
+        self.win_amort.hide()
+
     def specif_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(3)
-        self.specif_page_update()
 
     def test_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(2)
