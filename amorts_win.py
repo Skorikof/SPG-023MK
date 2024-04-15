@@ -179,27 +179,28 @@ class AmortWin(QMainWindow):
 
     def amort_add(self):
         try:
+            trans_table = str.maketrans(',', '.')
             self.new_amort.clear()
             dialog = QDialog()
             win_diag = AmortDialog()
             win_diag.setupUi(dialog)
             if dialog.exec_():
-                self.new_amort['name'] = win_diag.name_le.text()
-                self.new_amort['len_min'] = win_diag.length_min.text()
-                self.new_amort['len_max'] = win_diag.length_max.text()
-                self.new_amort['comp_min'] = win_diag.comp_min.text()
-                self.new_amort['comp_max'] = win_diag.comp_max.text()
-                self.new_amort['recoil_min'] = win_diag.recoil_min.text()
-                self.new_amort['recoil_max'] = win_diag.recoil_max.text()
-                self.new_amort['max_temper'] = win_diag.max_temper.text()
-                self.new_amort['speed'] = win_diag.speed.text()
+                self.new_amort['name'] = win_diag.name_le.text().translate(trans_table)
+                self.new_amort['len_min'] = win_diag.length_min.text().translate(trans_table)
+                self.new_amort['len_max'] = win_diag.length_max.text().translate(trans_table)
+                self.new_amort['comp_min'] = win_diag.comp_min.text().translate(trans_table)
+                self.new_amort['comp_max'] = win_diag.comp_max.text().translate(trans_table)
+                self.new_amort['recoil_min'] = win_diag.recoil_min.text().translate(trans_table)
+                self.new_amort['recoil_max'] = win_diag.recoil_max.text().translate(trans_table)
+                self.new_amort['max_temper'] = win_diag.max_temper.text().translate(trans_table)
+                self.new_amort['speed'] = win_diag.speed.text().translate(trans_table)
 
                 flag_add = self.check_concurrence_name()
                 if flag_add:
                     txt_log = 'Amort is added -'
-                    for k, v in self.new_amort:
-                        txt_log = txt_log + ' ' + k + ' - ' + v
-                    self.signals.log_msg.emit(txt_log)
+                    for k, v in self.new_amort.items():
+                        txt_log = txt_log + ' ' + k + ' - ' + v + ','
+                    self.signals.log_msg.emit(txt_log[:-1])
                     self.amorts.add_amort(self.new_amort)
                     self.amorts_update()
                 else:
@@ -210,7 +211,7 @@ class AmortWin(QMainWindow):
                 pass
 
         except Exception as e:
-            txt_log = 'ERROR in executors_win/amort_add - {}'.format(e)
+            txt_log = 'ERROR in amorts_win/amort_add - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 

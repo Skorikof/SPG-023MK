@@ -2,6 +2,9 @@ from mainui import Ui_MainWindow
 from settings_window import SetWindow
 from executors_win import ExecWin
 from amorts_win import AmortWin
+from archive_win import ArchiveWin
+from datetime import datetime
+import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QFrame, QLabel
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.Qt import QFont
@@ -25,6 +28,7 @@ class AppWindow(QMainWindow):
         self.win_set = SetWindow(self.model)
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
+        self.win_archive = ArchiveWin()
 
         self._create_statusbar_ui()
 
@@ -106,16 +110,23 @@ class AppWindow(QMainWindow):
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_statusbar_data)
+
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_exec.signals.log_err.connect(self.log_msg_err_slot)
         self.win_exec.signals.operator_select.connect(self.operator_select)
+
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_amort.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_amort.signals.log_err.connect(self.log_msg_err_slot)
         self.win_amort.signals.amort_select.connect(self.amort_select)
+
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_set.signals.log_err.connect(self.log_msg_err_slot)
+
+        self.win_archive.signals.closed.connect(self.close_win_archive)
+        self.win_archive.signals.log_msg.connect(self.log_msg_info_slot)
+        self.win_archive.signals.log_err.connect(self.log_msg_err_slot)
 
     def init_buttons(self):
         self.ui.main_close_btn.clicked.connect(self.closeEvent)
@@ -123,7 +134,7 @@ class AppWindow(QMainWindow):
         self.ui.main_operator_btn.clicked.connect(self.open_win_operator)
         self.ui.main_test_btn.clicked.connect(self.specif_page)
         self.ui.main_hand_debug_btn.clicked.connect(self.open_win_settings)
-        self.ui.main_archive_btn.clicked.connect(self.archive_page)
+        self.ui.main_archive_btn.clicked.connect(self.open_win_archive)
         self.ui.main_amorts_btn.clicked.connect(self.open_win_amort)
 
     def log_msg_info_slot(self, txt_log):
@@ -185,8 +196,16 @@ class AppWindow(QMainWindow):
     def test_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(2)
 
-    def archive_page(self):
-        self.ui.main_stackedWidget.setCurrentIndex(5)
+    def open_win_archive(self):
+        self.ui.main_stackedWidget.setEnabled(False)
+        self.ui.main_btn_frame.setEnabled(False)
+        self.win_archive.show()
+        self.win_archive.archive_init()
+
+    def close_win_archive(self):
+        self.ui.main_stackedWidget.setEnabled(True)
+        self.ui.main_btn_frame.setEnabled(True)
+        self.win_archive.hide()
 
     def open_win_settings(self):
         self.ui.main_stackedWidget.setEnabled(False)
