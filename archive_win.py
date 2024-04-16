@@ -1,8 +1,11 @@
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, QDialog
+from PyQt5.QtCore import QObject, pyqtSignal, Qt
+from PyQt5.QtGui import QPageLayout, QPixmap, QPainter
+from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QAbstractPrintDialog
 from archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from datetime import datetime
+from PIL import ImageGrab
 import pyqtgraph as pg
 
 
@@ -46,7 +49,7 @@ class ArchiveWin(QMainWindow):
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
-        self.ui.btn_print.clicked.connect(self.print_archive)
+        self.ui.btn_print.clicked.connect(self.archive_save_form)
 
     def archive_init(self):
         try:
@@ -219,38 +222,41 @@ class ArchiveWin(QMainWindow):
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    # FIXME print archive
-    # def archive_print(self):
-    #     try:
-    #         x = 265
-    #         y = 140
-    #         height = 774
-    #         width = 1015
-    #
-    #         image = ImageGrab.grab((x, y, x + width, y + height))
-    #         image.save("screen.bmp", "BMP")
-    #
-    #         self.printer = QPrinter(QPrinter.HighResolution)
-    #         self.printer.setPageOrientation(QPageLayout.Landscape)
-    #
-    #         pd = QPrintDialog(self.printer, parent=self)
-    #         pd.setOptions(QAbstractPrintDialog.PrintToFile | QAbstractPrintDialog.PrintSelection)
-    #         if pd.exec() == QDialog.Accepted:
-    #             self._printImage(self.printer)
-    #
-    #         # занесение в лог распечатанного архива
-    #         self.logger.info('Print test from archive')
-    #         self.logger.info(self.archive_log)
-    #
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #
-    # def _printImage(self, printer):
-    #     try:
-    #         painter = QPainter()
-    #         painter.begin(printer)
-    #         pixmap = QPixmap("screen.bmp")
-    #         pixmap = pixmap.scaled(printer.width(), printer.height(), aspectRatioMode=Qt.KeepAspectRatio)
-    #         painter.drawPixmap(0, 0, pixmap)
-    #     except Exception as e:
-    #         self.logger.error(e)
+    def archive_save_form(self):
+        try:
+            rect = self.frameGeometry()
+            pos = rect.getRect()
+            x = pos[0] + 1
+            y = pos[1] + 100
+            height = 810
+            width = 1014
+
+            image = ImageGrab.grab((x, y, x + width, y + height))
+            image.save("screen.bmp", "BMP")
+
+            self.printer = QPrinter(QPrinter.HighResolution)
+            self.printer.setPageOrientation(QPageLayout.Landscape)
+
+            pd = QPrintDialog(self.printer, parent=self)
+            pd.setOptions(QAbstractPrintDialog.PrintToFile | QAbstractPrintDialog.PrintSelection)
+            if pd.exec() == QDialog.Accepted:
+                self._printImage(self.printer)
+
+
+        except Exception as e:
+            txt_log = 'ERROR in archive_win/archive_save_form - {}'.format(e)
+            self.statusbar_set_ui(txt_log)
+            self.signals.log_err.emit(txt_log)
+
+    def _printImage(self, printer):
+        try:
+            painter = QPainter()
+            painter.begin(printer)
+            pixmap = QPixmap("screen.bmp")
+            pixmap = pixmap.scaled(printer.width(), printer.height(), aspectRatioMode=Qt.KeepAspectRatio)
+            painter.drawPixmap(0, 0, pixmap)
+
+        except Exception as e:
+            txt_log = 'ERROR in archive_win/_printImage - {}'.format(e)
+            self.statusbar_set_ui(txt_log)
+            self.signals.log_err.emit(txt_log)

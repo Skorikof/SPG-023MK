@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>1015</width>
-    <height>952</height>
+    <height>960</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>1015</width>
-    <height>0</height>
+    <height>960</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>1015</width>
-    <height>16777215</height>
+    <height>960</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -32,13 +32,13 @@
    <property name="minimumSize">
     <size>
      <width>1015</width>
-     <height>0</height>
+     <height>940</height>
     </size>
    </property>
    <property name="maximumSize">
     <size>
      <width>1015</width>
-     <height>16777215</height>
+     <height>940</height>
     </size>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -142,27 +142,30 @@
     </item>
     <item>
      <widget class="QFrame" name="frame_content">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255);</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
       </property>
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
        <property name="spacing">
         <number>0</number>
        </property>
        <property name="leftMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="topMargin">
         <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <item>
         <widget class="PlotWidget" name="graphwidget" native="true">
@@ -211,56 +214,31 @@
          </property>
          <layout class="QGridLayout" name="gridLayout">
           <property name="leftMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="spacing">
            <number>5</number>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="lbl">
-            <property name="minimumSize">
-             <size>
-              <width>170</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>170</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Наименование:</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="1">
            <widget class="QLineEdit" name="name_le">
             <property name="minimumSize">
              <size>
-              <width>390</width>
+              <width>350</width>
               <height>35</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>380</width>
+              <width>350</width>
               <height>35</height>
              </size>
             </property>
@@ -278,8 +256,8 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="lbl_8">
+          <item row="4" column="0">
+           <widget class="QLabel" name="lbl_4">
             <property name="minimumSize">
              <size>
               <width>170</width>
@@ -299,7 +277,135 @@
              </font>
             </property>
             <property name="text">
-             <string>Серийный номер:</string>
+             <string>Сопротивление, кН*с/м:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lbl_3">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Максимальное усилие отбоя, кгс:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="resistance_le">
+            <property name="minimumSize">
+             <size>
+              <width>150</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>150</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLineEdit" name="operator_le">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>300</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="max_recoil_le">
+            <property name="minimumSize">
+             <size>
+              <width>150</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>150</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="lbl_5">
+            <property name="minimumSize">
+             <size>
+              <width>170</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>170</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Дата:</string>
             </property>
            </widget>
           </item>
@@ -334,8 +440,20 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lbl_2">
+          <item row="0" column="2">
+           <widget class="QLabel" name="lbl_8">
+            <property name="minimumSize">
+             <size>
+              <width>170</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
@@ -343,12 +461,68 @@
              </font>
             </property>
             <property name="text">
-             <string>Максимальное усилие сжатия, Н:</string>
+             <string>Серийный номер:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="max_comp_le">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lbl">
+            <property name="minimumSize">
+             <size>
+              <width>170</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>170</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Наименование:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLineEdit" name="date_le">
+            <property name="minimumSize">
+             <size>
+              <width>220</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>220</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="limit_comp_le">
             <property name="minimumSize">
              <size>
               <width>150</width>
@@ -399,12 +573,12 @@
              </font>
             </property>
             <property name="text">
-             <string>Пределы усилия сжатия, Н:</string>
+             <string>Пределы усилия сжатия, кгс:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="3" rowspan="2">
-           <widget class="QLineEdit" name="limit_comp_le">
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="max_comp_le">
             <property name="minimumSize">
              <size>
               <width>150</width>
@@ -434,8 +608,8 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" rowspan="2">
-           <widget class="QLabel" name="lbl_3">
+          <item row="1" column="0">
+           <widget class="QLabel" name="lbl_2">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -443,253 +617,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Максимальное усилие отбоя, Н:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1" rowspan="3">
-           <widget class="QLineEdit" name="max_recoil_le">
-            <property name="minimumSize">
-             <size>
-              <width>150</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>150</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="lbl_4">
-            <property name="minimumSize">
-             <size>
-              <width>170</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Сопротивление, кН*с/м:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1" rowspan="2">
-           <widget class="QLineEdit" name="resistance_le">
-            <property name="minimumSize">
-             <size>
-              <width>150</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>150</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="lbl_5">
-            <property name="minimumSize">
-             <size>
-              <width>170</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>170</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Дата:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QLineEdit" name="date_le">
-            <property name="minimumSize">
-             <size>
-              <width>220</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>220</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="lbl_6">
-            <property name="minimumSize">
-             <size>
-              <width>170</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>170</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Оператор:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="1">
-           <widget class="QLineEdit" name="operator_le">
-            <property name="minimumSize">
-             <size>
-              <width>300</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>300</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QLabel" name="lbl_7">
-            <property name="maximumSize">
-             <size>
-              <width>200</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial Black</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Заключение:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="1">
-           <widget class="QLineEdit" name="conclusion_le">
-            <property name="minimumSize">
-             <size>
-              <width>200</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>200</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>18</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
+             <string>Максимальное усилие сжатия, кгс:</string>
             </property>
            </widget>
           </item>
@@ -733,24 +661,11 @@
              </font>
             </property>
             <property name="text">
-             <string>Пределы усилия отбоя, Н:</string>
+             <string>Пределы усилия отбоя, кгс:</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="2">
-           <widget class="QLabel" name="lbl_12">
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Скорость испытания, м/с:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="3">
+          <item row="4" column="3">
            <widget class="QLineEdit" name="speed_le">
             <property name="minimumSize">
              <size>
@@ -781,8 +696,8 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="2">
-           <widget class="QLabel" name="lbl_13">
+          <item row="4" column="2">
+           <widget class="QLabel" name="lbl_12">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -790,11 +705,11 @@
              </font>
             </property>
             <property name="text">
-             <string>Температура, °С:</string>
+             <string>Скорость испытания, м/с:</string>
             </property>
            </widget>
           </item>
-          <item row="7" column="3">
+          <item row="5" column="3">
            <widget class="QLineEdit" name="temper_le">
             <property name="minimumSize">
              <size>
@@ -825,8 +740,8 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="2">
-           <widget class="QLabel" name="lbl_9">
+          <item row="5" column="2">
+           <widget class="QLabel" name="lbl_13">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -834,11 +749,11 @@
              </font>
             </property>
             <property name="text">
-             <string>Тип испытаниня:</string>
+             <string>Температура, °С:</string>
             </property>
            </widget>
           </item>
-          <item row="8" column="3">
+          <item row="6" column="3">
            <widget class="QLineEdit" name="type_test_le">
             <property name="minimumSize">
              <size>
@@ -866,6 +781,94 @@
             </property>
             <property name="readOnly">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QLabel" name="lbl_9">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Тип испытаниня:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QLineEdit" name="conclusion_le">
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="lbl_6">
+            <property name="minimumSize">
+             <size>
+              <width>170</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>170</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Оператор:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="lbl_7">
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial Black</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Заключение:</string>
             </property>
            </widget>
           </item>
