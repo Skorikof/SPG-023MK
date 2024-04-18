@@ -85,12 +85,12 @@ class ExecWin(QMainWindow):
         try:
             self.operators.update_list()
             self.ui.combo_Names.clear()
+            self.signals.operator_select.emit('', '')
             if len(self.operators.config.sections()) == 0:
                 self.ui.btn_ok_select.setEnabled(False)
                 self.ui.btn_del.setEnabled(False)
                 self.ui.lbl_name.setText('')
                 self.ui.lbl_rank.setText('')
-                self.signals.operator_select.emit('', '')
 
             else:
                 self.ui.combo_Names.addItems(self.operators.names)

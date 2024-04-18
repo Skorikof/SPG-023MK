@@ -9,7 +9,6 @@ class WinSignals(QObject):
     closed = pyqtSignal()
     log_msg = pyqtSignal(str)
     log_err = pyqtSignal(str)
-    amort_select = pyqtSignal(object)
 
 
 class AmortWin(QMainWindow):
@@ -63,7 +62,6 @@ class AmortWin(QMainWindow):
         self.ui.btn_exit.clicked.connect(self.close)
         self.ui.btn_del.clicked.connect(self.btn_del_click)
         self.ui.btn_add.clicked.connect(self.amort_add)
-        self.ui.btn_ok.clicked.connect(self.amort_ok)
         self.ui.btn_ok_quest.clicked.connect(self.ok_question)
         self.ui.btn_cancel_quest.clicked.connect(self.cancel_question)
         self.ui.btn_ok_warning.clicked.connect(self.ok_warning)
@@ -83,7 +81,6 @@ class AmortWin(QMainWindow):
             self.amorts.update_amort_list()
             self.ui.combo_Names.clear()
             if len(self.amorts.config.sections()) == 0:
-                self.ui.btn_ok.setEnabled(False)
                 self.ui.btn_del.setEnabled(False)
                 self.amorts_ui_clear()
 
@@ -93,7 +90,6 @@ class AmortWin(QMainWindow):
                 self.amorts.current_index = 0
                 self.ui.combo_Names.activated[int].connect(self.amort_select)
                 self.amort_select(0)
-                self.ui.btn_ok.setEnabled(True)
                 self.ui.btn_del.setEnabled(True)
 
         except Exception as e:
@@ -212,36 +208,6 @@ class AmortWin(QMainWindow):
 
         except Exception as e:
             txt_log = 'ERROR in amorts_win/amort_add - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
-
-    def amort_ok(self):
-        try:
-            ind = self.amorts.current_index
-            name = self.amorts.struct.amorts[ind].name_a
-            len_min = self.amorts.struct.amorts[ind].min_length
-            len_max = self.amorts.struct.amorts[ind].max_length
-            comp_min = self.amorts.struct.amorts[ind].min_comp
-            comp_max = self.amorts.struct.amorts[ind].max_comp
-            recoil_min = self.amorts.struct.amorts[ind].min_recoil
-            recoil_max = self.amorts.struct.amorts[ind].max_recoil
-            max_temper = self.amorts.struct.amorts[ind].max_temper
-            speed = self.amorts.struct.amorts[ind].speed
-
-            self.signals.amort_select.emit(self.amorts.struct.amorts[ind])
-
-            txt_log = 'Amort is select -> name - {}, len_min - {}, len_max - {}, comp_min - {}, comp_max - {},' \
-                      'recoil_min - {}, recoil_max - {}, max_temper - {}, speed - {}'.format(name, len_min, len_max,
-                                                                                             comp_min, comp_max,
-                                                                                             recoil_min, recoil_max,
-                                                                                             max_temper, speed)
-
-            self.signals.log_msg.emit(txt_log)
-
-            self.close()
-
-        except Exception as e:
-            txt_log = 'ERROR in amorts_win/amort_ok - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 

@@ -14,7 +14,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_AmortsWindow(object):
     def setupUi(self, AmortsWindow):
         AmortsWindow.setObjectName("AmortsWindow")
-        AmortsWindow.resize(600, 840)
+        AmortsWindow.resize(600, 770)
+        AmortsWindow.setMinimumSize(QtCore.QSize(600, 770))
+        AmortsWindow.setMaximumSize(QtCore.QSize(600, 770))
         self.centralwidget = QtWidgets.QWidget(AmortsWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.frame_parameters = QtWidgets.QFrame(self.centralwidget)
@@ -337,7 +339,7 @@ class Ui_AmortsWindow(object):
 "}")
         self.btn_cancel_quest.setObjectName("btn_cancel_quest")
         self.frame_btn = QtWidgets.QFrame(self.centralwidget)
-        self.frame_btn.setGeometry(QtCore.QRect(15, 640, 570, 171))
+        self.frame_btn.setGeometry(QtCore.QRect(15, 640, 570, 101))
         self.frame_btn.setMinimumSize(QtCore.QSize(0, 0))
         self.frame_btn.setMaximumSize(QtCore.QSize(1500, 1000))
         self.frame_btn.setFrameShape(QtWidgets.QFrame.Box)
@@ -345,7 +347,7 @@ class Ui_AmortsWindow(object):
         self.frame_btn.setLineWidth(2)
         self.frame_btn.setObjectName("frame_btn")
         self.btn_add = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_add.setGeometry(QtCore.QRect(20, 20, 160, 60))
+        self.btn_add.setGeometry(QtCore.QRect(25, 20, 160, 60))
         self.btn_add.setMinimumSize(QtCore.QSize(160, 60))
         self.btn_add.setMaximumSize(QtCore.QSize(160, 60))
         font = QtGui.QFont()
@@ -382,7 +384,7 @@ class Ui_AmortsWindow(object):
 "}")
         self.btn_add.setObjectName("btn_add")
         self.btn_del = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_del.setGeometry(QtCore.QRect(210, 20, 160, 60))
+        self.btn_del.setGeometry(QtCore.QRect(205, 20, 160, 60))
         self.btn_del.setMinimumSize(QtCore.QSize(160, 60))
         self.btn_del.setMaximumSize(QtCore.QSize(160, 60))
         font = QtGui.QFont()
@@ -418,45 +420,8 @@ class Ui_AmortsWindow(object):
 "    \n"
 "}")
         self.btn_del.setObjectName("btn_del")
-        self.btn_ok = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_ok.setGeometry(QtCore.QRect(450, 20, 75, 60))
-        self.btn_ok.setMinimumSize(QtCore.QSize(75, 60))
-        self.btn_ok.setMaximumSize(QtCore.QSize(75, 60))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_ok.setFont(font)
-        self.btn_ok.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 10px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    \n"
-"    background-color: rgb(0, 0, 255);\n"
-"    \n"
-"}")
-        self.btn_ok.setObjectName("btn_ok")
         self.btn_exit = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_exit.setGeometry(QtCore.QRect(350, 90, 160, 60))
+        self.btn_exit.setGeometry(QtCore.QRect(385, 20, 160, 60))
         self.btn_exit.setMinimumSize(QtCore.QSize(160, 60))
         self.btn_exit.setMaximumSize(QtCore.QSize(160, 60))
         font = QtGui.QFont()
@@ -591,7 +556,6 @@ class Ui_AmortsWindow(object):
         self.btn_cancel_quest.setText(_translate("AmortsWindow", "Отмена"))
         self.btn_add.setText(_translate("AmortsWindow", "Добавить"))
         self.btn_del.setText(_translate("AmortsWindow", "Удалить"))
-        self.btn_ok.setText(_translate("AmortsWindow", "Ok"))
         self.btn_exit.setText(_translate("AmortsWindow", "Выход"))
         self.txt_warning.setMarkdown(_translate("AmortsWindow", "**ПРЕДУПРЕЖДЕНИЕ**\n"
 "\n"

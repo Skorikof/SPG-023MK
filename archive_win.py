@@ -21,7 +21,7 @@ class ArchiveWin(QMainWindow):
     def __init__(self):
         super(ArchiveWin, self).__init__()
         try:
-            self.archive = None
+            self.archive = ReadArchive()
             self.ui = Ui_WindowArch()
             self.ui.setupUi(self)
             self.hide()
@@ -51,15 +51,8 @@ class ArchiveWin(QMainWindow):
         self.ui.btn_exit.clicked.connect(self.close)
         self.ui.btn_print.clicked.connect(self.archive_save_form)
 
-    def archive_init(self):
-        try:
-            self.archive = ReadArchive()
-            self.archive_update()
-
-        except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_init - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+    def archive_save_test(self, obj):
+        self.archive.save_test_in_archive(obj)
 
     def archive_update(self):
         try:
@@ -160,18 +153,12 @@ class ArchiveWin(QMainWindow):
     def archive_graph(self, data):
         try:
             self.ui.graphwidget.clear()
-            self.ui.graphwidget.setLabel('left', 'СЖАТИЕ ---------------------УСИЛИЕ ------------ОТБОЙ',
-                                                 units='кгс')
+            self.ui.graphwidget.setLabel('left', 'СЖАТИЕ ---------------------УСИЛИЕ ------------ОТБОЙ', units='кгс')
             self.ui.graphwidget.setLabel('bottom', 'Перемещение', units='мм')
             self.ui.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ ПЕРЕМЕЩЕНИЯ')
 
-            self.title_graph = 'Amort test'
-            self.name_x = 'Перемещение, мм'
-            self.name_y = 'Усилие, кгс'
             list_x = []
             list_y = []
-            self.max_y = ''
-            self.min_y = ''
 
             flag_mirror = False
             temp_val = self.archive.struct.tests[data].date_arch
@@ -201,8 +188,8 @@ class ArchiveWin(QMainWindow):
                 list_y.append(float(temp_val[1]))
             # list_y.append(float(temp_val[1]))
 
-            self.max_y = str(max(list_y))
-            self.min_y = str(abs(min(list_y)))
+            max_y = str(max(list_y))
+            min_y = str(abs(min(list_y)))
 
             self.ui.graphwidget.showGrid(True, True)
 
@@ -214,8 +201,8 @@ class ArchiveWin(QMainWindow):
             # if flag_mirror:
 
             # else:
-            self.ui.max_comp_le.setText(self.min_y)
-            self.ui.max_recoil_le.setText(self.max_y)
+            self.ui.max_comp_le.setText(min_y)
+            self.ui.max_recoil_le.setText(max_y)
 
         except Exception as e:
             txt_log = 'ERROR in archive_win/archive_graph - {}'.format(e)
@@ -240,15 +227,14 @@ class ArchiveWin(QMainWindow):
             pd = QPrintDialog(self.printer, parent=self)
             pd.setOptions(QAbstractPrintDialog.PrintToFile | QAbstractPrintDialog.PrintSelection)
             if pd.exec() == QDialog.Accepted:
-                self._printImage(self.printer)
-
+                self._print_image(self.printer)
 
         except Exception as e:
             txt_log = 'ERROR in archive_win/archive_save_form - {}'.format(e)
             self.statusbar_set_ui(txt_log)
             self.signals.log_err.emit(txt_log)
 
-    def _printImage(self, printer):
+    def _print_image(self, printer):
         try:
             painter = QPainter()
             painter.begin(printer)

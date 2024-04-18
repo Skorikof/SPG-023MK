@@ -8,6 +8,7 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QFrame, QLabel
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.Qt import QFont
+import glob_var
 
 
 class VLine(QFrame):
@@ -104,12 +105,13 @@ class AppWindow(QMainWindow):
     def start_param(self):
         self.init_buttons()
         self.init_signals()
-        self.ui.main_stackedWidget.setCurrentIndex(0)
-        self.ui.message_btn_frame.setVisible(False)
+        self.start_page()
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_statusbar_data)
+
+        self.controller.signals.control_msg.connect(self.controller_msg_slot)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -119,7 +121,6 @@ class AppWindow(QMainWindow):
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_amort.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_amort.signals.log_err.connect(self.log_msg_err_slot)
-        self.win_amort.signals.amort_select.connect(self.amort_select)
 
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_set.signals.log_err.connect(self.log_msg_err_slot)
@@ -131,6 +132,7 @@ class AppWindow(QMainWindow):
     def init_buttons(self):
         self.ui.main_close_btn.clicked.connect(self.closeEvent)
         self.ui.main_STOP_btn.clicked.connect(self.btn_main_stop_clicked)
+        self.ui.ok_message_btn.clicked.connect(self.btn_ok_message_clicked)
         self.ui.main_operator_btn.clicked.connect(self.open_win_operator)
         self.ui.main_test_btn.clicked.connect(self.specif_page)
         self.ui.main_hand_debug_btn.clicked.connect(self.open_win_settings)
@@ -143,77 +145,205 @@ class AppWindow(QMainWindow):
     def log_msg_err_slot(self, txt_log):
         self.model.save_log('error', txt_log)
 
+    def controller_msg_slot(self, msg):
+        try:
+            txt = ''
+            tag = 'warning'
+            if msg == 'pos_traverse':
+                txt = 'ПОЗИЦИОНИРОВАНИЕ\nТРАВЕРСЫ'
+                tag = 'attention'
+
+            elif msg == 'move_detection':
+                txt = 'ВНИМАНИЕ!\nБудет произведено\nопределение хода'
+                tag = 'attention'
+
+            elif msg == 'lost_control':
+                self.log_msg_err_slot(msg)
+                txt = 'ПОТЕРЯНО\nУПРАВЛЕНИЕ'
+
+            elif msg == 'excess_force':
+                self.log_msg_err_slot(msg)
+                txt = 'ПРЕВЫШЕНИЕ\nУСИЛИЯ'
+
+            elif msg == 'safety_fence':
+                self.log_msg_err_slot(msg)
+                txt = 'ОТКРЫТО\nЗАЩИТНОЕ\nОГРАЖДЕНИЕ'
+
+            elif msg == 'alarm_traverce_up':
+                self.log_msg_err_slot(msg)
+                txt = 'ТРАВЕРСА\nВ ВЕРХНЕМ\nПОЛОЖЕНИИ'
+
+            elif msg == 'alarm_traverce_down':
+                self.log_msg_err_slot(msg)
+                txt = 'ТРАВЕРСА\nВ НИЖНЕМ\nПОЛОЖЕНИИ'
+
+            self.main_ui_msg(txt, tag)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/slot_controller_msg - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def main_ui_msg(self, txt, tag):
+        try:
+            backcolor = ''
+            color = glob_var.COLOR_BLACK
+
+            if tag == 'info':
+                self.ui.message_btn_frame.setVisible(False)
+
+            elif tag == 'attention':
+                backcolor = glob_var.COLOR_ORANGE
+                self.ui.message_btn_frame.setVisible(False)
+
+            elif tag == 'warning':
+                backcolor = glob_var.COLOR_RED
+                color = glob_var.COLOR_LYELLOW
+                self.ui.message_btn_frame.setVisible(True)
+                self.ui.ok_message_btn.setVisible(True)
+                self.ui.cancel_message_btn.setVisible(False)
+                self.ui.main_btn_frame.setEnabled(False)
+            self.ui.main_stackedWidget.setCurrentIndex(0)
+            self.ui.stack_start_label.setText(txt)
+            self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
+                                                    "color: " + color + ";")
+
+        except Exception as e:
+            txt_log = 'ERROR in view/main_ui_msg - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
     def btn_main_stop_clicked(self):
         try:
-            self.ui.main_stackedWidget.setCurrentIndex(0)
-            self.ui.stack_start_label.setText('ЖМАКНУТА\nБОЛЬШАЯ\nКРАСНАЯ\nКНОПКА!!!')
-            client = self.model.set_connect.get('client')
-            if client:
-                self.model.set_regs['adr_freq'] = 1
-                self.model.motor_stop()
-                self.model.set_regs['adr_freq'] = 2
-                self.model.motor_stop()
-                self.model.reader_stop()
+            txt = 'РАБОТА ПРЕРВАНА\nПО КОМАНДЕ\nОПЕРАТОРА'
+            tag = 'warning'
+            self.main_ui_msg(txt, tag)
+            self.controller.work_interrupted_operator()
 
         except Exception as e:
             txt_log = 'ERROR in view/btn_main_stop_clicked - {}'.format(e)
             self.status_bar_ui(txt_log)
             self.model.save_log('error', str(e))
 
-    def open_win_operator(self):
+    def btn_ok_message_clicked(self):
+        try:
+            self.start_page()
+
+        except Exception as e:
+            txt_log = 'ERROR in view/btn_ok_message_clicked - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def main_ui_enable(self):
+        self.ui.main_stackedWidget.setEnabled(True)
+        self.ui.main_btn_frame.setEnabled(True)
+
+    def main_ui_disable(self):
         self.ui.main_stackedWidget.setEnabled(False)
         self.ui.main_btn_frame.setEnabled(False)
+
+    def start_page(self):
+        try:
+            txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
+            tag = 'info'
+            self.main_ui_msg(txt, tag)
+            self.ui.main_btn_frame.setEnabled(True)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/start_page - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def open_win_operator(self):
+        self.main_ui_disable()
         self.win_exec.show()
 
     def operator_select(self, name, rank):
         self.model.set_state['operator']['name'] = name
         self.model.set_state['operator']['rank'] = rank
 
-        if len(name) > 0 and len(rank) > 0:
-            self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
+        self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
 
     def close_win_operator(self):
-        self.ui.main_stackedWidget.setEnabled(True)
-        self.ui.main_btn_frame.setEnabled(True)
+        self.main_ui_enable()
         self.win_exec.hide()
 
     def open_win_amort(self):
-        self.ui.main_stackedWidget.setEnabled(False)
-        self.ui.main_btn_frame.setEnabled(False)
+        self.main_ui_disable()
         self.win_amort.show()
 
     def amort_select(self, obj):
         self.amort = obj
 
     def close_win_amort(self):
-        self.ui.main_stackedWidget.setEnabled(True)
-        self.ui.main_btn_frame.setEnabled(True)
+        self.main_ui_enable()
         self.win_amort.hide()
 
     def specif_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(3)
+        self.ui.specif_add_btn.setVisible(False)
+        self.ui.specif_del_btn.setVisible(False)
+        self.ui.specif_choice_comboBox.addItems(self.win_amort.amorts.names)
+        if len(self.win_amort.amorts.names) < 1:
+            self.ui.specif_continue_btn.setEnabled(False)
+        else:
+            self.ui.specif_continue_btn.setEnabled(True)
+
+        self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
+        self.select_type_test(0)
+
+    def select_type_test(self, ind):
+        try:
+            if ind == 0:
+                self.model.set_state['type_test'] = 'lab'
+
+            elif ind == 1:
+                self.model.set_state['type_test'] = 'conv'
+
+        except Exception as e:
+            txt_log = 'ERROR in view/select_type_test - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def specif_ui_fill(self, ind):
+        try:
+            obj = self.win_amort.amorts.struct.amorts[ind]
+
+
+        except Exception as e:
+            txt_log = 'ERROR in view/specif_ui_fill - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
+
+    def specif_ui_clear(self):
+        try:
+            pass
+            
+        except Exception as e:
+            txt_log = 'ERROR in view/specif_ui_clear - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.model.save_log('error', str(e))
 
     def test_page(self):
         self.ui.main_stackedWidget.setCurrentIndex(2)
 
+    # def save_test_archive(self):
+    #     self.win_archive.archive_save_test()
+
     def open_win_archive(self):
-        self.ui.main_stackedWidget.setEnabled(False)
-        self.ui.main_btn_frame.setEnabled(False)
+        self.main_ui_disable()
         self.win_archive.show()
-        self.win_archive.archive_init()
+        self.win_archive.archive_update()
 
     def close_win_archive(self):
-        self.ui.main_stackedWidget.setEnabled(True)
-        self.ui.main_btn_frame.setEnabled(True)
+        self.main_ui_enable()
         self.win_archive.hide()
 
     def open_win_settings(self):
-        self.ui.main_stackedWidget.setEnabled(False)
-        self.ui.main_btn_frame.setEnabled(False)
+        self.main_ui_disable()
         self.win_set.show()
         self.win_set.start_param()
 
     def close_win_settings(self):
-        self.ui.main_stackedWidget.setEnabled(True)
-        self.ui.main_btn_frame.setEnabled(True)
+        self.main_ui_enable()
         self.win_set.hide()

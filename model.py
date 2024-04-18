@@ -13,9 +13,6 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 class WinSignals(QObject):
     stbar_msg = pyqtSignal(str)
-    # read_buffer_start = pyqtSignal(object, object, int, int, int)
-    # read_buffer_stop = pyqtSignal()
-    # read_buffer_exit = pyqtSignal()
     read_start = pyqtSignal(object, object, object)
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
@@ -45,23 +42,6 @@ class Model:
 
     def start_param(self):
         self.set_connect['cst'] = cst
-        # self.init_connect()
-        # self.write_emergency_force()
-        # self.init_reader()
-        # self.init_reader_buffer()
-        # self.init_timer()
-
-    # def init_timer(self):
-    #     try:
-    #         self.timer_process = QTimer()
-    #         self.timer_process.setInterval(80)
-    #         self.timer_process.timeout.connect(self.control_process)
-    #         self.timer_process.start()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/init_timer - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
 
     def save_log(self, mode_s, msg_s):
         try:
@@ -135,36 +115,6 @@ class Model:
         self.status_bar_msg(txt_log)
         self.save_log('error', txt_log)
 
-    # def init_reader_buffer(self):
-    #     self.reader_buffer = Reader(self.set_connect['client'], cst)
-    #     self.reader_buffer.signals.thread_log.connect(self.thread_log_msg)
-    #     self.reader_buffer.signals.thread_err.connect(self.thread_err_log)
-    #     self.reader_buffer.signals.read_result.connect(self.reader_buffer_result)
-    #     self.signals.read_buffer_start.connect(self.reader_buffer.start_read)
-    #     self.signals.read_buffer_stop.connect(self.reader_buffer.stop_read)
-    #     self.signals.read_buffer_exit.connect(self.reader_buffer.exit_read)
-    #     self.threadpool.start(self.reader_buffer)
-    #
-    # def reader_buffer_start(self):
-    #     start_reg = self.set_regs.get('start_reg_buffer')
-    #     count_reg = self.set_regs.get('count_reg_buffer')
-    #     dev_id = self.set_regs.get('dev_id')
-    #
-    #     self.signals.read_buffer_start.emit(client=self.set_connect['client'],
-    #                                         cst=cst,
-    #                                         start_reg=start_reg,
-    #                                         count_reg=count_reg,
-    #                                         dev_id=dev_id)
-    #
-    # def reader_buffer_stop(self):
-    #     self.signals.read_buffer_stop.emit()
-    #
-    # def reader_buffer_exit(self):
-    #     self.signals.read_buffer_exit.emit()
-    #
-    # def reader_buffer_result(self, registers):
-    #     print(registers)
-
     def init_reader(self):
         self.reader = Reader()
         self.reader.signals.thread_log.connect(self.thread_err_log)
@@ -204,10 +154,6 @@ class Model:
                 self.set_regs['traverse_move'] = self.movement_amount(res[6])
                 self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
                 self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
-
-            # if self.set_regs.get('cycle_force') == '1':
-            #     self.remember_start_pos()
-            #     self.fill_data_for_graph()
 
             self.count_msg += 1
             txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
@@ -568,53 +514,3 @@ class Model:
             txt_log = 'ERROR in model/emergency_force - {}'.format(e)
             self.status_bar_msg(txt_log)
             self.save_log('error', str(e))
-
-    # def len_command_freq(self, data):
-    #     """Регистр длины команды ПЧ"""
-    #     try:
-    #         self.set_regs['len_freq_msg'] = data
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/len_command_freq - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def buffer_freq(self, registers):
-    #     """Буфер ПЧ"""
-    #     try:
-    #         self.set_regs['buffer_freq'] = registers
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/buffer_freq - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def len_command_force(self, data):
-    #     """Регистер длины команды датчика силы"""
-    #     try:
-    #         self.set_regs['len_force_msg'] = data
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/len_command_force - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def buffer_force(self, registers):
-    #     """Буфер датчика силы"""
-    #     try:
-    #         self.set_regs['buffer_force'] = registers
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/buffer_force - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def buffer_data(self, registers):
-    #     """Буфер данных"""
-    #     try:
-    #         self.set_regs['buffer_data'] = registers
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/buffer_data - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))

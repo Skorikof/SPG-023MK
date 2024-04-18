@@ -157,3 +157,32 @@ class ReadArchive:
 
         except Exception as e:
             print(str(e))
+
+    def save_test_in_archive(self, obj):
+        try:
+            nam_f = str(datetime.now().day).zfill(2) + '.' + str(datetime.now().month).zfill(2) + \
+                    '.' + str(datetime.now().year) + '.csv'
+            time_t = datetime.now().strftime('%H:%M:%S')
+            with open('archive/' + nam_f, 'a') as file_arch:
+                file_arch.write('Испытание; ' + '\n')
+                file_arch.write('Время;' + time_t + '\n')
+                file_arch.write('Оператор;' + str(obj.rank + ' ' + obj.operator) + '\n')
+                file_arch.write('Серийный номер;' + str(obj.serial_num) + '\n')
+                file_arch.write('Наименование;' + obj.name + '\n')
+                file_arch.write('Максимальная длина;' + str(obj.max_len) + '\n')
+                file_arch.write('Минимальная длина;' + str(obj.min_len) + '\n')
+                file_arch.write('Скорость;' + str(obj.speed) + '\n')
+                file_arch.write('Мин усилие сжатия;' + str(obj.min_comp) + '\n')
+                file_arch.write('Макс усилие сжатия;' + str(obj.max_comp) + '\n')
+                file_arch.write('Мин усилие отбоя;' + str(obj.min_recoil) + '\n')
+                file_arch.write('Макс усилие отбоя;' + str(obj.max_recoil) + '\n')
+                file_arch.write('Макс температура;' + str(obj.temper) + '\n')
+                file_arch.write('Сопротивление;' + str(obj.resistance) + '\n')
+                file_arch.write('Усилие;Перемещение' + '\n')
+                for i in range(len(obj.amort_move_list)):
+                    val_s = str(obj.amort_move_list[i]).replace('.', ',')
+                    val_f = str(obj.force_list[i]).replace('.', ',')
+                    file_arch.write(val_s + ';' + val_f + '\n')
+
+        except Exception as e:
+            print('{}'.format(e))
