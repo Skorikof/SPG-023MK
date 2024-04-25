@@ -14,7 +14,7 @@ def main():
         m = Model()
         c = Controller(m)
         win_set = SetWindow(m)
-        win = AppWindow(m, c)
+        win = AppWindow(m, c, win_set)
         win.show()
         sys.exit(app.exec_())
 

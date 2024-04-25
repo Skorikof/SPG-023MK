@@ -1,5 +1,4 @@
 from mainui import Ui_MainWindow
-from settings_window import SetWindow
 from executors_win import ExecWin
 from amorts_win import AmortWin
 from archive_win import ArchiveWin
@@ -19,14 +18,14 @@ class VLine(QFrame):
 
 
 class AppWindow(QMainWindow):
-    def __init__(self, model, controller):
+    def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
         self.model = model
         self.controller = controller
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.win_set = SetWindow(self.model)
+        self.win_set = win_set
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
@@ -35,6 +34,7 @@ class AppWindow(QMainWindow):
 
         self.operators = None
         self.amort = None
+        self.current_amort = None
 
         self.start_param()
 
@@ -86,7 +86,8 @@ class AppWindow(QMainWindow):
             self.lbl_info_msg.setText(txt_bar)
 
         except Exception as e:
-            self.model.save_log('error', str(e))
+            txt_log = 'ERROR in view/status_bar_ui - {}'.format(e)
+            self.log_msg_err_slot(txt_log)
 
     def update_statusbar_data(self, result):
         try:
@@ -100,7 +101,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/update_statusbar_data - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def start_param(self):
         self.init_buttons()
@@ -138,6 +139,9 @@ class AppWindow(QMainWindow):
         self.ui.main_hand_debug_btn.clicked.connect(self.open_win_settings)
         self.ui.main_archive_btn.clicked.connect(self.open_win_archive)
         self.ui.main_amorts_btn.clicked.connect(self.open_win_amort)
+
+        self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
+        self.ui.test_cancel_btn.clicked.connect(self.test_cancel_click)
 
     def log_msg_info_slot(self, txt_log):
         self.model.save_log('info', txt_log)
@@ -182,7 +186,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/slot_controller_msg - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def main_ui_msg(self, txt, tag):
         try:
@@ -211,7 +215,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/main_ui_msg - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def btn_main_stop_clicked(self):
         try:
@@ -219,11 +223,13 @@ class AppWindow(QMainWindow):
             tag = 'warning'
             self.main_ui_msg(txt, tag)
             self.controller.work_interrupted_operator()
+            txt_log = 'Work stopped interrupted operator'
+            self.log_msg_info_slot(txt_log)
 
         except Exception as e:
             txt_log = 'ERROR in view/btn_main_stop_clicked - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def btn_ok_message_clicked(self):
         try:
@@ -232,7 +238,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/btn_ok_message_clicked - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def main_ui_enable(self):
         self.ui.main_stackedWidget.setEnabled(True)
@@ -252,7 +258,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/start_page - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def open_win_operator(self):
         self.main_ui_disable()
@@ -272,14 +278,12 @@ class AppWindow(QMainWindow):
         self.main_ui_disable()
         self.win_amort.show()
 
-    def amort_select(self, obj):
-        self.amort = obj
-
     def close_win_amort(self):
         self.main_ui_enable()
         self.win_amort.hide()
 
     def specif_page(self):
+        self.specif_ui_clear()
         self.ui.main_stackedWidget.setCurrentIndex(3)
         self.ui.specif_add_btn.setVisible(False)
         self.ui.specif_del_btn.setVisible(False)
@@ -288,6 +292,8 @@ class AppWindow(QMainWindow):
             self.ui.specif_continue_btn.setEnabled(False)
         else:
             self.ui.specif_continue_btn.setEnabled(True)
+            self.ui.specif_choice_comboBox.activated[int].connect(self.select_amort)
+            self.select_amort(0)
 
         self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
         self.select_type_test(0)
@@ -303,29 +309,107 @@ class AppWindow(QMainWindow):
         except Exception as e:
             txt_log = 'ERROR in view/select_type_test - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
-    def specif_ui_fill(self, ind):
+    def select_amort(self, ind):
         try:
-            obj = self.win_amort.amorts.struct.amorts[ind]
+            self.current_amort = self.win_amort.amorts.struct.amorts[ind]
 
+            self.specif_ui_fill(self.current_amort)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/select_amort - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.log_msg_err_slot(txt_log)
+
+    def specif_ui_fill(self, obj):
+        try:
+            self.ui.specif_name_lineEdit.setText(str(obj.name_a))
+            self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
+            self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
+            self.ui.specif_speed_lineEdit.setText(str(obj.speed))
+            self.ui.specif_min_comp_lineEdit.setText(str(obj.min_comp))
+            self.ui.specif_max_comp_lineEdit.setText(str(obj.max_comp))
+            self.ui.specif_min_recoil_lineEdit.setText(str(obj.min_recoil))
+            self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
+            self.ui.specif_max_temp_lineEdit.setText(str(obj.max_temper))
 
         except Exception as e:
             txt_log = 'ERROR in view/specif_ui_fill - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
 
     def specif_ui_clear(self):
         try:
-            pass
+            self.ui.specif_name_lineEdit.clear()
+            self.ui.specif_min_length_lineEdit.clear()
+            self.ui.specif_max_length_lineEdit.clear()
+            self.ui.specif_speed_lineEdit.clear()
+            self.ui.specif_min_comp_lineEdit.clear()
+            self.ui.specif_max_comp_lineEdit.clear()
+            self.ui.specif_min_recoil_lineEdit.clear()
+            self.ui.specif_max_recoil_lineEdit.clear()
+            self.ui.specif_max_temp_lineEdit.clear()
             
         except Exception as e:
             txt_log = 'ERROR in view/specif_ui_clear - {}'.format(e)
             self.status_bar_ui(txt_log)
-            self.model.save_log('error', str(e))
+            self.log_msg_err_slot(txt_log)
+
+    def specif_continue_btn_click(self):
+        try:
+            name = self.model.set_state.get('operator')['name']
+            rank = self.model.set_state.get('operator')['rank']
+            if len(name) > 1 and len(rank) > 1:
+                self.test_page()
+
+            else:
+                self.open_win_operator()
+
+        except Exception as e:
+            txt_log = 'ERROR in view/specif_continue_btn_click - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.log_msg_err_slot(txt_log)
 
     def test_page(self):
-        self.ui.main_stackedWidget.setCurrentIndex(2)
+        try:
+            name = self.current_amort.name_a
+            type_test = self.model.set_state.get('type_test')
+            limit_comp = str(self.current_amort.min_comp) + ' - ' + str(self.current_amort.max_comp)
+            limit_recoil = str(self.current_amort.min_recoil) + ' - ' + str(self.current_amort.max_recoil)
+            speed = str(self.current_amort.speed)
+            txt_log = 'Start test amort -> {}, type_test - {}, limit_comp - {},' \
+                      'limit_recoil - {}, speed - {}'.format(name,
+                                                             type_test,
+                                                             limit_comp,
+                                                             limit_recoil,
+                                                             speed)
+
+            self.log_msg_info_slot(txt_log)
+
+            self.ui.main_stackedWidget.setCurrentIndex(2)
+            self.ui.test_save_btn.setVisible(False)
+            self.ui.test_repeat_btn.setVisible(False)
+
+            self.ui.test_data_name_lineEdit.setText(name)
+
+            self.ui.test_data_limit_comp_lineEdit.setText(limit_comp)
+            self.ui.test_data_limit_recoil_lineEdit.setText(limit_recoil)
+            self.ui.test_data_speed_lineEdit.setText(speed)
+
+        except Exception as e:
+            txt_log = 'ERROR in view/test_page - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.log_msg_err_slot(txt_log)
+
+    def test_cancel_click(self):
+        try:
+            self.btn_main_stop_clicked()
+
+        except Exception as e:
+            txt_log = 'ERROR in view/test_cancel_click - {}'.format(e)
+            self.status_bar_ui(txt_log)
+            self.log_msg_err_slot(txt_log)
 
     # def save_test_archive(self):
     #     self.win_archive.archive_save_test()
