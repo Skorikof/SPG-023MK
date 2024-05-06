@@ -4,9 +4,9 @@ from configparser import ConfigParser
 class PrgSettings:
     def __init__(self):
         try:
-            self.connect = dict()
-            self.registers = dict()
-            self.state = dict()
+            self.connect = {}
+            self.registers = {}
+            self.state = {}
             config = ConfigParser()
             config.read('settings.ini')
             self.connect['COM'] = 'COM' + config['ComPort']['NumberPort']
@@ -65,8 +65,11 @@ class PrgSettings:
             self.registers['red_light'] = 0
 
             self.state['operator'] = {'name': '', 'rank': ''}
+            self.state['amort'] = None
             self.state['type_test'] = ''
-            self.state['direction'] = None
+            self.state['hod'] = 50
+            self.state['start_direction'] = None
+            self.state['current_direction'] = None
             self.state['flag_full_cycle'] = False
             self.state['flag_start_pos'] = False
             self.state['start_pos'] = 0
@@ -76,6 +79,7 @@ class PrgSettings:
             self.state['max_pos'] = 0
             self.state['max_comp'] = 0
             self.state['max_recoil'] = 0
+            self.state['max_temp'] = 0
 
         except Exception as e:
             print(str(e))

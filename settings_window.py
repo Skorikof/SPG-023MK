@@ -24,8 +24,7 @@ class SetWindow(QMainWindow):
             self.flag_graph = None
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/__init__ - {}'.format(e)
-            self.signals.log_err.emit(txt_log)
+            self.signals.log_err.emit(f'ERROR in settings_window/__init__ - {e}')
 
     def smap_line_edit(self):
         smap = QSignalMapper(self)
@@ -37,7 +36,6 @@ class SetWindow(QMainWindow):
 
     @pyqtSlot(int)
     def on_click_lineedit(self, index):
-        print(index)
         if index == 1:
             self.model.reader_stop()
 
@@ -61,21 +59,18 @@ class SetWindow(QMainWindow):
     def statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
+            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/statusbar_set_ui - {}'.format(e)
-            self.signals.log_err.emit(txt_log)
+            self.signals.log_err.emit(f'ERROR in settings_window/statusbar_set_ui - {e}')
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
-        # self.ui.btn_test.clicked.connect(self.btn_test_clicked)
+        self.ui.btn_test.clicked.connect(self.btn_test_clicked)
         self.ui.btn_connect.clicked.connect(self.do_connect)
         self.ui.btn_read.clicked.connect(self.read_controller)
-        self.ui.rbtn_traverse.toggled.connect(self.select_engine)
-        self.ui.rbtn_traverse.adr_freq = 2
-        self.ui.rbtn_engine.toggled.connect(self.select_engine)
-        self.ui.rbtn_engine.adr_freq = 1
-        self.ui.btn_save_freq.clicked.connect(self.write_frequency_set)
+        self.ui.btn_hod.clicked.connect(self.write_hod)
+
         self.ui.btn_motor_main_start.clicked.connect(self.click_btn_motor_start)
         self.ui.btn_motor_main_stop.clicked.connect(self.click_btn_motor_main_stop)
         self.ui.btn_motor_up.clicked.connect(self.click_btn_motor_up)
@@ -91,7 +86,7 @@ class SetWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.read_finish.connect(self.update_win)
-        # self.model.signals.update_graph.connect(self.update_graph)
+        self.model.signals.update_graph_settings.connect(self.update_graph_data)
 
     def do_connect(self):
         try:
@@ -106,20 +101,19 @@ class SetWindow(QMainWindow):
                 self.model.disconnect_client()
                 self.disconnect_ui()
         except Exception as e:
-            txt_log = 'ERROR in settings_window/do_connect - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/do_connect - {e}')
 
     def connect_ui(self):
         self.ui.btn_connect.setText('ОТКЛЮЧИТЬСЯ')
         self.ui.btn_read.setEnabled(True)
-        self.ui.btn_test.setEnabled(True)
         self.ui.btn_motor_main_start.setEnabled(True)
         self.ui.btn_motor_main_stop.setEnabled(True)
         self.ui.btn_motor_up.setEnabled(True)
         self.ui.btn_motor_down.setEnabled(True)
         self.ui.btn_motor_traverse_stop.setEnabled(True)
-        self.ui.btn_save_freq.setEnabled(True)
+        self.ui.btn_hod.setEnabled(True)
+        self.ui.btn_speed_main.setEnabled(True)
+        self.ui.btn_freq_trverse.setEnabled(True)
         self.ui.btn_cycle_F.setEnabled(True)
         self.ui.btn_no_control.setEnabled(True)
         self.ui.btn_max_F.setEnabled(True)
@@ -131,13 +125,14 @@ class SetWindow(QMainWindow):
     def disconnect_ui(self):
         self.ui.btn_connect.setText('ПОДКЛЮЧИТЬСЯ')
         self.ui.btn_read.setEnabled(False)
-        self.ui.btn_test.setEnabled(False)
         self.ui.btn_motor_main_start.setEnabled(False)
         self.ui.btn_motor_main_stop.setEnabled(False)
         self.ui.btn_motor_up.setEnabled(False)
         self.ui.btn_motor_down.setEnabled(False)
         self.ui.btn_motor_traverse_stop.setEnabled(False)
-        self.ui.btn_save_freq.setEnabled(False)
+        self.ui.btn_hod.setEnabled(False)
+        self.ui.btn_speed_main.setEnabled(False)
+        self.ui.btn_freq_trverse.setEnabled(False)
         self.ui.btn_cycle_F.setEnabled(False)
         self.ui.btn_no_control.setEnabled(False)
         self.ui.btn_max_F.setEnabled(False)
@@ -157,9 +152,7 @@ class SetWindow(QMainWindow):
                 self.read_stop_ui()
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/reda_controller - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/read_controller - {e}')
 
     def read_start_ui(self):
         self.ui.btn_read.setText('ОСТАНОВИТЬ')
@@ -173,24 +166,41 @@ class SetWindow(QMainWindow):
         txt_log = 'Чтение контроллера остановлено'
         self.statusbar.showMessage(txt_log)
 
-    def select_engine(self):
-        rbtn = self.sender()
-        if rbtn.isChecked():
-            self.model.set_regs['adr_freq'] = int(rbtn.adr_freq)
+    def write_hod(self):
+        try:
+            temp = int(self.ui.lineEdit_hod.text())
+            if not temp:
+                pass
+            else:
+                self.model.set_state['hod'] = temp
+
+        except Exception as e:
+            self.statusbar.showMessage(f'ERROR in settings_window/write_hod - {e}')
 
     def write_frequency_set(self):
         try:
-            value = self.ui.lineEdit_freq.text()
-            if not value:
-                pass
-            else:
-                self.model.set_regs['frequency'] = int(value) * 100
-                self.model.write_frequency()
+            btn = self.sender()
+            if btn.objectName() == 'btn_speed_main':
+                value = self.ui.lineEdit_speed_main.text()
+                if not value:
+                    pass
+                else:
+                    speed = self.model.calculate_freq(float(value))
+                    self.model.set_regs['frequency'] = speed
+                    self.model.set_regs['adr_freq'] = 1
+                    self.model.write_frequency()
+
+            elif btn.objectName() == 'btn_freq_traverse':
+                value = int(self.ui.lineEdit_freq_traverse.text())
+                if not value:
+                    pass
+                else:
+                    self.model.set_regs['frequency'] = value * 100
+                    self.model.set_regs['adr_freq'] = 2
+                    self.model.write_frequency()
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/write_frequency - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/write_frequency - {e}')
 
     def click_btn_motor_up(self):
         self.model.set_regs['adr_freq'] = 2
@@ -214,7 +224,6 @@ class SetWindow(QMainWindow):
 
     def write_alarm_force(self):
         try:
-            self.model.reader_stop()
             value = float(self.ui.lineEdit_F_alarm.text())
             self.model.set_regs['force_alarm'] = value
 
@@ -223,55 +232,43 @@ class SetWindow(QMainWindow):
             self.model.reader_start()
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/write_alarm_force - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/write_alarm_force - {e}')
 
     def btn_set_doclick(self):
         try:
             btn = self.sender()
-            index = 0
-            flag = False
             temp_list = [x for x in self.model.set_regs.get('list_state')]
 
             if btn.objectName() == 'btn_cycle_F':
-                index = 0
-                flag = True
-            elif btn.objectName() == 'btn_red_light':
-                index = 1
-                flag = True
-            elif btn.objectName() == 'btn_green_light':
-                index = 2
-                flag = True
-            elif btn.objectName() == 'btn_no_control':
-                index = 3
-                flag = False
-            elif btn.objectName() == 'btn_max_F':
-                index = 4
-                flag = False
-            else:
-                pass
-
-            if flag:
-                value = temp_list[index]
-                if value == 0:
-                    bool_val = 1
-                    btn.setChecked(True)
+                if temp_list[0] == 0:
+                    value = 1
 
                 else:
-                    bool_val = 0
-                    btn.setChecked(False)
-                self.model.change_list_state(index, bool_val)
+                    value = 0
+                self.model.write_bit_force_cycle(value)
 
-            else:
-                bool_val = 1
-                btn.setChecked(False)
-                self.model.change_list_state(index, bool_val)
+            elif btn.objectName() == 'btn_red_light':
+                if temp_list[1] == 0:
+                    value = 1
+                else:
+                    value = 0
+                self.model.write_bit_red_light(value)
+
+            elif btn.objectName() == 'btn_green_light':
+                if temp_list[2] == 0:
+                    value = 1
+                else:
+                    value = 0
+                self.model.write_bit_green_light(value)
+
+            elif btn.objectName() == 'btn_no_control':
+                self.model.write_bit_unblock_control()
+
+            elif btn.objectName() == 'btn_max_F':
+                self.model.write_bit_emergency_force()
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/btn_set_doclick - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/btn_set_doclick - {e}')
 
     def update_win(self, result):
         self.ui.lcdTime.display(result.get('counter_time'))
@@ -279,7 +276,7 @@ class SetWindow(QMainWindow):
         self.ui.lcdH.display(result.get('amort_move'))
         self.ui.lcdH_T.display(result.get('traverse_move'))
         self.ui.lcdTemp.display(result.get('temperature'))
-        self.ui.lineEdit_F_alarm.setText(str(result.get('force_alarm')))
+        self.ui.lineEdit_F_alarm.setText(str(int(result.get('force_alarm'))))
         self.update_color_switch(result)
 
     def update_color_switch(self, state):
@@ -298,11 +295,10 @@ class SetWindow(QMainWindow):
             self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(state.get('alarm_highest_position'), True))
             self.ui.fram_green_light.setStyleSheet(self.set_color_fram(state.get('green_light')))
             self.ui.fram_red_light.setStyleSheet(self.set_color_fram(state.get('red_light')))
+            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('test_launch')))
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/update_color_switch - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/update_color_switch - {e}')
 
     def set_color_fram(self, bit, rev=False):
         try:
@@ -319,59 +315,38 @@ class SetWindow(QMainWindow):
                 return color_green + "border-color: rgb(0, 0, 0);"
 
         except Exception as e:
-            txt_log = 'ERROR in settings_window/set_color_fram - {}'.format(e)
-            self.statusbar.showMessage(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar.showMessage(f'ERROR in settings_window/set_color_fram - {e}')
 
-    # def btn_test_clicked(self):
-    #     try:
-    #         temp = self.ui.btn_test.text()
-    #         if temp == 'ТЕСТ':
-    #             self.test_start()
-    #
-    #         elif temp == 'СТОП':
-    #             self.test_stop()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in settings_window/btn_test_clicked - {}'.format(e)
-    #         self.statusbar.showMessage(txt_log)
-    #         self.model.save_log('error', str(e))
-    #
-    # def test_start(self):
-    #     try:
-    #         self.model.set_state['flag_start_pos'] = False
-    #         self.ui.btn_test.setText('СТОП')
-    #         self.model.reader_start()
-    #         self.model.change_list_state(0, 1)
-    #         self.click_btn_motor_start()
-    #         self.graph_ui.clear_graph()
-    #         self.graph_ui.show()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in settings_window/test_start - {}'.format(e)
-    #         self.statusbar.showMessage(txt_log)
-    #         self.model.save_log('error', str(e))
-    #
-    # def test_stop(self):
-    #     try:
-    #         self.ui.btn_test.setText('ТЕСТ')
-    #         self.model.change_list_state(0, 0)
-    #         self.click_btn_motor_main_stop()
-    #         self.model.set_state['flag_start_pos'] = False
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in settings_window/test_stop - {}'.format(e)
-    #         self.statusbar.showMessage(txt_log)
-    #         self.model.save_log('error', str(e))
-    #
-    # def update_graph(self):
-    #     try:
-    #         self.graph_ui.clear_graph()
-    #         x = self.model.set_regs.get('amort_move_list')
-    #         y = self.model.set_regs.get('force_list')
-    #         self.graph_ui.data_line_test.setData(x, y)
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in settings_window/update_graph - {}'.format(e)
-    #         self.statusbar.showMessage(txt_log)
-    #         self.model.save_log('error', str(e))
+    def btn_test_clicked(self):
+        if self.ui.btn_test.isChecked():
+            self.start_test()
+
+        else:
+            self.stop_test()
+            
+    def start_test(self):
+        try:
+            self.model.set_state['type_test'] = 'hand'
+            self.model.reader_start_test()
+            self.graph_ui.show()
+
+        except Exception as e:
+            print(str(e))
+
+    def stop_test(self):
+        try:
+            self.model.reader_stop()
+            self.model.reader_start()
+
+        except Exception as e:
+            print(str(e))
+
+    def update_graph_data(self):
+        try:
+            coord_x = self.model.set_regs.get('amort_move_list')
+            coord_y = self.model.set_regs.get('force_list')
+
+            self.graph_ui.data_line_test.setData(coord_x, coord_y)
+
+        except Exception as e:
+            self.statusbar.showMessage(f'ERROR in settings_window/update_graph_data - {e}')

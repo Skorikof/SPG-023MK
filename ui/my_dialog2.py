@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'my_dialog.ui'
+# Form implementation generated from reading ui file 'my_dialog2.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -11,72 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class OperatorDialog(object):
-    def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
-        Dialog.resize(380, 180)
-        self.gridLayout = QtWidgets.QGridLayout(Dialog)
-        self.gridLayout.setContentsMargins(10, 10, 10, 10)
-        self.gridLayout.setHorizontalSpacing(10)
-        self.gridLayout.setVerticalSpacing(5)
-        self.gridLayout.setObjectName("gridLayout")
-        self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.gridLayout.addWidget(self.buttonBox, 3, 0, 1, 2)
-        self.label = QtWidgets.QLabel(Dialog)
-        self.label.setMinimumSize(QtCore.QSize(100, 0))
-        self.label.setMaximumSize(QtCore.QSize(100, 16777215))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(14)
-        self.label.setFont(font)
-        self.label.setObjectName("label")
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
-        self.rank_le = QtWidgets.QLineEdit(Dialog)
-        self.rank_le.setMinimumSize(QtCore.QSize(250, 30))
-        self.rank_le.setMaximumSize(QtCore.QSize(250, 16777215))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(14)
-        self.rank_le.setFont(font)
-        self.rank_le.setText("")
-        self.rank_le.setObjectName("rank_le")
-        self.gridLayout.addWidget(self.rank_le, 1, 1, 1, 1)
-        self.name_le = QtWidgets.QLineEdit(Dialog)
-        self.name_le.setMinimumSize(QtCore.QSize(250, 30))
-        self.name_le.setMaximumSize(QtCore.QSize(250, 16777215))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(14)
-        self.name_le.setFont(font)
-        self.name_le.setText("")
-        self.name_le.setObjectName("name_le")
-        self.gridLayout.addWidget(self.name_le, 0, 1, 1, 1)
-        self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setMinimumSize(QtCore.QSize(100, 0))
-        self.label_2.setMaximumSize(QtCore.QSize(100, 16777215))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(14)
-        self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
-        self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
-
-        self.retranslateUi(Dialog)
-        self.buttonBox.accepted.connect(Dialog.accept) # type: ignore
-        self.buttonBox.rejected.connect(Dialog.reject) # type: ignore
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
-
-    def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Добавление оператора"))
-        self.label.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">Ф. И. О.:</p></body></html>"))
-        self.label_2.setText(_translate("Dialog", "<html><head/><body><p align=\"right\">должность:</p></body></html>"))
-
-
-class AmortDialog(object):
+class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(590, 776)

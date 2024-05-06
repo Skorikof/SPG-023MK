@@ -11,7 +11,7 @@ base_dir = os.path.dirname(__file__)
 class Signals(QObject):
     thread_log = pyqtSignal(str)
     thread_err = pyqtSignal(str)
-    read_result = pyqtSignal(object, str)
+    read_result = pyqtSignal(dict, str)
     write_finish = pyqtSignal(bool)
 
 
@@ -40,9 +40,8 @@ class LogWriter(QRunnable):
     def run(self):
         try:
             with open(self.filename, 'a') as file:
-                temp_str = str(datetime.now())[:-3] + ' - [' + str(self.nam_f) + '].' + self.nam_m + \
-                    '[' + str(self.num_line) + '] - ' + self.msg + '\n'
-                file.write(temp_str)
+                temp = f'{datetime.now()[:-3]} - [{self.nam_f}].{self.nam_m}[{self.num_line}] - {self.msg}\n'
+                file.write(temp)
 
         except Exception as err:
             print(str(err))
@@ -76,37 +75,24 @@ class Writer(QRunnable):
         try:
             if self.tag == 'reg':
                 while self.number_attempts <= self.max_attempts:
-                    txt = 'Writer, start_adr -> {}, value -> {}, dev_id -> {}'.format(self.reg_write,
-                                                                                      self.values,
-                                                                                      self.dev_id)
-                    self.signals.thread_log.emit(txt)
+                    self.signals.thread_log.emit(f'Writer, {self.reg_write=}, {self.values=}, {self.dev_id=}')
                     try:
                         rw = self.client.execute(self.dev_id, self.cst.WRITE_MULTIPLE_REGISTERS,
                                                  self.reg_write, output_value=tuple(self.values))
-                        txt = 'Complite write value {} in reg -> {}, dev_id -> {}'.format(self.values,
-                                                                                          self.reg_state,
-                                                                                          self.dev_id)
-                        self.signals.thread_log.emit(txt)
+                        self.signals.thread_log.emit(f'Complite write {self.values=} in {self.reg_state=}')
                         self.flag_write = True
                         self.number_attempts = self.max_attempts + 1
                         self.signals.write_finish.emit(True)
 
                     except Exception as e:
-                        txt = 'Attempts write: {}, value {} in reg -> {}, dev_id -> {}'.format(self.number_attempts,
-                                                                                               self.values,
-                                                                                               self.reg_write,
-                                                                                               self.dev_id)
-                        self.signals.thread_log.emit(txt)
+                        self.signals.thread_log.emit(f'Attempts write: {self.number_attempts}, '
+                                                     f'{self.values=} in {self.reg_write=}')
                         self.number_attempts += 1
                         time.sleep(0.02)
 
                 if not self.flag_write:
-                    txt = 'Unsuccessful write attempt value {} in reg -> {}, dev_id -> {}'.format(self.values,
-                                                                                                  self.reg_write,
-                                                                                                  self.dev_id)
-                    self.signals.thread_log.emit(txt)
-                    txt = 'ERROR format - {}'.format(rw)
-                    self.signals.thread_err.emit(txt)
+                    self.signals.thread_log.emit(f'Unsuccessful write attempt {self.values=} in {self.reg_write=}')
+                    self.signals.thread_err.emit(f'ERROR format - {rw}')
                     self.signals.write_finish.emit(False)
 
             if self.tag == 'FC':
@@ -122,8 +108,7 @@ class Writer(QRunnable):
                     else:
                         self.number_attempts += 1
                         if self.number_attempts == self.max_attempts:
-                            txt = 'ERROR write - {}'.format(rw)
-                            self.signals.thread_err.emit(txt)
+                            self.signals.thread_err.emit(f'ERROR write - {rw}')
                             self.signals.write_finish.emit(False)
 
                 if self.flag_next:
@@ -140,8 +125,7 @@ class Writer(QRunnable):
                             self.number_attempts = 10
 
                         except Exception as e:
-                            txt = 'ERROR write - {}'.format(rq)
-                            self.signals.thread_err.emit(txt)
+                            self.signals.thread_err.emit(f'ERROR write - {rq}')
                             self.signals.write_finish.emit(False)
 
                 if self.flag_next:
@@ -160,8 +144,7 @@ class Writer(QRunnable):
                         else:
                             self.number_attempts += 1
                             if self.number_attempts == self.max_attempts:
-                                txt = 'ERROR write - {}'.format(rw)
-                                self.signals.thread_err.emit(txt)
+                                self.signals.thread_err.emit(f'ERROR write - {rw}')
                                 self.signals.write_finish.emit(False)
 
                 if self.flag_next:
@@ -174,17 +157,16 @@ class Writer(QRunnable):
                                                      self.reg_freq_buffer, output_value=tuple(self.freq_command))
                             self.number_attempts = self.max_attempts
                             self.flag_next = True
+
                         except Exception as e:
-                            txt = 'ERROR write - {}'.format(rq)
-                            self.signals.thread_err.emit(txt)
+                            self.signals.thread_err.emit(f'ERROR write - {rq}')
                             self.signals.write_finish.emit(False)
 
                 if self.flag_next:
                     self.signals.write_finish.emit(True)
 
         except Exception as e:
-            txt = 'ERROR in thread Writer - {}'.format(e)
-            self.signals.thread_err.emit(txt)
+            self.signals.thread_err.emit(f'ERROR in thread Writer - {e}')
 
     def dec_to_bin_str(self, val_d):
         try:
@@ -198,8 +180,7 @@ class Writer(QRunnable):
             return bin_list
 
         except Exception as e:
-            txt = 'ERROR in thread Writer/dec_to_bin_str - {}'.format(e)
-            self.signals.thread_err.emit(txt)
+            self.signals.thread_err.emit(f'ERROR in thread Writer/dec_to_bin_str - {e}')
 
 
 class Reader(QRunnable):
@@ -222,11 +203,12 @@ class Reader(QRunnable):
         self.buffer_count = None
         self.time_start = 0
         self.flag_start_test = False
-        self.flag_emit_data_test = False
+        self.flag_start_point = False
         self.num_rec = 0
+        self.current_rec = -1
         self.count_rec = 0
         self.buffer_all = None
-        self.result = dict()
+        self.result = {}
         self.values_time = []
         self.values_f = []
         self.values_move = []
@@ -244,26 +226,28 @@ class Reader(QRunnable):
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.start_reg, self.count_reg)
 
-                        self.signals.read_result.emit(rr, self.read_tag)
+                        self.result['regs'] = rr
+
+                        self.signals.read_result.emit(self.result, self.read_tag)
 
                     elif self.read_tag == 'buffer':
                         self.time_start = time.monotonic()
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 5)
 
-                        if len(rr) == self.buffer_count * 5:
-                            for i in range(0, self.buffer_count):
+                        if len(rr) == self.buffer_count * 5:  # 100
+                            for i in range(0, self.buffer_count):  # 20
                                 flag_add = False
                                 ind = 5 * i
                                 if self.flag_start_test:
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr[ind] - self.buffer_count) == 1:
+                                    if abs(rr[ind] - self.current_rec) == 1:
                                         flag_add = True
 
                                 if flag_add:
-                                    self.buffer_count = rr[ind]
+                                    self.current_rec = rr[ind]
                                     self.reg_buffer += 5
                                     self.num_rec += 1
                                     self.count_rec += 1
@@ -280,30 +264,37 @@ class Reader(QRunnable):
                                 else:
                                     break
 
-                            delta_r = 16384 + 3000 * 5 - self.reg_buffer
+                            delta_r = 16384 + self.buffer_all - self.reg_buffer
                             if delta_r <= 0:
                                 if delta_r < 0:
                                     print('Выход за пределы буфера')
-                                self.num_rec = 0
-                                self.count_reg = 20
+                                self.buffer_count = 20
                                 self.reg_buffer = 0x4000
                             else:
                                 if delta_r >= 5 * self.buffer_count:
-                                    self.count_reg = 20
+                                    self.buffer_count = 20
                                 else:
-                                    self.count_reg = int(delta_r / 5)
+                                    self.buffer_count = int(delta_r / 5)
 
                             self.time_proc.append(round(time.monotonic() - self.time_start, 6))
+
+                            self.result['count'] = self.values_time
+                            self.result['force'] = self.values_f
+                            self.result['move'] = self.values_move
+                            self.result['state'] = self.values_state
+                            self.result['time'] = self.time_proc
+
+                            self.signals.read_result.emit(self.result, self.read_tag)
+
+                            time.sleep(0.001)
 
                         else:
                             self.signals.thread_err.emit(str(rr))
 
             except Exception as e:
-                txt = 'ERROR in thread Reader - {}'.format(e)
-                self.signals.thread_err.emit(txt)
+                self.signals.thread_err.emit(f'ERROR in thread Reader - {e}')
 
     def start_test(self, request):
-        self.read_tag = 'buffer'
         self.reg_buffer = request.get('reg_buffer')
         self.buffer_count = request.get('buffer_count')
         self.buffer_all = request.get('buffer_all')
@@ -319,17 +310,10 @@ class Reader(QRunnable):
         self.count_rec = 0
         self.result = {}
         self.flag_start_test = True
-        self.flag_emit_data_test = True
+        self.flag_start_point = False
+        self.read_tag = 'buffer'
 
     def stop_test(self):
-        if self.flag_emit_data_test:
-            self.flag_emit_data_test = False
-            self.result['count'] = self.values_time
-            self.result['force'] = self.values_f
-            self.result['move'] = self.values_move
-            self.result['state'] = self.values_state
-            self.result['time'] = self.time_proc
-            self.signals.read_result.emit(self.result, self.read_tag)
         self.read_tag = 'reg'
 
     def start_read(self, client, cst, request):

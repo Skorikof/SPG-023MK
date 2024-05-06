@@ -29,8 +29,7 @@ class ArchiveWin(QMainWindow):
             self.init_buttons()
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/__init__ - {}'.format(e)
-            self.signals.log_err.emit(txt_log)
+            self.signals.log_err.emit(f'ERROR in archive_win/__init__ - {e}')
 
     def closeEvent(self, event):
         self.signals.closed.emit()
@@ -42,10 +41,10 @@ class ArchiveWin(QMainWindow):
     def statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
+            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/statusbar_set_ui - {}'.format(e)
-            self.signals.log_err.emit(txt_log)
+            self.signals.log_err.emit(f'ERROR in archive_win/statusbar_set_ui - {e}')
 
     def init_buttons(self):
         self.ui.btn_exit.clicked.connect(self.close)
@@ -72,9 +71,7 @@ class ArchiveWin(QMainWindow):
                 self.ui.btn_print.setEnabled(True)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_update - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_update - {e}')
 
     def archive_ui_clear(self):
         try:
@@ -93,9 +90,7 @@ class ArchiveWin(QMainWindow):
             self.ui.temper_le.setText('')
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_ui_clear - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_ui_clear - {e}')
 
     def archive_selected(self, data):
         try:
@@ -116,9 +111,7 @@ class ArchiveWin(QMainWindow):
             self.ui.combo_test.activated[int].connect(self.archive_graph)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_selected - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_selected - {e}')
 
     def archive_test_select(self, data):
         try:
@@ -146,9 +139,7 @@ class ArchiveWin(QMainWindow):
             self.ui.type_test_le.setText(self.archive.struct.tests[data].type_test)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_test_select - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_test_select - {e}')
 
     def archive_graph(self, data):
         try:
@@ -205,9 +196,7 @@ class ArchiveWin(QMainWindow):
             self.ui.max_recoil_le.setText(max_y)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_graph - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_graph - {e}')
 
     def archive_save_form(self):
         try:
@@ -230,9 +219,7 @@ class ArchiveWin(QMainWindow):
                 self._print_image(self.printer)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/archive_save_form - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/archive_save_form - {e}')
 
     def _print_image(self, printer):
         try:
@@ -243,6 +230,4 @@ class ArchiveWin(QMainWindow):
             painter.drawPixmap(0, 0, pixmap)
 
         except Exception as e:
-            txt_log = 'ERROR in archive_win/_printImage - {}'.format(e)
-            self.statusbar_set_ui(txt_log)
-            self.signals.log_err.emit(txt_log)
+            self.statusbar_set_ui(f'ERROR in archive_win/_printImage - {e}')

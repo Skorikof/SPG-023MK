@@ -1,6 +1,4 @@
 import inspect
-import random
-
 import serial
 import crcmod
 import modbus_tk.defines as cst
@@ -14,11 +12,12 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 class WinSignals(QObject):
     stbar_msg = pyqtSignal(str)
     read_start = pyqtSignal(object, object, object)
+    start_test = pyqtSignal(object)
+    stop_test = pyqtSignal()
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal(dict)
-    read_result_buffer = pyqtSignal(dict)
-    update_graph = pyqtSignal()
+    update_graph_settings = pyqtSignal()
 
 
 class Model:
@@ -37,6 +36,15 @@ class Model:
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
+        self.flag_start_point = False
+        self.flag_start_direction = False
+        self.start_point = None
+        self.direction = None
+        self.flag_min = False
+        self.flag_max = False
+        self.values_f = []
+        self.values_move = []
+        self.values_state = []
         self.timer_process = None
         self.count_msg = 0
 
@@ -65,12 +73,18 @@ class Model:
             self.change_list_state(3, 1)
 
         except Exception as e:
-            txt_log = 'ERROR in model/control_process - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/control_process - {e}')
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
+
+    def log_error(self, txt_log):
+        self.status_bar_msg(txt_log)
+        self.save_log('error', txt_log)
+
+    def log_info(self, txt_log):
+        self.status_bar_msg(txt_log)
+        self.save_log('info', txt_log)
 
     def init_connect(self):
         try:
@@ -87,14 +101,11 @@ class Model:
 
             self.set_connect['client'] = client
             self.set_connect['connect'] = True
-            txt_log = 'Контроллер подключен'
-            self.status_bar_msg(txt_log)
+            self.status_bar_msg(f'Контроллер подключен')
 
         except Exception as e:
             self.set_connect['connect'] = False
-            txt_log = 'ERROR in model/init_connect - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/init_connect - {e}')
 
     def disconnect_client(self):
         client = self.set_connect.get('client')
@@ -102,26 +113,17 @@ class Model:
             client.close()
             self.set_connect['client'] = None
             self.set_connect['connect'] = False
-            txt_log = 'Контроллер отключен'
-            self.status_bar_msg(txt_log)
-
-    def thread_log_msg(self, txt_log):
-        print(txt_log)
-        self.status_bar_msg(txt_log)
-        self.save_log('info', txt_log)
-
-    def thread_err_log(self, txt_log):
-        print(txt_log)
-        self.status_bar_msg(txt_log)
-        self.save_log('error', txt_log)
+            self.status_bar_msg(f'Контроллер отключен')
 
     def init_reader(self):
         self.reader = Reader()
-        self.reader.signals.thread_log.connect(self.thread_err_log)
-        self.reader.signals.thread_err.connect(self.thread_err_log)
+        self.reader.signals.thread_log.connect(self.log_info)
+        self.reader.signals.thread_err.connect(self.log_error)
         self.reader.signals.read_result.connect(self.reader_result)
         self.signals.read_start.connect(self.reader.start_read)
+        self.signals.start_test.connect(self.reader.start_test)
         self.signals.read_stop.connect(self.reader.stop_read)
+        self.signals.stop_test.connect(self.reader.stop_test)
         self.signals.read_exit.connect(self.reader.exit_read)
         self.threadpool.start(self.reader)
 
@@ -129,13 +131,28 @@ class Model:
         self.count_msg = 0
         client = self.set_connect.get('client')
         self.signals.read_start.emit(client, cst, self.set_regs)
-        txt_log = 'Чтение контроллера запущено'
-        self.status_bar_msg(txt_log)
+        self.status_bar_msg(f'Чтение контроллера запущено')
+
+    def reader_start_test(self):
+        self.flag_start_point = False
+        self.flag_start_direction = False
+        self.start_point = None
+        self.direction = None
+        self.flag_min = False
+        self.flag_max = False
+        self.values_f.clear()
+        self.values_move.clear()
+        self.values_state.clear()
+        self.signals.start_test.emit(self.set_regs)
+        self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
     def reader_stop(self):
         self.signals.read_stop.emit()
-        txt_log = 'Чтение контроллера остановлено'
-        self.status_bar_msg(txt_log)
+        self.status_bar_msg(f'Чтение контроллера остановлено')
+
+    def reader_stop_test(self):
+        self.signals.stop_test.emit()
+        self.status_bar_msg(f'Чтение буффера контроллера остановлено')
 
     def reader_exit(self):
         self.signals.read_exit.emit()
@@ -143,9 +160,10 @@ class Model:
     def reader_result(self, res, tag):
         try:
             if tag == 'buffer':
-                self.signals.read_result_buffer.emit(res)
+                self.delete_left_data_buffer(res)
 
             if tag == 'reg':
+                res = res.get('regs')
                 self.set_regs['force_now'] = self.magnitude_effort(res[0], res[1])
                 self.set_regs['amort_move'] = self.movement_amount(res[2])
                 self.register_state(res[3])
@@ -156,98 +174,90 @@ class Model:
                 self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
 
             self.count_msg += 1
-            txt_log = 'Получен ответ контроллера - {}'.format(self.count_msg)
-            self.status_bar_msg(txt_log)
+            self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
 
             self.signals.read_finish.emit(self.set_regs)
             if self.count_msg == 10000:
                 self.count_msg = 0
 
         except Exception as e:
-            txt_log = 'ERROR in model/reader_result - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/reader_result - {e}')
 
-    # FIXME
-    # def fill_data_for_graph(self):
-    #     try:
-    #         direction = self.set_state.get('direction')
-    #         force = self.set_regs.get('force_now')
-    #         move = self.set_regs.get('amort_move')
-    #         start_pos = self.set_state.get('start_pos')
-    #
-    #         if move != start_pos - 0.1 or move != start_pos + 0.1:
-    #             if move < start_pos:
-    #                 direction = 'down'
-    #                 self.set_state['direction'] = 'down'
-    #             elif move > start_pos:
-    #                 direction = 'up'
-    #                 self.set_state['direction'] = 'up'
-    #
-    #             self.set_regs['force_list'].append(force)
-    #             self.set_regs['amort_move_list'].append(move)
-    #
-    #         else:
-    #             if direction == 'down':
-    #                 min_pos = min(self.set_regs.get('amort_move_list'))
-    #                 max_recoil = max(self.set_regs.get('force_list'))
-    #                 self.set_state['min_pos'] = min_pos
-    #                 self.set_state['flag_min_pos'] = True
-    #
-    #             elif direction == 'up':
-    #                 max_pos = max(self.set_regs.get('amort_move_list'))
-    #                 max_comp = max(self.set_regs.get('force_list'))
-    #                 self.set_state['max_pos'] = max_pos
-    #                 self.set_state['flag_max_pos'] = True
-    #
-    #             else:
-    #                 pass
-    #
-    #         if self.set_state.get('flag_max_pos') and self.set_state.get('flag_min_pos'):
-    #             self.set_state['flag_full_cycle'] = True
-    #             self.flag_full_cycle()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/fill_data_for_graph - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def clear_data_graph(self):
-    #     try:
-    #         self.set_regs['force_list'].clear()
-    #         self.set_regs['amort_move_list'].clear()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/clear_data_graph - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def remember_start_pos(self):
-    #     try:
-    #         flag = self.set_state.get('flag_start_pos')
-    #         if not flag:
-    #             pos = self.set_regs.get('amort_move')
-    #             self.set_state['start_pos'] = pos
-    #             self.set_state['flag_start_pos'] = True
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/remember_start_pos - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
-    #
-    # def flag_full_cycle(self):
-    #     try:
-    #         self.set_state['direction'] = None
-    #         self.set_state['flag_min_pos'] = False
-    #         self.set_state['flag_max_pos'] = False
-    #         self.set_state['flag_full_cycle'] = False
-    #         self.signals.update_graph.emit()
-    #         self.clear_data_graph()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in model/flag_full_cycle - {}'.format(e)
-    #         self.status_bar_msg(txt_log)
-    #         self.save_log('error', str(e))
+    def delete_left_data_buffer(self, result):
+        try:
+            move = []
+            force = []
+            state = []
+
+            for i in range(len(result.get('force'))):
+                if result['force'][i] == -100000.0:
+                    pass
+                else:
+                    force.append(result.get('force')[i])
+                    move.append(result.get('move')[i])
+                    state.append(result.get('state')[i])
+
+            self.pars_result_on_circle(move, force, state)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/delete_left_data_buffer - {e}')
+
+    def pars_result_on_circle(self, move, force, state):
+        try:
+            if not self.flag_start_point:
+                self.start_point = move[0]
+                self.flag_start_point = True
+
+            if not self.flag_start_direction:
+                if self.start_point < move[20]:
+                    self.direction = 'up'
+                    self.flag_start_direction = True
+
+                elif self.start_point > move[20]:
+                    self.direction = 'down'
+                    self.flag_start_direction = True
+
+                else:
+                    print('Колено стоит на месте')
+
+            if self.direction == 'up':
+                max_point = max(move)
+                if max_point != move[-1]:
+                    self.flag_max = True
+                    self.direction = 'down'
+
+            if self.direction == 'down':
+                min_point = min(move)
+                if min_point != move[-1]:
+                    self.flag_min = True
+                    self.direction = 'up'
+
+            for i in range(len(force)):
+                self.values_move.append(move[i])
+                self.values_f.append(force[i])
+                self.values_state.append(state[i])
+
+            if self.flag_min and self.flag_max and (abs(self.start_point - 0.1) in move):
+                self.graphics_formation(self.values_move, self.values_f, self.values_state)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/pars_result_on_circle - {e}')
+
+    def graphics_formation(self, move, force, state):
+        try:
+            print(f'force --> {force}')
+            print(f'move --> {move}')
+            self.values_move.clear()
+            self.values_f.clear()
+            self.values_state.clear()
+            self.set_regs['force_list'] = force
+            self.set_regs['amort_move_list'] = move
+            self.register_state(state[-1])
+            if self.set_state['type_test'] == 'hand':
+                self.signals.update_graph_settings.emit()
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/graphics_formation - {e}')
 
     def init_writer(self):
         try:
@@ -256,16 +266,14 @@ class Model:
                                  **self.set_regs)
 
             if not self.writer_flag_init:
-                self.writer.signals.thread_log.connect(self.thread_log_msg)
-                self.writer.signals.thread_err.connect(self.thread_err_log)
+                self.writer.signals.thread_log.connect(self.log_info)
+                self.writer.signals.thread_err.connect(self.log_error)
                 self.writer.signals.write_finish.connect(self.writer_result)
                 self.writer_flag_init = True
             self.threadpool.start(self.writer)
 
         except Exception as e:
-            txt_log = 'ERROR in model/init_writer - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/init_writer - {e}')
 
     def writer_result(self, state):
         self.flag_write = state
@@ -286,9 +294,7 @@ class Model:
             self.init_writer()
 
         except Exception as e:
-            txt_log = 'ERROR in model/write_reg_state - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/write_reg_state - {e}')
 
     def change_list_state(self, bit, value):
         try:
@@ -297,9 +303,42 @@ class Model:
             self.write_reg_state()
 
         except Exception as e:
-            txt_log = 'ERROR in model/change_list_state - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/change_list_state - {e}')
+
+    def write_bit_force_cycle(self, value):
+        try:
+            self.change_list_state(0, value)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_force_cycle - {e}')
+
+    def write_bit_red_light(self, value):
+        try:
+            self.change_list_state(1, value)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_red_light - {e}')
+
+    def write_bit_green_light(self, value):
+        try:
+            self.change_list_state(2, value)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_green_light - {e}')
+
+    def write_bit_unblock_control(self):
+        try:
+            self.change_list_state(3, 1)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_unblock_control - {e}')
+
+    def write_bit_emergency_force(self):
+        try:
+            self.change_list_state(4, 1)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_emergency_force - {e}')
 
     def write_emergency_force(self):
         try:
@@ -316,9 +355,7 @@ class Model:
             self.init_writer()
 
         except Exception as e:
-            txt_log = 'ERROR in model/write_emergency_force - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/write_emergency_force - {e}')
 
     def motor_command(self, command):
         try:
@@ -330,9 +367,7 @@ class Model:
             self.init_writer()
 
         except Exception as e:
-            txt_log = 'ERROR in model/motor_command - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/motor_command - {e}')
 
     def write_frequency(self):
         try:
@@ -343,9 +378,7 @@ class Model:
             self.motor_command(freq_hex)
 
         except Exception as e:
-            txt_log = 'ERROR in model/write_frequency - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/write_frequency - {e}')
 
     def motor_up(self):
         try:
@@ -354,9 +387,7 @@ class Model:
             self.motor_command(com_hex)
 
         except Exception as e:
-            txt_log = 'ERROR in model/motor_up - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/motor_up - {e}')
 
     def motor_down(self):
         try:
@@ -364,9 +395,7 @@ class Model:
             self.motor_command(com_hex)
 
         except Exception as e:
-            txt_log = 'ERROR in model/motor_down - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/motor_down - {e}')
 
     def motor_stop(self):
         try:
@@ -375,9 +404,7 @@ class Model:
             self.motor_command(com_hex)
 
         except Exception as e:
-            txt_log = 'ERROR in model/motor_stop - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/motor_stop - {e}')
         
     def calc_crc(self, data):
         try:
@@ -389,9 +416,7 @@ class Model:
             return crc_str
 
         except Exception as e:
-            txt_log = 'ERROR in model/calc_crc - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/calc_crc - {e}')
 
     def calc_values_write(self, data):
         try:
@@ -405,9 +430,7 @@ class Model:
             return val_regs
 
         except Exception as e:
-            txt_log = 'ERROR in model/calc_values_write - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/calc_values_write - {e}')
 
     def magnitude_effort(self, low_reg, big_reg):
         """Текущая величина усилия"""
@@ -417,9 +440,7 @@ class Model:
             return val_temp
 
         except Exception as e:
-            txt_log = 'ERROR in model/magnitude_effort - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/magnitude_effort - {e}')
 
     def movement_amount(self, data) -> float:
         """Текущая величина перемещения штока аммортизатора или траверсы"""
@@ -429,9 +450,7 @@ class Model:
             return result
 
         except Exception as e:
-            txt_log = 'ERROR in model/movement_amount - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/movement_amount - {e}')
 
     def register_state(self, register):
         """Регистр состояния 0х2003"""
@@ -457,9 +476,7 @@ class Model:
             self.set_regs['list_state'][12] = int(bits[12])
 
         except Exception as e:
-            txt_log = 'ERROR in model/register_state - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/register_state - {e}')
 
     def counter_time(self, register):
         """Регистр счётчика времени"""
@@ -467,9 +484,7 @@ class Model:
             return register
 
         except Exception as e:
-            txt_log = 'ERROR in model/counter_time - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/counter_time - {e}')
 
     def switch_state(self, register):
         """Регистр состояния входов модуля МВ110-224.16ДН"""
@@ -487,9 +502,7 @@ class Model:
             self.set_regs['lowest_position'] = bits[13]
 
         except Exception as e:
-            txt_log = 'ERROR in model/switch_state - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/switch_state - {e}')
 
     def temperature_value(self, low_reg, big_reg):
         """Величина температуры с модуля МВ-110-224-2А"""
@@ -499,9 +512,7 @@ class Model:
             return val_temp
 
         except Exception as e:
-            txt_log = 'ERROR in model/temperature_value - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/temperature_value - {e}')
 
     def emergency_force(self, low_reg, big_reg):
         """Аварийное усилие"""
@@ -511,6 +522,17 @@ class Model:
             return val_temp
 
         except Exception as e:
-            txt_log = 'ERROR in model/emergency_force - {}'.format(e)
-            self.status_bar_msg(txt_log)
-            self.save_log('error', str(e))
+            self.log_error(f'ERROR in model/emergency_force - {e}')
+
+    def calculate_freq(self, speed):
+        """Пересчёт скорости в частоту для записи в частотник"""
+        try:
+            koef = (3 * 7) / (2 * 3.1415 * 0.98)
+            hod = self.set_state.get('hod') / 1000
+            radius = hod / 2
+            freq = int(100 * (koef * speed) / radius)
+
+            return freq
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/calculate_freq - {e}')

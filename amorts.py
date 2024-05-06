@@ -11,13 +11,14 @@ class DataAmort(object):
         self.name_a = ''
         self.min_length = 0
         self.max_length = 0
+        self.hod = 0
+        self.speed_one = 0
+        self.speed_two = 0
         self.min_comp = 0
         self.max_comp = 0
         self.min_recoil = 0
         self.max_recoil = 0
         self.max_temper = 0
-        self.speed = 0
-        self.beta = 0
 
 
 class Amort:
@@ -32,32 +33,36 @@ class Amort:
             self.names = []
             self.struct.amorts.clear()
             self.config.read("amorts.ini")
-            index_d = -1
+            ind = -1
             for section in self.config.sections():
                 try:
-                    index_d += 1
+                    ind += 1
                     self.struct.amorts.append(DataAmort())
                     for key in self.config[section]:
                         temp_val = self.config.get(section, key)
                         if key == 'name':
-                            self.struct.amorts[index_d].name_a = temp_val
+                            self.struct.amorts[ind].name_a = temp_val
                             self.names.append(temp_val)
+                        if key == 'hod':
+                            self.struct.amorts[ind].hod = int(temp_val)
+                        if key == 'speed_one':
+                            self.struct.amorts[ind].speed_one = float(temp_val)
+                        if key == 'speed_two':
+                            self.struct.amorts[ind].speed_two = float(temp_val)
                         if key == 'min_length':
-                            self.struct.amorts[index_d].min_length = int(temp_val)
+                            self.struct.amorts[ind].min_length = int(temp_val)
                         if key == 'max_length':
-                            self.struct.amorts[index_d].max_length = int(temp_val)
+                            self.struct.amorts[ind].max_length = int(temp_val)
                         if key == 'min_comp':
-                            self.struct.amorts[index_d].min_comp = int(temp_val)
+                            self.struct.amorts[ind].min_comp = int(temp_val)
                         if key == 'max_comp':
-                            self.struct.amorts[index_d].max_comp = int(temp_val)
+                            self.struct.amorts[ind].max_comp = int(temp_val)
                         if key == 'min_recoil':
-                            self.struct.amorts[index_d].min_recoil = int(temp_val)
+                            self.struct.amorts[ind].min_recoil = int(temp_val)
                         if key == 'max_recoil':
-                            self.struct.amorts[index_d].max_recoil = int(temp_val)
+                            self.struct.amorts[ind].max_recoil = int(temp_val)
                         if key == 'max_temper':
-                            self.struct.amorts[index_d].max_temper = int(temp_val)
-                        if key == 'speed':
-                            self.struct.amorts[index_d].speed = float(temp_val)
+                            self.struct.amorts[ind].max_temper = int(temp_val)
 
                 except Exception as e:
                     print(str(e))
@@ -75,6 +80,9 @@ class Amort:
                 self.config.add_section(nam_section)
 
                 self.config.set(nam_section, 'name', self.struct.amorts[i].name_a)
+                self.config.set(nam_section, 'hod', str(self.struct.amorts[i].hod))
+                self.config.set(nam_section, 'speed_one', str(self.struct.amorts[i].speed_one))
+                self.config.set(nam_section, 'speed_two', str(self.struct.amorts[i].speed_two))
                 self.config.set(nam_section, 'min_length', str(self.struct.amorts[i].min_length))
                 self.config.set(nam_section, 'max_length', str(self.struct.amorts[i].max_length))
 
@@ -84,13 +92,12 @@ class Amort:
                 self.config.set(nam_section, 'min_recoil', str(self.struct.amorts[i].min_recoil))
                 self.config.set(nam_section, 'max_recoil', str(self.struct.amorts[i].max_recoil))
                 self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
-                self.config.set(nam_section, 'speed', str(self.struct.amorts[i].speed))
 
             with open('amorts.ini', "w") as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
-            print('Ошибки в файле amorts.ini {}'.format(e))
+            print(f'Ошибка в файле amorts.ini {e}')
 
     def add_amort(self, obj):
         try:
@@ -99,6 +106,9 @@ class Amort:
             self.config.add_section(nam_section)
 
             self.config.set(nam_section, 'name', obj.get('name'))
+            self.config.set(nam_section, 'hod', obj.get('hod'))
+            self.config.set(nam_section, 'speed_one', obj.get('speed_one'))
+            self.config.set(nam_section, 'speed_two', obj.get('speed_two'))
             self.config.set(nam_section, 'min_length', obj.get('len_min'))
             self.config.set(nam_section, 'max_length', obj.get('len_max'))
 
@@ -108,10 +118,9 @@ class Amort:
             self.config.set(nam_section, 'min_recoil', obj.get('recoil_min'))
             self.config.set(nam_section, 'max_recoil', obj.get('recoil_max'))
             self.config.set(nam_section, 'max_temper', obj.get('max_temper'))
-            self.config.set(nam_section, 'speed', obj.get('speed'))
 
             with open('amorts.ini', 'w') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
-            print('Ошибки в файле amorts.ini {}'.format(e))
+            print(f'Ошибка в файле amorts.ini {e}')
