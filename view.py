@@ -10,6 +10,10 @@ from PyQt5.Qt import QFont
 import glob_var
 
 
+class WinSignals(QObject):
+    start_test = pyqtSignal(object)
+
+
 class VLine(QFrame):
     # a simple VLine, like the one you get from designer
     def __init__(self):
@@ -24,6 +28,7 @@ class AppWindow(QMainWindow):
         self.controller = controller
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.signals = WinSignals()
 
         self.win_set = win_set
         self.win_exec = ExecWin()
@@ -86,9 +91,9 @@ class AppWindow(QMainWindow):
 
     def update_statusbar_data(self, result):
         try:
-            txt = 'Усилие, кгс: {}'.format(result.get('force_now'))
+            txt = 'Усилие, кгс: {}'.format(result.get('force'))
             self.lbl_info_F.setText(txt)
-            txt = 'Перемещение, мм: {}'.format(result.get('amort_move'))
+            txt = 'Перемещение, мм: {}'.format(result.get('move'))
             self.lbl_info_H.setText(txt)
             txt = 'Траверса, мм: {}'.format(result.get('traverse_move'))
             self.lbl_info_Traverse.setText(txt)
@@ -388,6 +393,10 @@ class AppWindow(QMainWindow):
 
             self.log_msg_info_slot(txt_log)
 
+            self.model.set_regs['traverse_referent'] = False
+
+            self.controller.start_test_clicked(amort)
+
             self.ui.main_stackedWidget.setCurrentIndex(2)
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.test_save_btn.setVisible(False)
@@ -430,6 +439,12 @@ class AppWindow(QMainWindow):
                       f'limit_recoil = {limit_recoil}, max_temper = {temper}'
 
             self.log_msg_info_slot(txt_log)
+
+            self.model.set_regs['traverse_referent'] = False
+
+            self.signals.start_test.emit(amort)
+
+            self.controller.start_test_clicked(amort)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')

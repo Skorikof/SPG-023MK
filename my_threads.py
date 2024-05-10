@@ -40,11 +40,12 @@ class LogWriter(QRunnable):
     def run(self):
         try:
             with open(self.filename, 'a') as file:
-                temp = f'{datetime.now()[:-3]} - [{self.nam_f}].{self.nam_m}[{self.num_line}] - {self.msg}\n'
+                time_msg = str(datetime.now())[:-3]
+                temp = f'{time_msg} - [{self.nam_f}].{self.nam_m}[{self.num_line}] - {self.msg}\n'
                 file.write(temp)
 
         except Exception as err:
-            print(str(err))
+            print(f'ERROR in thread LogWriter - {err}')
 
 
 class Writer(QRunnable):

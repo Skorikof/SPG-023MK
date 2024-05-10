@@ -50,6 +50,12 @@ class Model:
 
     def start_param(self):
         self.set_connect['cst'] = cst
+        self.init_connect()
+        con = self.set_connect.get('connect')
+        if con:
+            self.init_reader()
+        else:
+            self.log_error(f'Нет подключения к контроллеру')
 
     def save_log(self, mode_s, msg_s):
         try:
@@ -157,15 +163,15 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def reader_result(self, res, tag):
+    def reader_result(self, res: dict, tag: str):
         try:
             if tag == 'buffer':
                 self.delete_left_data_buffer(res)
 
             if tag == 'reg':
                 res = res.get('regs')
-                self.set_regs['force_now'] = self.magnitude_effort(res[0], res[1])
-                self.set_regs['amort_move'] = self.movement_amount(res[2])
+                self.set_regs['force'] = self.magnitude_effort(res[0], res[1])
+                self.set_regs['move'] = self.movement_amount(res[2])
                 self.register_state(res[3])
                 self.set_regs['counter_time'] = self.counter_time(res[4])
                 self.switch_state(res[5])
@@ -182,6 +188,66 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/reader_result - {e}')
+
+    def pars_response_on_circle(self, force, move):
+        try:
+
+            if not self.set_state.get('start_pos'):
+                self.set_state['start_point'] = move
+                start_point = move
+                self.add_data_on_graph(force, move)
+                self.set_state['start_pos'] = True
+
+            if not self.set_state.get('start_direction'):
+                if start_point < move:
+                    point = move
+                    self.set_state['start_direction'] = 'up'
+                    self.set_state['current_direction'] = 'up'
+                    self.add_data_on_graph(force, move)
+
+                elif start_point > move:
+                    point = move
+                    self.set_state['start_direction'] = 'down'
+                    self.set_state['current_direction'] = 'down'
+                    self.add_data_on_graph(force, move)
+
+                else:
+                    self.set_state['start_direction'] = None
+
+            if self.set_state.get('current_direction') == 'up':
+                if move < point:
+                    max_point = point
+                    self.set_state['max_pos'] = True
+                    self.set_state['max_point'] = point
+                    self.set_state['current_direction'] = 'down'
+                point = move
+                self.add_data_on_graph(force, move)
+
+            if self.set_state.get('current_direction') == 'down':
+                if move > point:
+                    min_point = point
+                    self.set_state['min_pos'] = True
+                    self.set_state['min_point'] = point
+                    self.set_state['current_direction'] = 'up'
+                point = move
+                self.add_data_on_graph(force, move)
+
+            if self.set_state.get('min_pos') and self.set_state.get('max_pos') \
+                    and abs(start_point - move) < 0.05:
+                self.set_state['full_cycle'] = True
+                self.add_data_on_graph(force, move)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/pars_response_on_circle - {e}')
+
+    def add_data_on_graph(self, force, move):
+        """Добавление координаты в списки усилия и перемещения"""
+        try:
+            self.set_regs['force_list'].append(force)
+            self.set_regs['move_list'].append(move)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/add_data_on_graph - {e}')
 
     def delete_left_data_buffer(self, result):
         try:
@@ -251,7 +317,7 @@ class Model:
             self.values_f.clear()
             self.values_state.clear()
             self.set_regs['force_list'] = force
-            self.set_regs['amort_move_list'] = move
+            self.set_regs['move_list'] = move
             self.register_state(state[-1])
             if self.set_state['type_test'] == 'hand':
                 self.signals.update_graph_settings.emit()

@@ -1,4 +1,5 @@
 import os
+import time
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
 
@@ -9,6 +10,7 @@ class ControlSignals(QObject):
 class Controller:
     def __init__(self, model):
         try:
+            self.amort = None
             self.timer_process = None
             # self.values_time = []
             # self.values_f = []
@@ -119,6 +121,8 @@ class Controller:
                 self.alarm_traverse_position('up')
             if self.model.set_regs.get('alarm_lowest_position') == '1':
                 self.alarm_traverse_position('down')
+            # if self.model.set_regs.get('test_launch') == '1':
+            #     self.yellow_btn_push()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/control_process - {e}')
@@ -149,5 +153,114 @@ class Controller:
         if client:
             self.model.set_regs['adr_freq'] = 1
             self.model.motor_stop()
+            self.stop_test_clicked()
+
+    # def yellow_btn_push(self):
+    #     if test == 'stop':
+    #         test == 'start'
+    #     elif test == 'start':
+    #         test == 'stop'
+
+    def start_test_clicked(self, amort):
+        try:
+            self.amort = amort
+            self.model.reader_start()
+            self.check_traverse_position()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
+
+    def stop_test_clicked(self):
+        try:
+            len_max = self.amort.max_length
+            bracket = self.model.set_regs.get('bracket_height')
+            stock_point = len_max + bracket
+
+            self.traverse_move_position(stock_point)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/stop_test_clicked - {e}')
+
+    def check_traverse_position(self):
+        try:
+            hod = self.amort.hod
+            len_min = self.amort.min_length
+            len_max = self.amort.max_length
+            midpoint = (len_max - len_min)
+            bracket = self.model.set_regs.get('bracket_height')
+            test_point = bracket + len_min + midpoint + hod / 2
+
+            if not self.model.set_regs['traverse_referent']:
+                self.traverse_referent_point()
+
+            if not self.model.set_regs['traverse_position']:
+                set_point = len_max + bracket
+                self.traverse_move_position(set_point)
+
+            if test_point != self.model.set_regs['traverse_position']:
+                self.traverse_move_position(test_point)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/check_traverse_position - {e}')
+
+    def traverse_move_position(self, set_point):
+        """Позционирование траверсы для установки амортизатора"""
+        try:
             self.model.set_regs['adr_freq'] = 2
+            self.model.set_regs['frequency'] = 1000
+            if self.model.set_regs['traverse_move'] > set_point:
+                self.model.motor_down()
+            else:
+                self.model.motor_up()
+
+            pos_trav = self.model.set_regs.get('traverse_move')
+            while set_point != (pos_trav - 3) or set_point != (pos_trav + 3):
+                pos_trav = self.model.set_regs.get('traverse_move')
+                print(f'Позиция траверсы --> {pos_trav}')
+                time.sleep(0.1)
+
             self.model.motor_stop()
+            self.model.set_regs['traverse_position'] = True
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/traverse_move_position - {e}')
+
+    def traverse_referent_point(self):
+        """Подъём траверсы до концевика для определения референтной точки"""
+        try:
+            self.model.set_regs['traverse_position'] = False
+            self.model.set_regs['adr_freq'] = 2
+            self.model.set_regs['frequency'] = 1000
+            self.model.write_frequency()
+            self.model.motor_up()
+            control = self.model.set_regs.get('highest_position')
+            while control != '1':
+                print(f'Состояние верхнего концевика --> {self.model.set_regs["highest_position"]}')
+                control = self.model.set_regs.get('highest_position')
+                time.sleep(0.1)
+
+            self.model.motor_stop()
+            time.sleep(0.2)
+            self.model.set_regs['traverse_referent'] = True
+            self.model.set_regs['traverse_referent_point'] = self.model.set_regs.get('traverse_move')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/traverse_referent_point - {e}')
+
+    def test_move_cycle(self):
+        """Проверочный ход"""
+        try:
+            self.model.set_regs['force_alarm'] = 30
+            self.model.write_emergency_force()
+            time.sleep(0.1)
+
+            self.model.set_regs['frequency'] = self.model.calculate_freq(0.01)
+            self.model.set_regs['adr_freq'] = 1
+            self.model.write_frequency()
+            time.sleep(0.1)
+
+            self.model.set_state['full_cycle'] = False
+            self.model.motor_up()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/test_move_cycle - {e}')

@@ -40,10 +40,10 @@ class PrgSettings:
             self.registers['buffer_count'] = 20
             self.registers['buffer_all'] = 15000
 
-            self.registers['force_now'] = 0
+            self.registers['force'] = 0
             self.registers['force_list'] = []
-            self.registers['amort_move'] = 0
-            self.registers['amort_move_list'] = []
+            self.registers['move'] = 0
+            self.registers['move_list'] = []
             self.registers['force_alarm'] = 2000
             self.registers['cycle_force'] = 0
             self.registers['lost_control'] = 0
@@ -63,6 +63,10 @@ class PrgSettings:
             self.registers['lowest_position'] = 0
             self.registers['green_light'] = 0
             self.registers['red_light'] = 0
+            self.registers['traverse_referent'] = False
+            self.registers['traverse_referent_point'] = 0
+            self.registers['bracket_height'] = 100
+            self.registers['traverse_position'] = False
 
             self.state['operator'] = {'name': '', 'rank': ''}
             self.state['amort'] = None
@@ -70,16 +74,16 @@ class PrgSettings:
             self.state['hod'] = 50
             self.state['start_direction'] = None
             self.state['current_direction'] = None
-            self.state['flag_full_cycle'] = False
-            self.state['flag_start_pos'] = False
-            self.state['start_pos'] = 0
-            self.state['flag_min_pos'] = False
-            self.state['min_pos'] = 0
-            self.state['flag_max_pos'] = False
-            self.state['max_pos'] = 0
+            self.state['full_cycle'] = False
+            self.state['start_pos'] = False
+            self.state['start_point'] = 0
+            self.state['min_pos'] = False
+            self.state['min_point'] = 0
+            self.state['max_pos'] = False
+            self.state['max_point'] = 0
             self.state['max_comp'] = 0
             self.state['max_recoil'] = 0
-            self.state['max_temp'] = 0
+            self.state['temper'] = 0
 
         except Exception as e:
             print(str(e))
