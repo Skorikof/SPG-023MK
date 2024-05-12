@@ -105,6 +105,7 @@ class AppWindow(QMainWindow):
         self.init_buttons()
         self.init_signals()
         self.start_page()
+        self.ui.main_STOP_btn.setEnabled(False)
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
@@ -372,6 +373,12 @@ class AppWindow(QMainWindow):
 
     def test_lab(self):
         try:
+            self.ui.main_stackedWidget.setCurrentIndex(2)
+            self.ui.main_STOP_btn.setEnabled(True)
+            self.ui.main_btn_frame.setEnabled(False)
+            self.ui.test_save_btn.setVisible(False)
+            self.ui.test_repeat_btn.setVisible(False)
+
             amort = self.model.set_state.get('amort')
 
             temp = float(self.ui.specif_speed_one_lineEdit.text())
@@ -397,11 +404,6 @@ class AppWindow(QMainWindow):
 
             self.controller.start_test_clicked(amort)
 
-            self.ui.main_stackedWidget.setCurrentIndex(2)
-            self.ui.main_btn_frame.setEnabled(False)
-            self.ui.test_save_btn.setVisible(False)
-            self.ui.test_repeat_btn.setVisible(False)
-
             self.ui.test_data_name_lineEdit.setText(name)
 
             self.ui.test_data_limit_comp_lineEdit.setText(limit_comp)
@@ -416,6 +418,7 @@ class AppWindow(QMainWindow):
             self.controller.work_interrupted_operator()
             self.specif_page()
             self.ui.main_btn_frame.setEnabled(True)
+            self.ui.main_STOP_btn.setEnabled(False)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_cancel_click - {e}')
@@ -423,6 +426,7 @@ class AppWindow(QMainWindow):
     def test_conveyor(self):
         try:
             self.ui.main_btn_frame.setEnabled(False)
+            self.ui.main_STOP_btn.setEnabled(True)
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
             amort = self.model.set_state.get('amort')
@@ -454,6 +458,7 @@ class AppWindow(QMainWindow):
         self.controller.work_interrupted_operator()
         self.specif_page()
         self.ui.main_btn_frame.setEnabled(True)
+        self.ui.main_STOP_btn.setEnabled(False)
 
     # def save_test_archive(self):
     #     self.win_archive.archive_save_test()

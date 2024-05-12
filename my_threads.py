@@ -76,23 +76,26 @@ class Writer(QRunnable):
         try:
             if self.tag == 'reg':
                 while self.number_attempts <= self.max_attempts:
-                    self.signals.thread_log.emit(f'Writer, {self.reg_write=}, {self.values=}, {self.dev_id=}')
+                    self.signals.thread_log.emit(f'Writer, start_reg = {self.reg_write:x}, '
+                                                 f'values = {self.values}')
                     try:
                         rw = self.client.execute(self.dev_id, self.cst.WRITE_MULTIPLE_REGISTERS,
                                                  self.reg_write, output_value=tuple(self.values))
-                        self.signals.thread_log.emit(f'Complite write {self.values=} in {self.reg_state=}')
+                        self.signals.thread_log.emit(f'Done write values = {self.values}'
+                                                     f' in reg = {self.reg_state:x}')
                         self.flag_write = True
                         self.number_attempts = self.max_attempts + 1
                         self.signals.write_finish.emit(True)
 
                     except Exception as e:
                         self.signals.thread_log.emit(f'Attempts write: {self.number_attempts}, '
-                                                     f'{self.values=} in {self.reg_write=}')
+                                                     f'values = {self.values} in reg = {self.reg_write:x}')
                         self.number_attempts += 1
                         time.sleep(0.02)
 
                 if not self.flag_write:
-                    self.signals.thread_log.emit(f'Unsuccessful write attempt {self.values=} in {self.reg_write=}')
+                    self.signals.thread_log.emit(f'Unsuccessful write attempt values = {self.values} in '
+                                                 f'reg = {self.reg_write:x}')
                     self.signals.thread_err.emit(f'ERROR format - {rw}')
                     self.signals.write_finish.emit(False)
 
