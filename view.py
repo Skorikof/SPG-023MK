@@ -10,10 +10,6 @@ from PyQt5.Qt import QFont
 import glob_var
 
 
-class WinSignals(QObject):
-    start_test = pyqtSignal(object)
-
-
 class VLine(QFrame):
     # a simple VLine, like the one you get from designer
     def __init__(self):
@@ -28,7 +24,6 @@ class AppWindow(QMainWindow):
         self.controller = controller
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.signals = WinSignals()
 
         self.win_set = win_set
         self.win_exec = ExecWin()
@@ -446,12 +441,25 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['traverse_referent'] = False
 
-            self.signals.start_test.emit(amort)
-
             self.controller.start_test_clicked(amort)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')
+
+    # def color_led_lamp(self):
+    #     try:
+    #         if self.model.set_regs.get('red_light') == '1':
+    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
+    #         else:
+    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+    #
+    #         if self.model.set_regs.get('green_light') == '1':
+    #             self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
+    #         else:
+    #             self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+    #
+    #     except Exception as e:
+    #         self.log_msg_err_slot(f'ERROR in view/color_led_lamp - {e}')
 
     def test_conv_cancel_click(self):
         self.log_msg_info_slot(f'Conveyor test stopped interrupted operator')

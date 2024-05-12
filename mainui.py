@@ -787,14 +787,34 @@ class Ui_MainWindow(object):
         self.red_signal = QtWidgets.QLineEdit(self.frame_signal)
         self.red_signal.setMinimumSize(QtCore.QSize(300, 80))
         self.red_signal.setMaximumSize(QtCore.QSize(300, 80))
-        self.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);")
+        self.red_signal.setStyleSheet("QLineEdit \n"
+"{\n"
+"    background-color: rgb(255, 255, 255);\n"
+"\n"
+"    border: 2px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}")
         self.red_signal.setReadOnly(True)
         self.red_signal.setObjectName("red_signal")
         self.horizontalLayout_5.addWidget(self.red_signal)
         self.green_signal = QtWidgets.QLineEdit(self.frame_signal)
         self.green_signal.setMinimumSize(QtCore.QSize(300, 80))
         self.green_signal.setMaximumSize(QtCore.QSize(300, 80))
-        self.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);")
+        self.green_signal.setStyleSheet("QLineEdit \n"
+"{\n"
+"    background-color: rgb(255, 255, 255);\n"
+"\n"
+"    border: 2px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}")
         self.green_signal.setReadOnly(True)
         self.green_signal.setObjectName("green_signal")
         self.horizontalLayout_5.addWidget(self.green_signal)
@@ -876,7 +896,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.main_stackedWidget.setCurrentIndex(1)
+        self.main_stackedWidget.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
