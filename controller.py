@@ -165,7 +165,10 @@ class Controller:
         try:
             self.amort = amort
             self.model.reader_start()
+            time.sleep(0.1)
             self.check_traverse_position()
+
+            self.start_test()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
@@ -264,3 +267,43 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/test_move_cycle - {e}')
+
+    def start_test(self):
+        try:
+            self.model.set_regs['force_alarm'] = 2000
+            self.model.write_emergency_force()
+            time.sleep(0.1)
+
+            temp = self.model.set_state.get('type_test')
+            if temp == 'lab':
+                self.start_laboratory_test()
+
+            elif temp == 'conv':
+                self.start_conveyor_test()
+
+            else:
+                pass
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/start_test - {e}')
+
+    def start_laboratory_test(self):
+        try:
+            speed = self.amort.speed_one
+            self.model.set_regs['frequency'] = self.model.calculate_freq(speed)
+            self.model.set_regs['adr_freq'] = 1
+            self.model.write_frequency()
+            time.sleep(0.1)
+
+            self.model.set_state['full_cycle'] = False
+            self.model.motor_up()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/start_laboratory_test - {e}')
+
+    def start_conveyor_test(self):
+        try:
+            pass
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/start_conveyor_test - {e}')

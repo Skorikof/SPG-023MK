@@ -1,6 +1,6 @@
 import inspect
-import serial
 import crcmod
+import serial
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack

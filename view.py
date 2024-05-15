@@ -377,8 +377,8 @@ class AppWindow(QMainWindow):
             amort = self.model.set_state.get('amort')
 
             temp = float(self.ui.specif_speed_one_lineEdit.text())
-            if temp != amort.speed:
-                amort.speed = temp
+            if temp != amort.speed_one:
+                amort.speed_one = temp
                 self.model.set_state['amort'].speed_one = temp
 
             name = amort.name_a
