@@ -40,6 +40,7 @@ class PrgSettings:
             self.registers['buffer_count'] = 20
             self.registers['buffer_all'] = 15000
 
+            self.registers['count_msg'] = 0
             self.registers['force'] = 0
             self.registers['force_list'] = []
             self.registers['move'] = 0

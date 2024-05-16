@@ -4,9 +4,9 @@ import serial
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack
-from my_threads import LogWriter, Writer, Reader
+from my_threads import LogWriter, Writer, Reader, ParsData
 from settings import PrgSettings
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal
 
 
 class WinSignals(QObject):
@@ -31,21 +31,12 @@ class Model:
         self.threadpool = QThreadPool()
 
         self.log_writer = None
-        self.reader_buffer = None
         self.reader = None
+        self.parser = None
+        self.flag_parser_init = False
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
-        self.flag_start_point = False
-        self.flag_start_direction = False
-        self.start_point = None
-        self.direction = None
-        self.flag_min = False
-        self.flag_max = False
-        self.values_f = []
-        self.values_move = []
-        self.values_state = []
-        self.timer_process = None
         self.count_msg = 0
 
     def start_param(self):
@@ -54,6 +45,7 @@ class Model:
         con = self.set_connect.get('connect')
         if con:
             self.init_reader()
+            self.reader_start()
         else:
             self.log_error(f'Нет подключения к контроллеру')
 
@@ -125,7 +117,7 @@ class Model:
         self.reader = Reader()
         self.reader.signals.thread_log.connect(self.log_info)
         self.reader.signals.thread_err.connect(self.log_error)
-        self.reader.signals.read_result.connect(self.reader_result)
+        self.reader.signals.read_result.connect(self.init_parser)
         self.signals.read_start.connect(self.reader.start_read)
         self.signals.start_test.connect(self.reader.start_test)
         self.signals.read_stop.connect(self.reader.stop_read)
@@ -140,15 +132,6 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
-        self.flag_start_point = False
-        self.flag_start_direction = False
-        self.start_point = None
-        self.direction = None
-        self.flag_min = False
-        self.flag_max = False
-        self.values_f.clear()
-        self.values_move.clear()
-        self.values_state.clear()
         self.signals.start_test.emit(self.set_regs)
         self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
@@ -163,36 +146,52 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def reader_result(self, res: dict, tag: str):
+    def init_parser(self, res, tag):
         try:
-            if tag == 'buffer':
-                self.pars_buffer_on_controller(res)
+            marg_dict = {**self.set_regs, **self.set_state, **res}
+            self.parser = ParsData(tag, **marg_dict)
 
-            if tag == 'reg':
-                res = res.get('regs')
-                force = self.magnitude_effort(res[0], res[1])
-                move = self.movement_amount(res[2])
-                self.register_state(res[3])
-                self.set_regs['counter_time'] = self.counter_time(res[4])
-                self.switch_state(res[5])
-                self.set_regs['traverse_move'] = self.movement_amount(res[6])
-                self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
-                self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
+            if not self.flag_parser_init:
+                self.parser.signals.thread_log.connect(self.log_info)
+                self.parser.signals.thread_err.connect(self.log_error)
+                self.parser.signals.pars_finish.connect(self.reader_result)
+                self.flag_parser_init = True
+            self.threadpool.start(self.parser)
 
-                if self.set_regs.get('cycle_force') == '1':
-                    force, move = self.delete_left_data(force, move)
+        except Exception as e:
+            self.log_error(f'ERROR in model/init_parser - {e}')
 
-                if not force:
-                    pass
-                else:
-                    self.pars_response_on_circle(force, move)
-
-            self.count_msg += 1
-            self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-
-            self.signals.read_finish.emit(self.set_regs)
-            if self.count_msg == 10000:
-                self.count_msg = 0
+    def reader_result(self, response):
+        try:
+            self.signals.read_finish.emit(**response)
+            # if tag == 'buffer':
+            #     self.pars_buffer_on_controller(res)
+            #
+            # if tag == 'reg':
+            #     res = res.get('regs')
+            #     force = self.magnitude_effort(res[0], res[1])
+            #     move = self.movement_amount(res[2])
+            #     self.register_state(res[3])
+            #     self.set_regs['counter_time'] = self.counter_time(res[4])
+            #     self.switch_state(res[5])
+            #     self.set_regs['traverse_move'] = self.movement_amount(res[6])
+            #     self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
+            #     self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
+            #
+            #     if self.set_regs.get('cycle_force') == '1':
+            #         force, move = self.delete_left_data(force, move)
+            #
+            #         if not force:
+            #             pass
+            #         else:
+            #             self.pars_response_on_circle(force, move)
+            #
+            # self.count_msg += 1
+            # self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+            #
+            # self.signals.read_finish.emit(self.set_regs)
+            # if self.count_msg == 10000:
+            #     self.count_msg = 0
 
         except Exception as e:
             self.log_error(f'ERROR in model/reader_result - {e}')

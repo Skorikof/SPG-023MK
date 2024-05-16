@@ -107,6 +107,9 @@ class AppWindow(QMainWindow):
         self.model.signals.read_finish.connect(self.update_statusbar_data)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
+        self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
+        self.controller.signals.traverse_position.connect(self.msg_traverse_position)
+        self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -136,6 +139,7 @@ class AppWindow(QMainWindow):
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
         self.ui.test_cancel_btn.clicked.connect(self.test_lab_cancel_click)
+        self.ui.test_repeat_btn.clicked.connect(self.test_lab)
         self.ui.test_conv_cancel_btn.clicked.connect(self.test_conv_cancel_click)
 
     def log_msg_info_slot(self, txt_log):
@@ -183,6 +187,44 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_controller_msg - {e}')
+
+    def msg_traverse_referent(self):
+        try:
+            txt = 'ОПРЕДЕЛЕНИЕ\nРЕФЕРЕНТНОЙ ТОЧКИ\nТРАВЕРСЫ'
+            self.main_ui_msg(txt, 'attention')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/msg_traverse_referent - {e}')
+
+    def msg_traverse_position(self):
+        try:
+            txt = 'ПОЗИЦИОНИРОВАНИЕ\nТРАВЕРСЫ\nДЛЯ УСТАНОВКИ\nАМОРТИЗАТОРА'
+            self.main_ui_msg(txt, 'attention')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/msg_traverse_position - {e}')
+
+    def msg_yellow_btn(self):
+        try:
+            temp = self.model.set_state.get('type_test')
+            if temp == 'conv':
+                txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ'
+                self.main_ui_msg(txt, 'attention')
+
+            elif temp == 'lab':
+                txt = 'ЖМАКНИТЕ\nЧТО-НИБУДЬ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
+                self.main_ui_msg(txt, 'attention')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/msg_yellow_btn - {e}')
+
+    def msg_test_move_cycle(self):
+        try:
+            txt = 'ПРОВЕРОЧНЫЙ\nХОД'
+            self.main_ui_msg(txt, 'attention')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/msg_test_move_cycle - {e}')
 
     def main_ui_msg(self, txt, tag):
         try:
@@ -373,6 +415,7 @@ class AppWindow(QMainWindow):
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.test_save_btn.setVisible(False)
             self.ui.test_repeat_btn.setVisible(False)
+            self.ui.test_cancel_btn.setText('СТОП')
 
             amort = self.model.set_state.get('amort')
 
@@ -397,7 +440,9 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['traverse_referent'] = False
 
-            self.controller.start_test_clicked(amort)
+            self.controller.current_amort(amort)
+
+            self.controller.start_test_clicked()
 
             self.ui.test_data_name_lineEdit.setText(name)
 
@@ -409,11 +454,18 @@ class AppWindow(QMainWindow):
 
     def test_lab_cancel_click(self):
         try:
-            self.log_msg_info_slot(f'Laboratory test stopped interrupted operator')
-            self.controller.work_interrupted_operator()
-            self.specif_page()
-            self.ui.main_btn_frame.setEnabled(True)
-            self.ui.main_STOP_btn.setEnabled(False)
+            temp = self.ui.test_cancel_btn.text()
+            if temp == 'СТОП':
+                self.log_msg_info_slot(f'Laboratory test stopped interrupted operator')
+                self.controller.work_interrupted_operator()
+                self.ui.test_save_btn.setVisible(True)
+                self.ui.test_repeat_btn.setVisible(True)
+                self.ui.main_btn_frame.setEnabled(True)
+                self.ui.main_STOP_btn.setEnabled(False)
+                self.ui.test_cancel_btn.setText('НАЗАД')
+
+            elif temp == 'НАЗАД':
+                self.specif_page()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_cancel_click - {e}')
@@ -441,7 +493,8 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['traverse_referent'] = False
 
-            self.controller.start_test_clicked(amort)
+            self.controller.current_amort(amort)
+            self.controller.start_test_clicked()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')

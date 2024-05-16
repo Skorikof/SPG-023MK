@@ -5,6 +5,10 @@ from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
 class ControlSignals(QObject):
     control_msg = pyqtSignal(str)
+    traverse_referent = pyqtSignal()
+    traverse_position = pyqtSignal()
+    wait_yellow_btn = pyqtSignal()
+    test_move_cycle = pyqtSignal()
 
 
 class Controller:
@@ -161,14 +165,20 @@ class Controller:
     #     elif test == 'start':
     #         test == 'stop'
 
-    def start_test_clicked(self, amort):
+    def current_amort(self, amort):
         try:
             self.amort = amort
-            self.model.reader_start()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/current_amort - {e}')
+
+    def start_test_clicked(self):
+        try:
+            self.model.write_bit_unblock_control()
             time.sleep(0.1)
             self.check_traverse_position()
 
-            self.start_test()
+            # self.start_test()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
@@ -194,14 +204,19 @@ class Controller:
             test_point = bracket + len_min + midpoint + hod / 2
 
             if not self.model.set_regs['traverse_referent']:
+                self.signals.traverse_referent.emit()
                 self.traverse_referent_point()
 
-            if not self.model.set_regs['traverse_position']:
-                set_point = len_max + bracket
-                self.traverse_move_position(set_point)
-
-            if test_point != self.model.set_regs['traverse_position']:
-                self.traverse_move_position(test_point)
+            # if not self.model.set_regs['traverse_position']:
+            #     self.signals.traverse_position.emit()
+            #     set_point = len_max + bracket
+            #     self.traverse_move_position(set_point)
+            #
+            # if test_point != self.model.set_regs['traverse_position']:
+            #     self.traverse_move_position(test_point)
+            #
+            # if test_point == self.model.set_regs['traverse_position']:
+            #     self.signals.wait_yellow_btn.emit()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/check_traverse_position - {e}')
@@ -236,9 +251,11 @@ class Controller:
             self.model.set_regs['frequency'] = 1000
             self.model.write_frequency()
             self.model.motor_up()
+            time.sleep(0.1)
             control = self.model.set_regs.get('highest_position')
             while control != '1':
                 print(f'Состояние верхнего концевика --> {self.model.set_regs["highest_position"]}')
+                print(f'Перемещение траверсы --> {self.model.set_regs.get("traverse_move")}')
                 control = self.model.set_regs.get('highest_position')
                 time.sleep(0.1)
 
@@ -253,6 +270,7 @@ class Controller:
     def test_move_cycle(self):
         """Проверочный ход"""
         try:
+            self.signals.test_move_cycle.emit()
             self.model.set_regs['force_alarm'] = 30
             self.model.write_emergency_force()
             time.sleep(0.1)
@@ -264,6 +282,15 @@ class Controller:
 
             self.model.set_state['full_cycle'] = False
             self.model.motor_up()
+
+            control = self.model.set_state.get('full_cycle')
+            while not control:
+                control = self.model.set_state.get('full_cycle')
+                time.sleep(0.1)
+
+            self.model.motor_stop()
+
+            return True
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/test_move_cycle - {e}')
