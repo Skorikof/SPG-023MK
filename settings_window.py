@@ -16,6 +16,7 @@ class SetWindow(QMainWindow):
     def __init__(self, model):
         super(SetWindow, self).__init__()
         try:
+            self.response = {}
             self.model = model
             self.ui = Ui_SettingsWindow()
             self.ui.setupUi(self)
@@ -40,7 +41,6 @@ class SetWindow(QMainWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
-        self.model.reader_stop()
         self.signals.closed.emit()
 
     def start_param(self):
@@ -48,7 +48,6 @@ class SetWindow(QMainWindow):
         self.init_buttons()
         self.init_signals()
         self.smap_line_edit()
-        self.model.reader_start()
 
     def _create_statusbar_set(self):
         self.statusbar = self.statusBar()
@@ -66,6 +65,8 @@ class SetWindow(QMainWindow):
         self.ui.btn_exit.clicked.connect(self.close)
         self.ui.btn_test.clicked.connect(self.btn_test_clicked)
         self.ui.btn_hod.clicked.connect(self.write_hod)
+        self.ui.btn_speed_main.clicked.connect(self.write_frequency_set)
+        self.ui.btn_freq_trverse.clicked.connect(self.write_frequency_set)
 
         self.ui.btn_motor_main_start.clicked.connect(self.click_btn_motor_start)
         self.ui.btn_motor_main_stop.clicked.connect(self.click_btn_motor_main_stop)
@@ -84,8 +85,16 @@ class SetWindow(QMainWindow):
         self.ui.btn_read.setVisible(False)
 
     def init_signals(self):
-        self.model.signals.read_finish.connect(self.update_win)
+        self.model.signals.read_finish.connect(self.update_data)
         self.model.signals.update_graph_settings.connect(self.update_graph_data)
+
+    def update_data(self, response):
+        try:
+            self.response = response
+            self.update_win(self.response)
+
+        except Exception as e:
+            self.statusbar_set_ui(f'ERROR in settings_window/update_data - {e}')
 
     def do_connect(self):
         try:
@@ -142,7 +151,7 @@ class SetWindow(QMainWindow):
             if not temp:
                 pass
             else:
-                self.model.set_state['hod'] = temp
+                self.model.set_regs['hod'] = temp
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/write_hod - {e}')
@@ -155,12 +164,13 @@ class SetWindow(QMainWindow):
                 if not value:
                     pass
                 else:
+                    value = value.replace(',', '.')
                     speed = self.model.calculate_freq(float(value))
                     self.model.set_regs['frequency'] = speed
                     self.model.set_regs['adr_freq'] = 1
                     self.model.write_frequency()
 
-            elif btn.objectName() == 'btn_freq_traverse':
+            elif btn.objectName() == 'btn_freq_trverse':
                 value = int(self.ui.lineEdit_freq_traverse.text())
                 if not value:
                     pass
@@ -207,7 +217,7 @@ class SetWindow(QMainWindow):
     def btn_set_doclick(self):
         try:
             btn = self.sender()
-            temp_list = [x for x in self.model.set_regs.get('list_state')]
+            temp_list = [x for x in self.response.get('list_state')]
 
             if btn.objectName() == 'btn_cycle_F':
                 if temp_list[0] == 0:
@@ -273,15 +283,15 @@ class SetWindow(QMainWindow):
     def set_color_fram(self, bit, rev=False):
         try:
             if rev:
-                if bit == '0':
-                    bit = '1'
+                if bit == 0:
+                    bit = 1
                 else:
-                    bit = '0'
+                    bit = 0
             color_gray = "background-color: rgb(93, 93, 93);\n"
             color_green = "background-color: rgb(0, 255, 0);\n"
-            if bit == '0':
+            if bit == 0:
                 return color_gray + "border-color: rgb(0, 0, 0);"
-            elif bit == '1':
+            elif bit == 1:
                 return color_green + "border-color: rgb(0, 0, 0);"
 
         except Exception as e:
@@ -296,7 +306,12 @@ class SetWindow(QMainWindow):
             
     def start_test(self):
         try:
-            self.model.set_state['type_test'] = 'hand'
+            self.model.set_regs['type_test'] = 'hand'
+            self.model.set_regs['start_pos'] = False
+            self.model.set_regs['start_direction'] = False
+            self.model.set_regs['current_direction'] = ''
+            self.model.set_regs['min_pos'] = False
+            self.model.set_regs['max_pos'] = False
             self.model.reader_start_test()
             self.graph_ui.show()
 
@@ -305,16 +320,15 @@ class SetWindow(QMainWindow):
 
     def stop_test(self):
         try:
-            self.model.reader_stop()
-            self.model.reader_start()
+            self.model.reader_stop_test()
 
         except Exception as e:
             print(str(e))
 
     def update_graph_data(self):
         try:
-            coord_x = self.model.set_regs.get('move_list')
-            coord_y = self.model.set_regs.get('force_list')
+            coord_x = self.response.get('move_graph')
+            coord_y = self.response.get('force_graph')
 
             self.graph_ui.data_line_test.setData(coord_x, coord_y)
 

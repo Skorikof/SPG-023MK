@@ -14,26 +14,16 @@ class ControlSignals(QObject):
 class Controller:
     def __init__(self, model):
         try:
+            self.response = {}
             self.amort = None
             self.timer_process = None
-            # self.values_time = []
-            # self.values_f = []
-            # self.values_move = []
-            # self.values_state = []
-            # self.time_proc = []
-            # self.val_1 = []
-            # self.val_2 = []
-            # self.val_3 = []
-            # self.val_4 = []
-            # self.val_5 = []
-            self.count_msg = 0
-            self.count_err = 0
 
             self.signals = ControlSignals()
             self.model = model
 
             self.model.start_param()
             self.check_directory()
+            self.init_signals()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/__init__ - {e}')
@@ -45,6 +35,20 @@ class Controller:
             os.mkdir('archive')
         if not os.path.exists('log'):
             os.mkdir('log')
+
+    def init_signals(self):
+        try:
+            self.model.signals.read_finish.connect(self.update_data)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/init_signals - {e}')
+
+    def update_data(self, response):
+        try:
+            self.response = response
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/update_data - {e}')
 
     # def result_test(self, result):
     #     try:
@@ -115,17 +119,17 @@ class Controller:
 
     def control_process(self):
         try:
-            if self.model.set_regs.get('lost_control') == '1':
+            if self.response.get('lost_control') == 1:
                 self.lost_control()
-            if self.model.set_regs.get('excess_force') == '1':
+            if self.response.get('excess_force') == 1:
                 self.excess_force()
-            if self.model.set_regs.get('safety_fence') == '1':
+            if self.response.get('safety_fence') == 1:
                 self.safety_fence()
-            if self.model.set_regs.get('alarm_highest_position') == '1':
+            if self.response.get('alarm_highest_position') == 1:
                 self.alarm_traverse_position('up')
-            if self.model.set_regs.get('alarm_lowest_position') == '1':
+            if self.response.get('alarm_lowest_position') == 1:
                 self.alarm_traverse_position('down')
-            # if self.model.set_regs.get('test_launch') == '1':
+            # if self.response.get('test_launch') == 1:
             #     self.yellow_btn_push()
 
         except Exception as e:
@@ -165,9 +169,9 @@ class Controller:
     #     elif test == 'start':
     #         test == 'stop'
 
-    def current_amort(self, amort):
+    def current_amort(self):
         try:
-            self.amort = amort
+            self.amort = self.response.get('amort')
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/current_amort - {e}')
@@ -186,7 +190,7 @@ class Controller:
     def stop_test_clicked(self):
         try:
             len_max = self.amort.max_length
-            bracket = self.model.set_regs.get('bracket_height')
+            bracket = self.response.get('bracket_height')
             stock_point = len_max + bracket
 
             self.traverse_move_position(stock_point)
@@ -200,22 +204,22 @@ class Controller:
             len_min = self.amort.min_length
             len_max = self.amort.max_length
             midpoint = (len_max - len_min)
-            bracket = self.model.set_regs.get('bracket_height')
+            bracket = self.response.get('bracket_height')
             test_point = bracket + len_min + midpoint + hod / 2
 
-            if not self.model.set_regs['traverse_referent']:
+            if not self.response['traverse_referent']:
                 self.signals.traverse_referent.emit()
                 self.traverse_referent_point()
 
-            # if not self.model.set_regs['traverse_position']:
+            # if not self.response['traverse_position']:
             #     self.signals.traverse_position.emit()
             #     set_point = len_max + bracket
             #     self.traverse_move_position(set_point)
             #
-            # if test_point != self.model.set_regs['traverse_position']:
+            # if test_point != self.response['traverse_position']:
             #     self.traverse_move_position(test_point)
             #
-            # if test_point == self.model.set_regs['traverse_position']:
+            # if test_point == self.response['traverse_position']:
             #     self.signals.wait_yellow_btn.emit()
 
         except Exception as e:
@@ -226,14 +230,14 @@ class Controller:
         try:
             self.model.set_regs['adr_freq'] = 2
             self.model.set_regs['frequency'] = 1000
-            if self.model.set_regs['traverse_move'] > set_point:
+            if self.response['traverse_move'] > set_point:
                 self.model.motor_down()
             else:
                 self.model.motor_up()
 
-            pos_trav = self.model.set_regs.get('traverse_move')
-            while set_point != (pos_trav - 3) or set_point != (pos_trav + 3):
-                pos_trav = self.model.set_regs.get('traverse_move')
+            pos_trav = self.response.get('traverse_move')
+            while set_point != (pos_trav - 2) or set_point != (pos_trav + 2):
+                pos_trav = self.response.get('traverse_move')
                 print(f'Позиция траверсы --> {pos_trav}')
                 time.sleep(0.1)
 
@@ -252,17 +256,17 @@ class Controller:
             self.model.write_frequency()
             self.model.motor_up()
             time.sleep(0.1)
-            control = self.model.set_regs.get('highest_position')
+            control = self.response.get('highest_position')
             while control != '1':
-                print(f'Состояние верхнего концевика --> {self.model.set_regs["highest_position"]}')
-                print(f'Перемещение траверсы --> {self.model.set_regs.get("traverse_move")}')
-                control = self.model.set_regs.get('highest_position')
+                print(f'Состояние верхнего концевика --> {self.response["highest_position"]}')
+                print(f'Перемещение траверсы --> {self.response.get("traverse_move")}')
+                control = self.response.get('highest_position')
                 time.sleep(0.1)
 
             self.model.motor_stop()
             time.sleep(0.2)
             self.model.set_regs['traverse_referent'] = True
-            self.model.set_regs['traverse_referent_point'] = self.model.set_regs.get('traverse_move')
+            self.model.set_regs['traverse_referent_point'] = self.response.get('traverse_move')
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/traverse_referent_point - {e}')
@@ -283,9 +287,9 @@ class Controller:
             self.model.set_state['full_cycle'] = False
             self.model.motor_up()
 
-            control = self.model.set_state.get('full_cycle')
+            control = self.response.get('full_cycle')
             while not control:
-                control = self.model.set_state.get('full_cycle')
+                control = self.response.get('full_cycle')
                 time.sleep(0.1)
 
             self.model.motor_stop()
@@ -301,7 +305,7 @@ class Controller:
             self.model.write_emergency_force()
             time.sleep(0.1)
 
-            temp = self.model.set_state.get('type_test')
+            temp = self.response.get('type_test')
             if temp == 'lab':
                 self.start_laboratory_test()
 

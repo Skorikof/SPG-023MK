@@ -20,6 +20,7 @@ class VLine(QFrame):
 class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
+        self.response = {}
         self.model = model
         self.controller = controller
         self.ui = Ui_MainWindow()
@@ -104,7 +105,7 @@ class AppWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.read_finish.connect(self.update_statusbar_data)
+        self.model.signals.read_finish.connect(self.update_data)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
@@ -141,6 +142,14 @@ class AppWindow(QMainWindow):
         self.ui.test_cancel_btn.clicked.connect(self.test_lab_cancel_click)
         self.ui.test_repeat_btn.clicked.connect(self.test_lab)
         self.ui.test_conv_cancel_btn.clicked.connect(self.test_conv_cancel_click)
+
+    def update_data(self, response):
+        try:
+            self.response = response
+            self.update_statusbar_data(self.response)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/update_data - {e}')
 
     def log_msg_info_slot(self, txt_log):
         self.model.log_info(txt_log)
@@ -206,7 +215,7 @@ class AppWindow(QMainWindow):
 
     def msg_yellow_btn(self):
         try:
-            temp = self.model.set_state.get('type_test')
+            temp = self.response.get('type_test')
             if temp == 'conv':
                 txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ'
                 self.main_ui_msg(txt, 'attention')
@@ -295,8 +304,8 @@ class AppWindow(QMainWindow):
         self.win_exec.show()
 
     def operator_select(self, name, rank):
-        self.model.set_state['operator']['name'] = name
-        self.model.set_state['operator']['rank'] = rank
+        self.model.set_regs['operator']['name'] = name
+        self.model.set_regs['operator']['rank'] = rank
 
         self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
 
@@ -329,7 +338,7 @@ class AppWindow(QMainWindow):
     def select_type_test(self, ind):
         try:
             if ind == 0:
-                self.model.set_state['type_test'] = 'lab'
+                self.model.set_regs['type_test'] = 'lab'
                 self.ui.specif_speed_one_lineEdit.setGeometry(QRect(480, 260, 100, 40))
                 self.ui.specif_data_label2_2.setVisible(False)
                 self.ui.specif_data_label2_3.setVisible(False)
@@ -337,7 +346,7 @@ class AppWindow(QMainWindow):
                 self.ui.specif_speed_one_lineEdit.setReadOnly(False)
 
             elif ind == 1:
-                self.model.set_state['type_test'] = 'conv'
+                self.model.set_regs['type_test'] = 'conv'
                 self.ui.specif_speed_one_lineEdit.setGeometry(QRect(570, 260, 100, 40))
                 self.ui.specif_data_label2_2.setVisible(True)
                 self.ui.specif_data_label2_3.setVisible(True)
@@ -350,15 +359,16 @@ class AppWindow(QMainWindow):
 
     def select_amort(self, ind):
         try:
-            self.model.set_state['amort'] = self.win_amort.amorts.struct.amorts[ind]
+            self.model.set_regs['amort'] = self.win_amort.amorts.struct.amorts[ind]
 
-            self.specif_ui_fill(self.model.set_state.get('amort'))
+            self.specif_ui_fill()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_amort - {e}')
 
-    def specif_ui_fill(self, obj):
+    def specif_ui_fill(self):
         try:
+            obj = self.response.get('amort')
             self.ui.specif_name_lineEdit.setText(str(obj.name_a))
             self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
             self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
@@ -393,10 +403,10 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            name = self.model.set_state.get('operator')['name']
-            rank = self.model.set_state.get('operator')['rank']
+            name = self.response.get('operator')['name']
+            rank = self.response.get('operator')['rank']
             if len(name) > 1 and len(rank) > 1:
-                temp = self.model.set_state.get('type_test')
+                temp = self.response.get('type_test')
                 if temp == 'lab':
                     self.test_lab()
                 elif temp == 'conv':
@@ -417,12 +427,12 @@ class AppWindow(QMainWindow):
             self.ui.test_repeat_btn.setVisible(False)
             self.ui.test_cancel_btn.setText('СТОП')
 
-            amort = self.model.set_state.get('amort')
+            amort = self.model.set_regs.get('amort')
 
             temp = float(self.ui.specif_speed_one_lineEdit.text())
             if temp != amort.speed_one:
                 amort.speed_one = temp
-                self.model.set_state['amort'].speed_one = temp
+                self.model.set_regs['amort'].speed_one = temp
 
             name = amort.name_a
             dimensions = f'{amort.min_length} - {amort.max_length}'
@@ -440,7 +450,7 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['traverse_referent'] = False
 
-            self.controller.current_amort(amort)
+            self.controller.current_amort()
 
             self.controller.start_test_clicked()
 
@@ -476,7 +486,7 @@ class AppWindow(QMainWindow):
             self.ui.main_STOP_btn.setEnabled(True)
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
-            amort = self.model.set_state.get('amort')
+            amort = self.response.get('amort')
             name = amort.name_a
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
@@ -493,7 +503,7 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['traverse_referent'] = False
 
-            self.controller.current_amort(amort)
+            self.controller.current_amort()
             self.controller.start_test_clicked()
 
         except Exception as e:

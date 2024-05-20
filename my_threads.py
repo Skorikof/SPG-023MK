@@ -12,7 +12,6 @@ class Signals(QObject):
     thread_log = pyqtSignal(str)
     thread_err = pyqtSignal(str)
     read_result = pyqtSignal(dict, str)
-    pars_finish = pyqtSignal(dict)
     write_finish = pyqtSignal(bool)
 
 
@@ -237,6 +236,13 @@ class Reader(QRunnable):
 
                     elif self.read_tag == 'buffer':
                         self.time_start = time.monotonic()
+
+                        self.values_time = []
+                        self.values_f = []
+                        self.values_move = []
+                        self.values_state = []
+                        self.time_proc = []
+
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 5)
 
@@ -248,7 +254,7 @@ class Reader(QRunnable):
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr[ind] - self.current_rec) == 1:
+                                    if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65535:
                                         flag_add = True
 
                                 if flag_add:
@@ -258,16 +264,26 @@ class Reader(QRunnable):
                                     self.count_rec += 1
 
                                     self.values_time.append(rr[ind])
-                                    temp = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
-                                    self.values_f.append(temp)
+                                    force = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
+                                    self.values_f.append(force)
 
-                                    temp = round(0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
-                                    self.values_move.append(temp)
+                                    move = round(0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
+                                    self.values_move.append(move)
 
                                     self.values_state.append(rr[ind + 4])
 
                                 else:
                                     break
+
+                            self.time_proc.append(round(time.monotonic() - self.time_start, 6))
+
+                            self.result['count'] = [x for x in self.values_time]
+                            self.result['force'] = [x for x in self.values_f]
+                            self.result['move'] = [x for x in self.values_move]
+                            self.result['state'] = [x for x in self.values_state]
+                            self.result['time'] = [x for x in self.time_proc]
+
+                            self.signals.read_result.emit(self.result, self.read_tag)
 
                             delta_r = 16384 + self.buffer_all - self.reg_buffer
                             if delta_r <= 0:
@@ -281,17 +297,7 @@ class Reader(QRunnable):
                                 else:
                                     self.buffer_count = int(delta_r / 5)
 
-                            self.time_proc.append(round(time.monotonic() - self.time_start, 6))
-
-                            self.result['count'] = self.values_time
-                            self.result['force'] = self.values_f
-                            self.result['move'] = self.values_move
-                            self.result['state'] = self.values_state
-                            self.result['time'] = self.time_proc
-
-                            self.signals.read_result.emit(self.result, self.read_tag)
-
-                            time.sleep(0.001)
+                            # time.sleep(0.001)
 
                         else:
                             self.signals.thread_err.emit(str(rr))
@@ -305,13 +311,6 @@ class Reader(QRunnable):
         self.reg_buffer = request.get('reg_buffer')
         self.buffer_count = request.get('buffer_count')
         self.buffer_all = request.get('buffer_all')
-
-        self.values_time = []
-        self.values_f = []
-        self.values_move = []
-        self.values_state = []
-
-        self.time_proc = []
 
         self.num_rec = 0
         self.count_rec = 0
@@ -338,240 +337,3 @@ class Reader(QRunnable):
 
     def exit_read(self):
         self.cycle = False
-
-
-class ParsData(QRunnable):
-    signals = Signals()
-
-    def __init__(self, *args, **kwargs):
-        super(ParsData, self).__init__()
-        self.args = args
-        self.kwargs = kwargs
-
-    @pyqtSlot()
-    def run(self):
-        try:
-            tag = self.args[0]
-            if tag == 'buffer':
-                self.pars_buffer_on_controller(self.kwargs)
-
-            if tag == 'reg':
-                res = self.kwargs.get('regs')
-                force = self.magnitude_effort(res[0], res[1])
-                move = self.movement_amount(res[2])
-                self.register_state(res[3])
-                self.kwargs['counter_time'] = self.counter_time(res[4])
-                self.switch_state(res[5])
-                self.kwargs['traverse_move'] = self.movement_amount(res[6])
-                self.kwargs['temperature'] = self.temperature_value(res[7], res[8])
-                self.kwargs['force_alarm'] = self.emergency_force(res[10], res[11])
-
-                force, move = self.delete_left_data(force, move)
-
-                if not force:
-                    pass
-                else:
-                    self.pars_response_on_circle(force, move)
-
-            self.kwargs['count_msg'] += 1
-            self.signals.thread_log.emit(f'Получен ответ контроллера - {self.kwargs.get("count_msg")}')
-
-            self.signals.pars_finish.emit(self.kwargs)
-            if self.kwargs['count_msg'] == 10000:
-                self.kwargs['count_msg'] = 0
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in thread ParsDat - {e}')
-
-    # FIXME
-    def pars_buffer_on_controller(self, response):
-        try:
-            force_list = response.get('force')
-            move_list = response.get('move')
-            state_list = response.get('state')
-
-            for i in range(len(force_list)):
-                force, move = self.delete_left_data(force_list[i], move_list[i])
-                if not force:
-                    pass
-                else:
-                    self.pars_response_on_circle(force, move)
-                    self.register_state(state_list[i])
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in model/pars_buffer_on_controller - {e}')
-
-    def delete_left_data(self, force, move):
-        try:
-            if force == -100000.0:
-                force, move = None, None
-
-            return force, move
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in model/delete_left_data - {e}')
-
-    def pars_response_on_circle(self, force, move):
-        try:
-            self.kwargs['force'] = force
-            self.kwargs['move'] = move
-
-            if not self.kwargs.get('start_pos'):
-                self.kwargs['start_point'] = move
-                start_point = move
-                self.add_data_on_graph(force, move)
-                self.kwargs['start_pos'] = True
-
-            if not self.kwargs.get('start_direction'):
-                if start_point < move:
-                    point = move
-                    self.kwargs['start_direction'] = 'up'
-                    self.kwargs['current_direction'] = 'up'
-                    self.add_data_on_graph(force, move)
-
-                elif start_point > move:
-                    point = move
-                    self.kwargs['start_direction'] = 'down'
-                    self.kwargs['current_direction'] = 'down'
-                    self.add_data_on_graph(force, move)
-
-                else:
-                    self.kwargs['start_direction'] = None
-
-            if self.kwargs.get('current_direction') == 'up':
-                if move < point:
-                    max_point = point
-                    self.kwargs['max_pos'] = True
-                    self.kwargs['max_point'] = point
-                    self.kwargs['current_direction'] = 'down'
-                point = move
-                self.add_data_on_graph(force, move)
-
-            if self.kwargs.get('current_direction') == 'down':
-                if move > point:
-                    min_point = point
-                    self.kwargs['min_pos'] = True
-                    self.kwargs['min_point'] = point
-                    self.kwargs['current_direction'] = 'up'
-                point = move
-                self.add_data_on_graph(force, move)
-
-            if self.kwargs.get('min_pos') and self.kwargs.get('max_pos') \
-                    and abs(start_point - move) < 0.05:
-                self.kwargs['full_cycle'] = True
-                self.add_data_on_graph(force, move)
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in model/pars_response_on_circle - {e}')
-
-    def add_data_on_graph(self, force, move):
-        """Добавление координаты в списки усилия и перемещения"""
-        try:
-            self.kwargs['force_list'].append(force)
-            self.kwargs['move_list'].append(move)
-
-            if self.kwargs.get('full_cycle'):
-                self.full_circle_done()
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in model/add_data_on_graph - {e}')
-
-    def full_circle_done(self):
-        try:
-            print(f'force --> {self.kwargs.get("force_list")}')
-            print(f'move --> {self.kwargs.get("move_list")}')
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in model/full_circle_done - {e}')
-
-    def magnitude_effort(self, low_reg, big_reg):
-        """Текущая величина усилия"""
-        try:
-            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 0)
-
-            return val_temp
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/magnitude_effort - {e}')
-
-    def movement_amount(self, data) -> float:
-        """Текущая величина перемещения штока аммортизатора или траверсы"""
-        try:
-            result = round(0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
-
-            return result
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/movement_amount - {e}')
-
-    def register_state(self, register):
-        """Регистр состояния 0х2003"""
-        try:
-            temp = bin(register)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-
-            self.kwargs['cycle_force'] = int(bits[0])
-            self.kwargs['list_state'][0] = int(bits[0])
-            self.kwargs['red_light'] = int(bits[1])
-            self.kwargs['list_state'][1] = int(bits[1])
-            self.kwargs['green_light'] = int(bits[2])
-            self.kwargs['list_state'][2] = int(bits[2])
-            self.kwargs['lost_control'] = int(bits[3])
-            self.kwargs['list_state'][3] = int(bits[3])
-            self.kwargs['excess_force'] = int(bits[4])
-            self.kwargs['list_state'][4] = int(bits[4])
-            self.kwargs['safety_fence'] = int(bits[8])
-            self.kwargs['list_state'][8] = int(bits[8])
-            self.kwargs['state_freq'] = int(bits[11])
-            self.kwargs['list_state'][11] = int(bits[11])
-            self.kwargs['state_force'] = int(bits[12])
-            self.kwargs['list_state'][12] = int(bits[12])
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/register_state - {e}')
-
-    def counter_time(self, register):
-        """Регистр счётчика времени"""
-        try:
-            return register
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/counter_time - {e}')
-
-    def switch_state(self, register):
-        """Регистр состояния входов модуля МВ110-224.16ДН"""
-        try:
-            temp = bin(register)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-
-            self.kwargs['safety_fence'] = int(bits[0])
-            self.kwargs['traverse_block_1'] = int(bits[1])
-            self.kwargs['traverse_block_2'] = int(bits[2])
-            self.kwargs['test_launch'] = int(bits[3])
-            self.kwargs['alarm_highest_position'] = int(bits[8])
-            self.kwargs['alarm_lowest_position'] = int(bits[9])
-            self.kwargs['highest_position'] = int(bits[12])
-            self.kwargs['lowest_position'] = int(bits[13])
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/switch_state - {e}')
-
-    def temperature_value(self, low_reg, big_reg):
-        """Величина температуры с модуля МВ-110-224-2А"""
-        try:
-            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
-
-            return val_temp
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/temperature_value - {e}')
-
-    def emergency_force(self, low_reg, big_reg):
-        """Аварийное усилие"""
-        try:
-            val_temp = unpack('f', pack('<HH', big_reg, low_reg))[0]
-
-            return val_temp
-
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in my_thread/emergency_force - {e}')

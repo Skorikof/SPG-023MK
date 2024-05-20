@@ -1050,7 +1050,7 @@ class Ui_SettingsWindow(object):
         self.btn_connect.setText(_translate("SettingsWindow", "ПОДКЛЮЧИТЬСЯ"))
         self.btn_read.setText(_translate("SettingsWindow", "ЧИТАТЬ"))
         self.lbl_txt19_2.setText(_translate("SettingsWindow", "Скорость, (м/с)"))
-        self.lineEdit_hod.setText(_translate("SettingsWindow", "50"))
+        self.lineEdit_hod.setText(_translate("SettingsWindow", "120"))
         self.lbl_txt6_3.setText(_translate("SettingsWindow", "Жёлтая кнопка"))
         self.lbl_txt1_2.setText(_translate("SettingsWindow", "Шатун"))
         self.lbl_txt1_3.setText(_translate("SettingsWindow", "Траверса"))
