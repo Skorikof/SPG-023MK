@@ -163,40 +163,41 @@ class Model:
     def reader_result(self, response, tag):
         try:
             if tag == 'buffer':
+                count_list = []
+                force_list = []
+                move_list = []
+                state_list = []
 
-                if not response.get('force'):
-                    self.restart_read_buffer()
+                for i in range(len(response.get('force'))):
+                    if response.get('force')[i] != -100000.0:
+                        count_list.append(response.get('state')[i])
+                        force_list.append(response.get('force')[i])
+                        move_list.append(response.get('move')[i])
+                        state_list.append(response.get('state')[i])
+                        self.count_msg += 1
+                        self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                    else:
+                        pass
+
+                if not force_list:
+                    print(f'Пришла пустая посылка')
+                    pass
 
                 else:
-                    force_list = []
-                    move_list = []
-                    for i in range(len(response.get('force'))):
-                        force, move, count = self.delete_left_data(response.get('force')[i],
-                                                                   response.get('move')[i],
-                                                                   response.get('count')[i])
-
-                        if not force:
-                            pass
-                        else:
-                            force_list.append(force)
-                            move_list.append(move)
-                            self.set_regs['counter_time'] = count
-                            self.set_regs['force'] = force
-                            self.set_regs['move'] = move
-                            self.count_msg += 1
-                            self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-                            self.register_state(response.get('state')[i])
-
-                            self.signals.read_finish.emit(self.set_regs)
-
                     self.set_regs['force_list'] = [x for x in force_list]
                     self.set_regs['move_list'] = [x for x in move_list]
-                    # print(f'force_list --> {force_list}')
-                    # print(f'move_list --> {move_list}')
+                    self.set_regs['count_list'] = [x for x in count_list]
+                    self.set_regs['state_list'] = [x for x in state_list]
+
+                    self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
+                    self.set_regs['force'] = self.set_regs.get('force_list')[-1]
+                    self.set_regs['move'] = self.set_regs.get('move_list')[-1]
+
+                    self.register_state(self.set_regs.get('state_list')[-1])
+
+                    self.signals.read_finish.emit(self.set_regs)
 
                     self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
-
-                    # self.signals.read_finish.emit(self.set_regs)
 
             if tag == 'reg':
                 res = response.get('regs')
@@ -228,17 +229,6 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/reader_result - {e}')
 
-    def delete_left_data(self, force, move, count):
-        try:
-            if force == -100000.0:
-                force, move, count = None, None, None
-                self.count_err += 1
-
-            return force, move, count
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/delete_left_data - {e}')
-
     def find_start_point(self, move: float):
         try:
             self.set_regs['start_point'] = move
@@ -267,7 +257,6 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/find_start_direction - {e}')
 
-    # FIXME
     def pars_response_on_circle(self, force: list, move: list):
         try:
             if not self.set_regs.get('start_pos'):
@@ -295,7 +284,7 @@ class Model:
                     self.set_regs['current_direction'] = 'up'
 
             if self.set_regs.get('min_pos') and self.set_regs.get('max_pos') \
-                    and abs(self.set_regs.get('start_point') - 0.1) in move:
+                    and self.set_regs.get('start_point') - 1 in move:
                 self.set_regs['full_cycle'] = True
                 print(f'Full cycle is done!')
 
@@ -317,13 +306,14 @@ class Model:
 
     def full_circle_done(self, force: list, move: list):
         try:
+            self.set_regs['full_cycle'] = False
+            self.set_regs['min_pos'] = False
+            self.set_regs['max_pos'] = False
             self.set_regs['force_graph'] = [x for x in force]
             self.set_regs['move_graph'] = [x for x in move]
             self.signals.update_graph_settings.emit()
             self.force_graph = []
             self.move_graph = []
-            # print(f'force --> {self.set_regs.get("force_list")}')
-            # print(f'move --> {self.set_regs.get("move_list")}')
 
         except Exception as e:
             self.log_error(f'ERROR in model/full_circle_done - {e}')

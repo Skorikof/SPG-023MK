@@ -338,3 +338,10 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_conveyor_test - {e}')
+
+    # def stop_gear_min_pos(self):
+    #     try:
+    #
+    #
+    #     except Exception as e:
+    #         self.model.log_error(f'ERROR in controller/stop_gear_min_pos - {e}')

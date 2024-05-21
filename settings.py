@@ -54,6 +54,8 @@ class PrgSettings:
             self.registers['frequency'] = 0
             self.registers['state_force'] = 0
             self.registers['counter_time'] = 0
+            self.registers['count_list'] = []
+            self.registers['state_list'] = []
 
             self.registers['safety_fence'] = 0
             self.registers['traverse_block_1'] = 0
