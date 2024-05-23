@@ -86,7 +86,6 @@ class SetWindow(QMainWindow):
 
     def init_signals(self):
         self.model.signals.read_finish.connect(self.update_data)
-        self.model.signals.update_graph_settings.connect(self.update_graph_data)
 
     def update_data(self, response):
         try:

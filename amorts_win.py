@@ -93,6 +93,7 @@ class AmortWin(QMainWindow):
     def amorts_ui_clear(self):
         try:
             self.ui.lbl_hod.setText('')
+            self.ui.lbl_adapter.setText('')
             self.ui.lbl_speed_1.setText('')
             self.ui.lbl_speed_2.setText('')
             self.ui.lbl_length_min.setText('')
@@ -111,6 +112,7 @@ class AmortWin(QMainWindow):
             self.amorts.current_index = index
 
             self.ui.lbl_hod.setText(str(self.amorts.struct.amorts[index].hod))
+            self.ui.lbl_adapter.setText(str(self.amorts.struct.amorts[index].adapter))
             self.ui.lbl_speed_1.setText(str(self.amorts.struct.amorts[index].speed_one))
             self.ui.lbl_speed_2.setText(str(self.amorts.struct.amorts[index].speed_two))
             self.ui.lbl_length_min.setText(str(self.amorts.struct.amorts[index].min_length))
@@ -143,13 +145,14 @@ class AmortWin(QMainWindow):
             name = amort.name_a
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
+            adapter = f'{amort.adapter}'
             speed = f'one: {amort.speed_one} & two: {amort.speed_two}'
             limit_comp = f'{amort.min_comp} - {amort.max_comp}'
             limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
             temper = f'{amort.max_temper}'
 
             txt_log = f'Amort is delete --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                      f'speed = {speed}, limit_comp = {limit_comp}, ' \
+                      f'adapter = {adapter}, speed = {speed}, limit_comp = {limit_comp}, ' \
                       f'limit_recoil = {limit_recoil}, max_temper = {temper}'
 
             self.signals.log_msg.emit(txt_log)
@@ -173,6 +176,7 @@ class AmortWin(QMainWindow):
                 self.new_amort['len_min'] = win_diag.le_length_min.text().translate(trans_table)
                 self.new_amort['len_max'] = win_diag.le_length_max.text().translate(trans_table)
                 self.new_amort['hod'] = win_diag.le_hod.text().translate(trans_table)
+                self.new_amort['adapter'] = str(win_diag.adapter_cb.currentIndex() + 1)
                 self.new_amort['speed_one'] = win_diag.le_speed_one.text().translate(trans_table)
                 self.new_amort['speed_two'] = win_diag.le_speed_two.text().translate(trans_table)
                 self.new_amort['comp_min'] = win_diag.le_comp_min.text().translate(trans_table)
@@ -186,13 +190,14 @@ class AmortWin(QMainWindow):
                     name = self.new_amort.get('name_a')
                     dimensions = f'{self.new_amort.get("min_length")} - {self.new_amort.get("max_length")}'
                     hod = f'{self.new_amort.get("hod")}'
+                    adapter = f'{self.new_amort.get("adapter")}'
                     speed = f'one: {self.new_amort.get("speed_one")} & two: {self.new_amort.get("speed_two")}'
                     limit_comp = f'{self.new_amort.get("min_comp")} - {self.new_amort.get("max_comp")}'
                     limit_recoil = f'{self.new_amort.get("min_recoil")} - {self.new_amort.get("max_recoil")}'
                     temper = f'{self.new_amort.get("max_temper")}'
 
                     txt_log = f'Amort is added --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                              f'speed = {speed}, limit_comp = {limit_comp}, ' \
+                              f'adapter = {adapter}, speed = {speed}, limit_comp = {limit_comp}, ' \
                               f'limit_recoil = {limit_recoil}, max_temper = {temper}'
 
                     self.signals.log_msg.emit(txt_log[:-1])

@@ -46,6 +46,7 @@ class PrgSettings:
             self.registers['move'] = 0
             self.registers['move_list'] = []
             self.registers['move_graph'] = []
+
             self.registers['force_alarm'] = 2000
             self.registers['cycle_force'] = 0
             self.registers['lost_control'] = 0
@@ -61,16 +62,20 @@ class PrgSettings:
             self.registers['traverse_block_1'] = 0
             self.registers['traverse_block_2'] = 0
             self.registers['test_launch'] = 0
+            self.registers['test_flag'] = False
             self.registers['alarm_highest_position'] = 0
             self.registers['highest_position'] = 0
             self.registers['alarm_lowest_position'] = 0
             self.registers['lowest_position'] = 0
             self.registers['green_light'] = 0
             self.registers['red_light'] = 0
+            self.registers['traverse_stock'] = 755
             self.registers['traverse_referent'] = False
             self.registers['traverse_referent_point'] = 0
-            self.registers['bracket_height'] = 100
+            self.registers['bracket_height'] = 120
             self.registers['traverse_position'] = False
+            self.registers['traverse_point'] = 0
+            self.registers['stage'] = ''
 
             self.registers['operator'] = {'name': '', 'rank': ''}
             self.registers['amort'] = None

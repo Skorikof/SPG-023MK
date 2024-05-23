@@ -21,6 +21,8 @@ class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
         self.response = {}
+        self.pen_test_conv = None
+        self.data_line_test_conv = None
         self.model = model
         self.controller = controller
         self.ui = Ui_MainWindow()
@@ -102,15 +104,18 @@ class AppWindow(QMainWindow):
         self.init_signals()
         self.start_page()
         self.ui.main_STOP_btn.setEnabled(False)
+        self.init_conv_graph()
 
     def init_signals(self):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_data)
+        self.model.signals.update_graph_settings.connect(self.update_data_graph)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
         self.controller.signals.traverse_position.connect(self.msg_traverse_position)
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
+        self.controller.signals.conv_win_test.connect(self.conv_test_win)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -217,7 +222,7 @@ class AppWindow(QMainWindow):
         try:
             temp = self.response.get('type_test')
             if temp == 'conv':
-                txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ'
+                txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
                 self.main_ui_msg(txt, 'attention')
 
             elif temp == 'lab':
@@ -334,6 +339,21 @@ class AppWindow(QMainWindow):
 
         self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
         self.select_type_test(0)
+
+    def update_data_graph(self):
+        try:
+            temp = self.response.get('type_test')
+            if temp == 'lab':
+                pass
+
+            elif temp == 'conv':
+                self.update_conv_graph()
+
+            elif temp == 'hand':
+                self.win_set.update_graph_data()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/update_data_graph - {e}')
 
     def select_type_test(self, ind):
         try:
@@ -484,7 +504,7 @@ class AppWindow(QMainWindow):
         try:
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.main_STOP_btn.setEnabled(True)
-            self.ui.main_stackedWidget.setCurrentIndex(3)
+            # self.ui.main_stackedWidget.setCurrentIndex(3)
 
             amort = self.response.get('amort')
             name = amort.name_a
@@ -508,6 +528,34 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')
+
+    def conv_test_win(self):
+        try:
+            self.ui.main_stackedWidget.setCurrentIndex(3)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/conv_test_win - {e}')
+
+    def init_conv_graph(self):
+        try:
+            self.ui.conv_GraphWidget.showGrid(True, True)
+            self.ui.conv_GraphWidget.setBackground('w')
+
+            self.pen_test_conv = pg.mkPen(color='black', width=3)
+            self.data_line_test_conv = self.ui.conv_GraphWidget.plot([], [], pen=self.pen_test_conv)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/init_conv_graph - {e}')
+
+    def update_conv_graph(self):
+        try:
+            coord_x = self.response.get('move_graph')
+            coord_y = self.response.get('force_graph')
+
+            self.data_line_test_conv.setData(coord_x, coord_y)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/update_conv_graph - {e}')
 
     # def color_led_lamp(self):
     #     try:

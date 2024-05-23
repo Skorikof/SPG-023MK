@@ -12,6 +12,7 @@ class DataAmort(object):
         self.min_length = 0
         self.max_length = 0
         self.hod = 0
+        self.adapter = 0
         self.speed_one = 0
         self.speed_two = 0
         self.min_comp = 0
@@ -45,6 +46,8 @@ class Amort:
                             self.names.append(temp_val)
                         if key == 'hod':
                             self.struct.amorts[ind].hod = int(temp_val)
+                        if key == 'adapter':
+                            self.struct.amorts[ind].adapter = int(temp_val)
                         if key == 'speed_one':
                             self.struct.amorts[ind].speed_one = float(temp_val)
                         if key == 'speed_two':
@@ -81,6 +84,7 @@ class Amort:
 
                 self.config.set(nam_section, 'name', self.struct.amorts[i].name_a)
                 self.config.set(nam_section, 'hod', str(self.struct.amorts[i].hod))
+                self.config.set(nam_section, 'adapter', str(self.struct.amorts[i].adapter))
                 self.config.set(nam_section, 'speed_one', str(self.struct.amorts[i].speed_one))
                 self.config.set(nam_section, 'speed_two', str(self.struct.amorts[i].speed_two))
                 self.config.set(nam_section, 'min_length', str(self.struct.amorts[i].min_length))
@@ -93,7 +97,7 @@ class Amort:
                 self.config.set(nam_section, 'max_recoil', str(self.struct.amorts[i].max_recoil))
                 self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
 
-            with open('amorts.ini', "w") as configfile:
+            with open('amorts.ini', "w", encoding='cp1251') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
@@ -107,6 +111,7 @@ class Amort:
 
             self.config.set(nam_section, 'name', obj.get('name'))
             self.config.set(nam_section, 'hod', obj.get('hod'))
+            self.config.set(nam_section, 'adapter', obj.get('adapter'))
             self.config.set(nam_section, 'speed_one', obj.get('speed_one'))
             self.config.set(nam_section, 'speed_two', obj.get('speed_two'))
             self.config.set(nam_section, 'min_length', obj.get('len_min'))
@@ -119,7 +124,7 @@ class Amort:
             self.config.set(nam_section, 'max_recoil', obj.get('recoil_max'))
             self.config.set(nam_section, 'max_temper', obj.get('max_temper'))
 
-            with open('amorts.ini', 'w') as configfile:
+            with open('amorts.ini', 'w', encoding='cp1251') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:

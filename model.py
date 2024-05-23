@@ -19,7 +19,9 @@ class WinSignals(QObject):
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal(dict)
+    full_cycle = pyqtSignal()
     update_graph_settings = pyqtSignal()
+    test_launch = pyqtSignal()
 
 
 class Model:
@@ -38,7 +40,6 @@ class Model:
         self.writer_flag_init = False
         self.flag_write = False
         self.count_msg = 0
-        self.count_err = 0
         self.count_point = 0
         self.force_graph = []
         self.move_graph = []
@@ -131,7 +132,6 @@ class Model:
 
     def reader_start(self):
         self.count_msg = 0
-        self.count_err = 0
         client = self.set_connect.get('client')
         self.signals.read_start.emit(client, cst, self.set_regs)
         self.status_bar_msg(f'Чтение контроллера запущено')
@@ -150,15 +150,6 @@ class Model:
 
     def reader_exit(self):
         self.signals.read_exit.emit()
-
-    def restart_read_buffer(self):
-        try:
-            self.reader_stop_test()
-            time.sleep(0.1)
-            self.reader_start_test()
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/restart_read_buffer - {e}')
 
     def reader_result(self, response, tag):
         try:
@@ -206,14 +197,13 @@ class Model:
                 self.register_state(res[3])
                 self.set_regs['counter_time'] = self.counter_time(res[4])
                 self.switch_state(res[5])
-                self.set_regs['traverse_move'] = self.movement_amount(res[6])
+                self.set_regs['traverse_move'] = -0.5 * self.movement_amount(res[6])
                 self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
                 self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
 
                 if force == -100000.0:
                     pass
                     force, move = None, None
-                    self.count_err += 1
 
                 else:
                     self.set_regs['force'] = force
@@ -225,6 +215,9 @@ class Model:
 
             if self.count_msg == 10000:
                 self.count_msg = 0
+
+            if self.set_regs['test_launch'] == 1:
+                self.signals.test_launch.emit()
 
         except Exception as e:
             self.log_error(f'ERROR in model/reader_result - {e}')
@@ -306,6 +299,8 @@ class Model:
 
     def full_circle_done(self, force: list, move: list):
         try:
+            self.signals.full_cycle.emit()
+
             self.set_regs['full_cycle'] = False
             self.set_regs['min_pos'] = False
             self.set_regs['max_pos'] = False
