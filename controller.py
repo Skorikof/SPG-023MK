@@ -508,6 +508,7 @@ class Controller:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.write_speed_motor(1, speed=0.05)
+            self.model.set_regs['test_flag'] = False
             self.model.set_regs['stage'] = 'stop_gear_min_pos'
 
         except Exception as e:
