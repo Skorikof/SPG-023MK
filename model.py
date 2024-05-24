@@ -39,10 +39,12 @@ class Model:
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
+        self.amort = None
         self.count_msg = 0
         self.count_point = 0
         self.force_graph = []
         self.move_graph = []
+        self.time_push_yellow = None
 
     def start_param(self):
         self.set_connect['cst'] = cst
@@ -88,6 +90,13 @@ class Model:
     def log_info(self, txt_log):
         self.status_bar_msg(txt_log)
         self.save_log('info', txt_log)
+
+    def current_amort(self):
+        try:
+            self.amort = self.set_regs['amort']
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/current_amort - {e}')
 
     def init_connect(self):
         try:
@@ -161,7 +170,7 @@ class Model:
 
                 for i in range(len(response.get('force'))):
                     if response.get('force')[i] != -100000.0:
-                        count_list.append(response.get('state')[i])
+                        count_list.append(response.get('count')[i])
                         force_list.append(response.get('force')[i])
                         move_list.append(response.get('move')[i])
                         state_list.append(response.get('state')[i])
@@ -193,7 +202,7 @@ class Model:
             if tag == 'reg':
                 res = response.get('regs')
                 force = self.magnitude_effort(res[0], res[1])
-                move = self.movement_amount(res[2])
+                move = -1 * self.movement_amount(res[2])
                 self.register_state(res[3])
                 self.set_regs['counter_time'] = self.counter_time(res[4])
                 self.switch_state(res[5])
@@ -216,8 +225,27 @@ class Model:
             if self.count_msg == 10000:
                 self.count_msg = 0
 
-            if self.set_regs['test_launch'] == 1:
-                self.signals.test_launch.emit()
+            if self.set_regs['yellow_btn'] == 1:
+                flag_test = self.set_regs.get('test_launch')
+                if flag_test:
+                    flag = self.set_regs.get('rattle_yellow')
+
+                    if not flag:
+                        self.time_push_yellow = time.monotonic()
+                        self.signals.test_launch.emit()
+                        self.set_regs['rattle_yellow'] = True
+
+                    else:
+                        if time.monotonic() - self.time_push_yellow > 2:
+                            self.time_push_yellow = time.monotonic()
+                            self.signals.test_launch.emit()
+                            self.set_regs['rattle_yellow'] = True
+
+                        else:
+                            pass
+
+                else:
+                    pass
 
         except Exception as e:
             self.log_error(f'ERROR in model/reader_result - {e}')
@@ -233,13 +261,13 @@ class Model:
 
     def find_start_direction(self, move: list):
         try:
-            point = self.set_regs.get('start_point')
-            if point < move[-1]:
+            start_point = self.set_regs.get('start_point')
+            if start_point < move[-1]:
                 self.set_regs['start_direction'] = 'up'
                 self.set_regs['current_direction'] = 'up'
                 print(f'Find start direction --> {self.set_regs["start_direction"]}')
 
-            elif point > move[-1]:
+            elif start_point > move[-1]:
                 self.set_regs['start_direction'] = 'down'
                 self.set_regs['current_direction'] = 'down'
                 print(f'Find start direction --> {self.set_regs["start_direction"]}')
@@ -277,9 +305,11 @@ class Model:
                     self.set_regs['current_direction'] = 'up'
 
             if self.set_regs.get('min_pos') and self.set_regs.get('max_pos') \
-                    and self.set_regs.get('start_point') - 1 in move:
+                    and self.set_regs.get('start_point') + 1 in move:
+
                 self.set_regs['full_cycle'] = True
                 print(f'Full cycle is done!')
+                self.full_circle_done(self.force_graph, self.move_graph)
 
         except Exception as e:
             self.log_error(f'ERROR in model/pars_response_on_circle - {e}')
@@ -291,22 +321,33 @@ class Model:
                 self.force_graph.append(force[i])
                 self.move_graph.append(move[i])
 
-            if self.set_regs.get('full_cycle'):
-                self.full_circle_done(self.force_graph, self.move_graph)
-
         except Exception as e:
             self.log_error(f'ERROR in model/add_data_on_graph - {e}')
 
     def full_circle_done(self, force: list, move: list):
         try:
-            self.signals.full_cycle.emit()
+            teor_hod = self.amort.hod
+            if teor_hod == 120:
+                teor_hod = 118
+
+            fact_hod = abs(self.set_regs['min_point']) + abs(self.set_regs['max_point'])
+
+            if abs(fact_hod - teor_hod) > 2:
+                self.set_regs['start_pos'] = False
+                print(f'Значения с линейки меньше заявленного хода')
+
+            else:
+                self.set_regs['start_point'] = self.set_regs.get('min_point')
+                self.set_regs['max_comp'] = max(force)
+                self.set_regs['max_recoil'] = abs(min(force))
+                self.set_regs['force_graph'] = [x for x in force]
+                self.set_regs['move_graph'] = [x for x in move]
+                self.signals.full_cycle.emit()
+                self.signals.update_graph_settings.emit()
 
             self.set_regs['full_cycle'] = False
             self.set_regs['min_pos'] = False
             self.set_regs['max_pos'] = False
-            self.set_regs['force_graph'] = [x for x in force]
-            self.set_regs['move_graph'] = [x for x in move]
-            self.signals.update_graph_settings.emit()
             self.force_graph = []
             self.move_graph = []
 
@@ -528,6 +569,8 @@ class Model:
             self.set_regs['list_state'][11] = int(bits[11])
             self.set_regs['state_force'] = int(bits[12])
             self.set_regs['list_state'][12] = int(bits[12])
+            # self.set_regs['yellow_btn'] = int(bits[13])
+            # self.set_regs['list_state'][13] = int(bits[13])
 
         except Exception as e:
             self.log_error(f'ERROR in model/register_state - {e}')
@@ -549,7 +592,7 @@ class Model:
             self.set_regs['safety_fence'] = int(bits[0])
             self.set_regs['traverse_block_1'] = int(bits[1])
             self.set_regs['traverse_block_2'] = int(bits[2])
-            self.set_regs['test_launch'] = int(bits[3])
+            self.set_regs['yellow_btn'] = int(bits[3])
             self.set_regs['alarm_highest_position'] = int(bits[8])
             self.set_regs['alarm_lowest_position'] = int(bits[9])
             self.set_regs['highest_position'] = int(bits[12])

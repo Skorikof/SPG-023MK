@@ -10,6 +10,7 @@ class ControlSignals(QObject):
     wait_yellow_btn = pyqtSignal()
     test_move_cycle = pyqtSignal()
     conv_win_test = pyqtSignal()
+    conv_lamp = pyqtSignal(str)
 
 
 class Controller:
@@ -29,6 +30,7 @@ class Controller:
             self.check_directory()
             self.init_signals()
             self.init_timer()
+            self.lamp_all_switch_off()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/__init__ - {e}')
@@ -66,63 +68,6 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_full_cycle - {e}')
 
-    # def result_test(self, result):
-    #     try:
-    #         # self.val_1 = result.get('1')
-    #         # self.val_2 = result.get('2')
-    #         # self.val_3 = result.get('3')
-    #         # self.val_4 = result.get('4')
-    #         # self.val_5 = result.get('5')
-    #
-    #         # self.values_time = result.get('count')
-    #         # self.values_f = result.get('force')
-    #         # self.values_move = result.get('move')
-    #         # self.values_state = result.get('state')
-    #         # self.time_proc = result.get('time')
-    #         #
-    #         # self.save_result_test()
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in controller/result_test - {}'.format(e)
-    #         self.model.status_bar_msg(txt_log)
-    #         self.model.save_log('error', str(e))
-    #
-    #
-    # def print_result_test(self, res):
-    #     try:
-    #         for i in range(0, len(res.get('count'))):
-    #             self.count_msg += 1
-    #             if res.get('force')[i] == -100000.0:
-    #                 self.count_err += 1
-    #
-    #             print(f'{str(i)} Счётчик: {str(res.get("count")[i])} '
-    #                   f'Статус: {str(res.get("state")[i])} '
-    #                   f'УСИЛИЕ: {str(res.get("force")[i])} '
-    #                   f'ПЕРЕМЕЩЕНИЕ: {str(res.get("move")[i])}')
-    #
-    #             print(f'Count error in force sensor = {self.count_err} in all msg = {self.count_msg}')
-    #
-    #         # with open('testData.dat', 'w') as file_dat:
-    #         #     for i in range(0, len(self.val_1)):
-    #         #         str_f = str(i) + ' Время: ' + str(self.values_time[i]) + \
-    #         #             ' Статус: ' + str(self.values_state[i]) + \
-    #         #             ' УСИЛИЕ = ' + str(self.values_f[i]) + \
-    #         #             ' ПЕРЕМЕШЕНИЕ = ' + str(self.values_move[i]) + '\n'
-    #
-    #                 # str_f = str(i) + ' Время: ' + str(self.val_1[i]) + \
-    #                 #     ' Усилие старш: ' + str(self.val_2[i]) + \
-    #                 #     ' Усилие младш: ' + str(self.val_3[i]) + \
-    #                 #     ' Перемещение: ' + str(self.val_4[i]) + \
-    #                 #     ' Статус: ' + str(self.val_5[i]) + '\n'
-    #             #     file_dat.write(str_f)
-    #             #
-    #             # file_dat.write('=' * 50 + '\n')
-    #
-    #     except Exception as e:
-    #         txt_log = 'ERROR in controller/save_result_test - {}'.format(e)
-    #         self.model.status_bar_msg(txt_log)
-    #         self.model.save_log('error', str(e))
-
     def init_timer(self):
         try:
             self.timer_process = QTimer()
@@ -135,8 +80,9 @@ class Controller:
 
     def update_stage_on_timer(self):
         try:
-            # FIXME
-            self.control_process()
+            # self.control_process()
+
+            # FIXME дописать корректное завершение испытания
 
             stage = self.model.set_regs.get('stage')
 
@@ -158,7 +104,7 @@ class Controller:
                 control_point = float(self.response.get('traverse_point'))
                 pos_trav = float(self.response.get('traverse_move'))
 
-                if abs(control_point - pos_trav) < 2:
+                if abs(control_point - pos_trav) <= 1:
                     self.model.motor_stop()
                     self.model.set_regs['traverse_position'] = True
                     self.model.set_regs['stage'] = 'wait'
@@ -178,34 +124,34 @@ class Controller:
                 exc_force = self.response.get('excess_force')
                 if self.count_cycle >= 1:
                     self.model.motor_stop()
-                    time.sleep(0.5)
-                    self.model.set_regs['stage'] = 'conv_test_speed_one'
+                    time.sleep(0.1)
+
                     self.change_param_for_test()
-                    self.conv_test_speed()
+
+                    self.conv_test_speed(1)
 
                 if exc_force == 1:
                     self.excess_force()
                     self.model.motor_stop()
+                    self.lamp_red_switch_on()
 
             if stage == 'conv_test_speed_one':
-                if self.count_cycle == 4:
-                    self.model.set_regs['stage'] = 'conv_test_speed_two'
+                if self.count_cycle == 3:
 
-                    self.conv_test_speed()
+                    self.conv_test_speed(2)
 
             if stage == 'conv_test_speed_two':
-                if self.count_cycle == 4:
-                    self.model.set_regs['stage'] = 'conv_test_finish'
+                if self.count_cycle == 3:
+                    self.model.set_regs['stage'] = 'wait'
                     self.stop_gear_min_pos()
 
             if stage == 'stop_gear_min_pos':
-                point = self.response.get('max_point')
-                move = self.response.get('move_list')
-                if point in move:
+                point = float(self.response.get('min_point'))
+                move = float(self.response.get('move'))
+                if move <= point + 5:
                     self.model.motor_stop()
                     time.sleep(1)
-                    self.model.reader_stop_test()
-                    time.sleep(0.1)
+                    self.result_conveyor_test()
                     self.traverse_install_point()
 
         except Exception as e:
@@ -250,6 +196,7 @@ class Controller:
         self.signals.control_msg.emit(txt)
 
     def work_interrupted_operator(self):
+        self.model.set_regs['test_launch'] = False
         client = self.model.set_connect.get('client')
         if client:
             self.model.set_regs['adr_freq'] = 1
@@ -263,11 +210,12 @@ class Controller:
         try:
             flag = self.model.set_regs.get('test_flag')
             if not flag:
+                self.lamp_all_switch_off()
                 self.traverse_start_test_point()
                 self.model.set_regs['test_flag'] = True
 
             else:
-                self.stop_gear_min_pos()
+                self.work_interrupted_operator()
                 self.model.set_regs['test_flag'] = False
 
         except Exception as e:
@@ -326,9 +274,8 @@ class Controller:
             self.model.log_error(f'ERROR in controller/convert_adapter - {e}')
 
     def traverse_move_position(self, set_point):
-
         try:
-            self.write_speed_motor(2, freq=20)
+            self.write_speed_motor(2, freq=25)
 
             pos_trav = self.response.get('traverse_move')
             self.model.set_regs['traverse_position'] = False
@@ -349,8 +296,9 @@ class Controller:
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
             self.signals.traverse_referent.emit()
+            # self.lamp_all_switch_on()
             self.model.set_regs['traverse_position'] = False
-            self.write_speed_motor(2, freq=20)
+            self.write_speed_motor(2, freq=25)
             self.model.set_regs['stage'] = 'traverse_referent'
             self.model.motor_up()
 
@@ -360,8 +308,9 @@ class Controller:
     def traverse_install_point(self):
         """Позционирование траверсы для установки амортизатора"""
         try:
-            self.signals.traverse_position.emit()
+            # self.signals.traverse_position.emit()
             self.position_traverse()
+            self.write_speed_motor(2, freq=25)
             stock_point = self.response.get('traverse_stock')
             hod = self.amort.hod
             len_max = self.amort.max_length
@@ -382,6 +331,7 @@ class Controller:
     def traverse_start_test_point(self):
         """Позиционирование траверсы для начала испытания"""
         try:
+            self.position_traverse()
             stock_point = int(self.response.get('traverse_stock'))
             # hod = self.amort.hod
             len_max = self.amort.max_length
@@ -395,6 +345,22 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/traverse_start_test_point - {e}')
+
+    def traverse_end_point(self):
+        try:
+            self.position_traverse()
+            self.write_speed_motor(2, freq=25)
+            stock_point = self.response.get('traverse_stock')
+            hod = self.amort.hod
+            len_max = self.amort.max_length
+            adapter = self.convert_adapter(self.amort.adapter)
+            end_point = (stock_point + hod / 2) - len_max - adapter + 2
+
+            self.model.set_regs['stage'] = 'end_test'
+            self.traverse_move_position(end_point)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/traverse_end_point - {e}')
 
     def test_move_cycle(self):
         """Проверочный ход"""
@@ -435,22 +401,20 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/change_param_for_test - {e}')
 
-    def conv_test_speed(self):
+    def conv_test_speed(self, ind):
         try:
             self.signals.conv_win_test.emit()
 
             speed_one = self.amort.speed_one
             speed_two = self.amort.speed_two
 
-            stage = self.response.get('stage')
-
-            if stage == 'conv_test_speed_one':
+            if ind == 1:
                 self.write_speed_motor(1, speed=speed_one)
+                self.model.set_regs['stage'] = 'conv_test_speed_one'
 
-            elif stage == 'conv_test_speed_two':
+            elif ind == 2:
                 self.write_speed_motor(1, speed=speed_two)
-
-            # self.model.set_regs['full_cycle'] = False
+                self.model.set_regs['stage'] = 'conv_test_speed_two'
 
             self.count_cycle = 0
 
@@ -494,22 +458,87 @@ class Controller:
 
     def start_conveyor_test(self):
         try:
-            al_force = self.response.get('force_alarm')
-            if al_force == 100:
+            self.model.set_regs['test_launch'] = True
+            trav_ref = self.response.get('traverse_referent')
+            if not trav_ref:
                 self.traverse_referent_point()
 
             else:
                 self.traverse_install_point()
 
         except Exception as e:
+
             self.model.log_error(f'ERROR in controller/start_conveyor_test - {e}')
+
+    def result_conveyor_test(self):
+        try:
+            comp_max = self.response.get('max_comp')
+            recoil_max = self.response.get('max_recoil')
+
+            if self.amort.min_comp < comp_max < self.amort.max_comp and \
+                    self.amort.min_recoi < recoil_max < self.amort.max_recoil:
+                self.lamp_green_switch_on()
+
+            else:
+                self.lamp_red_switch_on()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/result_conveyor_test - {e}')
 
     def stop_gear_min_pos(self):
         """Снижение скорости и остановка привода в нижней точке"""
         try:
+            self.model.reader_stop_test()
+            time.sleep(0.1)
+
             self.write_speed_motor(1, speed=0.05)
+
             self.model.set_regs['test_flag'] = False
             self.model.set_regs['stage'] = 'stop_gear_min_pos'
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/stop_gear_min_pos - {e}')
+
+    def lamp_all_switch_on(self):
+        try:
+            self.model.write_bit_green_light(1)
+            time.sleep(0.1)
+            self.model.write_bit_red_light(1)
+            time.sleep(0.1)
+            self.signals.conv_lamp.emit('all_on')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_all_switch_on - {e}')
+
+    def lamp_all_switch_off(self):
+        try:
+            self.model.write_bit_green_light(0)
+            time.sleep(0.1)
+            self.model.write_bit_red_light(0)
+            time.sleep(0.1)
+            self.signals.conv_lamp.emit('all_off')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_all_switch_off - {e}')
+
+    def lamp_green_switch_on(self):
+        try:
+            self.model.write_bit_green_light(1)
+            time.sleep(0.1)
+            self.model.write_bit_red_light(0)
+            time.sleep(0.1)
+            self.signals.conv_lamp.emit('green_on')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_green_switch_on - {e}')
+
+    def lamp_red_switch_on(self):
+        try:
+            self.model.write_bit_green_light(0)
+            time.sleep(0.1)
+            self.model.write_bit_red_light(1)
+            time.sleep(0.1)
+            self.signals.conv_lamp.emit('red_on')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_red_switch_on - {e}')

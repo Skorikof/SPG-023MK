@@ -267,7 +267,7 @@ class Reader(QRunnable):
                                     force = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
                                     self.values_f.append(force)
 
-                                    move = round(0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
+                                    move = round(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
                                     self.values_move.append(move)
 
                                     self.values_state.append(rr[ind + 4])

@@ -116,6 +116,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.traverse_position.connect(self.msg_traverse_position)
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
+        self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -471,6 +472,7 @@ class AppWindow(QMainWindow):
             self.model.set_regs['traverse_referent'] = False
 
             self.controller.current_amort()
+            self.model.current_amort()
 
             self.controller.start_test_clicked()
 
@@ -521,9 +523,9 @@ class AppWindow(QMainWindow):
 
             self.log_msg_info_slot(txt_log)
 
-            self.model.set_regs['traverse_referent'] = False
-
             self.controller.current_amort()
+            self.model.current_amort()
+
             self.controller.start_test_clicked()
 
         except Exception as e:
@@ -535,6 +537,27 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/conv_test_win - {e}')
+
+    def conv_test_lamp(self, command):
+        try:
+            if command == 'all_on':
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n")
+                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n")
+
+            elif command == 'all_off':
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+
+            elif command == 'red_on':
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n")
+                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+
+            elif command == 'green_on':
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n")
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/conv_test_lamp - {e}')
 
     def init_conv_graph(self):
         try:

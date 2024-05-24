@@ -274,7 +274,7 @@ class SetWindow(QMainWindow):
             self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(state.get('alarm_highest_position'), True))
             self.ui.fram_green_light.setStyleSheet(self.set_color_fram(state.get('green_light')))
             self.ui.fram_red_light.setStyleSheet(self.set_color_fram(state.get('red_light')))
-            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('test_launch')))
+            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('yellow_btn')))
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')

@@ -61,7 +61,9 @@ class PrgSettings:
             self.registers['safety_fence'] = 0
             self.registers['traverse_block_1'] = 0
             self.registers['traverse_block_2'] = 0
-            self.registers['test_launch'] = 0
+            self.registers['test_launch'] = False
+            self.registers['yellow_btn'] = 0
+            self.registers['rattle_yellow'] = False
             self.registers['test_flag'] = False
             self.registers['alarm_highest_position'] = 0
             self.registers['highest_position'] = 0
@@ -75,6 +77,7 @@ class PrgSettings:
             self.registers['bracket_height'] = 120
             self.registers['traverse_position'] = False
             self.registers['traverse_point'] = 0
+            self.registers['gear_referent'] = False
             self.registers['stage'] = ''
 
             self.registers['operator'] = {'name': '', 'rank': ''}
