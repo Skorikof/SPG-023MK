@@ -8,7 +8,7 @@ import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack
 from my_threads import LogWriter, Writer, Reader
 from settings import PrgSettings
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 
 class WinSignals(QObject):
@@ -39,6 +39,7 @@ class Model:
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
+        self.timer_yellow = None
         self.amort = None
         self.count_msg = 0
         self.count_point = 0
@@ -51,6 +52,7 @@ class Model:
         self.init_connect()
         con = self.set_connect.get('connect')
         if con:
+            self.init_timer_yellow_btn()
             self.init_reader()
             self.reader_start()
         else:
@@ -206,7 +208,7 @@ class Model:
                 self.register_state(res[3])
                 self.set_regs['counter_time'] = self.counter_time(res[4])
                 self.switch_state(res[5])
-                self.set_regs['traverse_move'] = -0.5 * self.movement_amount(res[6])
+                self.set_regs['traverse_move'] = round(-0.5 * self.movement_amount(res[6]), 1)
                 self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
                 self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
 
@@ -226,8 +228,28 @@ class Model:
                 self.count_msg = 0
 
             if self.set_regs['yellow_btn'] == 1:
-                flag_test = self.set_regs.get('test_launch')
-                if flag_test:
+                if not self.timer_yellow.isActive():
+                    self.timer_yellow.start()
+                else:
+                    pass
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/reader_result - {e}')
+
+    def init_timer_yellow_btn(self):
+        try:
+            self.timer_yellow = QTimer()
+            self.timer_yellow.setInterval(200)
+            self.timer_yellow.timeout.connect(self.yellow_btn_click)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/init_timer_yellow_btn - {e}')
+
+    def yellow_btn_click(self):
+        try:
+            if self.set_regs['test_launch']:
+                if self.set_regs['yellow_btn'] == 1:
+
                     flag = self.set_regs.get('rattle_yellow')
 
                     if not flag:
@@ -236,19 +258,19 @@ class Model:
                         self.set_regs['rattle_yellow'] = True
 
                     else:
-                        if time.monotonic() - self.time_push_yellow > 2:
+                        time_signal = time.monotonic() - self.time_push_yellow
+                        if 2 < time_signal:
                             self.time_push_yellow = time.monotonic()
                             self.signals.test_launch.emit()
                             self.set_regs['rattle_yellow'] = True
 
                         else:
                             pass
-
                 else:
-                    pass
+                    self.timer_yellow.stop()
 
         except Exception as e:
-            self.log_error(f'ERROR in model/reader_result - {e}')
+            self.log_error(f'ERROR in model/yellow_btn_click - {e}')
 
     def find_start_point(self, move: float):
         try:
@@ -288,26 +310,23 @@ class Model:
 
             if self.set_regs.get('current_direction') == 'up':
                 self.add_data_on_graph(force, move)
-                max_point = max(move)
-                if max_point != move[-1]:
+                if max(move) != move[-1]:
                     self.set_regs['max_pos'] = True
-                    self.set_regs['max_point'] = max_point
-                    print(f'Find max point --> {max_point}')
+                    self.set_regs['max_point'] = max(move)
+                    print(f'Find max point --> {max(move)}')
                     self.set_regs['current_direction'] = 'down'
 
             elif self.set_regs.get('current_direction') == 'down':
                 self.add_data_on_graph(force, move)
-                min_point = min(move)
-                if min_point != move[-1]:
+                if min(move) != move[-1]:
                     self.set_regs['min_pos'] = True
-                    self.set_regs['min_point'] = min_point
-                    print(f'Find min point --> {min_point}')
+                    self.set_regs['min_point'] = min(move)
+                    print(f'Find min point --> {min(move)}')
                     self.set_regs['current_direction'] = 'up'
 
             if self.set_regs.get('min_pos') and self.set_regs.get('max_pos') \
-                    and self.set_regs.get('start_point') + 1 in move:
+                    and (self.set_regs.get('start_point') in move):
 
-                self.set_regs['full_cycle'] = True
                 print(f'Full cycle is done!')
                 self.full_circle_done(self.force_graph, self.move_graph)
 
@@ -326,18 +345,14 @@ class Model:
 
     def full_circle_done(self, force: list, move: list):
         try:
-            teor_hod = self.amort.hod
-            if teor_hod == 120:
-                teor_hod = 118
-
-            fact_hod = abs(self.set_regs['min_point']) + abs(self.set_regs['max_point'])
-
-            if abs(fact_hod - teor_hod) > 2:
+            flag = self.set_regs.get('gear_referent')
+            if not flag:
+                self.set_regs['gear_referent'] = True
                 self.set_regs['start_pos'] = False
-                print(f'Значения с линейки меньше заявленного хода')
+                self.set_regs['start_direction'] = False
 
             else:
-                self.set_regs['start_point'] = self.set_regs.get('min_point')
+                # self.set_regs['start_point'] = self.set_regs.get('min_point') + 20
                 self.set_regs['max_comp'] = max(force)
                 self.set_regs['max_recoil'] = abs(min(force))
                 self.set_regs['force_graph'] = [x for x in force]
@@ -345,11 +360,41 @@ class Model:
                 self.signals.full_cycle.emit()
                 self.signals.update_graph_settings.emit()
 
-            self.set_regs['full_cycle'] = False
             self.set_regs['min_pos'] = False
             self.set_regs['max_pos'] = False
             self.force_graph = []
             self.move_graph = []
+
+            # teor_hod = self.amort.hod
+            # if teor_hod == 120:
+            #     teor_hod = 118
+            #
+            # fact_hod = abs(self.set_regs['min_point']) + abs(self.set_regs['max_point'])
+            #
+            # if abs(teor_hod - fact_hod) > 2:
+            #     self.set_regs['start_pos'] = False
+            #     self.set_regs['start_direction'] = False
+            #     self.set_regs['current_direction'] = ''
+            #     print(f'Значения с линейки меньше заявленного хода')
+            #
+            #     self.set_regs['min_pos'] = False
+            #     self.set_regs['max_pos'] = False
+            #     self.force_graph = []
+            #     self.move_graph = []
+            #
+            # else:
+            #     # self.set_regs['start_point'] = self.set_regs.get('min_point')
+            #     self.set_regs['max_comp'] = max(force)
+            #     self.set_regs['max_recoil'] = abs(min(force))
+            #     self.set_regs['force_graph'] = [x for x in force]
+            #     self.set_regs['move_graph'] = [x for x in move]
+            #     self.signals.full_cycle.emit()
+            #     self.signals.update_graph_settings.emit()
+            #
+            #     self.set_regs['min_pos'] = False
+            #     self.set_regs['max_pos'] = False
+            #     self.force_graph = []
+            #     self.move_graph = []
 
         except Exception as e:
             self.log_error(f'ERROR in model/full_circle_done - {e}')
@@ -540,7 +585,7 @@ class Model:
     def movement_amount(self, data) -> float:
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
-            result = round(0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 2)
+            result = round(0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
 
             return result
 

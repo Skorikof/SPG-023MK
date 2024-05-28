@@ -10,6 +10,7 @@ class ControlSignals(QObject):
     wait_yellow_btn = pyqtSignal()
     test_move_cycle = pyqtSignal()
     conv_win_test = pyqtSignal()
+    conv_test_cancel = pyqtSignal()
     conv_lamp = pyqtSignal(str)
 
 
@@ -20,7 +21,6 @@ class Controller:
             self.amort = None
             self.timer_process = None
             self.count_cycle = 0
-            self.flag_cycle = False
 
             self.signals = ControlSignals()
             self.model = model
@@ -63,7 +63,6 @@ class Controller:
     def update_full_cycle(self):
         try:
             self.count_cycle += 1
-            self.flag_cycle = True
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_full_cycle - {e}')
@@ -82,14 +81,12 @@ class Controller:
         try:
             # self.control_process()
 
-            # FIXME дописать корректное завершение испытания
-
             stage = self.model.set_regs.get('stage')
 
             if stage == 'wait':
                 pass
 
-            if stage == 'traverse_referent':
+            elif stage == 'traverse_referent':
                 high_switch = self.response.get('highest_position')
 
                 if high_switch == 1:
@@ -100,9 +97,12 @@ class Controller:
                     time.sleep(1)
                     self.traverse_install_point()
 
-            if stage == 'install_amort':
+            elif stage == 'install_amort':
                 control_point = float(self.response.get('traverse_point'))
                 pos_trav = float(self.response.get('traverse_move'))
+
+                if abs(control_point - pos_trav) <= 10:
+                    self.write_speed_motor(2, freq=10)
 
                 if abs(control_point - pos_trav) <= 1:
                     self.model.motor_stop()
@@ -110,17 +110,20 @@ class Controller:
                     self.model.set_regs['stage'] = 'wait'
                     self.signals.wait_yellow_btn.emit()
 
-            if stage == 'start_point_amort':
+            elif stage == 'start_point_amort':
                 control_point = float(self.response.get('traverse_point'))
                 pos_trav = float(self.response.get('traverse_move'))
 
-                if abs(control_point - pos_trav) < 2:
+                if abs(control_point - pos_trav) <= 10:
+                    self.write_speed_motor(2, freq=10)
+
+                if abs(control_point - pos_trav) <= 1:
                     self.model.motor_stop()
                     self.model.set_regs['traverse_position'] = True
                     time.sleep(0.5)
                     self.test_move_cycle()
 
-            if stage == 'test_move_cycle':
+            elif stage == 'test_move_cycle':
                 exc_force = self.response.get('excess_force')
                 if self.count_cycle >= 1:
                     self.model.motor_stop()
@@ -132,27 +135,40 @@ class Controller:
 
                 if exc_force == 1:
                     self.excess_force()
-                    self.model.motor_stop()
+                    # self.model.motor_stop()
                     self.lamp_red_switch_on()
 
-            if stage == 'conv_test_speed_one':
+            elif stage == 'conv_test_speed_one':
                 if self.count_cycle == 3:
-
                     self.conv_test_speed(2)
 
-            if stage == 'conv_test_speed_two':
+            elif stage == 'conv_test_speed_two':
                 if self.count_cycle == 3:
+                    self.model.motor_stop()
                     self.model.set_regs['stage'] = 'wait'
                     self.stop_gear_min_pos()
 
-            if stage == 'stop_gear_min_pos':
+            elif stage == 'stop_gear_min_pos':
                 point = float(self.response.get('min_point'))
                 move = float(self.response.get('move'))
-                if move <= point + 5:
+                if move <= point + 1:
                     self.model.motor_stop()
                     time.sleep(1)
                     self.result_conveyor_test()
-                    self.traverse_install_point()
+                    self.traverse_end_point()
+
+            elif stage == 'end_test':
+                control_point = float(self.response.get('traverse_point'))
+                pos_trav = float(self.response.get('traverse_move'))
+
+                if abs(control_point - pos_trav) <= 10:
+                    self.write_speed_motor(2, freq=10)
+
+                if abs(control_point - pos_trav) <= 1:
+                    self.model.motor_stop()
+                    self.model.set_regs['traverse_position'] = True
+                    self.model.set_regs['stage'] = 'wait'
+                    self.signals.wait_yellow_btn.emit()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_stage_on_timer - {e}')
@@ -215,7 +231,8 @@ class Controller:
                 self.model.set_regs['test_flag'] = True
 
             else:
-                self.work_interrupted_operator()
+                # self.work_interrupted_operator()
+                self.cancel_conveyor_test()
                 self.model.set_regs['test_flag'] = False
 
         except Exception as e:
@@ -374,14 +391,13 @@ class Controller:
             self.model.write_bit_unblock_control()
             time.sleep(0.1)
 
-            self.write_speed_motor(1, speed=0.03)
+            self.write_speed_motor(1, speed=0.05)
 
             self.model.write_bit_force_cycle(1)
             time.sleep(0.5)
             self.model.reader_start_test()
-            time.sleep(0.1)
+            time.sleep(1)
 
-            # self.model.set_regs['full_cycle'] = False
             self.model.set_regs['stage'] = 'test_move_cycle'
             self.count_cycle = 0
             self.model.motor_up()
@@ -411,14 +427,13 @@ class Controller:
             if ind == 1:
                 self.write_speed_motor(1, speed=speed_one)
                 self.model.set_regs['stage'] = 'conv_test_speed_one'
+                self.model.motor_up()
 
             elif ind == 2:
                 self.write_speed_motor(1, speed=speed_two)
                 self.model.set_regs['stage'] = 'conv_test_speed_two'
 
             self.count_cycle = 0
-
-            self.model.motor_up()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/conv_test - {e}')
@@ -450,7 +465,6 @@ class Controller:
             speed = self.amort.speed_one
             self.write_speed_motor(1, speed=speed)
 
-            self.model.set_state['full_cycle'] = False
             self.model.motor_up()
 
         except Exception as e:
@@ -459,16 +473,30 @@ class Controller:
     def start_conveyor_test(self):
         try:
             self.model.set_regs['test_launch'] = True
-            trav_ref = self.response.get('traverse_referent')
-            if not trav_ref:
-                self.traverse_referent_point()
-
-            else:
-                self.traverse_install_point()
+            # trav_ref = self.response.get('traverse_referent')
+            # if not trav_ref:
+            #     self.traverse_referent_point()
+            #
+            # else:
+            self.traverse_install_point()
 
         except Exception as e:
-
             self.model.log_error(f'ERROR in controller/start_conveyor_test - {e}')
+
+    def cancel_conveyor_test(self):
+        try:
+            self.model.set_regs['test_launch'] = False
+            self.model.set_regs['adr_freq'] = 1
+            self.model.motor_stop()
+            time.sleep(0.1)
+            self.model.set_regs['adr_freq'] = 2
+            self.model.motor_stop()
+            time.sleep(0.1)
+            self.model.reader_stop_test()
+            self.signals.conv_test_cancel.emit()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/cancel_conveyor_test - {e}')
 
     def result_conveyor_test(self):
         try:
@@ -489,9 +517,11 @@ class Controller:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
-            time.sleep(0.1)
+            time.sleep(0.5)
 
             self.write_speed_motor(1, speed=0.05)
+            self.model.motor_up()
+            time.sleep(0.1)
 
             self.model.set_regs['test_flag'] = False
             self.model.set_regs['stage'] = 'stop_gear_min_pos'

@@ -117,6 +117,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
+        self.controller.signals.conv_test_cancel.connect(self.specif_page)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -197,7 +198,7 @@ class AppWindow(QMainWindow):
             else:
                 print(msg)
 
-            self.log_msg_err_slot(msg)
+            # self.log_msg_err_slot(msg)
             self.main_ui_msg(txt, tag)
 
         except Exception as e:
@@ -335,9 +336,11 @@ class AppWindow(QMainWindow):
             self.ui.specif_continue_btn.setEnabled(False)
         else:
             self.ui.specif_continue_btn.setEnabled(True)
+            self.ui.specif_choice_comboBox.setCurrentIndex(0)
             self.ui.specif_choice_comboBox.activated[int].connect(self.select_amort)
             self.select_amort(0)
 
+        self.ui.specif_type_test_comboBox.setCurrentIndex(0)
         self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
         self.select_type_test(0)
 
@@ -407,6 +410,7 @@ class AppWindow(QMainWindow):
 
     def specif_ui_clear(self):
         try:
+            self.ui.specif_choice_comboBox.clear()
             self.ui.specif_name_lineEdit.clear()
             self.ui.specif_min_length_lineEdit.clear()
             self.ui.specif_max_length_lineEdit.clear()
@@ -540,21 +544,22 @@ class AppWindow(QMainWindow):
 
     def conv_test_lamp(self, command):
         try:
+            border = "border-color: rgb(0, 0, 0);"
             if command == 'all_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n")
-                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n")
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n" + border)
+                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n" + border)
 
             elif command == 'all_off':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
-                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
+                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
 
             elif command == 'red_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n")
-                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n" + border)
+                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
 
             elif command == 'green_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n")
-                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n")
+                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
+                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n" + border)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/conv_test_lamp - {e}')
@@ -580,24 +585,25 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_conv_graph - {e}')
 
-    # def color_led_lamp(self):
-    #     try:
-    #         if self.model.set_regs.get('red_light') == '1':
-    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
-    #         else:
-    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-    #
-    #         if self.model.set_regs.get('green_light') == '1':
-    #             self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
-    #         else:
-    #             self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-    #
-    #     except Exception as e:
-    #         self.log_msg_err_slot(f'ERROR in view/color_led_lamp - {e}')
+    def color_led_lamp(self):
+        try:
+            if self.model.set_regs.get('red_light') == '1':
+                self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
+            else:
+                self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+
+            if self.model.set_regs.get('green_light') == '1':
+                self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
+            else:
+                self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/color_led_lamp - {e}')
 
     def test_conv_cancel_click(self):
         self.log_msg_info_slot(f'Conveyor test stopped interrupted operator')
-        self.controller.work_interrupted_operator()
+        # self.controller.work_interrupted_operator()
+        self.controller.cancel_conveyor_test()
         self.specif_page()
         self.ui.main_btn_frame.setEnabled(True)
         self.ui.main_STOP_btn.setEnabled(False)

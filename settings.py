@@ -86,7 +86,7 @@ class PrgSettings:
             self.registers['hod'] = 120
             self.registers['start_direction'] = None
             self.registers['current_direction'] = None
-            self.registers['full_cycle'] = False
+            # self.registers['full_cycle'] = False
             self.registers['start_pos'] = False
             self.registers['start_point'] = 0
             self.registers['min_pos'] = False
