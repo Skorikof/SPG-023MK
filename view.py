@@ -21,6 +21,8 @@ class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
         self.response = {}
+        self.pen_test_lab = None
+        self.data_line_test_lab = None
         self.pen_test_conv = None
         self.data_line_test_conv = None
         self.model = model
@@ -104,6 +106,7 @@ class AppWindow(QMainWindow):
         self.init_signals()
         self.start_page()
         self.ui.main_STOP_btn.setEnabled(False)
+        self.init_lab_graph()
         self.init_conv_graph()
 
     def init_signals(self):
@@ -118,6 +121,8 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.conv_test_cancel.connect(self.specif_page)
+        self.controller.signals.lab_win_test.connect(self.lab_test_win)
+        self.controller.signals.lab_test_cancel.connect(self.specif_page)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -154,6 +159,14 @@ class AppWindow(QMainWindow):
         try:
             self.response = response
             self.update_statusbar_data(self.response)
+
+            temp = self.response.get('type_test')
+
+            if temp == 'lab' or temp == 'conv':
+                self.controller.update_data(response)
+
+            elif temp == 'hand':
+                self.win_set.update_data(response)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_data - {e}')
@@ -222,14 +235,8 @@ class AppWindow(QMainWindow):
 
     def msg_yellow_btn(self):
         try:
-            temp = self.response.get('type_test')
-            if temp == 'conv':
-                txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
-                self.main_ui_msg(txt, 'attention')
-
-            elif temp == 'lab':
-                txt = 'ЖМАКНИТЕ\nЧТО-НИБУДЬ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
-                self.main_ui_msg(txt, 'attention')
+            txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
+            self.main_ui_msg(txt, 'attention')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/msg_yellow_btn - {e}')
@@ -348,7 +355,7 @@ class AppWindow(QMainWindow):
         try:
             temp = self.response.get('type_test')
             if temp == 'lab':
-                pass
+                self.update_lab_graph()
 
             elif temp == 'conv':
                 self.update_conv_graph()
@@ -445,7 +452,7 @@ class AppWindow(QMainWindow):
 
     def test_lab(self):
         try:
-            self.ui.main_stackedWidget.setCurrentIndex(2)
+            # self.ui.main_stackedWidget.setCurrentIndex(2)
             self.ui.main_STOP_btn.setEnabled(True)
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.test_save_btn.setVisible(False)
@@ -488,12 +495,40 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_page - {e}')
 
+    def lab_test_win(self):
+        try:
+            self.ui.main_stackedWidget.setCurrentIndex(2)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/lab_test_win - {e}')
+
+    def init_lab_graph(self):
+        try:
+            self.ui.lab_GraphWidget.showGrid(True, True)
+            self.ui.lab_GraphWidget.setBackground('w')
+
+            self.pen_test_lab = pg.mkPen(color='black', width=3)
+            self.data_line_test_lab = self.ui.conv_GraphWidget.plot([], [], pen=self.pen_test_conv)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/init_lab_graph - {e}')
+
+    def update_lab_graph(self):
+        try:
+            coord_x = self.response.get('move_graph')
+            coord_y = self.response.get('force_graph')
+
+            self.data_line_test_lab.setData(coord_x, coord_y)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/update_lab_graph - {e}')
+
     def test_lab_cancel_click(self):
         try:
             temp = self.ui.test_cancel_btn.text()
             if temp == 'СТОП':
                 self.log_msg_info_slot(f'Laboratory test stopped interrupted operator')
-                self.controller.work_interrupted_operator()
+                self.controller.cancel_lab_test()
                 self.ui.test_save_btn.setVisible(True)
                 self.ui.test_repeat_btn.setVisible(True)
                 self.ui.main_btn_frame.setEnabled(True)
@@ -622,9 +657,11 @@ class AppWindow(QMainWindow):
 
     def open_win_settings(self):
         self.main_ui_disable()
+        self.model.set_regs['type_test'] = 'hand'
         self.win_set.show()
         self.win_set.start_param()
 
     def close_win_settings(self):
+        self.model.set_regs['type_test'] = None
         self.main_ui_enable()
         self.win_set.hide()

@@ -32,6 +32,8 @@ class Model:
         self.set_regs = PrgSettings().registers
         self.threadpool = QThreadPool()
 
+        # self.log_save_move = []
+
         self.log_writer = None
         self.reader = None
         self.parser = None
@@ -46,6 +48,7 @@ class Model:
         self.force_graph = []
         self.move_graph = []
         self.time_push_yellow = None
+        # self.timer_save_move = None
 
     def start_param(self):
         self.set_connect['cst'] = cst
@@ -53,6 +56,7 @@ class Model:
         con = self.set_connect.get('connect')
         if con:
             self.init_timer_yellow_btn()
+            # self.init_timer_save_log()
             self.init_reader()
             self.reader_start()
         else:
@@ -148,6 +152,8 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
+        # self.log_save_move.clear()
+        # self.timer_save_move.start()
         self.signals.start_test.emit(self.set_regs)
         self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
@@ -156,6 +162,7 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера остановлено')
 
     def reader_stop_test(self):
+        # self.timer_save_move.stop()
         self.signals.stop_test.emit()
         self.status_bar_msg(f'Чтение буффера контроллера остановлено')
 
@@ -170,7 +177,10 @@ class Model:
                 move_list = []
                 state_list = []
 
+                # self.timer_save_log(response.get('move'))
+
                 for i in range(len(response.get('force'))):
+                    # self.log_save_move.append(response.get('move')[i])
                     if response.get('force')[i] != -100000.0:
                         count_list.append(response.get('count')[i])
                         force_list.append(response.get('force')[i])
@@ -248,7 +258,7 @@ class Model:
     def yellow_btn_click(self):
         try:
             if self.set_regs['test_launch']:
-                if self.set_regs['yellow_btn'] == 1:
+                if self.set_regs['yellow_btn'] == 0:
 
                     flag = self.set_regs.get('rattle_yellow')
 
@@ -271,6 +281,30 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/yellow_btn_click - {e}')
+
+    # def init_timer_save_log(self):
+    #     try:
+    #         self.timer_save_move = QTimer()
+    #         self.timer_yellow.setInterval(10000)
+    #         self.timer_yellow.timeout.connect(self.save_log_move)
+    #
+    #     except Exception as e:
+    #         self.log_error(f'ERROR in model/timer_save_log - {e}')
+
+    # def save_log_move(self):
+    #     try:
+    #         temp_list = [x for x in self.log_save_move]
+    #         self.log_save_move = []
+    #         with open('testData.dat', 'w') as file:
+    #             for i in range(len(temp_list)):
+    #                 file.write(f'{temp_list[i]}\n')
+    #
+    #             # file.write('================== \n')
+    #
+    #         print('file write is Done')
+    #
+    #     except Exception as e:
+    #         self.log_error(f'ERROR in model/save_log_move - {e}')
 
     def find_start_point(self, move: float):
         try:
@@ -347,12 +381,22 @@ class Model:
         try:
             flag = self.set_regs.get('gear_referent')
             if not flag:
-                self.set_regs['gear_referent'] = True
-                self.set_regs['start_pos'] = False
-                self.set_regs['start_direction'] = False
+                teor_hod = self.amort.hod
+                if teor_hod == 120:
+                    teor_hod = 118
+                fact_hod = abs(self.set_regs['min_point']) + abs(self.set_regs['max_point'])
+
+                if abs(teor_hod - fact_hod) > 2:
+                    print(f'Ход несоответствует заданному')
+
+                else:
+                    self.set_regs['gear_referent'] = True
+                    self.set_regs['start_pos'] = False
+                    self.set_regs['start_direction'] = False
 
             else:
                 # self.set_regs['start_point'] = self.set_regs.get('min_point') + 20
+                # self.set_regs['start_point'] = self.set_regs.get('max_point') - 10
                 self.set_regs['max_comp'] = max(force)
                 self.set_regs['max_recoil'] = abs(min(force))
                 self.set_regs['force_graph'] = [x for x in force]
@@ -614,8 +658,8 @@ class Model:
             self.set_regs['list_state'][11] = int(bits[11])
             self.set_regs['state_force'] = int(bits[12])
             self.set_regs['list_state'][12] = int(bits[12])
-            # self.set_regs['yellow_btn'] = int(bits[13])
-            # self.set_regs['list_state'][13] = int(bits[13])
+            self.set_regs['yellow_btn'] = int(bits[13])
+            self.set_regs['list_state'][13] = int(bits[13])
 
         except Exception as e:
             self.log_error(f'ERROR in model/register_state - {e}')
@@ -637,7 +681,7 @@ class Model:
             self.set_regs['safety_fence'] = int(bits[0])
             self.set_regs['traverse_block_1'] = int(bits[1])
             self.set_regs['traverse_block_2'] = int(bits[2])
-            self.set_regs['yellow_btn'] = int(bits[3])
+            # self.set_regs['yellow_btn'] = int(bits[3])
             self.set_regs['alarm_highest_position'] = int(bits[8])
             self.set_regs['alarm_lowest_position'] = int(bits[9])
             self.set_regs['highest_position'] = int(bits[12])

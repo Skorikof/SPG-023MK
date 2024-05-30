@@ -46,7 +46,6 @@ class SetWindow(QMainWindow):
     def start_param(self):
         self._create_statusbar_set()
         self.init_buttons()
-        self.init_signals()
         self.smap_line_edit()
 
     def _create_statusbar_set(self):
@@ -83,9 +82,6 @@ class SetWindow(QMainWindow):
 
         self.ui.btn_connect.setVisible(False)
         self.ui.btn_read.setVisible(False)
-
-    def init_signals(self):
-        self.model.signals.read_finish.connect(self.update_data)
 
     def update_data(self, response):
         try:
@@ -274,7 +270,7 @@ class SetWindow(QMainWindow):
             self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(state.get('alarm_highest_position'), True))
             self.ui.fram_green_light.setStyleSheet(self.set_color_fram(state.get('green_light')))
             self.ui.fram_red_light.setStyleSheet(self.set_color_fram(state.get('red_light')))
-            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('yellow_btn')))
+            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('yellow_btn'), True))
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
@@ -305,7 +301,6 @@ class SetWindow(QMainWindow):
             
     def start_test(self):
         try:
-            self.model.set_regs['type_test'] = 'hand'
             self.model.set_regs['start_pos'] = False
             self.model.set_regs['start_direction'] = False
             self.model.set_regs['current_direction'] = ''
