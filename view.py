@@ -27,17 +27,17 @@ class AppWindow(QMainWindow):
         self.data_line_test_conv = None
         self.model = model
         self.controller = controller
+        self.win_set = win_set
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.win_set = win_set
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
 
         self._create_statusbar_ui()
 
-        self.start_param()
+        self.start_param_view()
 
     def closeEvent(self, event):
         self.model.reader_exit()
@@ -101,7 +101,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_statusbar_data - {e}')
 
-    def start_param(self):
+    def start_param_view(self):
         self.init_buttons()
         self.init_signals()
         self.start_page()
@@ -110,8 +110,9 @@ class AppWindow(QMainWindow):
         self.init_conv_graph()
 
     def init_signals(self):
+        self.model.signals.connect_ctrl.connect(self.start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.read_finish.connect(self.update_data)
+        self.model.signals.read_finish.connect(self.update_data_view)
         self.model.signals.update_graph_settings.connect(self.update_data_graph)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
@@ -120,9 +121,8 @@ class AppWindow(QMainWindow):
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
-        self.controller.signals.conv_test_cancel.connect(self.specif_page)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
-        self.controller.signals.lab_test_cancel.connect(self.specif_page)
+        self.controller.signals.cancel_test.connect(self.cancel_test_slot)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
@@ -151,11 +151,13 @@ class AppWindow(QMainWindow):
         self.ui.main_amorts_btn.clicked.connect(self.open_win_amort)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
-        self.ui.test_cancel_btn.clicked.connect(self.test_lab_cancel_click)
+        self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
+        self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.test_lab)
-        self.ui.test_conv_cancel_btn.clicked.connect(self.test_conv_cancel_click)
 
-    def update_data(self, response):
+        self.ui.test_data_speed_lineEdit.returnPressed.connect(self.change_speed_test)
+
+    def update_data_view(self, response):
         try:
             self.response = response
             self.update_statusbar_data(self.response)
@@ -163,10 +165,10 @@ class AppWindow(QMainWindow):
             temp = self.response.get('type_test')
 
             if temp == 'lab' or temp == 'conv':
-                self.controller.update_data(response)
+                self.controller.update_data_ctrl(response)
 
             elif temp == 'hand':
-                self.win_set.update_data(response)
+                self.win_set.update_data_win_set(response)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_data - {e}')
@@ -290,6 +292,7 @@ class AppWindow(QMainWindow):
 
     def btn_ok_message_clicked(self):
         try:
+            self.controller.lamp_all_switch_off()
             self.start_page()
 
         except Exception as e:
@@ -305,10 +308,19 @@ class AppWindow(QMainWindow):
 
     def start_page(self):
         try:
-            txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
-            tag = 'info'
-            self.main_ui_msg(txt, tag)
-            self.ui.main_btn_frame.setEnabled(True)
+            flag = self.model.set_connect.get('connect')
+            if flag:
+                txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
+                tag = 'info'
+                self.main_ui_msg(txt, tag)
+                self.main_ui_enable()
+
+            else:
+                txt = "ОТСУТСТВУЕТ\nПОДКЛЮЧЕНИЕ\nК\nКОНТРОЛЛЕРУ."
+                tag = 'attention'
+                self.main_ui_msg(txt, tag)
+                self.main_ui_disable()
+                self.model.start_param_model()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/start_page - {e}')
@@ -452,7 +464,6 @@ class AppWindow(QMainWindow):
 
     def test_lab(self):
         try:
-            # self.ui.main_stackedWidget.setCurrentIndex(2)
             self.ui.main_STOP_btn.setEnabled(True)
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.test_save_btn.setVisible(False)
@@ -480,8 +491,6 @@ class AppWindow(QMainWindow):
 
             self.log_msg_info_slot(txt_log)
 
-            self.model.set_regs['traverse_referent'] = False
-
             self.controller.current_amort()
             self.model.current_amort()
 
@@ -491,6 +500,7 @@ class AppWindow(QMainWindow):
 
             self.ui.test_data_limit_comp_lineEdit.setText(limit_comp)
             self.ui.test_data_limit_recoil_lineEdit.setText(limit_recoil)
+            self.ui.test_data_speed_lineEdit.setText(str(speed))
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_page - {e}')
@@ -520,32 +530,45 @@ class AppWindow(QMainWindow):
 
             self.data_line_test_lab.setData(coord_x, coord_y)
 
+            self.update_lab_data()
+
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_lab_graph - {e}')
 
-    def test_lab_cancel_click(self):
+    def update_lab_data(self):
         try:
-            temp = self.ui.test_cancel_btn.text()
-            if temp == 'СТОП':
-                self.log_msg_info_slot(f'Laboratory test stopped interrupted operator')
-                self.controller.cancel_lab_test()
-                self.ui.test_save_btn.setVisible(True)
-                self.ui.test_repeat_btn.setVisible(True)
-                self.ui.main_btn_frame.setEnabled(True)
-                self.ui.main_STOP_btn.setEnabled(False)
-                self.ui.test_cancel_btn.setText('НАЗАД')
+            max_comp = self.response.get('max_comp')
+            max_recoil = self.response.get('max_recoil')
+            temper = self.response.get('temperature')
 
-            elif temp == 'НАЗАД':
-                self.specif_page()
+            self.ui.test_data_max_comp_lineEdit.setText(str(max_comp))
+            self.ui.test_data_max_recoil_lineEdit.setText(str(max_recoil))
+            self.ui.test_data_temp_lineEdit.setText(str(temper))
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/test_cancel_click - {e}')
+            self.log_msg_err_slot(f'ERROR in view/update_lab_data - {e}')
+
+    def change_speed_test(self):
+        try:
+            value = self.ui.test_data_speed_lineEdit.text()
+            value = float(value.replace(',', '.'))
+            speed = self.response.get('amort').speed_one
+
+            if value == speed:
+                pass
+            else:
+                speed = self.model.calculate_freq(float(value))
+                self.model.set_regs['frequency'] = speed
+                self.model.set_regs['adr_freq'] = 1
+                self.model.write_frequency()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/change_speed_test - {e}')
 
     def test_conveyor(self):
         try:
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.main_STOP_btn.setEnabled(True)
-            # self.ui.main_stackedWidget.setCurrentIndex(3)
 
             amort = self.response.get('amort')
             name = amort.name_a
@@ -635,16 +658,35 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/color_led_lamp - {e}')
 
-    def test_conv_cancel_click(self):
-        self.log_msg_info_slot(f'Conveyor test stopped interrupted operator')
-        # self.controller.work_interrupted_operator()
-        self.controller.cancel_conveyor_test()
-        self.specif_page()
-        self.ui.main_btn_frame.setEnabled(True)
-        self.ui.main_STOP_btn.setEnabled(False)
+    def cancel_test_clicked(self):
+        try:
+            self.controller.stop_test_clicked()
 
-    # def save_test_archive(self):
-    #     self.win_archive.archive_save_test()
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')
+
+    def cancel_test_slot(self):
+        try:
+            type_test = self.response.get('type_test')
+            if type_test == 'conv':
+                self.specif_page()
+                self.ui.main_btn_frame.setEnabled(True)
+                self.ui.main_STOP_btn.setEnabled(False)
+
+            elif type_test == 'lab':
+                # temp = self.ui.test_cancel_btn.text()
+                # if temp == 'СТОП':
+                self.ui.test_save_btn.setVisible(True)
+                self.ui.test_repeat_btn.setVisible(True)
+                self.ui.main_btn_frame.setEnabled(True)
+                self.ui.main_STOP_btn.setEnabled(False)
+                # self.ui.test_cancel_btn.setText('НАЗАД')
+
+                # elif temp == 'НАЗАД':
+                #     self.specif_page()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/cancel_test_slot - {e}')
 
     def open_win_archive(self):
         self.main_ui_disable()
@@ -659,7 +701,7 @@ class AppWindow(QMainWindow):
         self.main_ui_disable()
         self.model.set_regs['type_test'] = 'hand'
         self.win_set.show()
-        self.win_set.start_param()
+        self.win_set.start_param_win_set()
 
     def close_win_settings(self):
         self.model.set_regs['type_test'] = None

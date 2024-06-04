@@ -43,7 +43,7 @@ class SetWindow(QMainWindow):
     def closeEvent(self, event):
         self.signals.closed.emit()
 
-    def start_param(self):
+    def start_param_win_set(self):
         self._create_statusbar_set()
         self.init_buttons()
         self.smap_line_edit()
@@ -83,7 +83,7 @@ class SetWindow(QMainWindow):
         self.ui.btn_connect.setVisible(False)
         self.ui.btn_read.setVisible(False)
 
-    def update_data(self, response):
+    def update_data_win_set(self, response):
         try:
             self.response = response
             self.update_win(self.response)

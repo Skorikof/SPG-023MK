@@ -73,7 +73,6 @@ class PrgSettings:
             self.registers['red_light'] = 0
             self.registers['traverse_stock'] = 755
             self.registers['traverse_referent'] = False
-            self.registers['traverse_referent_point'] = 0
             self.registers['bracket_height'] = 120
             self.registers['traverse_position'] = False
             self.registers['traverse_point'] = 0
@@ -95,7 +94,7 @@ class PrgSettings:
             self.registers['max_point'] = 0
             self.registers['max_comp'] = 0
             self.registers['max_recoil'] = 0
-            self.registers['temper'] = 0
+            self.registers['temperature'] = 0
 
         except Exception as e:
             print(str(e))

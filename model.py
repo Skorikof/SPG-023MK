@@ -12,6 +12,7 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 
 class WinSignals(QObject):
+    connect_ctrl = pyqtSignal()
     stbar_msg = pyqtSignal(str)
     read_start = pyqtSignal(object, object, object)
     start_test = pyqtSignal(object)
@@ -41,24 +42,29 @@ class Model:
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
+        self.timer_connect = None
         self.timer_yellow = None
         self.amort = None
         self.count_msg = 0
         self.count_point = 0
         self.force_graph = []
         self.move_graph = []
+        self.time_response = None
         self.time_push_yellow = None
         # self.timer_save_move = None
 
-    def start_param(self):
+    def start_param_model(self):
         self.set_connect['cst'] = cst
         self.init_connect()
+        self.init_timer_connect()
         con = self.set_connect.get('connect')
         if con:
             self.init_timer_yellow_btn()
             # self.init_timer_save_log()
             self.init_reader()
             self.reader_start()
+            self.timer_connect.start()
+
         else:
             self.log_error(f'Нет подключения к контроллеру')
 
@@ -132,6 +138,31 @@ class Model:
             self.set_connect['client'] = None
             self.set_connect['connect'] = False
             self.status_bar_msg(f'Контроллер отключен')
+
+    def check_connect_client(self):
+        try:
+            check_time = time.monotonic()
+            if check_time - self.time_response > 1:
+                self.signals.connect_ctrl.emit()
+                self.reader_stop()
+                self.disconnect_client()
+                time.sleep(1)
+                self.init_connect()
+                if self.set_connect['connect']:
+                    self.signals.connect_ctrl.emit()
+                    self.reader_start()
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/check_connect_client - {e}')
+
+    def init_timer_connect(self):
+        try:
+            self.timer_connect = QTimer()
+            self.timer_connect.setInterval(1000)
+            self.timer_connect.timeout.connect(self.check_connect_client)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/init_timer_connect - {e}')
 
     def init_reader(self):
         self.reader = Reader()
@@ -234,10 +265,12 @@ class Model:
 
                     self.signals.read_finish.emit(self.set_regs)
 
+            self.time_response = time.monotonic()
+
             if self.count_msg == 10000:
                 self.count_msg = 0
 
-            if self.set_regs['yellow_btn'] == 1:
+            if self.set_regs['test_launch']:
                 if not self.timer_yellow.isActive():
                     self.timer_yellow.start()
                 else:
@@ -257,27 +290,26 @@ class Model:
 
     def yellow_btn_click(self):
         try:
-            if self.set_regs['test_launch']:
-                if self.set_regs['yellow_btn'] == 0:
+            if self.set_regs['yellow_btn'] == 0:
 
-                    flag = self.set_regs.get('rattle_yellow')
+                flag = self.set_regs.get('rattle_yellow')
 
-                    if not flag:
+                if not flag:
+                    self.time_push_yellow = time.monotonic()
+                    self.signals.test_launch.emit()
+                    self.set_regs['rattle_yellow'] = True
+
+                else:
+                    time_signal = time.monotonic() - self.time_push_yellow
+                    if 2 < time_signal:
                         self.time_push_yellow = time.monotonic()
                         self.signals.test_launch.emit()
                         self.set_regs['rattle_yellow'] = True
 
                     else:
-                        time_signal = time.monotonic() - self.time_push_yellow
-                        if 2 < time_signal:
-                            self.time_push_yellow = time.monotonic()
-                            self.signals.test_launch.emit()
-                            self.set_regs['rattle_yellow'] = True
-
-                        else:
-                            pass
-                else:
-                    self.timer_yellow.stop()
+                        pass
+            else:
+                self.timer_yellow.stop()
 
         except Exception as e:
             self.log_error(f'ERROR in model/yellow_btn_click - {e}')
@@ -355,6 +387,7 @@ class Model:
                 if min(move) != move[-1]:
                     self.set_regs['min_pos'] = True
                     self.set_regs['min_point'] = min(move)
+                    self.set_regs['start_point'] = self.set_regs.get('min_point') + 10
                     print(f'Find min point --> {min(move)}')
                     self.set_regs['current_direction'] = 'up'
 
@@ -395,8 +428,6 @@ class Model:
                     self.set_regs['start_direction'] = False
 
             else:
-                # self.set_regs['start_point'] = self.set_regs.get('min_point') + 20
-                # self.set_regs['start_point'] = self.set_regs.get('max_point') - 10
                 self.set_regs['max_comp'] = max(force)
                 self.set_regs['max_recoil'] = abs(min(force))
                 self.set_regs['force_graph'] = [x for x in force]
@@ -644,20 +675,28 @@ class Model:
 
             self.set_regs['cycle_force'] = int(bits[0])
             self.set_regs['list_state'][0] = int(bits[0])
+
             self.set_regs['red_light'] = int(bits[1])
             self.set_regs['list_state'][1] = int(bits[1])
+
             self.set_regs['green_light'] = int(bits[2])
             self.set_regs['list_state'][2] = int(bits[2])
+
             self.set_regs['lost_control'] = int(bits[3])
             self.set_regs['list_state'][3] = int(bits[3])
+
             self.set_regs['excess_force'] = int(bits[4])
             self.set_regs['list_state'][4] = int(bits[4])
+
             self.set_regs['safety_fence'] = int(bits[8])
             self.set_regs['list_state'][8] = int(bits[8])
+
             self.set_regs['state_freq'] = int(bits[11])
             self.set_regs['list_state'][11] = int(bits[11])
+
             self.set_regs['state_force'] = int(bits[12])
             self.set_regs['list_state'][12] = int(bits[12])
+
             self.set_regs['yellow_btn'] = int(bits[13])
             self.set_regs['list_state'][13] = int(bits[13])
 
