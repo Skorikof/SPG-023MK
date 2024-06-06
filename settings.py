@@ -37,7 +37,7 @@ class PrgSettings:
             self.registers['force_buffer_count'] = 16
             self.registers['reg_buffer'] = 0x4000
             self.registers['buffer_count'] = 20
-            self.registers['buffer_all'] = 15000
+            self.registers['buffer_all'] = 3000
 
             self.registers['count_msg'] = 0
             self.registers['force'] = 0
@@ -57,6 +57,7 @@ class PrgSettings:
             self.registers['counter_time'] = 0
             self.registers['count_list'] = []
             self.registers['state_list'] = []
+            self.registers['temp_list'] = []
 
             self.registers['safety_fence'] = 0
             self.registers['traverse_block_1'] = 0

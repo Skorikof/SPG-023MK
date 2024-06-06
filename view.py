@@ -154,8 +154,7 @@ class AppWindow(QMainWindow):
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.test_lab)
-
-        self.ui.test_data_speed_lineEdit.returnPressed.connect(self.change_speed_test)
+        self.ui.btn_speed_change.clicked.connect(self.change_speed_test)
 
     def update_data_view(self, response):
         try:
@@ -707,3 +706,22 @@ class AppWindow(QMainWindow):
         self.model.set_regs['type_test'] = None
         self.main_ui_enable()
         self.win_set.hide()
+
+    def save_btn_clicked(self):
+        try:
+            ser = self.ui.test_data_serial_lineEdit.text()
+            if ser == '':
+                pass
+
+            else:
+                self.save_data_in_archive()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/save_btn_clicked - {e}')
+
+    def save_data_in_archive(self):
+        try:
+            print(f'Save data in archive')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')

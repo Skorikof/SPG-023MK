@@ -307,7 +307,7 @@ class SetWindow(QMainWindow):
             self.model.set_regs['min_pos'] = False
             self.model.set_regs['max_pos'] = False
             self.model.reader_start_test()
-            self.graph_ui.show()
+            # self.graph_ui.show()
 
         except Exception as e:
             print(str(e))

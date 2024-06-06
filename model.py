@@ -49,21 +49,22 @@ class Model:
         self.count_point = 0
         self.force_graph = []
         self.move_graph = []
-        self.time_response = None
+        self.time_response = time.monotonic()
         self.time_push_yellow = None
         # self.timer_save_move = None
 
     def start_param_model(self):
         self.set_connect['cst'] = cst
         self.init_connect()
-        self.init_timer_connect()
+        # self.init_timer_connect()
         con = self.set_connect.get('connect')
         if con:
             self.init_timer_yellow_btn()
             # self.init_timer_save_log()
             self.init_reader()
             self.reader_start()
-            self.timer_connect.start()
+            # time.sleep(0.1)
+            # self.timer_connect.start()
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -207,40 +208,50 @@ class Model:
                 force_list = []
                 move_list = []
                 state_list = []
+                temp_list = []
 
                 # self.timer_save_log(response.get('move'))
+                print(f'count --> {response["count"]}')
+                print(f'force --> {response["force"]}')
+                print(f'move --> {response["move"]}')
+                print(f'state --> {response["state"]}')
+                print(f'temp --> {response["temp"]}')
+                print(f'======================')
 
-                for i in range(len(response.get('force'))):
-                    # self.log_save_move.append(response.get('move')[i])
-                    if response.get('force')[i] != -100000.0:
-                        count_list.append(response.get('count')[i])
-                        force_list.append(response.get('force')[i])
-                        move_list.append(response.get('move')[i])
-                        state_list.append(response.get('state')[i])
-                        self.count_msg += 1
-                        self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-                    else:
-                        pass
-
-                if not force_list:
-                    print(f'Пришла пустая посылка')
-                    pass
-
-                else:
-                    self.set_regs['force_list'] = [x for x in force_list]
-                    self.set_regs['move_list'] = [x for x in move_list]
-                    self.set_regs['count_list'] = [x for x in count_list]
-                    self.set_regs['state_list'] = [x for x in state_list]
-
-                    self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
-                    self.set_regs['force'] = self.set_regs.get('force_list')[-1]
-                    self.set_regs['move'] = self.set_regs.get('move_list')[-1]
-
-                    self.register_state(self.set_regs.get('state_list')[-1])
-
-                    self.signals.read_finish.emit(self.set_regs)
-
-                    self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
+                # for i in range(len(response.get('force'))):
+                #     # self.log_save_move.append(response.get('move')[i])
+                #     if response.get('force')[i] != -100000.0:
+                #         count_list.append(response.get('count')[i])
+                #         force_list.append(response.get('force')[i])
+                #         move_list.append(response.get('move')[i])
+                #         state_list.append(response.get('state')[i])
+                #         temp_list.append(response.get('temp')[i])
+                #         self.count_msg += 1
+                #         self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                #     else:
+                #         pass
+                #
+                # if not force_list:
+                #     print(f'Пришла пустая посылка')
+                #     pass
+                #
+                # else:
+                #     self.set_regs['force_list'] = [x for x in force_list]
+                #     self.set_regs['move_list'] = [x for x in move_list]
+                #     self.set_regs['count_list'] = [x for x in count_list]
+                #     self.set_regs['state_list'] = [x for x in state_list]
+                #     self.set_regs['temp_list'] = [x for x in temp_list]
+                #
+                #     self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
+                #     self.set_regs['force'] = self.set_regs.get('force_list')[-1]
+                #     self.set_regs['move'] = self.set_regs.get('move_list')[-1]
+                #
+                #     self.register_state(state_list[-1])
+                #     self.set_regs['temperature'] = temp_list[-1]
+                #
+                #     self.signals.read_finish.emit(self.set_regs)
+                #
+                #     self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
 
             if tag == 'reg':
                 res = response.get('regs')

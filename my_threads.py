@@ -217,6 +217,7 @@ class Reader(QRunnable):
         self.values_f = []
         self.values_move = []
         self.values_state = []
+        self.values_temp = []
         self.time_proc = []
 
     @pyqtSlot()
@@ -241,25 +242,33 @@ class Reader(QRunnable):
                         self.values_f = []
                         self.values_move = []
                         self.values_state = []
+                        self.values_temp = []
                         self.time_proc = []
 
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
-                                                 self.reg_buffer, self.buffer_count * 5)
+                                                 self.reg_buffer, self.buffer_count * 6)
 
-                        if len(rr) == self.buffer_count * 5:  # 100
+                        print(f'read reg --> {self.reg_buffer}, count reg --> {self.buffer_count * 6}')
+                        print(f'response --> {rr}')
+                        print(f'len response --> {len(rr)}')
+
+                        if len(rr) == self.buffer_count * 6:  # 120
                             for i in range(0, self.buffer_count):  # 20
                                 flag_add = False
-                                ind = 5 * i
+                                ind = 6 * i
                                 if self.flag_start_test:
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
                                     if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65535:
                                         flag_add = True
+                                    else:
+                                        print(f'Кто-то кого-то обогнал')
+                                        print(f'current_rec --> {self.current_rec}, index Popov --> {rr[ind]}')
 
                                 if flag_add:
                                     self.current_rec = rr[ind]
-                                    self.reg_buffer += 5
+                                    self.reg_buffer += 6
                                     self.num_rec += 1
                                     self.count_rec += 1
 
@@ -271,6 +280,7 @@ class Reader(QRunnable):
                                     self.values_move.append(move)
 
                                     self.values_state.append(rr[ind + 4])
+                                    self.values_temp.append(round(rr[ind + 5] * 0.01, 1))
 
                                 else:
                                     break
@@ -281,21 +291,22 @@ class Reader(QRunnable):
                             self.result['force'] = [x for x in self.values_f]
                             self.result['move'] = [x for x in self.values_move]
                             self.result['state'] = [x for x in self.values_state]
+                            self.result['temp'] = [x for x in self.values_temp]
                             self.result['time'] = [x for x in self.time_proc]
 
                             self.signals.read_result.emit(self.result, self.read_tag)
 
-                            delta_r = 16384 + self.buffer_all - self.reg_buffer
+                            delta_r = 16384 + self.buffer_all * 6 - self.reg_buffer
                             if delta_r <= 0:
                                 if delta_r < 0:
                                     print('Выход за пределы буфера')
                                 self.buffer_count = 20
                                 self.reg_buffer = 0x4000
                             else:
-                                if delta_r >= 5 * self.buffer_count:
+                                if delta_r >= 6 * self.buffer_count:
                                     self.buffer_count = 20
                                 else:
-                                    self.buffer_count = int(delta_r / 5)
+                                    self.buffer_count = int(delta_r / 6)
 
                             # time.sleep(0.001)
 
