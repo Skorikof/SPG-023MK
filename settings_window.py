@@ -306,8 +306,10 @@ class SetWindow(QMainWindow):
             self.model.set_regs['current_direction'] = ''
             self.model.set_regs['min_pos'] = False
             self.model.set_regs['max_pos'] = False
+            self.model.write_bit_force_cycle(1)
+            time.sleep(0.1)
             self.model.reader_start_test()
-            # self.graph_ui.show()
+            self.graph_ui.show()
 
         except Exception as e:
             print(str(e))
@@ -315,6 +317,9 @@ class SetWindow(QMainWindow):
     def stop_test(self):
         try:
             self.model.reader_stop_test()
+            time.sleep(0.2)
+            self.model.write_bit_force_cycle(0)
+            time.sleep(0.1)
 
         except Exception as e:
             print(str(e))

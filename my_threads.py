@@ -212,13 +212,8 @@ class Reader(QRunnable):
         self.current_rec = -1
         self.count_rec = 0
         self.buffer_all = None
+        self.request = {}
         self.result = {}
-        self.values_time = []
-        self.values_f = []
-        self.values_move = []
-        self.values_state = []
-        self.values_temp = []
-        self.time_proc = []
 
     @pyqtSlot()
     def run(self):
@@ -238,19 +233,20 @@ class Reader(QRunnable):
                     elif self.read_tag == 'buffer':
                         self.time_start = time.monotonic()
 
-                        self.values_time = []
-                        self.values_f = []
-                        self.values_move = []
-                        self.values_state = []
-                        self.values_temp = []
-                        self.time_proc = []
+                        self.result['count'] = []
+                        self.result['force'] = []
+                        self.result['move'] = []
+                        self.result['state'] = []
+                        self.result['temp'] = []
+                        self.result['time'] = []
+
+                        print(f'Регистр читаем --> {self.reg_buffer}, количество записей --> {self.buffer_count * 6}')
 
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 6)
 
-                        print(f'read reg --> {self.reg_buffer}, count reg --> {self.buffer_count * 6}')
-                        print(f'response --> {rr}')
-                        print(f'len response --> {len(rr)}')
+                        print(f'Ответ --> {rr}')
+                        print(f'Длина ответа --> {len(rr)}')
 
                         if len(rr) == self.buffer_count * 6:  # 120
                             for i in range(0, self.buffer_count):  # 20
@@ -260,11 +256,12 @@ class Reader(QRunnable):
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65535:
+                                    if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65534:
                                         flag_add = True
+
                                     else:
-                                        print(f'Кто-то кого-то обогнал')
-                                        print(f'current_rec --> {self.current_rec}, index Popov --> {rr[ind]}')
+                                        print(f'Чтение обогнало запись')
+                                        print(f'Последний корректный счётчик --> {self.current_rec}')
 
                                 if flag_add:
                                     self.current_rec = rr[ind]
@@ -272,43 +269,37 @@ class Reader(QRunnable):
                                     self.num_rec += 1
                                     self.count_rec += 1
 
-                                    self.values_time.append(rr[ind])
+                                    self.result['count'].append(rr[ind])
                                     force = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
-                                    self.values_f.append(force)
-
-                                    move = round(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)), 1)
-                                    self.values_move.append(move)
-
-                                    self.values_state.append(rr[ind + 4])
-                                    self.values_temp.append(round(rr[ind + 5] * 0.01, 1))
+                                    self.result['force'].append(force)
+                                    move = round(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)),
+                                                 1)
+                                    self.result['move'].append(move)
+                                    self.result['state'].append(rr[ind + 4])
+                                    self.result['temp'].append(round(rr[ind + 5] * 0.01, 1))
+                                    self.result['time'].append(round(time.monotonic() - self.time_start, 6))
 
                                 else:
                                     break
 
-                            self.time_proc.append(round(time.monotonic() - self.time_start, 6))
-
-                            self.result['count'] = [x for x in self.values_time]
-                            self.result['force'] = [x for x in self.values_f]
-                            self.result['move'] = [x for x in self.values_move]
-                            self.result['state'] = [x for x in self.values_state]
-                            self.result['temp'] = [x for x in self.values_temp]
-                            self.result['time'] = [x for x in self.time_proc]
-
                             self.signals.read_result.emit(self.result, self.read_tag)
 
-                            delta_r = 16384 + self.buffer_all * 6 - self.reg_buffer
+                            delta_r = 16384 + self.buffer_all - self.reg_buffer
+
+                            print(f'В буфере осталось --> {delta_r} записей')
                             if delta_r <= 0:
                                 if delta_r < 0:
                                     print('Выход за пределы буфера')
-                                self.buffer_count = 20
+                                self.buffer_count = self.request.get('buffer_count')
                                 self.reg_buffer = 0x4000
                             else:
                                 if delta_r >= 6 * self.buffer_count:
-                                    self.buffer_count = 20
+                                    self.buffer_count = self.request.get('buffer_count')
+
                                 else:
                                     self.buffer_count = int(delta_r / 6)
 
-                            # time.sleep(0.001)
+                                print(f'Будет прочитано записей --> {self.buffer_count * 6}')
 
                         else:
                             self.signals.thread_err.emit(str(rr))
@@ -319,6 +310,7 @@ class Reader(QRunnable):
                 self.signals.thread_err.emit(f'ERROR in thread Reader - {e}')
 
     def start_test(self, request):
+        self.request = request
         self.reg_buffer = request.get('reg_buffer')
         self.buffer_count = request.get('buffer_count')
         self.buffer_all = request.get('buffer_all')
@@ -334,6 +326,7 @@ class Reader(QRunnable):
         self.read_tag = 'reg'
 
     def start_read(self, client, cst, request):
+        self.request = request
         self.client = client
         self.cst = cst
         self.dev_id = request.get('dev_id')

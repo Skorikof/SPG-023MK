@@ -33,7 +33,6 @@ class Controller:
             self.check_directory()
             self.init_signals()
             self.init_timer()
-            # self.lamp_all_switch_off()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/__init__ - {e}')
@@ -81,7 +80,7 @@ class Controller:
 
     def update_stage_on_timer(self):
         try:
-            # self.control_process()
+            self.control_process()
 
             stage = self.response.get('stage')
             type_test = self.response.get('type_test')
@@ -129,8 +128,6 @@ class Controller:
             elif stage == 'test_move_cycle':
                 exc_force = self.response.get('excess_force')
                 if self.count_cycle >= 1:
-                    # self.model.motor_stop()
-                    # time.sleep(0.1)
                     self.change_excess_force(2000)
 
                     if type_test == 'lab':
@@ -141,8 +138,6 @@ class Controller:
 
                 if exc_force == 1:
                     self.excess_force()
-                    self.stop_test_clicked()
-                    self.lamp_red_switch_on()
                     self.model.set_regs['stage'] = 'wait'
 
             elif stage == 'test_speed_one':
@@ -152,7 +147,6 @@ class Controller:
             elif stage == 'test_speed_two':
                 if self.count_cycle == 3:
                     self.result_conveyor_test()
-                    # self.model.motor_stop()
                     self.model.set_regs['stage'] = 'wait'
                     self.stop_gear_min_pos()
 
@@ -186,35 +180,61 @@ class Controller:
 
     def control_process(self):
         try:
-            # if self.response.get('lost_control') == 1:
-            #     self.lost_control()
-            # if self.response.get('excess_force') == 1:
-            #     self.excess_force()
-            # if self.response.get('safety_fence') == 1:
-            #     self.safety_fence()
+            if self.response.get('lost_control') == 1:
+                self.lost_control()
+            if self.response.get('excess_force') == 1:
+                self.excess_force()
+            if self.response.get('safety_fence') == 1:
+                self.safety_fence()
             if self.response.get('alarm_highest_position') == 0:
                 self.alarm_traverse_position('up')
             if self.response.get('alarm_lowest_position') == 0:
                 self.alarm_traverse_position('down')
 
+            self.check_max_temperature()
+
         except Exception as e:
             self.model.log_error(f'ERROR in controller/control_process - {e}')
 
+    def check_max_temperature(self):
+        if self.response.get('max_temper') >= self.amort.max_temper:
+            self.excess_temperature()
+
     def lost_control(self):
+        self.stop_test_clicked()
+        self.lamp_red_switch_on()
+        self.model.set_regs['test_launch'] = False
+        self.model.set_regs['test_flag'] = False
+        self.model.log_error(f'lost control')
         self.signals.control_msg.emit('lost_control')
 
     def excess_force(self):
+        self.stop_test_clicked()
+        self.lamp_red_switch_on()
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
+        self.model.log_error(f'excess force')
         self.signals.control_msg.emit('excess_force')
 
-    def safety_fence(self):
+    def excess_temperature(self):
+        self.stop_test_clicked()
+        self.lamp_red_switch_on()
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
+        self.model.log_error(f'excess temperature')
+        self.signals.control_msg.emit('excess_temperature')
+
+    def safety_fence(self):
+        self.stop_test_clicked()
+        self.lamp_red_switch_on()
+        self.model.set_regs['test_launch'] = False
+        self.model.set_regs['test_flag'] = False
+        self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
 
     def alarm_traverse_position(self, pos):
-        txt = 'alarm_traverce_{}'.format(pos)
+        txt = 'alarm_traverse_{}'.format(pos)
+        self.model.log_error(f'alarm traverse {pos}')
         self.signals.control_msg.emit(txt)
 
     def position_traverse(self):
@@ -276,6 +296,7 @@ class Controller:
 
     def start_test_clicked(self):
         try:
+            self.model.set_regs['max_temperature'] = 0
             self.model.set_regs['test_launch'] = True
             # trav_ref = self.response.get('traverse_referent')
             # if not trav_ref:
@@ -303,11 +324,6 @@ class Controller:
             self.model.set_regs['test_launch'] = False
 
             self.change_excess_force(2000)
-            # self.model.set_regs['adr_freq'] = 2
-            # self.model.motor_stop()
-            #
-            # self.model.set_regs['adr_freq'] = 1
-            # self.model.motor_stop()
 
             flag = self.response.get('gear_referent')
             if flag:
@@ -319,12 +335,6 @@ class Controller:
                 self.model.set_regs['adr_freq'] = 1
                 self.model.motor_stop()
                 self.signals.cancel_test.emit()
-
-            # len_max = self.amort.max_length
-            # bracket = self.response.get('bracket_height')
-            # stock_point = len_max + bracket
-            #
-            # self.traverse_move_position(stock_point)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/stop_test_clicked - {e}')
@@ -363,7 +373,6 @@ class Controller:
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
             self.signals.traverse_referent.emit()
-            # self.lamp_all_switch_on()
             self.model.set_regs['traverse_position'] = False
             self.write_speed_motor(2, freq=25)
             self.model.set_regs['stage'] = 'traverse_referent'
@@ -375,7 +384,6 @@ class Controller:
     def traverse_install_point(self):
         """Позционирование траверсы для установки амортизатора"""
         try:
-            # self.signals.traverse_position.emit()
             self.position_traverse()
             stock_point = self.response.get('traverse_stock')
             hod = self.amort.hod
@@ -399,7 +407,6 @@ class Controller:
         try:
             self.position_traverse()
             stock_point = int(self.response.get('traverse_stock'))
-            # hod = self.amort.hod
             len_max = self.amort.max_length
             len_min = self.amort.min_length
             mid_point = (len_max - len_min) / 2

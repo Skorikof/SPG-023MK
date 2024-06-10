@@ -191,28 +191,25 @@ class AppWindow(QMainWindow):
                 tag = 'attention'
 
             elif msg == 'lost_control':
-                self.log_msg_err_slot(msg)
                 txt = 'ПОТЕРЯНО\nУПРАВЛЕНИЕ'
 
             elif msg == 'excess_force':
-                self.log_msg_err_slot(msg)
                 txt = 'ПРЕВЫШЕНИЕ\nУСИЛИЯ'
 
+            elif msg == 'excess_temperature':
+                txt = 'ПРЕВЫШЕНА\nМАКСИМАЛЬНО\nДОПУСТИМАЯ\nТЕМПЕРАТУРА'
+
             elif msg == 'safety_fence':
-                self.log_msg_err_slot(msg)
                 txt = 'ОТКРЫТО\nЗАЩИТНОЕ\nОГРАЖДЕНИЕ'
 
-            elif msg == 'alarm_traverce_up':
-                self.log_msg_err_slot(msg)
+            elif msg == 'alarm_traverse_up':
                 txt = 'ТРАВЕРСА\nВ ВЕРХНЕМ\nПОЛОЖЕНИИ'
 
-            elif msg == 'alarm_traverce_down':
-                self.log_msg_err_slot(msg)
+            elif msg == 'alarm_traverse_down':
                 txt = 'ТРАВЕРСА\nВ НИЖНЕМ\nПОЛОЖЕНИИ'
             else:
                 print(msg)
 
-            # self.log_msg_err_slot(msg)
             self.main_ui_msg(txt, tag)
 
         except Exception as e:
@@ -517,7 +514,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.setBackground('w')
 
             self.pen_test_lab = pg.mkPen(color='black', width=3)
-            self.data_line_test_lab = self.ui.conv_GraphWidget.plot([], [], pen=self.pen_test_conv)
+            self.data_line_test_lab = self.ui.lab_GraphWidget.plot([], [], pen=self.pen_test_conv)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/init_lab_graph - {e}')
@@ -539,10 +536,12 @@ class AppWindow(QMainWindow):
             max_comp = self.response.get('max_comp')
             max_recoil = self.response.get('max_recoil')
             temper = self.response.get('temperature')
+            max_temper = self.response.get('max_temper')
 
             self.ui.test_data_max_comp_lineEdit.setText(str(max_comp))
             self.ui.test_data_max_recoil_lineEdit.setText(str(max_recoil))
-            self.ui.test_data_temp_lineEdit.setText(str(temper))
+            self.ui.test_data_now_temp_lineEdit.setText(str(temper))
+            self.ui.test_data_max_temp_lineEdit.setText(str(max_temper))
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_lab_data - {e}')

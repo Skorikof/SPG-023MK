@@ -37,7 +37,7 @@ class PrgSettings:
             self.registers['force_buffer_count'] = 16
             self.registers['reg_buffer'] = 0x4000
             self.registers['buffer_count'] = 20
-            self.registers['buffer_all'] = 3000
+            self.registers['buffer_all'] = 18000
 
             self.registers['count_msg'] = 0
             self.registers['force'] = 0
@@ -96,6 +96,7 @@ class PrgSettings:
             self.registers['max_comp'] = 0
             self.registers['max_recoil'] = 0
             self.registers['temperature'] = 0
+            self.registers['max_temperature'] = 0
 
         except Exception as e:
             print(str(e))

@@ -33,8 +33,6 @@ class Model:
         self.set_regs = PrgSettings().registers
         self.threadpool = QThreadPool()
 
-        # self.log_save_move = []
-
         self.log_writer = None
         self.reader = None
         self.parser = None
@@ -51,7 +49,6 @@ class Model:
         self.move_graph = []
         self.time_response = time.monotonic()
         self.time_push_yellow = None
-        # self.timer_save_move = None
 
     def start_param_model(self):
         self.set_connect['cst'] = cst
@@ -60,7 +57,6 @@ class Model:
         con = self.set_connect.get('connect')
         if con:
             self.init_timer_yellow_btn()
-            # self.init_timer_save_log()
             self.init_reader()
             self.reader_start()
             # time.sleep(0.1)
@@ -184,8 +180,6 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
-        # self.log_save_move.clear()
-        # self.timer_save_move.start()
         self.signals.start_test.emit(self.set_regs)
         self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
@@ -194,7 +188,6 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера остановлено')
 
     def reader_stop_test(self):
-        # self.timer_save_move.stop()
         self.signals.stop_test.emit()
         self.status_bar_msg(f'Чтение буффера контроллера остановлено')
 
@@ -210,48 +203,47 @@ class Model:
                 state_list = []
                 temp_list = []
 
-                # self.timer_save_log(response.get('move'))
-                print(f'count --> {response["count"]}')
-                print(f'force --> {response["force"]}')
-                print(f'move --> {response["move"]}')
-                print(f'state --> {response["state"]}')
-                print(f'temp --> {response["temp"]}')
-                print(f'======================')
+                # print(f'Счётчик --> {response["count"]}')
+                # print(f'Усилие --> {response["force"]}')
+                # print(f'Перемещение --> {response["move"]}')
+                # print(f'Состояние --> {response["state"]}')
+                # print(f'Температура --> {response["temp"]}')
+                # print(f'======================')
 
-                # for i in range(len(response.get('force'))):
-                #     # self.log_save_move.append(response.get('move')[i])
-                #     if response.get('force')[i] != -100000.0:
-                #         count_list.append(response.get('count')[i])
-                #         force_list.append(response.get('force')[i])
-                #         move_list.append(response.get('move')[i])
-                #         state_list.append(response.get('state')[i])
-                #         temp_list.append(response.get('temp')[i])
-                #         self.count_msg += 1
-                #         self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-                #     else:
-                #         pass
-                #
-                # if not force_list:
-                #     print(f'Пришла пустая посылка')
-                #     pass
-                #
-                # else:
-                #     self.set_regs['force_list'] = [x for x in force_list]
-                #     self.set_regs['move_list'] = [x for x in move_list]
-                #     self.set_regs['count_list'] = [x for x in count_list]
-                #     self.set_regs['state_list'] = [x for x in state_list]
-                #     self.set_regs['temp_list'] = [x for x in temp_list]
-                #
-                #     self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
-                #     self.set_regs['force'] = self.set_regs.get('force_list')[-1]
-                #     self.set_regs['move'] = self.set_regs.get('move_list')[-1]
-                #
-                #     self.register_state(state_list[-1])
-                #     self.set_regs['temperature'] = temp_list[-1]
-                #
-                #     self.signals.read_finish.emit(self.set_regs)
-                #
-                #     self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
+                for i in range(len(response.get('force'))):
+                    if response.get('force')[i] != -100000.0:
+                        count_list.append(response.get('count')[i])
+                        force_list.append(response.get('force')[i])
+                        move_list.append(response.get('move')[i])
+                        state_list.append(response.get('state')[i])
+                        temp_list.append(response.get('temp')[i])
+                        self.count_msg += 1
+                        self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                    else:
+                        pass
+
+                if not force_list:
+                    print(f'Пришла пустая посылка')
+                    pass
+
+                else:
+                    self.set_regs['force_list'] = [x for x in force_list]
+                    self.set_regs['move_list'] = [x for x in move_list]
+                    self.set_regs['count_list'] = [x for x in count_list]
+                    self.set_regs['state_list'] = [x for x in state_list]
+                    self.set_regs['temp_list'] = [x for x in temp_list]
+
+                    self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
+                    self.set_regs['force'] = self.set_regs.get('force_list')[-1]
+                    self.set_regs['move'] = self.set_regs.get('move_list')[-1]
+
+                    self.register_state(state_list[-1])
+                    self.set_regs['temperature'] = temp_list[-1]
+                    self.set_regs['max_temperature'] = self.find_max_temperature(max(temp_list))
+
+                    self.signals.read_finish.emit(self.set_regs)
+
+                    self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
 
             if tag == 'reg':
                 res = response.get('regs')
@@ -324,30 +316,6 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/yellow_btn_click - {e}')
-
-    # def init_timer_save_log(self):
-    #     try:
-    #         self.timer_save_move = QTimer()
-    #         self.timer_yellow.setInterval(10000)
-    #         self.timer_yellow.timeout.connect(self.save_log_move)
-    #
-    #     except Exception as e:
-    #         self.log_error(f'ERROR in model/timer_save_log - {e}')
-
-    # def save_log_move(self):
-    #     try:
-    #         temp_list = [x for x in self.log_save_move]
-    #         self.log_save_move = []
-    #         with open('testData.dat', 'w') as file:
-    #             for i in range(len(temp_list)):
-    #                 file.write(f'{temp_list[i]}\n')
-    #
-    #             # file.write('================== \n')
-    #
-    #         print('file write is Done')
-    #
-    #     except Exception as e:
-    #         self.log_error(f'ERROR in model/save_log_move - {e}')
 
     def find_start_point(self, move: float):
         try:
@@ -450,37 +418,6 @@ class Model:
             self.set_regs['max_pos'] = False
             self.force_graph = []
             self.move_graph = []
-
-            # teor_hod = self.amort.hod
-            # if teor_hod == 120:
-            #     teor_hod = 118
-            #
-            # fact_hod = abs(self.set_regs['min_point']) + abs(self.set_regs['max_point'])
-            #
-            # if abs(teor_hod - fact_hod) > 2:
-            #     self.set_regs['start_pos'] = False
-            #     self.set_regs['start_direction'] = False
-            #     self.set_regs['current_direction'] = ''
-            #     print(f'Значения с линейки меньше заявленного хода')
-            #
-            #     self.set_regs['min_pos'] = False
-            #     self.set_regs['max_pos'] = False
-            #     self.force_graph = []
-            #     self.move_graph = []
-            #
-            # else:
-            #     # self.set_regs['start_point'] = self.set_regs.get('min_point')
-            #     self.set_regs['max_comp'] = max(force)
-            #     self.set_regs['max_recoil'] = abs(min(force))
-            #     self.set_regs['force_graph'] = [x for x in force]
-            #     self.set_regs['move_graph'] = [x for x in move]
-            #     self.signals.full_cycle.emit()
-            #     self.signals.update_graph_settings.emit()
-            #
-            #     self.set_regs['min_pos'] = False
-            #     self.set_regs['max_pos'] = False
-            #     self.force_graph = []
-            #     self.move_graph = []
 
         except Exception as e:
             self.log_error(f'ERROR in model/full_circle_done - {e}')
@@ -657,6 +594,17 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/calc_values_write - {e}')
+
+    def find_max_temperature(self, value):
+        try:
+            temp = self.set_regs.get('max_temperature')
+            if value > temp:
+                return value
+
+            return temp
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/find_max_temperature - {e}')
 
     def magnitude_effort(self, low_reg, big_reg):
         """Текущая величина усилия"""
