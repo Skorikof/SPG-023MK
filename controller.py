@@ -201,38 +201,43 @@ class Controller:
             self.excess_temperature()
 
     def lost_control(self):
-        self.stop_test_clicked()
+        self.stop_gear_now()
         self.lamp_red_switch_on()
+        self.model.set_regs['stage'] = 'wait'
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         self.model.log_error(f'lost control')
         self.signals.control_msg.emit('lost_control')
 
     def excess_force(self):
-        self.stop_test_clicked()
+        self.stop_gear_now()
         self.lamp_red_switch_on()
+        self.model.set_regs['stage'] = 'wait'
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         self.model.log_error(f'excess force')
         self.signals.control_msg.emit('excess_force')
 
     def excess_temperature(self):
-        self.stop_test_clicked()
+        self.stop_gear_min_pos()
         self.lamp_red_switch_on()
         self.model.set_regs['test_launch'] = False
-        self.model.set_regs['test_flag'] = False
         self.model.log_error(f'excess temperature')
         self.signals.control_msg.emit('excess_temperature')
 
     def safety_fence(self):
-        self.stop_test_clicked()
+        self.stop_gear_min_pos()
         self.lamp_red_switch_on()
         self.model.set_regs['test_launch'] = False
-        self.model.set_regs['test_flag'] = False
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
 
     def alarm_traverse_position(self, pos):
+        self.stop_gear_now()
+        self.lamp_red_switch_on()
+        self.model.set_regs['stage'] = 'wait'
+        self.model.set_regs['test_launch'] = False
+        self.model.set_regs['test_flag'] = False
         txt = 'alarm_traverse_{}'.format(pos)
         self.model.log_error(f'alarm traverse {pos}')
         self.signals.control_msg.emit(txt)
@@ -252,10 +257,7 @@ class Controller:
         self.lamp_all_switch_off()
         client = self.model.set_connect.get('client')
         if client:
-            self.model.set_regs['adr_freq'] = 1
-            self.model.motor_stop()
-            self.model.set_regs['adr_freq'] = 2
-            self.model.motor_stop()
+            self.stop_gear_now()
             self.model.reader_stop_test()
 
     def yellow_btn_push(self):
@@ -329,11 +331,7 @@ class Controller:
             if flag:
                 self.stop_gear_min_pos()
             else:
-                self.model.set_regs['adr_freq'] = 2
-                self.model.motor_stop()
-
-                self.model.set_regs['adr_freq'] = 1
-                self.model.motor_stop()
+                self.stop_gear_now()
                 self.signals.cancel_test.emit()
 
         except Exception as e:
@@ -461,6 +459,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/test_move_cycle - {e}')
 
     def change_excess_force(self, force):
+        """Запись аварийного усилия и отключение бита блокировки"""
         try:
             self.model.set_regs['force_alarm'] = force
             self.model.write_emergency_force()
@@ -473,6 +472,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/change_excess_force - {e}')
 
     def conv_test_speed(self, ind):
+        """Сигнал на окно конвейерного испытания, разгон до скорости индекса(1 или 2)"""
         try:
             self.signals.conv_win_test.emit()
 
@@ -491,6 +491,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/conv_test - {e}')
 
     def laboratory_test_speed(self):
+        """Сигнал на окно лабораторного испытания, разгон до заданной скорости"""
         try:
             self.signals.lab_win_test.emit()
 
@@ -502,44 +503,8 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_laboratory_test - {e}')
 
-    def cancel_lab_test(self):
-        try:
-            self.model.set_regs['test_launch'] = False
-            self.model.set_regs['adr_freq'] = 1
-            self.model.motor_stop()
-            time.sleep(0.1)
-            self.model.set_regs['adr_freq'] = 2
-            self.model.motor_stop()
-            time.sleep(0.1)
-            self.model.reader_stop_test()
-            time.sleep(0.2)
-            self.model.write_bit_force_cycle(1)
-            time.sleep(0.1)
-            self.signals.lab_test_cancel.emit()
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/cancel_lab_test - {e}')
-
-    def cancel_conveyor_test(self):
-        try:
-            self.model.set_regs['test_launch'] = False
-            self.model.set_regs['adr_freq'] = 1
-            self.model.motor_stop()
-            time.sleep(0.1)
-            self.model.set_regs['adr_freq'] = 2
-            self.model.motor_stop()
-            time.sleep(0.1)
-            self.model.reader_stop_test()
-            time.sleep(0.2)
-            self.model.write_bit_force_cycle(1)
-            time.sleep(0.1)
-            self.lamp_all_switch_off()
-            self.signals.conv_test_cancel.emit()
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/cancel_conveyor_test - {e}')
-
     def result_conveyor_test(self):
+        """Включение индикаторов, зелёный - в допусках, красный - нет"""
         try:
             comp_max = self.response.get('max_comp')
             recoil_max = self.response.get('max_recoil')
@@ -570,7 +535,21 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/stop_gear_min_pos - {e}')
 
+    def stop_gear_now(self):
+        """Останов всех двигателей сейчас"""
+        try:
+            self.model.set_regs['adr_freq'] = 1
+            self.model.motor_stop()
+            time.sleep(0.1)
+            self.model.set_regs['adr_freq'] = 2
+            self.model.motor_stop()
+            time.sleep(0.1)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/stop_gear_now - {e}')
+
     def lamp_all_switch_on(self):
+        """Включение всех индикаторов"""
         try:
             self.model.write_bit_green_light(1)
             time.sleep(0.1)
@@ -582,6 +561,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/lamp_all_switch_on - {e}')
 
     def lamp_all_switch_off(self):
+        """Выключение всех индикаторов"""
         try:
             self.model.write_bit_green_light(0)
             time.sleep(0.1)
@@ -593,6 +573,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/lamp_all_switch_off - {e}')
 
     def lamp_green_switch_on(self):
+        """Включение зелёного индикатора"""
         try:
             self.model.write_bit_green_light(1)
             time.sleep(0.1)
@@ -604,6 +585,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/lamp_green_switch_on - {e}')
 
     def lamp_red_switch_on(self):
+        """Включение красного индикатора"""
         try:
             self.model.write_bit_green_light(0)
             time.sleep(0.1)
