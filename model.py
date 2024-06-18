@@ -676,7 +676,7 @@ class Model:
             temp = bin(register)[2:].zfill(16)
             bits = ''.join(reversed(temp))
 
-            self.set_regs['safety_fence'] = int(bits[0])
+            # `self.set_regs['safety_fence'] = int(bits[0])
             self.set_regs['traverse_block_1'] = int(bits[1])
             self.set_regs['traverse_block_2'] = int(bits[2])
             # self.set_regs['yellow_btn'] = int(bits[3])

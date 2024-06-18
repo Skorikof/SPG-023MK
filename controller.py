@@ -80,10 +80,15 @@ class Controller:
 
     def update_stage_on_timer(self):
         try:
-            self.control_process()
+            self.control_alarm_traverse_position()
 
             stage = self.response.get('stage')
             type_test = self.response.get('type_test')
+            flag_test = self.response.get('test_flag')
+            flag_alarm = self.response.get('alarm_stage')
+
+            if flag_test:
+                self.control_alarm_state()
 
             if stage == 'wait':
                 pass
@@ -173,12 +178,24 @@ class Controller:
                     self.model.motor_stop()
                     self.model.set_regs['traverse_position'] = True
                     self.model.set_regs['stage'] = 'wait'
-                    self.signals.cancel_test.emit()
+                    if not flag_alarm:
+                        self.signals.cancel_test.emit()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_stage_on_timer - {e}')
 
-    def control_process(self):
+    def control_alarm_traverse_position(self):
+        try:
+
+            if self.response.get('alarm_highest_position') == 0:
+                self.alarm_traverse_position('up')
+            if self.response.get('alarm_lowest_position') == 0:
+                self.alarm_traverse_position('down')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/control_alarm_traverse_position - {e}')
+
+    def control_alarm_state(self):
         try:
             if self.response.get('lost_control') == 1:
                 self.lost_control()
@@ -186,15 +203,11 @@ class Controller:
                 self.excess_force()
             if self.response.get('safety_fence') == 1:
                 self.safety_fence()
-            if self.response.get('alarm_highest_position') == 0:
-                self.alarm_traverse_position('up')
-            if self.response.get('alarm_lowest_position') == 0:
-                self.alarm_traverse_position('down')
 
             self.check_max_temperature()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/control_process - {e}')
+            self.model.log_error(f'ERROR in controller/control_alarm_state - {e}')
 
     def check_max_temperature(self):
         if self.response.get('max_temper') >= self.amort.max_temper:
@@ -204,6 +217,7 @@ class Controller:
         self.stop_gear_now()
         self.lamp_red_switch_on()
         self.model.set_regs['stage'] = 'wait'
+        self.model.set_regs['alarm_stage'] = True
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         self.model.log_error(f'lost control')
@@ -213,6 +227,7 @@ class Controller:
         self.stop_gear_now()
         self.lamp_red_switch_on()
         self.model.set_regs['stage'] = 'wait'
+        self.model.set_regs['alarm_stage'] = True
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         self.model.log_error(f'excess force')
@@ -221,6 +236,7 @@ class Controller:
     def excess_temperature(self):
         self.stop_gear_min_pos()
         self.lamp_red_switch_on()
+        self.model.set_regs['alarm_stage'] = True
         self.model.set_regs['test_launch'] = False
         self.model.log_error(f'excess temperature')
         self.signals.control_msg.emit('excess_temperature')
@@ -228,6 +244,7 @@ class Controller:
     def safety_fence(self):
         self.stop_gear_min_pos()
         self.lamp_red_switch_on()
+        self.model.set_regs['alarm_stage'] = True
         self.model.set_regs['test_launch'] = False
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
@@ -236,6 +253,7 @@ class Controller:
         self.stop_gear_now()
         self.lamp_red_switch_on()
         self.model.set_regs['stage'] = 'wait'
+        self.model.set_regs['alarm_stage'] = True
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         txt = 'alarm_traverse_{}'.format(pos)
@@ -261,6 +279,7 @@ class Controller:
             self.model.reader_stop_test()
 
     def yellow_btn_push(self):
+        """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
         try:
             flag = self.model.set_regs.get('test_flag')
             if not flag:
@@ -283,6 +302,10 @@ class Controller:
             self.model.log_error(f'ERROR in controller/current_amort - {e}')
 
     def write_speed_motor(self, adr: int, speed: float = None, freq: int = None):
+        """
+        Запись скорости вращения двигателя, если задана скорость, то она пересчитывается в частоту,
+        частота записывается напрямую
+        """
         try:
             if not freq:
                 self.model.set_regs['frequency'] = self.model.calculate_freq(speed)
@@ -297,8 +320,13 @@ class Controller:
             self.model.log_error(f'ERROR in controller/write_speed_motor - {e}')
 
     def start_test_clicked(self):
+        """
+        Точка входа в испытание, определение референтной траверсы, если известна,
+        то сразу запуск позиционирования для установки амортизатора
+        """
         try:
             self.model.set_regs['max_temperature'] = 0
+            self.model.set_regs['alarm_stage'] = False
             self.model.set_regs['test_launch'] = True
             # trav_ref = self.response.get('traverse_referent')
             # if not trav_ref:
@@ -321,6 +349,10 @@ class Controller:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
 
     def stop_test_clicked(self):
+        """
+        Завершение теста, если определена референтная коленвала, то остановка в нижней точке,
+        иначе моментальная остановка
+        """
         try:
             self.model.set_regs['stage'] = 'wait'
             self.model.set_regs['test_launch'] = False
@@ -338,6 +370,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/stop_test_clicked - {e}')
 
     def convert_adapter(self, ind):
+        """Перевод номера адаптера в его длинну"""
         try:
             if ind == 1:
                 return 20
@@ -349,6 +382,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/convert_adapter - {e}')
 
     def traverse_move_position(self, set_point):
+        """Непосредственно включение и перемещение траверсы"""
         try:
             self.write_speed_motor(2, freq=25)
 
@@ -418,6 +452,7 @@ class Controller:
             self.model.log_error(f'ERROR in controller/traverse_start_test_point - {e}')
 
     def traverse_end_point(self):
+        """Подъём траверсы в исходное состояние и завершение испытания"""
         try:
             self.position_traverse()
             stock_point = self.response.get('traverse_stock')

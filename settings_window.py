@@ -86,7 +86,8 @@ class SetWindow(QMainWindow):
     def update_data_win_set(self, response):
         try:
             self.response = response
-            self.update_win(self.response)
+
+            self.update_win()
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/update_data - {e}')
@@ -245,32 +246,37 @@ class SetWindow(QMainWindow):
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/btn_set_doclick - {e}')
 
-    def update_win(self, result):
-        self.ui.lcdTime.display(result.get('counter_time'))
-        self.ui.lcdF.display(result.get('force'))
-        self.ui.lcdH.display(result.get('move'))
-        self.ui.lcdH_T.display(result.get('traverse_move'))
-        self.ui.lcdTemp.display(result.get('temperature'))
-        self.ui.lineEdit_F_alarm.setText(str(int(result.get('force_alarm'))))
-        self.update_color_switch(result)
+    def update_win(self):
+        self.ui.lcdTime.display(self.response.get('counter_time'))
+        self.ui.lcdF.display(self.response.get('force'))
+        self.ui.lcdH.display(self.response.get('move'))
+        self.ui.lcdH_T.display(self.response.get('traverse_move'))
+        self.ui.lcdTemp.display(self.response.get('temperature'))
+        self.ui.lineEdit_F_alarm.setText(str(int(self.response.get('force_alarm'))))
 
-    def update_color_switch(self, state):
+        self.update_color_switch()
+
+    def update_color_switch(self):
         try:
-            self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(state.get('cycle_force')))
-            self.ui.fram_no_control.setStyleSheet(self.set_color_fram(state.get('lost_control')))
-            self.ui.fram_max_F.setStyleSheet(self.set_color_fram(state.get('excess_force')))
-            self.ui.fram_safety_fence.setStyleSheet(self.set_color_fram(state.get('safety_fence'), True))
-            self.ui.fram_condition_FC.setStyleSheet(self.set_color_fram(state.get('state_freq')))
-            self.ui.fram_sensor_F.setStyleSheet(self.set_color_fram(state.get('state_force')))
-            self.ui.fram_block_traverse_1.setStyleSheet(self.set_color_fram(state.get('traverse_block_1'), True))
-            self.ui.fram_block_traverse_2.setStyleSheet(self.set_color_fram(state.get('traverse_block_2'), True))
-            self.ui.fram_down_point.setStyleSheet(self.set_color_fram(state.get('lowest_position')))
-            self.ui.fram_down__alarm_point.setStyleSheet(self.set_color_fram(state.get('alarm_lowest_position'), True))
-            self.ui.fram_up_point.setStyleSheet(self.set_color_fram(state.get('highest_position')))
-            self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(state.get('alarm_highest_position'), True))
-            self.ui.fram_green_light.setStyleSheet(self.set_color_fram(state.get('green_light')))
-            self.ui.fram_red_light.setStyleSheet(self.set_color_fram(state.get('red_light')))
-            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(state.get('yellow_btn'), True))
+            self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(self.response.get('cycle_force')))
+            self.ui.fram_no_control.setStyleSheet(self.set_color_fram(self.response.get('lost_control')))
+            self.ui.fram_max_F.setStyleSheet(self.set_color_fram(self.response.get('excess_force')))
+            self.ui.fram_safety_fence.setStyleSheet(self.set_color_fram(self.response.get('safety_fence')))
+            self.ui.fram_condition_FC.setStyleSheet(self.set_color_fram(self.response.get('state_freq')))
+            self.ui.fram_sensor_F.setStyleSheet(self.set_color_fram(self.response.get('state_force')))
+            self.ui.fram_block_traverse_1.setStyleSheet(self.set_color_fram(
+                self.response.get('traverse_block_1'), True))
+            self.ui.fram_block_traverse_2.setStyleSheet(self.set_color_fram(
+                self.response.get('traverse_block_2'), True))
+            self.ui.fram_down_point.setStyleSheet(self.set_color_fram(self.response.get('lowest_position')))
+            self.ui.fram_down__alarm_point.setStyleSheet(self.set_color_fram(
+                self.response.get('alarm_lowest_position'), True))
+            self.ui.fram_up_point.setStyleSheet(self.set_color_fram(self.response.get('highest_position')))
+            self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(
+                self.response.get('alarm_highest_position'), True))
+            self.ui.fram_green_light.setStyleSheet(self.set_color_fram(self.response.get('green_light')))
+            self.ui.fram_red_light.setStyleSheet(self.set_color_fram(self.response.get('red_light')))
+            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(self.response.get('yellow_btn'), True))
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')

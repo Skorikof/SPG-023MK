@@ -79,6 +79,7 @@ class PrgSettings:
             self.registers['traverse_point'] = 0
             self.registers['gear_referent'] = False
             self.registers['stage'] = ''
+            self.registers['alarm_stage'] = False
 
             self.registers['operator'] = {'name': '', 'rank': ''}
             self.registers['amort'] = None

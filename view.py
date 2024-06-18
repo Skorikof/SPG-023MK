@@ -53,19 +53,23 @@ class AppWindow(QMainWindow):
 
         self.lbl_info_F = QLabel("Усилие,(кгс):")
         self.lbl_info_F.setStyleSheet('border: 0);')
-        self.lbl_info_F.setFont(QFont('Calibri', 14))
+        self.lbl_info_F.setFont(QFont('Calibri', 12))
 
         self.lbl_info_H = QLabel("Перемещение,(мм):")
         self.lbl_info_H.setStyleSheet('border: 0);')
-        self.lbl_info_H.setFont(QFont('Calibri', 14))
+        self.lbl_info_H.setFont(QFont('Calibri', 12))
 
-        self.lbl_info_Traverse = QLabel("Траверса, (мм):")
+        self.lbl_info_Temp = QLabel("Температура,(*С):")
+        self.lbl_info_Temp.setStyleSheet('border: 0);')
+        self.lbl_info_Temp.setFont(QFont('Calibri', 12))
+
+        self.lbl_info_Traverse = QLabel("Траверса,(мм):")
         self.lbl_info_Traverse.setStyleSheet('border: 0);')
-        self.lbl_info_Traverse.setFont(QFont('Calibri', 14))
+        self.lbl_info_Traverse.setFont(QFont('Calibri', 12))
 
         self.lbl_info_executor = QLabel("Оператор:")
         self.lbl_info_executor.setStyleSheet('border: 0);')
-        self.lbl_info_executor.setFont(QFont('Calibri', 14))
+        self.lbl_info_executor.setFont(QFont('Calibri', 12))
 
         self.statusBar().reformat()
         self.statusBar().setStyleSheet('border: 0; background-color: #FFF8DC;')
@@ -78,6 +82,8 @@ class AppWindow(QMainWindow):
         self.statusBar().addPermanentWidget(VLine())  # <---
         self.statusBar().addPermanentWidget(self.lbl_info_H, stretch=1)
         self.statusBar().addPermanentWidget(VLine())  # <---
+        self.statusBar().addPermanentWidget(self.lbl_info_Temp, stretch=1)
+        self.statusBar().addPermanentWidget(VLine())  # <---
         self.statusBar().addPermanentWidget(self.lbl_info_Traverse, stretch=1)
         self.statusBar().addPermanentWidget(VLine())  # <---
         self.statusBar().addPermanentWidget(self.lbl_info_executor, stretch=1)
@@ -89,14 +95,12 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/status_bar_ui - {e}')
 
-    def update_statusbar_data(self, result):
+    def update_statusbar_data(self):
         try:
-            txt = 'Усилие, кгс: {}'.format(result.get('force'))
-            self.lbl_info_F.setText(txt)
-            txt = 'Перемещение, мм: {}'.format(result.get('move'))
-            self.lbl_info_H.setText(txt)
-            txt = 'Траверса, мм: {}'.format(result.get('traverse_move'))
-            self.lbl_info_Traverse.setText(txt)
+            self.lbl_info_F.setText(f'Усилие,(кгс): {self.response.get("force")}')
+            self.lbl_info_H.setText(f'Перемещение,(мм): {self.response.get("move")}')
+            self.lbl_info_Temp.setText(f'Температура,(*С): {self.response.get("temperature")}')
+            self.lbl_info_Traverse.setText(f'Траверса,(мм): {self.response.get("traverse_move")}')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_statusbar_data - {e}')
@@ -159,7 +163,8 @@ class AppWindow(QMainWindow):
     def update_data_view(self, response):
         try:
             self.response = response
-            self.update_statusbar_data(self.response)
+
+            self.update_statusbar_data()
 
             temp = self.response.get('type_test')
 
@@ -559,6 +564,10 @@ class AppWindow(QMainWindow):
                 self.model.set_regs['frequency'] = speed
                 self.model.set_regs['adr_freq'] = 1
                 self.model.write_frequency()
+
+                txt_log = f'Change speed in lab test on --> {speed}'
+
+                self.log_msg_info_slot(txt_log)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_test - {e}')

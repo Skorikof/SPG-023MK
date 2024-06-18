@@ -76,13 +76,13 @@ class Writer(QRunnable):
         try:
             if self.tag == 'reg':
                 while self.number_attempts <= self.max_attempts:
-                    self.signals.thread_log.emit(f'Writer, start_reg = {self.reg_write:x}, '
-                                                 f'values = {self.values}')
+                    # self.signals.thread_log.emit(f'Writer, start_reg = {self.reg_write:x}, '
+                    #                              f'values = {self.values}')
                     try:
                         rw = self.client.execute(self.dev_id, self.cst.WRITE_MULTIPLE_REGISTERS,
                                                  self.reg_write, output_value=tuple(self.values))
-                        self.signals.thread_log.emit(f'Done write values = {self.values}'
-                                                     f' in reg = {self.reg_state:x}')
+                        # self.signals.thread_log.emit(f'Done write values = {self.values}'
+                        #                              f' in reg = {self.reg_state:x}')
                         self.flag_write = True
                         self.number_attempts = self.max_attempts + 1
                         self.signals.write_finish.emit(True)
@@ -94,8 +94,8 @@ class Writer(QRunnable):
                         time.sleep(0.02)
 
                 if not self.flag_write:
-                    self.signals.thread_log.emit(f'Unsuccessful write attempt values = {self.values} in '
-                                                 f'reg = {self.reg_write:x}')
+                    # self.signals.thread_log.emit(f'Unsuccessful write attempt values = {self.values} in '
+                    #                              f'reg = {self.reg_write:x}')
                     self.signals.thread_err.emit(f'ERROR format - {rw}')
                     self.signals.write_finish.emit(False)
 
@@ -240,13 +240,8 @@ class Reader(QRunnable):
                         self.result['temp'] = []
                         self.result['time'] = []
 
-                        print(f'Регистр читаем --> {self.reg_buffer}, количество записей --> {self.buffer_count * 6}')
-
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 6)
-
-                        print(f'Ответ --> {rr}')
-                        print(f'Длина ответа --> {len(rr)}')
 
                         if len(rr) == self.buffer_count * 6:  # 120
                             for i in range(0, self.buffer_count):  # 20
@@ -258,10 +253,6 @@ class Reader(QRunnable):
                                 else:
                                     if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65534:
                                         flag_add = True
-
-                                    else:
-                                        print(f'Чтение обогнало запись')
-                                        print(f'Последний корректный счётчик --> {self.current_rec}')
 
                                 if flag_add:
                                     self.current_rec = rr[ind]
@@ -286,10 +277,9 @@ class Reader(QRunnable):
 
                             delta_r = 16384 + self.buffer_all - self.reg_buffer
 
-                            print(f'В буфере осталось --> {delta_r} записей')
                             if delta_r <= 0:
                                 if delta_r < 0:
-                                    print('Выход за пределы буфера')
+                                    self.signals.thread_err.emit('Выход за пределы буфера')
                                 self.buffer_count = self.request.get('buffer_count')
                                 self.reg_buffer = 0x4000
                             else:
@@ -298,8 +288,6 @@ class Reader(QRunnable):
 
                                 else:
                                     self.buffer_count = int(delta_r / 6)
-
-                                print(f'Будет прочитано записей --> {self.buffer_count * 6}')
 
                         else:
                             self.signals.thread_err.emit(str(rr))
