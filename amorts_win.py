@@ -142,7 +142,7 @@ class AmortWin(QMainWindow):
             ind = self.amorts.current_index
             amort = self.amorts.struct.amorts[ind]
 
-            name = amort.name_a
+            name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
             adapter = f'{amort.adapter}'
@@ -187,7 +187,7 @@ class AmortWin(QMainWindow):
 
                 flag_add = self.check_concurrence_name()
                 if flag_add:
-                    name = self.new_amort.get('name_a')
+                    name = self.new_amort.get('name')
                     dimensions = f'{self.new_amort.get("min_length")} - {self.new_amort.get("max_length")}'
                     hod = f'{self.new_amort.get("hod")}'
                     adapter = f'{self.new_amort.get("adapter")}'

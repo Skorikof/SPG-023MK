@@ -8,7 +8,7 @@ class StructAmort(object):
 
 class DataAmort(object):
     def __init__(self):
-        self.name_a = ''
+        self.name = ''
         self.min_length = 0
         self.max_length = 0
         self.hod = 0
@@ -42,7 +42,7 @@ class Amort:
                     for key in self.config[section]:
                         temp_val = self.config.get(section, key)
                         if key == 'name':
-                            self.struct.amorts[ind].name_a = temp_val
+                            self.struct.amorts[ind].name = temp_val
                             self.names.append(temp_val)
                         if key == 'hod':
                             self.struct.amorts[ind].hod = int(temp_val)
@@ -82,7 +82,7 @@ class Amort:
                 nam_section = 'Amort' + str(i)
                 self.config.add_section(nam_section)
 
-                self.config.set(nam_section, 'name', self.struct.amorts[i].name_a)
+                self.config.set(nam_section, 'name', self.struct.amorts[i].name)
                 self.config.set(nam_section, 'hod', str(self.struct.amorts[i].hod))
                 self.config.set(nam_section, 'adapter', str(self.struct.amorts[i].adapter))
                 self.config.set(nam_section, 'speed_one', str(self.struct.amorts[i].speed_one))

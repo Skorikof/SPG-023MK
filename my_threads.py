@@ -93,11 +93,12 @@ class Writer(QRunnable):
                         self.number_attempts += 1
                         time.sleep(0.02)
 
-                if not self.flag_write:
-                    # self.signals.thread_log.emit(f'Unsuccessful write attempt values = {self.values} in '
-                    #                              f'reg = {self.reg_write:x}')
-                    self.signals.thread_err.emit(f'ERROR format - {rw}')
-                    self.signals.write_finish.emit(False)
+                    finally:
+                        if not self.flag_write:
+                            # self.signals.thread_log.emit(f'Unsuccessful write attempt values = {self.values} in '
+                            #                              f'reg = {self.reg_write:x}')
+                            self.signals.thread_err.emit(f'ERROR format - {rw}')
+                            self.signals.write_finish.emit(False)
 
             if self.tag == 'FC':
                 while self.cond:
@@ -251,7 +252,7 @@ class Reader(QRunnable):
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr[ind] - self.current_rec) == 1 or abs(rr[ind] - self.current_rec) == 65534:
+                                    if abs(rr[ind] - self.current_rec) < 100 or abs(rr[ind] - self.current_rec) > 60000:
                                         flag_add = True
 
                                 if flag_add:

@@ -24,6 +24,7 @@ class Controller:
             self.amort = None
             self.timer_process = None
             self.count_cycle = 0
+            self.flag_alarm = False
 
             self.signals = ControlSignals()
             self.model = model
@@ -56,7 +57,7 @@ class Controller:
     def update_data_ctrl(self, response):
         try:
 
-            self.response = response
+            self.response = {**self.response, **response}
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_data - {e}')
@@ -80,15 +81,15 @@ class Controller:
 
     def update_stage_on_timer(self):
         try:
-            self.control_alarm_traverse_position()
+            # self.control_alarm_traverse_position()
 
             stage = self.response.get('stage')
             type_test = self.response.get('type_test')
             flag_test = self.response.get('test_flag')
             flag_alarm = self.response.get('alarm_stage')
 
-            if flag_test:
-                self.control_alarm_state()
+            # if flag_test:
+            #     self.control_alarm_state()
 
             if stage == 'wait':
                 pass
@@ -127,7 +128,7 @@ class Controller:
                 if abs(control_point - pos_trav) <= 0.6:
                     self.model.motor_stop()
                     self.model.set_regs['traverse_position'] = True
-                    time.sleep(0.1)
+                    time.sleep(0.2)
                     self.test_move_cycle()
 
             elif stage == 'test_move_cycle':
@@ -184,6 +185,14 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/update_stage_on_timer - {e}')
 
+    # FIXME Как отследить дребезг/помехи в аварийных сигналах?
+    def rattle_alarm_signal(self, state):
+        try:
+            pass
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/rattle_alarm_signal - {e}')
+
     def control_alarm_traverse_position(self):
         try:
 
@@ -214,24 +223,26 @@ class Controller:
             self.excess_temperature()
 
     def lost_control(self):
-        self.stop_gear_now()
-        self.lamp_red_switch_on()
-        self.model.set_regs['stage'] = 'wait'
-        self.model.set_regs['alarm_stage'] = True
-        self.model.set_regs['test_launch'] = False
-        self.model.set_regs['test_flag'] = False
-        self.model.log_error(f'lost control')
-        self.signals.control_msg.emit('lost_control')
+        print('lost control!')
+        # self.stop_gear_now()
+        # self.lamp_red_switch_on()
+        # self.model.set_regs['stage'] = 'wait'
+        # self.model.set_regs['alarm_stage'] = True
+        # self.model.set_regs['test_launch'] = False
+        # self.model.set_regs['test_flag'] = False
+        # self.model.log_error(f'lost control')
+        # self.signals.control_msg.emit('lost_control')
 
     def excess_force(self):
-        self.stop_gear_now()
-        self.lamp_red_switch_on()
-        self.model.set_regs['stage'] = 'wait'
-        self.model.set_regs['alarm_stage'] = True
-        self.model.set_regs['test_launch'] = False
-        self.model.set_regs['test_flag'] = False
-        self.model.log_error(f'excess force')
-        self.signals.control_msg.emit('excess_force')
+        print('excess force')
+        # self.stop_gear_now()
+        # self.lamp_red_switch_on()
+        # self.model.set_regs['stage'] = 'wait'
+        # self.model.set_regs['alarm_stage'] = True
+        # self.model.set_regs['test_launch'] = False
+        # self.model.set_regs['test_flag'] = False
+        # self.model.log_error(f'excess force')
+        # self.signals.control_msg.emit('excess_force')
 
     def excess_temperature(self):
         self.stop_gear_min_pos()
@@ -242,12 +253,13 @@ class Controller:
         self.signals.control_msg.emit('excess_temperature')
 
     def safety_fence(self):
-        self.stop_gear_min_pos()
-        self.lamp_red_switch_on()
-        self.model.set_regs['alarm_stage'] = True
-        self.model.set_regs['test_launch'] = False
-        self.model.log_error(f'safety fence')
-        self.signals.control_msg.emit('safety_fence')
+        print('safety fence')
+        # self.stop_gear_min_pos()
+        # self.lamp_red_switch_on()
+        # self.model.set_regs['alarm_stage'] = True
+        # self.model.set_regs['test_launch'] = False
+        # self.model.log_error(f'safety fence')
+        # self.signals.control_msg.emit('safety_fence')
 
     def alarm_traverse_position(self, pos):
         self.stop_gear_now()
@@ -314,7 +326,7 @@ class Controller:
 
             self.model.set_regs['adr_freq'] = adr
             self.model.write_frequency()
-            time.sleep(0.1)
+            time.sleep(0.2)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/write_speed_motor - {e}')
@@ -475,12 +487,9 @@ class Controller:
             self.change_excess_force(30)
 
             self.model.write_bit_force_cycle(1)
-            time.sleep(0.1)
+            time.sleep(0.2)
 
             self.write_speed_motor(1, speed=0.05)
-
-            self.model.reader_start_test()
-            time.sleep(0.5)
 
             self.model.set_regs['stage'] = 'test_move_cycle'
             self.count_cycle = 0
@@ -488,6 +497,9 @@ class Controller:
             self.model.set_regs['start_direction'] = False
             self.model.set_regs['min_pos'] = False
             self.model.set_regs['max_pos'] = False
+
+            self.model.reader_start_test()
+            time.sleep(0.5)
             self.model.motor_up()
 
         except Exception as e:
@@ -498,10 +510,10 @@ class Controller:
         try:
             self.model.set_regs['force_alarm'] = force
             self.model.write_emergency_force()
-            time.sleep(0.1)
+            time.sleep(0.2)
 
             self.model.write_bit_unblock_control()
-            time.sleep(0.1)
+            time.sleep(0.2)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/change_excess_force - {e}')
@@ -561,8 +573,6 @@ class Controller:
             time.sleep(0.5)
 
             self.write_speed_motor(1, speed=0.05)
-            self.model.motor_up()
-            time.sleep(0.1)
 
             self.model.set_regs['test_flag'] = False
             self.model.set_regs['stage'] = 'stop_gear_min_pos'

@@ -109,7 +109,6 @@ class AppWindow(QMainWindow):
         self.init_buttons()
         self.init_signals()
         self.start_page()
-        self.ui.main_STOP_btn.setEnabled(False)
         self.init_lab_graph()
         self.init_conv_graph()
 
@@ -162,7 +161,7 @@ class AppWindow(QMainWindow):
 
     def update_data_view(self, response):
         try:
-            self.response = response
+            self.response = {**self.response, **response}
 
             self.update_statusbar_data()
 
@@ -307,8 +306,15 @@ class AppWindow(QMainWindow):
         self.ui.main_stackedWidget.setEnabled(False)
         self.ui.main_btn_frame.setEnabled(False)
 
+    def main_stop_enable(self):
+        self.ui.main_STOP_btn.setEnabled(True)
+
+    def main_stop_disable(self):
+        self.ui.main_STOP_btn.setEnabled(False)
+
     def start_page(self):
         try:
+            self.main_stop_disable()
             flag = self.model.set_connect.get('connect')
             if flag:
                 txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
@@ -405,15 +411,14 @@ class AppWindow(QMainWindow):
         try:
             self.model.set_regs['amort'] = self.win_amort.amorts.struct.amorts[ind]
 
-            self.specif_ui_fill()
+            self.specif_ui_fill(self.win_amort.amorts.struct.amorts[ind])
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_amort - {e}')
 
-    def specif_ui_fill(self):
+    def specif_ui_fill(self, obj):
         try:
-            obj = self.response.get('amort')
-            self.ui.specif_name_lineEdit.setText(str(obj.name_a))
+            self.ui.specif_name_lineEdit.setText(str(obj.name))
             self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
             self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
             self.ui.specif_hod_lineEdit.setText(str(obj.hod))
@@ -465,7 +470,7 @@ class AppWindow(QMainWindow):
 
     def test_lab(self):
         try:
-            self.ui.main_STOP_btn.setEnabled(True)
+            self.main_stop_enable()
             self.ui.main_btn_frame.setEnabled(False)
             self.ui.test_save_btn.setVisible(False)
             self.ui.test_repeat_btn.setVisible(False)
@@ -478,7 +483,7 @@ class AppWindow(QMainWindow):
                 amort.speed_one = temp
                 self.model.set_regs['amort'].speed_one = temp
 
-            name = amort.name_a
+            name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
             speed = f'{amort.speed_one}'
@@ -575,10 +580,10 @@ class AppWindow(QMainWindow):
     def test_conveyor(self):
         try:
             self.ui.main_btn_frame.setEnabled(False)
-            self.ui.main_STOP_btn.setEnabled(True)
+            self.main_stop_enable()
 
             amort = self.response.get('amort')
-            name = amort.name_a
+            name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
             speed = f'one = {amort.speed_one} and two = {amort.speed_two}'
@@ -674,11 +679,12 @@ class AppWindow(QMainWindow):
 
     def cancel_test_slot(self):
         try:
+            self.main_stop_disable()
+            self.main_ui_enable()
             type_test = self.response.get('type_test')
             if type_test == 'conv':
+
                 self.specif_page()
-                self.ui.main_btn_frame.setEnabled(True)
-                self.ui.main_STOP_btn.setEnabled(False)
 
             elif type_test == 'lab':
                 # temp = self.ui.test_cancel_btn.text()
@@ -686,7 +692,6 @@ class AppWindow(QMainWindow):
                 self.ui.test_save_btn.setVisible(True)
                 self.ui.test_repeat_btn.setVisible(True)
                 self.ui.main_btn_frame.setEnabled(True)
-                self.ui.main_STOP_btn.setEnabled(False)
                 # self.ui.test_cancel_btn.setText('НАЗАД')
 
                 # elif temp == 'НАЗАД':

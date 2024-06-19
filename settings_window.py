@@ -85,7 +85,7 @@ class SetWindow(QMainWindow):
 
     def update_data_win_set(self, response):
         try:
-            self.response = response
+            self.response = {**self.response, **response}
 
             self.update_win()
 
@@ -315,7 +315,7 @@ class SetWindow(QMainWindow):
             self.model.write_bit_force_cycle(1)
             time.sleep(0.1)
             self.model.reader_start_test()
-            self.graph_ui.show()
+            # self.graph_ui.show()
 
         except Exception as e:
             print(str(e))
