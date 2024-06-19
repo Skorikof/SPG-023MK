@@ -15,31 +15,16 @@ class PrgSettings:
             self.connect['parity'] = temp_val[1]
             self.connect['bytesize'] = int(temp_val[2])
             self.connect['stopbits'] = int(temp_val[3])
-            self.connect['connect'] = False
 
-            self.registers['dev_id'] = 1
             self.registers['adr_freq'] = 1
             self.registers['reg_write'] = 0x2003
             self.registers['write_values'] = [0]
             self.registers['write_tag'] = 'reg'
-            self.registers['reg_read'] = 0x2000
-            self.registers['read_count'] = 12
-            self.registers['reg_state'] = 0x2003
             self.registers['list_state'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-            self.registers['reg_len_freq'] = 0x2060
-            self.registers['len_freq_msg'] = 8
-            self.registers['reg_freq_buffer'] = 0x2061
-            self.registers['freq_buffer_count'] = 16
             self.registers['freq_command'] = ''
-            self.registers['reg_len_force'] = 0x2080
-            self.registers['reg_force_buffer'] = 0x2081
-            self.registers['force_buffer_count'] = 16
-            self.registers['reg_buffer'] = 0x4000
-            self.registers['buffer_count'] = 20
-            self.registers['buffer_all'] = 18000
+            self.registers['force_alarm'] = 2000
 
-            self.registers['count_msg'] = 0
             self.registers['force'] = 0
             self.registers['force_list'] = []
             self.registers['force_graph'] = []
@@ -47,7 +32,6 @@ class PrgSettings:
             self.registers['move_list'] = []
             self.registers['move_graph'] = []
 
-            self.registers['force_alarm'] = 2000
             self.registers['cycle_force'] = 0
             self.registers['lost_control'] = 0
             self.registers['excess_force'] = 0

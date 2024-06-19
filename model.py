@@ -14,8 +14,8 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 class WinSignals(QObject):
     connect_ctrl = pyqtSignal()
     stbar_msg = pyqtSignal(str)
-    read_start = pyqtSignal(object, object, object)
-    start_test = pyqtSignal(object)
+    read_start = pyqtSignal()
+    start_test = pyqtSignal()
     stop_test = pyqtSignal()
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
@@ -33,6 +33,7 @@ class Model:
         self.set_regs = PrgSettings().registers
         self.threadpool = QThreadPool()
 
+        self.client = None
         self.log_writer = None
         self.reader = None
         self.parser = None
@@ -51,11 +52,9 @@ class Model:
         self.time_push_yellow = None
 
     def start_param_model(self):
-        self.set_connect['cst'] = cst
         self.init_connect()
         # self.init_timer_connect()
-        con = self.set_connect.get('connect')
-        if con:
+        if self.client:
             self.init_timer_yellow_btn()
             self.init_reader()
             self.reader_start()
@@ -109,31 +108,27 @@ class Model:
 
     def init_connect(self):
         try:
-            client = modbus_rtu.RtuMaster(serial.Serial(port=self.set_connect.get('COM'),
-                                                        baudrate=self.set_connect.get('baudrate'),
-                                                        bytesize=self.set_connect.get('bytesize'),
-                                                        parity=self.set_connect.get('parity'),
-                                                        stopbits=self.set_connect.get('stopbits'),
-                                                        timeout=0.000001))
+            self.client = modbus_rtu.RtuMaster(serial.Serial(port=self.set_connect.get('COM'),
+                                                             baudrate=self.set_connect.get('baudrate'),
+                                                             bytesize=self.set_connect.get('bytesize'),
+                                                             parity=self.set_connect.get('parity'),
+                                                             stopbits=self.set_connect.get('stopbits'),
+                                                             timeout=0.000001))
 
-            client.set_timeout(1.0)
-            client.set_verbose(True)
-            client.open()
+            self.client.set_timeout(1.0)
+            self.client.set_verbose(True)
+            self.client.open()
 
-            self.set_connect['client'] = client
-            self.set_connect['connect'] = True
             self.status_bar_msg(f'Контроллер подключен')
 
         except Exception as e:
-            self.set_connect['connect'] = False
+            self.client = None
             self.log_error(f'ERROR in model/init_connect - {e}')
 
     def disconnect_client(self):
-        client = self.set_connect.get('client')
-        if client:
-            client.close()
-            self.set_connect['client'] = None
-            self.set_connect['connect'] = False
+        if self.client:
+            self.client.close()
+            self.client = None
             self.status_bar_msg(f'Контроллер отключен')
 
     def check_connect_client(self):
@@ -145,7 +140,7 @@ class Model:
                 self.disconnect_client()
                 time.sleep(1)
                 self.init_connect()
-                if self.set_connect['connect']:
+                if self.client:
                     self.signals.connect_ctrl.emit()
                     self.reader_start()
 
@@ -162,7 +157,7 @@ class Model:
             self.log_error(f'ERROR in model/init_timer_connect - {e}')
 
     def init_reader(self):
-        self.reader = Reader()
+        self.reader = Reader(self.client, cst)
         self.reader.signals.thread_log.connect(self.log_info)
         self.reader.signals.thread_err.connect(self.log_error)
         self.reader.signals.read_result.connect(self.reader_result)
@@ -175,12 +170,11 @@ class Model:
 
     def reader_start(self):
         self.count_msg = 0
-        client = self.set_connect.get('client')
-        self.signals.read_start.emit(client, cst, self.set_regs)
+        self.signals.read_start.emit()
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
-        self.signals.start_test.emit(self.set_regs)
+        self.signals.start_test.emit()
         self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
     def reader_stop(self):
@@ -424,7 +418,7 @@ class Model:
 
     def init_writer(self):
         try:
-            self.writer = Writer(client=self.set_connect['client'],
+            self.writer = Writer(client=self.client,
                                  cst=cst,
                                  **self.set_regs)
 

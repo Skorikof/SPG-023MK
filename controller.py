@@ -285,8 +285,7 @@ class Controller:
         self.model.set_regs['test_flag'] = False
         self.model.set_regs['stage'] = 'wait'
         self.lamp_all_switch_off()
-        client = self.model.set_connect.get('client')
-        if client:
+        if self.model.client:
             self.stop_gear_now()
             self.model.reader_stop_test()
 

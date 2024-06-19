@@ -57,13 +57,12 @@ class Writer(QRunnable):
         self.cst = cst
         self.tag = kwargs.get('write_tag')
         self.values = kwargs.get('write_values')
-        self.start_reg = kwargs.get('reg_write')
-        self.dev_id = kwargs.get('dev_id')
+        self.dev_id = 1
         self.reg_write = kwargs.get('reg_write')
-        self.reg_state = kwargs.get('reg_state')
-        self.len_msg = kwargs.get('len_freq_msg')
-        self.reg_len_freq = kwargs.get('reg_len_freq')
-        self.reg_freq_buffer = kwargs.get('reg_freq_buffer')
+        self.reg_state = 0x2003
+        self.len_msg = 8
+        self.reg_len_freq = 0x2060
+        self.reg_freq_buffer = 0x2061
         self.freq_command = kwargs.get('freq_command')
         self.number_attempts = 0
         self.max_attempts = 5
@@ -191,30 +190,31 @@ class Writer(QRunnable):
 class Reader(QRunnable):
     signals = Signals()
 
-    def __init__(self):
+    def __init__(self, client, cst):
         super(Reader, self).__init__()
-        self.cycle = True
-        self.is_run = False
-
-        self.client = None
-        self.cst = None
+        self.client = client
+        self.cst = cst
 
         self.read_tag = ''
-        self.start_reg = None
-        self.count_reg = None
-        self.dev_id = None
 
-        self.reg_buffer = None
-        self.buffer_count = None
+        self.dev_id = 1
+        self.start_reg = 0x2000
+        self.count_reg = 12
+
+        self.reg_buffer = 0x4000
+        self.buffer_count = 20
+        self.buffer_all = 18000
+
         self.time_start = 0
         self.flag_start_test = False
-        self.flag_start_point = False
         self.num_rec = 0
         self.current_rec = -1
         self.count_rec = 0
-        self.buffer_all = None
-        self.request = {}
+
         self.result = {}
+
+        self.cycle = True
+        self.is_run = False
 
     @pyqtSlot()
     def run(self):
@@ -281,11 +281,11 @@ class Reader(QRunnable):
                             if delta_r <= 0:
                                 if delta_r < 0:
                                     self.signals.thread_err.emit('Выход за пределы буфера')
-                                self.buffer_count = self.request.get('buffer_count')
+                                self.buffer_count = 20
                                 self.reg_buffer = 0x4000
                             else:
                                 if delta_r >= 6 * self.buffer_count:
-                                    self.buffer_count = self.request.get('buffer_count')
+                                    self.buffer_count = 20
 
                                 else:
                                     self.buffer_count = int(delta_r / 6)
@@ -298,35 +298,23 @@ class Reader(QRunnable):
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread Reader - {e}')
 
-    def start_test(self, request):
-        self.request = request
-        self.reg_buffer = request.get('reg_buffer')
-        self.buffer_count = request.get('buffer_count')
-        self.buffer_all = request.get('buffer_all')
-
+    def start_test(self):
         self.num_rec = 0
         self.count_rec = 0
         self.result = {}
         self.flag_start_test = True
-        self.flag_start_point = False
         self.read_tag = 'buffer'
 
     def stop_test(self):
         self.read_tag = 'reg'
 
-    def start_read(self, client, cst, request):
-        self.request = request
-        self.client = client
-        self.cst = cst
-        self.dev_id = request.get('dev_id')
-        self.start_reg = request.get('reg_read')
-        self.count_reg = request.get('read_count')
+    def start_read(self):
         self.read_tag = 'reg'
-
         self.is_run = True
 
     def stop_read(self):
         self.is_run = False
+        self.read_tag = 'reg'
 
     def exit_read(self):
         self.cycle = False

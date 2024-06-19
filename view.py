@@ -315,8 +315,7 @@ class AppWindow(QMainWindow):
     def start_page(self):
         try:
             self.main_stop_disable()
-            flag = self.model.set_connect.get('connect')
-            if flag:
+            if self.model.client:
                 txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
                 tag = 'info'
                 self.main_ui_msg(txt, tag)

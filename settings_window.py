@@ -94,8 +94,7 @@ class SetWindow(QMainWindow):
 
     def do_connect(self):
         try:
-            con = self.model.set_connect.get('connect')
-            if con:
+            if self.model.client:
                 self.connect_ui()
             else:
                 self.disconnect_ui()
