@@ -130,6 +130,8 @@ class Model:
             check_time = time.monotonic()
             if check_time - self.time_response > 5:
                 print(f'Подключение к контроллеру отсутствует')
+                self.timer_connect.stop()
+                print(f'Таймер контроля посылки остановлен')
                 # self.signals.connect_ctrl.emit()
                 self.reader_stop()
                 print(f'Чтение контроллера остановлено')
@@ -142,6 +144,8 @@ class Model:
                 self.time_response = time.monotonic()
                 if self.set_connect['connect']:
                     print(f'Подключение восстановлено')
+                    self.timer_connect.start()
+                    print(f'Таймер контроля посылки запущен')
                     # self.signals.connect_ctrl.emit()
                     self.reader_start()
                     print(f'Поток чтения запущен')
