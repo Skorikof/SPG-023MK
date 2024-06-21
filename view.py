@@ -26,9 +26,11 @@ class AppWindow(QMainWindow):
         self.data_line_test_lab = None
         self.pen_test_conv = None
         self.data_line_test_conv = None
+
         self.model = model
         self.controller = controller
         self.win_set = win_set
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 

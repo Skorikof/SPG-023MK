@@ -24,19 +24,27 @@ class Controller:
             self.amort = None
             self.timer_process = None
             self.count_cycle = 0
-            self.flag_alarm = False
 
             self.signals = ControlSignals()
             self.model = model
-            self.model.start_param_model()
-            self.model.set_regs['stage'] = 'wait'
 
+            self.start_param_ctrl()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/__init__ - {e}')
+
+    def start_param_ctrl(self):
+        try:
             self.check_directory()
             self.init_signals()
             self.init_timer()
 
+            self.model.set_regs['stage'] = 'wait'
+            self.model.reader_start()
+            self.model.timer_connect.start()
+
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/__init__ - {e}')
+            self.model.log_error(f'ERROR in controller/start_param_ctrl - {e}')
 
     def check_directory(self):
         current_dir = os.getcwd()
@@ -74,7 +82,6 @@ class Controller:
             self.timer_process = QTimer()
             self.timer_process.setInterval(50)
             self.timer_process.timeout.connect(self.update_stage_on_timer)
-            self.timer_process.start()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/init_timer - {e}')
@@ -284,6 +291,7 @@ class Controller:
         self.model.set_regs['test_launch'] = False
         self.model.set_regs['test_flag'] = False
         self.model.set_regs['stage'] = 'wait'
+        self.timer_process.stop()
         self.lamp_all_switch_off()
         if self.model.client:
             self.stop_gear_now()
@@ -336,6 +344,8 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
+            self.model.set_regs['stage'] = 'wait'
+            self.timer_process.start()
             self.model.set_regs['max_temperature'] = 0
             self.model.set_regs['alarm_stage'] = False
             self.model.set_regs['test_launch'] = True
@@ -366,6 +376,7 @@ class Controller:
         """
         try:
             self.model.set_regs['stage'] = 'wait'
+            self.timer_process.stop()
             self.model.set_regs['test_launch'] = False
 
             self.change_excess_force(2000)

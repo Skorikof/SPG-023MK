@@ -22,7 +22,6 @@ class SetWindow(QMainWindow):
             self.ui.setupUi(self)
             self.hide()
             self.graph_ui = GraphUi(self.model)
-            self.flag_graph = None
 
         except Exception as e:
             self.signals.log_err.emit(f'ERROR in settings_window/__init__ - {e}')

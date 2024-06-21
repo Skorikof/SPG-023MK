@@ -43,19 +43,21 @@ class Model:
         self.timer_yellow = None
         self.amort = None
         self.count_msg = 0
-        self.count_point = 0
         self.force_graph = []
         self.move_graph = []
-        self.time_response = None
+        self.time_response = time.monotonic()
         self.time_push_yellow = None
+
+        self.start_param_model()
 
     def start_param_model(self):
         self.init_connect()
-        # self.init_timer_connect()
+        time.sleep(0.1)
+        self.init_timer_connect()
+        self.init_timer_yellow_btn()
         if self.client:
-            self.init_timer_yellow_btn()
             self.init_reader()
-            self.reader_start()
+            # self.reader_start()
             # time.sleep(0.1)
             # self.timer_connect.start()
 
@@ -125,14 +127,16 @@ class Model:
     def check_connect_client(self):
         try:
             check_time = time.monotonic()
-            if check_time - self.time_response > 1:
-                self.signals.connect_ctrl.emit()
+            if check_time - self.time_response > 5:
+                # self.signals.connect_ctrl.emit()
                 self.reader_stop()
+                time.sleep(0.1)
                 self.disconnect_client()
                 time.sleep(1)
                 self.init_connect()
+                time.sleep(0.1)
                 if self.client:
-                    self.signals.connect_ctrl.emit()
+                    # self.signals.connect_ctrl.emit()
                     self.reader_start()
 
         except Exception as e:
@@ -141,7 +145,7 @@ class Model:
     def init_timer_connect(self):
         try:
             self.timer_connect = QTimer()
-            self.timer_connect.setInterval(1000)
+            self.timer_connect.setInterval(3000)
             self.timer_connect.timeout.connect(self.check_connect_client)
 
         except Exception as e:
