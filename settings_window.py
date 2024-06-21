@@ -161,48 +161,38 @@ class SetWindow(QMainWindow):
                 else:
                     value = value.replace(',', '.')
                     speed = self.model.calculate_freq(float(value))
-                    self.model.set_regs['frequency'] = speed
-                    self.model.set_regs['adr_freq'] = 1
-                    self.model.write_frequency()
+                    self.model.write_frequency(1, speed)
 
             elif btn.objectName() == 'btn_freq_trverse':
                 value = int(self.ui.lineEdit_freq_traverse.text())
                 if not value:
                     pass
                 else:
-                    self.model.set_regs['frequency'] = value * 100
-                    self.model.set_regs['adr_freq'] = 2
-                    self.model.write_frequency()
+                    self.model.write_frequency(2, value * 100)
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/write_frequency - {e}')
 
     def click_btn_motor_up(self):
-        self.model.set_regs['adr_freq'] = 2
-        self.model.motor_up()
+        self.model.motor_up(2)
 
     def click_btn_motor_down(self):
-        self.model.set_regs['adr_freq'] = 2
-        self.model.motor_down()
+        self.model.motor_down(2)
 
     def click_btn_motor_start(self):
-        self.model.set_regs['adr_freq'] = 1
-        self.model.motor_up()
+        self.model.motor_up(1)
 
     def click_btn_motor_main_stop(self):
-        self.model.set_regs['adr_freq'] = 1
-        self.model.motor_stop()
+        self.model.motor_stop(1)
 
     def click_btn_motor_traverse_stop(self):
-        self.model.set_regs['adr_freq'] = 2
-        self.model.motor_stop()
+        self.model.motor_stop(2)
 
     def write_alarm_force(self):
         try:
             value = float(self.ui.lineEdit_F_alarm.text())
-            self.model.set_regs['force_alarm'] = value
 
-            self.model.write_emergency_force()
+            self.model.write_emergency_force(value)
             time.sleep(0.02)
             self.model.reader_start()
 
@@ -312,7 +302,7 @@ class SetWindow(QMainWindow):
             self.model.set_regs['min_pos'] = False
             self.model.set_regs['max_pos'] = False
             self.model.write_bit_force_cycle(1)
-            time.sleep(0.1)
+            time.sleep(0.2)
             self.model.reader_start_test()
             # self.graph_ui.show()
 

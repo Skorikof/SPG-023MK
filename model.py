@@ -36,8 +36,6 @@ class Model:
         self.client = None
         self.log_writer = None
         self.reader = None
-        self.parser = None
-        self.flag_parser_init = False
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
@@ -48,7 +46,7 @@ class Model:
         self.count_point = 0
         self.force_graph = []
         self.move_graph = []
-        self.time_response = time.monotonic()
+        self.time_response = None
         self.time_push_yellow = None
 
     def start_param_model(self):
@@ -81,13 +79,6 @@ class Model:
         except Exception as e:
             print(str(e))
 
-    def control_process(self):
-        try:
-            self.change_list_state(3, 1)
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/control_process - {e}')
-
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
 
@@ -99,9 +90,9 @@ class Model:
         self.status_bar_msg(txt_log)
         self.save_log('info', txt_log)
 
-    def current_amort(self):
+    def current_amort_model(self, obj):
         try:
-            self.amort = self.set_regs['amort']
+            self.amort = obj
 
         except Exception as e:
             self.log_error(f'ERROR in model/current_amort - {e}')
@@ -191,26 +182,20 @@ class Model:
     def reader_result(self, response, tag):
         try:
             if tag == 'buffer':
-                count_list = []
                 force_list = []
                 move_list = []
-                state_list = []
-                temp_list = []
 
-                print(f'Счётчик --> {response["count"]}')
-                print(f'Усилие --> {response["force"]}')
-                print(f'Перемещение --> {response["move"]}')
-                print(f'Состояние --> {response["state"]}')
-                print(f'Температура --> {response["temp"]}')
-                print(f'======================')
+                # print(f'Счётчик --> {response["count"]}')
+                # print(f'Усилие --> {response["force"]}')
+                # print(f'Перемещение --> {response["move"]}')
+                # print(f'Состояние --> {response["state"]}')
+                # print(f'Температура --> {response["temp"]}')
+                # print(f'======================')
 
-                for i in range(len(response.get('force'))):
-                    if response.get('force')[i] != -100000.0:
-                        count_list.append(response.get('count')[i])
+                for i in range(len(response['force'])):
+                    if response['force'][i] != -100000.0:
                         force_list.append(response.get('force')[i])
                         move_list.append(response.get('move')[i])
-                        state_list.append(response.get('state')[i])
-                        temp_list.append(response.get('temp')[i])
                         self.count_msg += 1
                         self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
                     else:
@@ -223,17 +208,15 @@ class Model:
                 else:
                     self.set_regs['force_list'] = [x for x in force_list]
                     self.set_regs['move_list'] = [x for x in move_list]
-                    self.set_regs['count_list'] = [x for x in count_list]
-                    self.set_regs['state_list'] = [x for x in state_list]
-                    self.set_regs['temp_list'] = [x for x in temp_list]
+                    self.set_regs['temp_list'] = [x for x in response.get('temp') if x != -100.0]
 
-                    self.set_regs['counter_time'] = self.set_regs.get('count_list')[-1]
+                    self.set_regs['counter_time'] = response.get('count')[-1]
                     self.set_regs['force'] = self.set_regs.get('force_list')[-1]
                     self.set_regs['move'] = self.set_regs.get('move_list')[-1]
 
-                    self.register_state(state_list[-1])
-                    self.set_regs['temperature'] = temp_list[-1]
-                    self.set_regs['max_temperature'] = self.find_max_temperature(max(temp_list))
+                    self.register_state(response.get('state')[-1])
+
+                    self.check_temperature(self.set_regs['temp_list'])
 
                     self.signals.read_finish.emit(self.set_regs)
 
@@ -416,11 +399,14 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/full_circle_done - {e}')
 
-    def init_writer(self):
+    def init_writer(self, tag, values=None, reg_write=None, freq_command=None):
         try:
             self.writer = Writer(client=self.client,
                                  cst=cst,
-                                 **self.set_regs)
+                                 tag=tag,
+                                 values=values,
+                                 reg_write=reg_write,
+                                 freq_command=freq_command)
 
             if not self.writer_flag_init:
                 self.writer.signals.thread_log.connect(self.log_info)
@@ -435,29 +421,26 @@ class Model:
     def writer_result(self, state):
         self.flag_write = state
 
-    def write_reg_state(self):
+    def write_reg_state(self, com_list):
         try:
             res = 0
             values = []
             for i in range(16):
-                res = res + self.set_regs.get('list_state')[i] * 2 ** i
+                res = res + com_list[i] * 2 ** i
 
             values.append(res)
 
-            self.set_regs['reg_write'] = 0x2003
-            self.set_regs['write_values'] = values
-            self.set_regs['write_tag'] = 'reg'
-
-            self.init_writer()
+            self.init_writer('reg', values, 0x2003)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_reg_state - {e}')
 
     def change_list_state(self, bit, value):
         try:
-            self.set_regs['list_state'][bit] = value
+            com_list = [x for x in self.set_regs.get('list_state')]
+            com_list[bit] = value
 
-            self.write_reg_state()
+            self.write_reg_state(com_list)
 
         except Exception as e:
             self.log_error(f'ERROR in model/change_list_state - {e}')
@@ -497,19 +480,14 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_emergency_force - {e}')
 
-    def write_emergency_force(self):
+    def write_emergency_force(self, value):
         try:
             arr = []
-            value = self.set_regs.get('force_alarm')
             val = pack('>f', value)
             for i in range(0, 4, 2):
                 arr.append(int((hex(val[i])[2:] + hex(val[i + 1])[2:]), 16))
 
-            self.set_regs['write_tag'] = 'reg'
-            self.set_regs['reg_write'] = 0x200a
-            self.set_regs['write_values'] = arr
-
-            self.init_writer()
+            self.init_writer('reg', arr, 0x200a)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_emergency_force - {e}')
@@ -518,46 +496,40 @@ class Model:
         try:
             command = command + self.calc_crc(command)
             values = self.calc_values_write(command)
-            self.set_regs['freq_command'] = values
-            self.set_regs['write_tag'] = 'FC'
 
-            self.init_writer()
+            self.init_writer('FC', freq_command=values)
 
         except Exception as e:
             self.log_error(f'ERROR in model/motor_command - {e}')
 
-    def write_frequency(self):
+    def write_frequency(self, adr_freq, freq):
         try:
-            adr_freq = str(self.set_regs.get('adr_freq'))
-            freq = self.set_regs.get('frequency')
             freq_hex = hex(freq)[2:].zfill(4)
-            freq_hex = '0' + adr_freq + '06010D' + freq_hex
+            freq_hex = f'0{adr_freq}06010D{freq_hex}'
             self.motor_command(freq_hex)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_frequency - {e}')
 
-    def motor_up(self):
+    def motor_up(self, adr_freq):
         try:
-            adr_freq = str(self.set_regs.get('adr_freq'))
-            com_hex = '0' + adr_freq + '0620000002'
+            com_hex = f'0{adr_freq}0620000002'
             self.motor_command(com_hex)
 
         except Exception as e:
             self.log_error(f'ERROR in model/motor_up - {e}')
 
-    def motor_down(self):
+    def motor_down(self, adr_freq):
         try:
-            com_hex = '020620000001'
+            com_hex = f'0{adr_freq}0620000001'
             self.motor_command(com_hex)
 
         except Exception as e:
             self.log_error(f'ERROR in model/motor_down - {e}')
 
-    def motor_stop(self):
+    def motor_stop(self, adr_freq):
         try:
-            adr_freq = str(self.set_regs.get('adr_freq'))
-            com_hex = '0' + adr_freq + '0620000003'
+            com_hex = f'0{adr_freq}0620000003'
             self.motor_command(com_hex)
 
         except Exception as e:
@@ -589,13 +561,13 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/calc_values_write - {e}')
 
-    def find_max_temperature(self, value):
+    def check_temperature(self, temp_list):
         try:
+            self.set_regs['temperature'] = temp_list[-1]
             temp = self.set_regs.get('max_temperature')
-            if value > temp:
-                return value
 
-            return temp
+            if max(temp_list) > temp:
+                self.set_regs['max_temperature'] = max(temp_list)
 
         except Exception as e:
             self.log_error(f'ERROR in model/find_max_temperature - {e}')
@@ -626,32 +598,17 @@ class Model:
             temp = bin(register)[2:].zfill(16)
             bits = ''.join(reversed(temp))
 
-            self.set_regs['cycle_force'] = int(bits[0])
-            self.set_regs['list_state'][0] = int(bits[0])
+            self.set_regs['list_state'] = [int(x) for x in bits]
 
-            self.set_regs['red_light'] = int(bits[1])
-            self.set_regs['list_state'][1] = int(bits[1])
-
-            self.set_regs['green_light'] = int(bits[2])
-            self.set_regs['list_state'][2] = int(bits[2])
-
-            self.set_regs['lost_control'] = int(bits[3])
-            self.set_regs['list_state'][3] = int(bits[3])
-
-            self.set_regs['excess_force'] = int(bits[4])
-            self.set_regs['list_state'][4] = int(bits[4])
-
-            self.set_regs['safety_fence'] = int(bits[8])
-            self.set_regs['list_state'][8] = int(bits[8])
-
-            self.set_regs['state_freq'] = int(bits[11])
-            self.set_regs['list_state'][11] = int(bits[11])
-
-            self.set_regs['state_force'] = int(bits[12])
-            self.set_regs['list_state'][12] = int(bits[12])
-
-            self.set_regs['yellow_btn'] = int(bits[13])
-            self.set_regs['list_state'][13] = int(bits[13])
+            self.set_regs['cycle_force'] = self.set_regs.get('list_state')[0]
+            self.set_regs['red_light'] = self.set_regs.get('list_state')[1]
+            self.set_regs['green_light'] = self.set_regs.get('list_state')[2]
+            self.set_regs['lost_control'] = self.set_regs.get('list_state')[3]
+            self.set_regs['excess_force'] = self.set_regs.get('list_state')[4]
+            self.set_regs['safety_fence'] = self.set_regs.get('list_state')[8]
+            self.set_regs['state_freq'] = self.set_regs.get('list_state')[11]
+            self.set_regs['state_force'] = self.set_regs.get('list_state')[12]
+            self.set_regs['yellow_btn'] = self.set_regs.get('list_state')[13]
 
         except Exception as e:
             self.log_error(f'ERROR in model/register_state - {e}')

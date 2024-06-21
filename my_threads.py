@@ -51,19 +51,19 @@ class LogWriter(QRunnable):
 class Writer(QRunnable):
     signals = Signals()
 
-    def __init__(self, client, cst, **kwargs):
+    def __init__(self, client, cst, tag, values, reg_write, freq_command):
         super(Writer, self).__init__()
         self.client = client
         self.cst = cst
-        self.tag = kwargs.get('write_tag')
-        self.values = kwargs.get('write_values')
+        self.tag = tag
+        self.values = values
         self.dev_id = 1
-        self.reg_write = kwargs.get('reg_write')
+        self.reg_write = reg_write
         self.reg_state = 0x2003
         self.len_msg = 8
         self.reg_len_freq = 0x2060
         self.reg_freq_buffer = 0x2061
-        self.freq_command = kwargs.get('freq_command')
+        self.freq_command = freq_command
         self.number_attempts = 0
         self.max_attempts = 5
         self.cond = True
@@ -314,7 +314,6 @@ class Reader(QRunnable):
 
     def stop_read(self):
         self.is_run = False
-        self.read_tag = 'reg'
 
     def exit_read(self):
         self.cycle = False

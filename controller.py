@@ -98,7 +98,7 @@ class Controller:
                 high_switch = self.response.get('highest_position')
 
                 if high_switch == 1:
-                    self.model.motor_stop()
+                    self.model.motor_stop(2)
                     self.model.set_regs['traverse_referent'] = True
                     self.model.set_regs['stage'] = 'wait'
                     time.sleep(0.2)
@@ -112,7 +112,7 @@ class Controller:
                     self.write_speed_motor(2, freq=15)
 
                 if abs(control_point - pos_trav) <= 0.6:
-                    self.model.motor_stop()
+                    self.model.motor_stop(2)
                     self.model.set_regs['traverse_position'] = True
                     self.model.set_regs['stage'] = 'wait'
                     time.sleep(0.2)
@@ -126,7 +126,7 @@ class Controller:
                     self.write_speed_motor(2, freq=15)
 
                 if abs(control_point - pos_trav) <= 0.6:
-                    self.model.motor_stop()
+                    self.model.motor_stop(2)
                     self.model.set_regs['traverse_position'] = True
                     time.sleep(0.2)
                     self.test_move_cycle()
@@ -160,7 +160,7 @@ class Controller:
                 point = float(self.response.get('min_point'))
                 move = float(self.response.get('move'))
                 if move <= point + 1:
-                    self.model.motor_stop()
+                    self.model.motor_stop(1)
                     time.sleep(0.5)
                     flag = self.response.get('test_launch')
                     if flag:
@@ -176,7 +176,7 @@ class Controller:
                     self.write_speed_motor(2, freq=15)
 
                 if abs(control_point - pos_trav) <= 0.6:
-                    self.model.motor_stop()
+                    self.model.motor_stop(2)
                     self.model.set_regs['traverse_position'] = True
                     self.model.set_regs['stage'] = 'wait'
                     if not flag_alarm:
@@ -305,9 +305,9 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/yellow_btn_push - {e}')
 
-    def current_amort(self):
+    def current_amort_ctrl(self, obj):
         try:
-            self.amort = self.response.get('amort')
+            self.amort = obj
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/current_amort - {e}')
@@ -318,13 +318,13 @@ class Controller:
         частота записывается напрямую
         """
         try:
+            value = 0
             if not freq:
-                self.model.set_regs['frequency'] = self.model.calculate_freq(speed)
+                value = self.model.calculate_freq(speed)
             elif not speed:
-                self.model.set_regs['frequency'] = 100 * freq
+                value = 100 * freq
 
-            self.model.set_regs['adr_freq'] = adr
-            self.model.write_frequency()
+            self.model.write_frequency(adr, value)
             time.sleep(0.2)
 
         except Exception as e:
@@ -405,9 +405,9 @@ class Controller:
             time.sleep(0.1)
 
             if pos_trav > set_point:
-                self.model.motor_up()
+                self.model.motor_up(2)
             else:
-                self.model.motor_down()
+                self.model.motor_down(2)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/traverse_move_position - {e}')
@@ -419,7 +419,7 @@ class Controller:
             self.model.set_regs['traverse_position'] = False
             self.write_speed_motor(2, freq=25)
             self.model.set_regs['stage'] = 'traverse_referent'
-            self.model.motor_up()
+            self.model.motor_up(2)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/traverse_referent_point - {e}')
@@ -498,8 +498,8 @@ class Controller:
             self.model.set_regs['max_pos'] = False
 
             self.model.reader_start_test()
-            time.sleep(0.5)
-            self.model.motor_up()
+            time.sleep(0.2)
+            self.model.motor_up(1)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/test_move_cycle - {e}')
@@ -507,8 +507,7 @@ class Controller:
     def change_excess_force(self, force):
         """Запись аварийного усилия и отключение бита блокировки"""
         try:
-            self.model.set_regs['force_alarm'] = force
-            self.model.write_emergency_force()
+            self.model.write_emergency_force(force)
             time.sleep(0.2)
 
             self.model.write_bit_unblock_control()
@@ -525,7 +524,7 @@ class Controller:
             if ind == 1:
                 self.write_speed_motor(1, speed=self.amort.speed_one)
                 self.model.set_regs['stage'] = 'test_speed_one'
-                self.model.motor_up()
+                self.model.motor_up(1)
 
             elif ind == 2:
                 self.write_speed_motor(1, speed=self.amort.speed_two)
@@ -544,7 +543,7 @@ class Controller:
             speed = self.amort.speed_one
             self.write_speed_motor(1, speed=speed)
 
-            self.model.motor_up()
+            self.model.motor_up(1)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_laboratory_test - {e}')
@@ -569,7 +568,7 @@ class Controller:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
-            time.sleep(0.5)
+            time.sleep(0.2)
 
             self.write_speed_motor(1, speed=0.05)
 
@@ -582,11 +581,9 @@ class Controller:
     def stop_gear_now(self):
         """Останов всех двигателей сейчас"""
         try:
-            self.model.set_regs['adr_freq'] = 1
-            self.model.motor_stop()
+            self.model.motor_stop(1)
             time.sleep(0.1)
-            self.model.set_regs['adr_freq'] = 2
-            self.model.motor_stop()
+            self.model.motor_stop(2)
             time.sleep(0.1)
 
         except Exception as e:

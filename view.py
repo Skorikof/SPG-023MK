@@ -21,6 +21,7 @@ class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
         self.response = {}
+        self.amort = None
         self.pen_test_lab = None
         self.data_line_test_lab = None
         self.pen_test_conv = None
@@ -408,7 +409,10 @@ class AppWindow(QMainWindow):
 
     def select_amort(self, ind):
         try:
-            self.model.set_regs['amort'] = self.win_amort.amorts.struct.amorts[ind]
+            self.amort = self.win_amort.amorts.struct.amorts[ind]
+
+            self.model.current_amort_model(self.win_amort.amorts.struct.amorts[ind])
+            self.controller.current_amort_ctrl(self.win_amort.amorts.struct.amorts[ind])
 
             self.specif_ui_fill(self.win_amort.amorts.struct.amorts[ind])
 
@@ -475,29 +479,23 @@ class AppWindow(QMainWindow):
             self.ui.test_repeat_btn.setVisible(False)
             self.ui.test_cancel_btn.setText('СТОП')
 
-            amort = self.model.set_regs.get('amort')
-
             temp = float(self.ui.specif_speed_one_lineEdit.text())
-            if temp != amort.speed_one:
-                amort.speed_one = temp
-                self.model.set_regs['amort'].speed_one = temp
+            if temp != self.amort.speed_one:
+                self.amort.speed_one = temp
 
-            name = amort.name
-            dimensions = f'{amort.min_length} - {amort.max_length}'
-            hod = f'{amort.hod}'
-            speed = f'{amort.speed_one}'
-            limit_comp = f'{amort.min_comp} - {amort.max_comp}'
-            limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
-            temper = f'{amort.max_temper}'
+            name = self.amort.name
+            dimensions = f'{self.amort.min_length} - {self.amort.max_length}'
+            hod = f'{self.amort.hod}'
+            speed = f'{self.amort.speed_one}'
+            limit_comp = f'{self.amort.min_comp} - {self.amort.max_comp}'
+            limit_recoil = f'{self.amort.min_recoil} - {self.amort.max_recoil}'
+            temper = f'{self.amort.max_temper}'
 
             txt_log = f'Start laboratory test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
                       f'speed = {speed}, limit_comp = {limit_comp}, ' \
                       f'limit_recoil = {limit_recoil}, max_temper = {temper}'
 
             self.log_msg_info_slot(txt_log)
-
-            self.controller.current_amort()
-            self.model.current_amort()
 
             self.controller.start_test_clicked()
 
@@ -559,15 +557,13 @@ class AppWindow(QMainWindow):
         try:
             value = self.ui.test_data_speed_lineEdit.text()
             value = float(value.replace(',', '.'))
-            speed = self.response.get('amort').speed_one
+            speed = self.amort.speed_one
 
             if value == speed:
                 pass
             else:
                 speed = self.model.calculate_freq(float(value))
-                self.model.set_regs['frequency'] = speed
-                self.model.set_regs['adr_freq'] = 1
-                self.model.write_frequency()
+                self.model.write_frequency(1, speed)
 
                 txt_log = f'Change speed in lab test on --> {speed}'
 
@@ -581,23 +577,19 @@ class AppWindow(QMainWindow):
             self.ui.main_btn_frame.setEnabled(False)
             self.main_stop_enable()
 
-            amort = self.response.get('amort')
-            name = amort.name
-            dimensions = f'{amort.min_length} - {amort.max_length}'
-            hod = f'{amort.hod}'
-            speed = f'one = {amort.speed_one} and two = {amort.speed_two}'
-            limit_comp = f'{amort.min_comp} - {amort.max_comp}'
-            limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
-            temper = f'{amort.max_temper}'
+            name = self.amort.name
+            dimensions = f'{self.amort.min_length} - {self.amort.max_length}'
+            hod = f'{self.amort.hod}'
+            speed = f'one = {self.amort.speed_one} and two = {self.amort.speed_two}'
+            limit_comp = f'{self.amort.min_comp} - {self.amort.max_comp}'
+            limit_recoil = f'{self.amort.min_recoil} - {self.amort.max_recoil}'
+            temper = f'{self.amort.max_temper}'
 
             txt_log = f'Start conveyor test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
                       f'speed = {speed}, limit_comp = {limit_comp}, ' \
                       f'limit_recoil = {limit_recoil}, max_temper = {temper}'
 
             self.log_msg_info_slot(txt_log)
-
-            self.controller.current_amort()
-            self.model.current_amort()
 
             self.controller.start_test_clicked()
 

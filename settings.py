@@ -16,15 +16,6 @@ class PrgSettings:
             self.connect['bytesize'] = int(temp_val[2])
             self.connect['stopbits'] = int(temp_val[3])
 
-            self.registers['adr_freq'] = 1
-            self.registers['reg_write'] = 0x2003
-            self.registers['write_values'] = [0]
-            self.registers['write_tag'] = 'reg'
-            self.registers['list_state'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-            self.registers['freq_command'] = ''
-            self.registers['force_alarm'] = 2000
-
             self.registers['force'] = 0
             self.registers['force_list'] = []
             self.registers['force_graph'] = []
@@ -32,15 +23,13 @@ class PrgSettings:
             self.registers['move_list'] = []
             self.registers['move_graph'] = []
 
+            self.registers['list_state'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             self.registers['cycle_force'] = 0
             self.registers['lost_control'] = 0
             self.registers['excess_force'] = 0
             self.registers['state_freq'] = 0
-            self.registers['frequency'] = 0
             self.registers['state_force'] = 0
             self.registers['counter_time'] = 0
-            self.registers['count_list'] = []
-            self.registers['state_list'] = []
             self.registers['temp_list'] = []
 
             self.registers['safety_fence'] = 0
@@ -58,7 +47,6 @@ class PrgSettings:
             self.registers['red_light'] = 0
             self.registers['traverse_stock'] = 755
             self.registers['traverse_referent'] = False
-            self.registers['bracket_height'] = 120
             self.registers['traverse_position'] = False
             self.registers['traverse_point'] = 0
             self.registers['gear_referent'] = False
@@ -66,7 +54,6 @@ class PrgSettings:
             self.registers['alarm_stage'] = False
 
             self.registers['operator'] = {'name': '', 'rank': ''}
-            self.registers['amort'] = None
             self.registers['type_test'] = ''
             self.registers['hod'] = 120
             self.registers['start_direction'] = None
