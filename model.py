@@ -111,7 +111,7 @@ class Model:
             self.client.set_timeout(1.0)
             self.client.set_verbose(True)
             self.client.open()
-
+            self.set_connect['connect'] = True
             self.status_bar_msg(f'Контроллер подключен')
 
         except Exception as e:
@@ -121,23 +121,30 @@ class Model:
     def disconnect_client(self):
         if self.client:
             self.client.close()
-            self.client = None
+            self.set_connect['connect'] = False
+            # self.client = None
             self.status_bar_msg(f'Контроллер отключен')
 
     def check_connect_client(self):
         try:
             check_time = time.monotonic()
             if check_time - self.time_response > 5:
+                print(f'Подключение к контроллеру отсутствует')
                 # self.signals.connect_ctrl.emit()
                 self.reader_stop()
+                print(f'Чтение контроллера остановлено')
                 time.sleep(0.1)
                 self.disconnect_client()
-                time.sleep(1)
-                self.init_connect()
+                print(f'Подключение разорвано')
+                time.sleep(0.5)
+                self.client.open()
                 time.sleep(0.1)
-                if self.client:
+                self.time_response = time.monotonic()
+                if self.set_connect['connect']:
+                    print(f'Подключение восстановлено')
                     # self.signals.connect_ctrl.emit()
                     self.reader_start()
+                    print(f'Поток чтения запущен')
 
         except Exception as e:
             self.log_error(f'ERROR in model/check_connect_client - {e}')
