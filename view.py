@@ -54,42 +54,12 @@ class AppWindow(QMainWindow):
         self.lbl_info_msg.setStyleSheet('border: 0);')
         self.lbl_info_msg.setFont(QFont('Calibri', 14))
 
-        self.lbl_info_F = QLabel("Усилие,(кгс):")
-        self.lbl_info_F.setStyleSheet('border: 0);')
-        self.lbl_info_F.setFont(QFont('Calibri', 12))
-
-        self.lbl_info_H = QLabel("Перемещение,(мм):")
-        self.lbl_info_H.setStyleSheet('border: 0);')
-        self.lbl_info_H.setFont(QFont('Calibri', 12))
-
-        self.lbl_info_Temp = QLabel("Температура,(*С):")
-        self.lbl_info_Temp.setStyleSheet('border: 0);')
-        self.lbl_info_Temp.setFont(QFont('Calibri', 12))
-
-        self.lbl_info_Traverse = QLabel("Траверса,(мм):")
-        self.lbl_info_Traverse.setStyleSheet('border: 0);')
-        self.lbl_info_Traverse.setFont(QFont('Calibri', 12))
-
-        self.lbl_info_executor = QLabel("Оператор:")
-        self.lbl_info_executor.setStyleSheet('border: 0);')
-        self.lbl_info_executor.setFont(QFont('Calibri', 12))
-
         self.statusBar().reformat()
         self.statusBar().setStyleSheet('border: 0; background-color: #FFF8DC;')
         self.statusBar().setStyleSheet("QStatusBar::item {border: none;}")
 
         self.statusBar().addPermanentWidget(VLine())  # <---
         self.statusBar().addPermanentWidget(self.lbl_info_msg, stretch=1)
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_F, stretch=1)
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_H, stretch=1)
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_Temp, stretch=1)
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_Traverse, stretch=1)
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_executor, stretch=1)
 
     def status_bar_ui(self, txt_bar):
         try:
@@ -98,15 +68,15 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/status_bar_ui - {e}')
 
-    def update_statusbar_data(self):
+    def update_data_on_left_bar(self):
         try:
-            self.lbl_info_F.setText(f'Усилие,(кгс): {self.response.get("force")}')
-            self.lbl_info_H.setText(f'Перемещение,(мм): {self.response.get("move")}')
-            self.lbl_info_Temp.setText(f'Температура,(*С): {self.response.get("temperature")}')
-            self.lbl_info_Traverse.setText(f'Траверса,(мм): {self.response.get("traverse_move")}')
+            self.ui.force_le.setText(f'{self.response.get("force")}')
+            self.ui.move_motor_le.setText(f'{self.response.get("move")}')
+            self.ui.move_traverse_le.setText(f'{self.response.get("traverse_move")}')
+            self.ui.temperature_le.setText(f'{self.response.get("temperature")}')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_statusbar_data - {e}')
+            self.log_msg_err_slot(f'ERROR in view/update_data_on_left_bar - {e}')
 
     def start_param_view(self):
         self.init_buttons()
@@ -147,7 +117,6 @@ class AppWindow(QMainWindow):
         self.win_archive.signals.log_err.connect(self.log_msg_err_slot)
 
     def init_buttons(self):
-        self.ui.main_close_btn.clicked.connect(self.closeEvent)
         self.ui.main_STOP_btn.clicked.connect(self.btn_main_stop_clicked)
         self.ui.ok_message_btn.clicked.connect(self.btn_ok_message_clicked)
         self.ui.main_operator_btn.clicked.connect(self.open_win_operator)
@@ -166,7 +135,7 @@ class AppWindow(QMainWindow):
         try:
             self.response = {**self.response, **response}
 
-            self.update_statusbar_data()
+            self.update_data_on_left_bar()
 
             temp = self.response.get('type_test')
 
@@ -272,7 +241,7 @@ class AppWindow(QMainWindow):
                 self.ui.message_btn_frame.setVisible(True)
                 self.ui.ok_message_btn.setVisible(True)
                 self.ui.cancel_message_btn.setVisible(False)
-                self.ui.main_btn_frame.setEnabled(False)
+                self.main_btn_disable()
             self.ui.main_stackedWidget.setCurrentIndex(0)
             self.ui.stack_start_label.setText(txt)
             self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
@@ -283,7 +252,6 @@ class AppWindow(QMainWindow):
 
     def btn_main_stop_clicked(self):
         try:
-            self.ui.main_btn_frame.setEnabled(False)
             txt = 'РАБОТА ПРЕРВАНА\nПО КОМАНДЕ\nОПЕРАТОРА'
             tag = 'warning'
             self.main_ui_msg(txt, tag)
@@ -308,6 +276,20 @@ class AppWindow(QMainWindow):
     def main_ui_disable(self):
         self.ui.main_stackedWidget.setEnabled(False)
         self.ui.main_btn_frame.setEnabled(False)
+
+    def main_btn_enable(self):
+        self.ui.main_operator_btn.setEnabled(True)
+        self.ui.main_test_btn.setEnabled(True)
+        self.ui.main_archive_btn.setEnabled(True)
+        self.ui.main_amorts_btn.setEnabled(True)
+        self.ui.main_hand_debug_btn.setEnabled(True)
+
+    def main_btn_disable(self):
+        self.ui.main_operator_btn.setEnabled(False)
+        self.ui.main_test_btn.setEnabled(False)
+        self.ui.main_archive_btn.setEnabled(False)
+        self.ui.main_amorts_btn.setEnabled(False)
+        self.ui.main_hand_debug_btn.setEnabled(False)
 
     def main_stop_enable(self):
         self.ui.main_STOP_btn.setEnabled(True)
@@ -342,7 +324,7 @@ class AppWindow(QMainWindow):
         self.model.set_regs['operator']['name'] = name
         self.model.set_regs['operator']['rank'] = rank
 
-        self.lbl_info_executor.setText('Оператор: {}, {}'.format(name, rank))
+        self.ui.operator_le.setText(f'{name}, {rank}')
 
     def close_win_operator(self):
         self.main_ui_enable()
@@ -476,7 +458,7 @@ class AppWindow(QMainWindow):
     def test_lab(self):
         try:
             self.main_stop_enable()
-            self.ui.main_btn_frame.setEnabled(False)
+            self.main_btn_disable()
             self.ui.test_save_btn.setVisible(False)
             self.ui.test_repeat_btn.setVisible(False)
             self.ui.test_cancel_btn.setText('СТОП')
@@ -576,7 +558,7 @@ class AppWindow(QMainWindow):
 
     def test_conveyor(self):
         try:
-            self.ui.main_btn_frame.setEnabled(False)
+            self.main_btn_disable()
             self.main_stop_enable()
 
             name = self.amort.name
@@ -673,7 +655,7 @@ class AppWindow(QMainWindow):
     def cancel_test_slot(self):
         try:
             self.main_stop_disable()
-            self.main_ui_enable()
+            self.main_btn_enable()
             type_test = self.response.get('type_test')
             if type_test == 'conv':
 
@@ -684,7 +666,6 @@ class AppWindow(QMainWindow):
                 # if temp == 'СТОП':
                 self.ui.test_save_btn.setVisible(True)
                 self.ui.test_repeat_btn.setVisible(True)
-                self.ui.main_btn_frame.setEnabled(True)
                 # self.ui.test_cancel_btn.setText('НАЗАД')
 
                 # elif temp == 'НАЗАД':

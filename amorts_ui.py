@@ -14,19 +14,19 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_AmortsWindow(object):
     def setupUi(self, AmortsWindow):
         AmortsWindow.setObjectName("AmortsWindow")
-        AmortsWindow.resize(600, 950)
+        AmortsWindow.resize(600, 740)
         AmortsWindow.setMinimumSize(QtCore.QSize(600, 700))
         AmortsWindow.setMaximumSize(QtCore.QSize(600, 950))
         self.centralwidget = QtWidgets.QWidget(AmortsWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.frame_parameters = QtWidgets.QFrame(self.centralwidget)
-        self.frame_parameters.setGeometry(QtCore.QRect(15, 10, 570, 800))
+        self.frame_parameters.setGeometry(QtCore.QRect(15, 10, 570, 610))
         self.frame_parameters.setFrameShape(QtWidgets.QFrame.Box)
         self.frame_parameters.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_parameters.setLineWidth(2)
         self.frame_parameters.setObjectName("frame_parameters")
         self.lbl_comp_max = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_comp_max.setGeometry(QtCore.QRect(440, 560, 110, 40))
+        self.lbl_comp_max.setGeometry(QtCore.QRect(440, 420, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -38,31 +38,31 @@ class Ui_AmortsWindow(object):
         self.lbl_comp_max.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_comp_max.setObjectName("lbl_comp_max")
         self.lbl_txt9 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt9.setGeometry(QtCore.QRect(20, 740, 400, 40))
+        self.lbl_txt9.setGeometry(QtCore.QRect(20, 555, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt9.setFont(font)
         self.lbl_txt9.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt9.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt9.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt9.setObjectName("lbl_txt9")
         self.lbl_txt5 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt5.setGeometry(QtCore.QRect(20, 500, 400, 40))
+        self.lbl_txt5.setGeometry(QtCore.QRect(20, 375, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt5.setFont(font)
         self.lbl_txt5.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt5.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt5.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt5.setObjectName("lbl_txt5")
         self.lbl_recoil_min = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_recoil_min.setGeometry(QtCore.QRect(440, 620, 110, 40))
+        self.lbl_recoil_min.setGeometry(QtCore.QRect(440, 465, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -74,19 +74,19 @@ class Ui_AmortsWindow(object):
         self.lbl_recoil_min.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_recoil_min.setObjectName("lbl_recoil_min")
         self.lbl_txt3 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt3.setGeometry(QtCore.QRect(20, 84, 530, 37))
+        self.lbl_txt3.setGeometry(QtCore.QRect(20, 65, 530, 30))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt3.setFont(font)
         self.lbl_txt3.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt3.setFrameShape(QtWidgets.QFrame.Box)
         self.lbl_txt3.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_txt3.setObjectName("lbl_txt3")
         self.lbl_length_min = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_length_min.setGeometry(QtCore.QRect(440, 140, 110, 40))
+        self.lbl_length_min.setGeometry(QtCore.QRect(440, 105, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -98,7 +98,7 @@ class Ui_AmortsWindow(object):
         self.lbl_length_min.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_length_min.setObjectName("lbl_length_min")
         self.lbl_temper = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_temper.setGeometry(QtCore.QRect(440, 740, 110, 40))
+        self.lbl_temper.setGeometry(QtCore.QRect(440, 555, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -110,7 +110,7 @@ class Ui_AmortsWindow(object):
         self.lbl_temper.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_temper.setObjectName("lbl_temper")
         self.lbl_length_max = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_length_max.setGeometry(QtCore.QRect(440, 200, 110, 40))
+        self.lbl_length_max.setGeometry(QtCore.QRect(440, 150, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -122,31 +122,31 @@ class Ui_AmortsWindow(object):
         self.lbl_length_max.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_length_max.setObjectName("lbl_length_max")
         self.lbl_txt4 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4.setGeometry(QtCore.QRect(20, 140, 400, 40))
+        self.lbl_txt4.setGeometry(QtCore.QRect(20, 105, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4.setFont(font)
         self.lbl_txt4.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4.setObjectName("lbl_txt4")
         self.lbl_txt6 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt6.setGeometry(QtCore.QRect(20, 620, 400, 40))
+        self.lbl_txt6.setGeometry(QtCore.QRect(20, 465, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt6.setFont(font)
         self.lbl_txt6.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt6.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt6.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt6.setObjectName("lbl_txt6")
         self.lbl_comp_min = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_comp_min.setGeometry(QtCore.QRect(440, 500, 110, 40))
+        self.lbl_comp_min.setGeometry(QtCore.QRect(440, 375, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -158,7 +158,7 @@ class Ui_AmortsWindow(object):
         self.lbl_comp_min.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_comp_min.setObjectName("lbl_comp_min")
         self.lbl_recoil_max = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_recoil_max.setGeometry(QtCore.QRect(440, 680, 110, 40))
+        self.lbl_recoil_max.setGeometry(QtCore.QRect(440, 510, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -170,9 +170,9 @@ class Ui_AmortsWindow(object):
         self.lbl_recoil_max.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_recoil_max.setObjectName("lbl_recoil_max")
         self.combo_Names = QtWidgets.QComboBox(self.frame_parameters)
-        self.combo_Names.setGeometry(QtCore.QRect(20, 14, 530, 60))
-        self.combo_Names.setMinimumSize(QtCore.QSize(0, 60))
-        self.combo_Names.setMaximumSize(QtCore.QSize(16777215, 60))
+        self.combo_Names.setGeometry(QtCore.QRect(20, 14, 530, 40))
+        self.combo_Names.setMinimumSize(QtCore.QSize(0, 40))
+        self.combo_Names.setMaximumSize(QtCore.QSize(16777215, 40))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -183,55 +183,55 @@ class Ui_AmortsWindow(object):
         self.combo_Names.setEditable(False)
         self.combo_Names.setObjectName("combo_Names")
         self.lbl_txt4_2 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4_2.setGeometry(QtCore.QRect(20, 200, 400, 40))
+        self.lbl_txt4_2.setGeometry(QtCore.QRect(20, 150, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4_2.setFont(font)
         self.lbl_txt4_2.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4_2.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4_2.setObjectName("lbl_txt4_2")
         self.lbl_txt5_2 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt5_2.setGeometry(QtCore.QRect(20, 560, 400, 40))
+        self.lbl_txt5_2.setGeometry(QtCore.QRect(20, 420, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt5_2.setFont(font)
         self.lbl_txt5_2.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt5_2.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt5_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt5_2.setObjectName("lbl_txt5_2")
         self.lbl_txt6_2 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt6_2.setGeometry(QtCore.QRect(20, 680, 400, 40))
+        self.lbl_txt6_2.setGeometry(QtCore.QRect(20, 510, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt6_2.setFont(font)
         self.lbl_txt6_2.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt6_2.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt6_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt6_2.setObjectName("lbl_txt6_2")
         self.lbl_txt4_3 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4_3.setGeometry(QtCore.QRect(20, 260, 400, 40))
+        self.lbl_txt4_3.setGeometry(QtCore.QRect(20, 195, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4_3.setFont(font)
         self.lbl_txt4_3.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4_3.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4_3.setObjectName("lbl_txt4_3")
         self.lbl_hod = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_hod.setGeometry(QtCore.QRect(440, 260, 110, 40))
+        self.lbl_hod.setGeometry(QtCore.QRect(440, 195, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -243,31 +243,31 @@ class Ui_AmortsWindow(object):
         self.lbl_hod.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_hod.setObjectName("lbl_hod")
         self.lbl_txt4_4 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4_4.setGeometry(QtCore.QRect(20, 380, 400, 40))
+        self.lbl_txt4_4.setGeometry(QtCore.QRect(20, 285, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4_4.setFont(font)
         self.lbl_txt4_4.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4_4.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4_4.setObjectName("lbl_txt4_4")
         self.lbl_txt4_5 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4_5.setGeometry(QtCore.QRect(20, 440, 400, 40))
+        self.lbl_txt4_5.setGeometry(QtCore.QRect(20, 330, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4_5.setFont(font)
         self.lbl_txt4_5.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4_5.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4_5.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4_5.setObjectName("lbl_txt4_5")
         self.lbl_speed_1 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_speed_1.setGeometry(QtCore.QRect(440, 380, 110, 40))
+        self.lbl_speed_1.setGeometry(QtCore.QRect(440, 285, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -279,7 +279,7 @@ class Ui_AmortsWindow(object):
         self.lbl_speed_1.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_speed_1.setObjectName("lbl_speed_1")
         self.lbl_speed_2 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_speed_2.setGeometry(QtCore.QRect(440, 440, 110, 40))
+        self.lbl_speed_2.setGeometry(QtCore.QRect(440, 330, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -291,19 +291,19 @@ class Ui_AmortsWindow(object):
         self.lbl_speed_2.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_speed_2.setObjectName("lbl_speed_2")
         self.lbl_txt4_6 = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_txt4_6.setGeometry(QtCore.QRect(20, 320, 400, 40))
+        self.lbl_txt4_6.setGeometry(QtCore.QRect(20, 240, 400, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(18)
-        font.setBold(True)
-        font.setWeight(75)
+        font.setPointSize(16)
+        font.setBold(False)
+        font.setWeight(50)
         self.lbl_txt4_6.setFont(font)
         self.lbl_txt4_6.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.lbl_txt4_6.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.lbl_txt4_6.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt4_6.setObjectName("lbl_txt4_6")
         self.lbl_adapter = QtWidgets.QLabel(self.frame_parameters)
-        self.lbl_adapter.setGeometry(QtCore.QRect(440, 320, 110, 40))
+        self.lbl_adapter.setGeometry(QtCore.QRect(440, 240, 110, 35))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(18)
@@ -314,8 +314,186 @@ class Ui_AmortsWindow(object):
         self.lbl_adapter.setFrameShape(QtWidgets.QFrame.Box)
         self.lbl_adapter.setAlignment(QtCore.Qt.AlignCenter)
         self.lbl_adapter.setObjectName("lbl_adapter")
+        self.frame_btn = QtWidgets.QFrame(self.centralwidget)
+        self.frame_btn.setGeometry(QtCore.QRect(15, 630, 570, 80))
+        self.frame_btn.setMinimumSize(QtCore.QSize(0, 0))
+        self.frame_btn.setMaximumSize(QtCore.QSize(1500, 1000))
+        self.frame_btn.setFrameShape(QtWidgets.QFrame.Box)
+        self.frame_btn.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_btn.setLineWidth(2)
+        self.frame_btn.setObjectName("frame_btn")
+        self.btn_add = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_add.setGeometry(QtCore.QRect(25, 20, 140, 40))
+        self.btn_add.setMinimumSize(QtCore.QSize(140, 40))
+        self.btn_add.setMaximumSize(QtCore.QSize(140, 40))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(18)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_add.setFont(font)
+        self.btn_add.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_add.setObjectName("btn_add")
+        self.btn_del = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_del.setGeometry(QtCore.QRect(220, 20, 140, 40))
+        self.btn_del.setMinimumSize(QtCore.QSize(140, 40))
+        self.btn_del.setMaximumSize(QtCore.QSize(140, 40))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(18)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_del.setFont(font)
+        self.btn_del.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_del.setObjectName("btn_del")
+        self.btn_exit = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_exit.setGeometry(QtCore.QRect(410, 20, 140, 40))
+        self.btn_exit.setMinimumSize(QtCore.QSize(140, 40))
+        self.btn_exit.setMaximumSize(QtCore.QSize(140, 40))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(18)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_exit.setFont(font)
+        self.btn_exit.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_exit.setObjectName("btn_exit")
+        self.frame_warning = QtWidgets.QFrame(self.centralwidget)
+        self.frame_warning.setGeometry(QtCore.QRect(-536, -126, 555, 251))
+        self.frame_warning.setStyleSheet("background-color: rgb(255, 170, 0);")
+        self.frame_warning.setFrameShape(QtWidgets.QFrame.Box)
+        self.frame_warning.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_warning.setLineWidth(2)
+        self.frame_warning.setObjectName("frame_warning")
+        self.txt_warning = QtWidgets.QTextEdit(self.frame_warning)
+        self.txt_warning.setGeometry(QtCore.QRect(8, 14, 539, 155))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(20)
+        font.setBold(True)
+        font.setWeight(75)
+        self.txt_warning.setFont(font)
+        self.txt_warning.setStyleSheet("")
+        self.txt_warning.setFrameShape(QtWidgets.QFrame.Box)
+        self.txt_warning.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.txt_warning.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.txt_warning.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.txt_warning.setReadOnly(True)
+        self.txt_warning.setObjectName("txt_warning")
+        self.btn_ok_warning = QtWidgets.QPushButton(self.frame_warning)
+        self.btn_ok_warning.setGeometry(QtCore.QRect(240, 178, 73, 61))
+        self.btn_ok_warning.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_ok_warning.setMaximumSize(QtCore.QSize(400, 120))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(20)
+        font.setBold(True)
+        font.setWeight(75)
+        self.btn_ok_warning.setFont(font)
+        self.btn_ok_warning.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_ok_warning.setObjectName("btn_ok_warning")
         self.frame_quest = QtWidgets.QFrame(self.centralwidget)
-        self.frame_quest.setGeometry(QtCore.QRect(570, -120, 555, 251))
+        self.frame_quest.setGeometry(QtCore.QRect(580, -120, 555, 251))
         self.frame_quest.setStyleSheet("background-color: rgb(85, 170, 127);")
         self.frame_quest.setFrameShape(QtWidgets.QFrame.Box)
         self.frame_quest.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -410,184 +588,6 @@ class Ui_AmortsWindow(object):
 "    \n"
 "}")
         self.btn_cancel_quest.setObjectName("btn_cancel_quest")
-        self.frame_btn = QtWidgets.QFrame(self.centralwidget)
-        self.frame_btn.setGeometry(QtCore.QRect(15, 820, 570, 100))
-        self.frame_btn.setMinimumSize(QtCore.QSize(0, 0))
-        self.frame_btn.setMaximumSize(QtCore.QSize(1500, 1000))
-        self.frame_btn.setFrameShape(QtWidgets.QFrame.Box)
-        self.frame_btn.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_btn.setLineWidth(2)
-        self.frame_btn.setObjectName("frame_btn")
-        self.btn_add = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_add.setGeometry(QtCore.QRect(25, 20, 160, 60))
-        self.btn_add.setMinimumSize(QtCore.QSize(160, 60))
-        self.btn_add.setMaximumSize(QtCore.QSize(160, 60))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_add.setFont(font)
-        self.btn_add.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 10px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    \n"
-"    background-color: rgb(0, 0, 255);\n"
-"    \n"
-"}")
-        self.btn_add.setObjectName("btn_add")
-        self.btn_del = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_del.setGeometry(QtCore.QRect(205, 20, 160, 60))
-        self.btn_del.setMinimumSize(QtCore.QSize(160, 60))
-        self.btn_del.setMaximumSize(QtCore.QSize(160, 60))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_del.setFont(font)
-        self.btn_del.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 10px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    \n"
-"    background-color: rgb(0, 0, 255);\n"
-"    \n"
-"}")
-        self.btn_del.setObjectName("btn_del")
-        self.btn_exit = QtWidgets.QPushButton(self.frame_btn)
-        self.btn_exit.setGeometry(QtCore.QRect(385, 20, 160, 60))
-        self.btn_exit.setMinimumSize(QtCore.QSize(160, 60))
-        self.btn_exit.setMaximumSize(QtCore.QSize(160, 60))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_exit.setFont(font)
-        self.btn_exit.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 10px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    \n"
-"    background-color: rgb(0, 0, 255);\n"
-"    \n"
-"}")
-        self.btn_exit.setObjectName("btn_exit")
-        self.frame_warning = QtWidgets.QFrame(self.centralwidget)
-        self.frame_warning.setGeometry(QtCore.QRect(-536, -126, 555, 251))
-        self.frame_warning.setStyleSheet("background-color: rgb(255, 170, 0);")
-        self.frame_warning.setFrameShape(QtWidgets.QFrame.Box)
-        self.frame_warning.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_warning.setLineWidth(2)
-        self.frame_warning.setObjectName("frame_warning")
-        self.txt_warning = QtWidgets.QTextEdit(self.frame_warning)
-        self.txt_warning.setGeometry(QtCore.QRect(8, 14, 539, 155))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.txt_warning.setFont(font)
-        self.txt_warning.setStyleSheet("")
-        self.txt_warning.setFrameShape(QtWidgets.QFrame.Box)
-        self.txt_warning.setFrameShadow(QtWidgets.QFrame.Plain)
-        self.txt_warning.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.txt_warning.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.txt_warning.setReadOnly(True)
-        self.txt_warning.setObjectName("txt_warning")
-        self.btn_ok_warning = QtWidgets.QPushButton(self.frame_warning)
-        self.btn_ok_warning.setGeometry(QtCore.QRect(240, 178, 73, 61))
-        self.btn_ok_warning.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_ok_warning.setMaximumSize(QtCore.QSize(400, 120))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_ok_warning.setFont(font)
-        self.btn_ok_warning.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 10px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    \n"
-"    background-color: rgb(0, 0, 255);\n"
-"    \n"
-"}")
-        self.btn_ok_warning.setObjectName("btn_ok_warning")
         AmortsWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(AmortsWindow)
         self.statusbar.setObjectName("statusbar")
@@ -622,16 +622,6 @@ class Ui_AmortsWindow(object):
         self.lbl_speed_2.setText(_translate("AmortsWindow", "0"))
         self.lbl_txt4_6.setText(_translate("AmortsWindow", "Адаптер (№)"))
         self.lbl_adapter.setText(_translate("AmortsWindow", "0"))
-        self.txt_quest.setMarkdown(_translate("AmortsWindow", "**ИНФОРМАЦИЯ**\n"
-"\n"
-""))
-        self.txt_quest.setHtml(_translate("AmortsWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Calibri\'; font-size:20pt; font-weight:600; font-style:normal;\">\n"
-"<p align=\"center\" style=\" margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">ИНФОРМАЦИЯ</p></body></html>"))
-        self.btn_ok_quest.setText(_translate("AmortsWindow", "Ok"))
-        self.btn_cancel_quest.setText(_translate("AmortsWindow", "Отмена"))
         self.btn_add.setText(_translate("AmortsWindow", "Добавить"))
         self.btn_del.setText(_translate("AmortsWindow", "Удалить"))
         self.btn_exit.setText(_translate("AmortsWindow", "Выход"))
@@ -645,3 +635,13 @@ class Ui_AmortsWindow(object):
 "<p align=\"center\" style=\" margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">ПРЕДУПРЕЖДЕНИЕ</p>\n"
 "<p align=\"center\" style=\"-qt-paragraph-type:empty; margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.btn_ok_warning.setText(_translate("AmortsWindow", "Ok"))
+        self.txt_quest.setMarkdown(_translate("AmortsWindow", "**ИНФОРМАЦИЯ**\n"
+"\n"
+""))
+        self.txt_quest.setHtml(_translate("AmortsWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Calibri\'; font-size:20pt; font-weight:600; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">ИНФОРМАЦИЯ</p></body></html>"))
+        self.btn_ok_quest.setText(_translate("AmortsWindow", "Ok"))
+        self.btn_cancel_quest.setText(_translate("AmortsWindow", "Отмена"))

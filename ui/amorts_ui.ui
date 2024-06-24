@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>950</height>
+    <height>740</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -32,7 +32,7 @@
       <x>15</x>
       <y>10</y>
       <width>570</width>
-      <height>800</height>
+      <height>610</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -48,9 +48,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>560</y>
+       <y>420</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -78,17 +78,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>740</y>
+       <y>555</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -108,17 +108,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>500</y>
+       <y>375</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -138,9 +138,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>620</y>
+       <y>465</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -168,17 +168,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>84</y>
+       <y>65</y>
        <width>530</width>
-       <height>37</height>
+       <height>30</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -198,9 +198,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>140</y>
+       <y>105</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -228,9 +228,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>740</y>
+       <y>555</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -258,9 +258,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>200</y>
+       <y>150</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -288,17 +288,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>140</y>
+       <y>105</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -318,17 +318,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>620</y>
+       <y>465</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -348,9 +348,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>500</y>
+       <y>375</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -378,9 +378,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>680</y>
+       <y>510</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -410,19 +410,19 @@
        <x>20</x>
        <y>14</y>
        <width>530</width>
-       <height>60</height>
+       <height>40</height>
       </rect>
      </property>
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>60</height>
+       <height>40</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>60</height>
+       <height>40</height>
       </size>
      </property>
      <property name="font">
@@ -444,17 +444,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>200</y>
+       <y>150</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -474,17 +474,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>560</y>
+       <y>420</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -504,17 +504,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>680</y>
+       <y>510</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -534,17 +534,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>260</y>
+       <y>195</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -564,9 +564,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>260</y>
+       <y>195</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -594,17 +594,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>380</y>
+       <y>285</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -624,17 +624,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>440</y>
+       <y>330</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -654,9 +654,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>380</y>
+       <y>285</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -684,9 +684,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>440</y>
+       <y>330</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -714,17 +714,17 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>320</y>
+       <y>240</y>
        <width>400</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
       <font>
        <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
+       <pointsize>16</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="styleSheet">
@@ -744,9 +744,9 @@
      <property name="geometry">
       <rect>
        <x>440</x>
-       <y>320</y>
+       <y>240</y>
        <width>110</width>
-       <height>40</height>
+       <height>35</height>
       </rect>
      </property>
      <property name="font">
@@ -771,10 +771,356 @@
      </property>
     </widget>
    </widget>
+   <widget class="QFrame" name="frame_btn">
+    <property name="geometry">
+     <rect>
+      <x>15</x>
+      <y>630</y>
+      <width>570</width>
+      <height>80</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>1500</width>
+      <height>1000</height>
+     </size>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <property name="lineWidth">
+     <number>2</number>
+    </property>
+    <widget class="QPushButton" name="btn_add">
+     <property name="geometry">
+      <rect>
+       <x>25</x>
+       <y>20</y>
+       <width>140</width>
+       <height>40</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>18</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+     </property>
+     <property name="text">
+      <string>Добавить</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_del">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>20</y>
+       <width>140</width>
+       <height>40</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>18</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+     </property>
+     <property name="text">
+      <string>Удалить</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_exit">
+     <property name="geometry">
+      <rect>
+       <x>410</x>
+       <y>20</y>
+       <width>140</width>
+       <height>40</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>140</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>18</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+     </property>
+     <property name="text">
+      <string>Выход</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame_warning">
+    <property name="geometry">
+     <rect>
+      <x>-536</x>
+      <y>-126</y>
+      <width>555</width>
+      <height>251</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 170, 0);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <property name="lineWidth">
+     <number>2</number>
+    </property>
+    <widget class="QTextEdit" name="txt_warning">
+     <property name="geometry">
+      <rect>
+       <x>8</x>
+       <y>14</y>
+       <width>539</width>
+       <height>155</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>20</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+     <property name="markdown">
+      <string>**ПРЕДУПРЕЖДЕНИЕ**
+
+</string>
+     </property>
+     <property name="html">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Calibri'; font-size:20pt; font-weight:600; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;ПРЕДУПРЕЖДЕНИЕ&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_ok_warning">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>178</y>
+       <width>73</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>30</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>400</width>
+       <height>120</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri</family>
+       <pointsize>20</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+     </property>
+     <property name="text">
+      <string>Ok</string>
+     </property>
+    </widget>
+   </widget>
    <widget class="QFrame" name="frame_quest">
     <property name="geometry">
      <rect>
-      <x>570</x>
+      <x>580</x>
       <y>-120</y>
       <width>555</width>
       <height>251</height>
@@ -960,352 +1306,6 @@ QPushButton:checked
      </property>
      <property name="text">
       <string>Отмена</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_btn">
-    <property name="geometry">
-     <rect>
-      <x>15</x>
-      <y>820</y>
-      <width>570</width>
-      <height>100</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>1500</width>
-      <height>1000</height>
-     </size>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <property name="lineWidth">
-     <number>2</number>
-    </property>
-    <widget class="QPushButton" name="btn_add">
-     <property name="geometry">
-      <rect>
-       <x>25</x>
-       <y>20</y>
-       <width>160</width>
-       <height>60</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>20</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 10px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}
-	
-
-QPushButton:checked
-{
-	
-	background-color: rgb(0, 0, 255);
-	
-}</string>
-     </property>
-     <property name="text">
-      <string>Добавить</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_del">
-     <property name="geometry">
-      <rect>
-       <x>205</x>
-       <y>20</y>
-       <width>160</width>
-       <height>60</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>20</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 10px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}
-	
-
-QPushButton:checked
-{
-	
-	background-color: rgb(0, 0, 255);
-	
-}</string>
-     </property>
-     <property name="text">
-      <string>Удалить</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_exit">
-     <property name="geometry">
-      <rect>
-       <x>385</x>
-       <y>20</y>
-       <width>160</width>
-       <height>60</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>160</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>20</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 10px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}
-	
-
-QPushButton:checked
-{
-	
-	background-color: rgb(0, 0, 255);
-	
-}</string>
-     </property>
-     <property name="text">
-      <string>Выход</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QFrame" name="frame_warning">
-    <property name="geometry">
-     <rect>
-      <x>-536</x>
-      <y>-126</y>
-      <width>555</width>
-      <height>251</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(255, 170, 0);</string>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
-    </property>
-    <property name="lineWidth">
-     <number>2</number>
-    </property>
-    <widget class="QTextEdit" name="txt_warning">
-     <property name="geometry">
-      <rect>
-       <x>8</x>
-       <y>14</y>
-       <width>539</width>
-       <height>155</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>20</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
-     </property>
-     <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarAlwaysOff</enum>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-     <property name="markdown">
-      <string>**ПРЕДУПРЕЖДЕНИЕ**
-
-</string>
-     </property>
-     <property name="html">
-      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Calibri'; font-size:20pt; font-weight:600; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;ПРЕДУПРЕЖДЕНИЕ&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:13px; margin-bottom:13px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_ok_warning">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>178</y>
-       <width>73</width>
-       <height>61</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>30</width>
-       <height>30</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>400</width>
-       <height>120</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>20</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 10px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}
-	
-
-QPushButton:checked
-{
-	
-	background-color: rgb(0, 0, 255);
-	
-}</string>
-     </property>
-     <property name="text">
-      <string>Ok</string>
      </property>
     </widget>
    </widget>
