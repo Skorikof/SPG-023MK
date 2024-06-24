@@ -264,6 +264,7 @@ class AppWindow(QMainWindow):
     def btn_ok_message_clicked(self):
         try:
             self.controller.lamp_all_switch_off()
+            self.main_btn_enable()
             self.start_page()
 
         except Exception as e:
