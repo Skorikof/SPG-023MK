@@ -205,7 +205,7 @@ class Reader(QRunnable):
         self.buffer_count = 20
         self.buffer_all = 18000
 
-        self.time_start = 0
+        # self.time_start = 0
         self.flag_start_test = False
         self.num_rec = 0
         self.current_rec = -1
@@ -232,14 +232,14 @@ class Reader(QRunnable):
                         self.signals.read_result.emit(self.result, self.read_tag)
 
                     elif self.read_tag == 'buffer':
-                        self.time_start = time.monotonic()
+                        # self.time_start = time.monotonic()
 
                         self.result['count'] = []
                         self.result['force'] = []
                         self.result['move'] = []
                         self.result['state'] = []
                         self.result['temp'] = []
-                        self.result['time'] = []
+                        # self.result['time'] = []
 
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 6)
@@ -262,14 +262,12 @@ class Reader(QRunnable):
                                     self.count_rec += 1
 
                                     self.result['count'].append(rr[ind])
-                                    force = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 0)
+                                    force = int(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0])
                                     self.result['force'].append(force)
-                                    move = round(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)),
-                                                 1)
+                                    move = int(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True)))
                                     self.result['move'].append(move)
                                     self.result['state'].append(rr[ind + 4])
-                                    self.result['temp'].append(round(rr[ind + 5] * 0.01, 1))
-                                    self.result['time'].append(round(time.monotonic() - self.time_start, 6))
+                                    self.result['temp'].append(int(rr[ind + 5] * 0.01))
 
                                 else:
                                     break
