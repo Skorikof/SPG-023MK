@@ -9,7 +9,6 @@ from struct import pack, unpack
 from my_threads import LogWriter, Writer, Reader
 from settings import PrgSettings
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
-from numba import njit
 
 
 class WinSignals(QObject):
@@ -195,85 +194,40 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-# FIXME
-    @njit()
-    def pars_buffer(self, response):
-        try:
-            res = {}
-            force_list = []
-            move_list = []
-
-            for i in range(len(response['force'])):
-                if response['force'][i] != -100000:
-                    force_list.append(response.get('force')[i])
-                    move_list.append(response.get('move')[i])
-
-                else:
-                    pass
-
-            if not force_list:
-                return None
-
-            else:
-                res['count'] = response.get('count')[-1]
-                res['force'] = [x for x in force_list]
-                res['move'] = [x for x in move_list]
-                res['state'] = response.get('state')[-1]
-                res['temp'] = [x for x in response.get('temp') if x != -100]
-
-                return res
-
-        except Exception as e:
-            print(f'ERROR in pars_buffer --> {e}')
-
     def reader_result(self, response, tag):
         try:
             if tag == 'buffer':
-                res = self.pars_buffer(response)
+                force_list = []
+                move_list = []
 
-                # force_list = []
-                # move_list = []
-                #
-                # # print(f'Счётчик --> {response["count"]}')
-                # # print(f'Усилие --> {response["force"]}')
-                # # print(f'Перемещение --> {response["move"]}')
-                # # print(f'Состояние --> {response["state"]}')
-                # # print(f'Температура --> {response["temp"]}')
-                # # print(f'======================')
-                #
-                # for i in range(len(response['force'])):
-                #     if response['force'][i] != -100000.0:
-                #         force_list.append(response.get('force')[i])
-                #         move_list.append(response.get('move')[i])
-                #         self.count_msg += 1
-                #         self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-                #     else:
-                #         pass
-                #
-                # if not force_list:
-                #     print(f'Пришла пустая посылка')
-                #     pass
+                # print(f'Счётчик --> {response["count"]}')
+                # print(f'Усилие --> {response["force"]}')
+                # print(f'Перемещение --> {response["move"]}')
+                # print(f'Состояние --> {response["state"]}')
+                # print(f'Температура --> {response["temp"]}')
+                # print(f'======================')
 
-                if not res:
+                for i in range(len(response['force'])):
+                    if response['force'][i] != -100000.0:
+                        force_list.append(response.get('force')[i])
+                        move_list.append(response.get('move')[i])
+                        self.count_msg += 1
+                        self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                    else:
+                        pass
+
+                if not force_list:
                     print(f'Пришла пустая посылка')
                     pass
 
                 else:
-                    self.set_regs['force_list'] = [x for x in res.get('force')]
-                    self.set_regs['move_list'] = [x for x in res.get('move')]
-                    self.set_regs['counter_time'] = res.get('count')
+                    self.set_regs['force_list'] = [x for x in force_list]
+                    self.set_regs['move_list'] = [x for x in move_list]
+                    self.set_regs['temp_list'] = [x for x in response.get('temp') if x != -100.0]
+
+                    self.set_regs['counter_time'] = response.get('count')[-1]
                     self.set_regs['force'] = self.set_regs.get('force_list')[-1]
                     self.set_regs['move'] = self.set_regs.get('move_list')[-1]
-                    self.register_state(res.get('state'))
-                    self.check_temperature(res.get('temp'))
-
-                    # self.set_regs['force_list'] = [x for x in force_list]
-                    # self.set_regs['move_list'] = [x for x in move_list]
-                    # self.set_regs['temp_list'] = [x for x in response.get('temp') if x != -100.0]
-                    #
-                    # self.set_regs['counter_time'] = response.get('count')[-1]
-                    # self.set_regs['force'] = self.set_regs.get('force_list')[-1]
-                    # self.set_regs['move'] = self.set_regs.get('move_list')[-1]
 
                     self.register_state(response.get('state')[-1])
 
