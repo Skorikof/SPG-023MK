@@ -3,6 +3,7 @@ import time
 
 import crcmod
 import serial
+import numpy as np
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack
@@ -194,27 +195,45 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
+    def delete_left_data(self, force: list, move: list):
+        try:
+            force_list = []
+            move_list = []
+
+            force = np.array(force, int)
+            move = np.array(move, float)
+
+            for i in range(len(force)):
+                if force[i] != -100000:
+                    force_list.append(force[i])
+                    move_list.append(move[i])
+
+            return force_list, move_list
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/delete_left_data - {e}')
+
     def reader_result(self, response, tag):
         try:
             if tag == 'buffer':
-                force_list = []
-                move_list = []
 
-                # print(f'Счётчик --> {response["count"]}')
-                # print(f'Усилие --> {response["force"]}')
-                # print(f'Перемещение --> {response["move"]}')
-                # print(f'Состояние --> {response["state"]}')
-                # print(f'Температура --> {response["temp"]}')
+                force_list, move_list = self.delete_left_data(response.get('force'), response.get('move'))
+
+                # print(f'Счётчик --> {response["count"]}') # list int
+                # print(f'Усилие --> {response["force"]}') # list int
+                # print(f'Перемещение --> {response["move"]}') # list float
+                # print(f'Состояние --> {response["state"]}') # list int
+                # print(f'Температура --> {response["temp"]}') # list float
                 # print(f'======================')
 
-                for i in range(len(response['force'])):
-                    if response['force'][i] != -100000.0:
-                        force_list.append(response.get('force')[i])
-                        move_list.append(response.get('move')[i])
-                        self.count_msg += 1
-                        self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
-                    else:
-                        pass
+                # for i in range(len(response['force'])):
+                #     if response['force'][i] != -100000:
+                #         force_list.append(response.get('force')[i])
+                #         move_list.append(response.get('move')[i])
+                #         self.count_msg += 1
+                #         self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                #     else:
+                #         pass
 
                 if not force_list:
                     print(f'Пришла пустая посылка')
@@ -226,8 +245,8 @@ class Model:
                     self.set_regs['temp_list'] = [x for x in response.get('temp') if x != -100.0]
 
                     self.set_regs['counter_time'] = response.get('count')[-1]
-                    self.set_regs['force'] = self.set_regs.get('force_list')[-1]
-                    self.set_regs['move'] = self.set_regs.get('move_list')[-1]
+                    self.set_regs['force'] = force_list[-1]
+                    self.set_regs['move'] = move_list[-1]
 
                     self.register_state(response.get('state')[-1])
 
