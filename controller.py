@@ -41,7 +41,7 @@ class Controller:
 
             self.model.set_regs['stage'] = 'wait'
             self.model.reader_start()
-            self.model.timer_connect.start()
+            # self.model.timer_connect.start()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_param_ctrl - {e}')
@@ -349,22 +349,12 @@ class Controller:
             self.model.set_regs['max_temperature'] = 0
             self.model.set_regs['alarm_stage'] = False
             self.model.set_regs['test_launch'] = True
-            # trav_ref = self.response.get('traverse_referent')
-            # if not trav_ref:
-            #     self.traverse_referent_point()
-            #
-            # else:
-            self.traverse_install_point()
+            trav_ref = self.response.get('traverse_referent')
+            if not trav_ref:
+                self.traverse_referent_point()
 
-            # temp = self.response.get('type_test')
-            # if temp == 'lab':
-            #     self.start_laboratory_test()
-            #
-            # elif temp == 'conv':
-            #     self.start_conveyor_test()
-            #
-            # else:
-            #     pass
+            else:
+                self.traverse_install_point()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')

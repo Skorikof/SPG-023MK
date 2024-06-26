@@ -40,13 +40,13 @@ class Model:
         self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
-        self.timer_connect = None
+        # self.timer_connect = None
         self.timer_yellow = None
         self.amort = None
         self.count_msg = 0
         self.force_graph = []
         self.move_graph = []
-        self.time_response = time.monotonic()
+        # self.time_response = time.monotonic()
         self.time_push_yellow = None
 
         self.start_param_model()
@@ -54,7 +54,7 @@ class Model:
     def start_param_model(self):
         self.init_connect()
         time.sleep(0.1)
-        self.init_timer_connect()
+        # self.init_timer_connect()
         self.init_timer_yellow_btn()
         if self.client:
             self.init_reader()
@@ -102,11 +102,11 @@ class Model:
 
     def init_connect(self):
         try:
-            self.client = modbus_rtu.RtuMaster(serial.Serial(port=self.set_connect.get('COM'),
-                                                             baudrate=self.set_connect.get('baudrate'),
-                                                             bytesize=self.set_connect.get('bytesize'),
-                                                             parity=self.set_connect.get('parity'),
-                                                             stopbits=self.set_connect.get('stopbits'),
+            self.client = modbus_rtu.RtuMaster(serial.Serial(port=self.set_connect.get('COM', 4),
+                                                             baudrate=self.set_connect.get('baudrate', 921600),
+                                                             bytesize=self.set_connect.get('bytesize', 8),
+                                                             parity=self.set_connect.get('parity', 'N'),
+                                                             stopbits=self.set_connect.get('stopbits', 1),
                                                              timeout=0.000001))
 
             self.client.set_timeout(1.0)
@@ -126,42 +126,42 @@ class Model:
             # self.client = None
             self.status_bar_msg(f'Контроллер отключен')
 
-    def check_connect_client(self):
-        try:
-            check_time = time.monotonic()
-            if check_time - self.time_response > 5:
-                print(f'Подключение к контроллеру отсутствует')
-                self.timer_connect.stop()
-                print(f'Таймер контроля посылки остановлен')
-                # self.signals.connect_ctrl.emit()
-                self.reader_stop()
-                print(f'Чтение контроллера остановлено')
-                time.sleep(0.1)
-                self.disconnect_client()
-                print(f'Подключение разорвано')
-                time.sleep(0.5)
-                self.client.open()
-                time.sleep(0.1)
-                self.time_response = time.monotonic()
-                if self.set_connect['connect']:
-                    print(f'Подключение восстановлено')
-                    self.timer_connect.start()
-                    print(f'Таймер контроля посылки запущен')
-                    # self.signals.connect_ctrl.emit()
-                    self.reader_start()
-                    print(f'Поток чтения запущен')
+    # def check_connect_client(self):
+    #     try:
+    #         check_time = time.monotonic()
+    #         if check_time - self.time_response > 5:
+    #             print(f'Подключение к контроллеру отсутствует')
+    #             self.timer_connect.stop()
+    #             print(f'Таймер контроля посылки остановлен')
+    #             # self.signals.connect_ctrl.emit()
+    #             self.reader_stop()
+    #             print(f'Чтение контроллера остановлено')
+    #             time.sleep(0.1)
+    #             self.disconnect_client()
+    #             print(f'Подключение разорвано')
+    #             time.sleep(0.5)
+    #             self.client.open()
+    #             time.sleep(0.1)
+    #             self.time_response = time.monotonic()
+    #             if self.set_connect['connect']:
+    #                 print(f'Подключение восстановлено')
+    #                 self.timer_connect.start()
+    #                 print(f'Таймер контроля посылки запущен')
+    #                 # self.signals.connect_ctrl.emit()
+    #                 self.reader_start()
+    #                 print(f'Поток чтения запущен')
+    #
+    #     except Exception as e:
+    #         self.log_error(f'ERROR in model/check_connect_client - {e}')
 
-        except Exception as e:
-            self.log_error(f'ERROR in model/check_connect_client - {e}')
-
-    def init_timer_connect(self):
-        try:
-            self.timer_connect = QTimer()
-            self.timer_connect.setInterval(3000)
-            self.timer_connect.timeout.connect(self.check_connect_client)
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/init_timer_connect - {e}')
+    # def init_timer_connect(self):
+    #     try:
+    #         self.timer_connect = QTimer()
+    #         self.timer_connect.setInterval(3000)
+    #         self.timer_connect.timeout.connect(self.check_connect_client)
+    #
+    #     except Exception as e:
+    #         self.log_error(f'ERROR in model/init_timer_connect - {e}')
 
     def init_reader(self):
         self.reader = Reader(self.client, cst)
@@ -219,13 +219,6 @@ class Model:
 
                 force_list, move_list = self.delete_left_data(response.get('force'), response.get('move'))
 
-                # print(f'Счётчик --> {response["count"]}') # list int
-                # print(f'Усилие --> {response["force"]}') # list int
-                # print(f'Перемещение --> {response["move"]}') # list float
-                # print(f'Состояние --> {response["state"]}') # list int
-                # print(f'Температура --> {response["temp"]}') # list float
-                # print(f'======================')
-
                 # for i in range(len(response['force'])):
                 #     if response['force'][i] != -100000:
                 #         force_list.append(response.get('force')[i])
@@ -237,7 +230,6 @@ class Model:
 
                 if not force_list:
                     print(f'Пришла пустая посылка')
-                    pass
 
                 else:
                     self.set_regs['force_list'] = [x for x in force_list]
@@ -252,20 +244,26 @@ class Model:
 
                     self.check_temperature(self.set_regs['temp_list'])
 
-                    self.signals.read_finish.emit(self.set_regs)
+                    print(f'Счётчик --> {self.set_regs.get("counter_time")}')
+                    print(f'Усилие --> {self.set_regs.get("force_list")}')
+                    print(f'Перемещение --> {self.set_regs.get("move_list")}')
+                    print(f'Состояние --> {self.set_regs.get("state")[-1]}')
+                    print(f'Температура --> {self.set_regs.get["temp_list"]}')
+                    print(f'======================')
 
-                    self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
+                    # self.signals.read_finish.emit(self.set_regs)
+
+                    # self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
 
             if tag == 'reg':
-                res = response.get('regs')
-                force = self.magnitude_effort(res[0], res[1])
-                move = -1 * self.movement_amount(res[2])
-                self.register_state(res[3])
-                self.set_regs['counter_time'] = self.counter_time(res[4])
-                self.switch_state(res[5])
-                self.set_regs['traverse_move'] = round(-0.5 * self.movement_amount(res[6]), 1)
-                self.set_regs['temperature'] = self.temperature_value(res[7], res[8])
-                self.set_regs['force_alarm'] = self.emergency_force(res[10], res[11])
+                force = self.magnitude_effort(response['regs'][0], response['regs'][1])
+                move = -1 * self.movement_amount(response['regs'][2])
+                self.register_state(response['regs'][3])
+                self.set_regs['counter_time'] = self.counter_time(response['regs'][4])
+                self.switch_state(response['regs'][5])
+                self.set_regs['traverse_move'] = round(-0.5 * self.movement_amount(response['regs'][6]), 1)
+                self.set_regs['temperature'] = self.temperature_value(response['regs'][7], response['regs'][8])
+                self.set_regs['force_alarm'] = self.emergency_force(response['regs'][10], response['regs'][11])
 
                 if force == -100000.0:
                     pass
@@ -279,7 +277,7 @@ class Model:
 
                     self.signals.read_finish.emit(self.set_regs)
 
-            self.time_response = time.monotonic()
+            # self.time_response = time.monotonic()
 
             if self.count_msg == 10000:
                 self.count_msg = 0
@@ -399,6 +397,19 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/add_data_on_graph - {e}')
 
+    def approximate_data(self, x: list, y: list):
+        try:
+            x = np.array(x, float)
+            y = np.array(y, int)
+            t = np.polyfit(x, y, 4)
+            f = np.poly1d(t)
+            y = f(x)
+
+            return y
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/approximate_data - {e}')
+
     def full_circle_done(self, force: list, move: list):
         try:
             flag = self.set_regs.get('gear_referent')
@@ -420,7 +431,8 @@ class Model:
                 self.set_regs['max_comp'] = max(force)
                 self.set_regs['max_recoil'] = abs(min(force))
                 self.set_regs['force_graph'] = [x for x in force]
-                self.set_regs['move_graph'] = [x for x in move]
+                # self.set_regs['move_graph'] = [x for x in move]
+                self.set_regs['move_graph'] = self.approximate_data(force, move)
                 self.signals.full_cycle.emit()
                 self.signals.update_graph_settings.emit()
 
@@ -597,9 +609,8 @@ class Model:
     def check_temperature(self, temp_list):
         try:
             self.set_regs['temperature'] = temp_list[-1]
-            temp = self.set_regs.get('max_temperature')
 
-            if max(temp_list) > temp:
+            if max(temp_list) > self.set_regs['max_temperature']:
                 self.set_regs['max_temperature'] = max(temp_list)
 
         except Exception as e:

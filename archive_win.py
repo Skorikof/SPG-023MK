@@ -83,7 +83,6 @@ class ArchiveWin(QMainWindow):
             self.ui.operator_le.setText('')
             self.ui.conclusion_le.setText('')
             self.ui.serial_le.setText('')
-            self.ui.type_test_le.setText('')
             self.ui.limit_comp_le.setText('')
             self.ui.limit_recoil_le.setText('')
             self.ui.speed_le.setText('')
@@ -136,7 +135,6 @@ class ArchiveWin(QMainWindow):
             self.ui.conclusion_le.setText(self.archive.struct.tests[data].conclusion)
             self.ui.serial_le.setText(self.archive.struct.tests[data].serial_number)
             self.ui.resistance_le.setText(self.archive.struct.tests[data].resistance)
-            self.ui.type_test_le.setText(self.archive.struct.tests[data].type_test)
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in archive_win/archive_test_select - {e}')

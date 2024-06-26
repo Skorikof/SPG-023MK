@@ -49,21 +49,23 @@ class AppWindow(QMainWindow):
         self.close()
 
     def _create_statusbar_ui(self):
-
-        self.lbl_info_msg = QLabel("Инф:")
-        self.lbl_info_msg.setStyleSheet('border: 0);')
-        self.lbl_info_msg.setFont(QFont('Calibri', 14))
-
-        self.statusBar().reformat()
-        self.statusBar().setStyleSheet('border: 0; background-color: #FFF8DC;')
-        self.statusBar().setStyleSheet("QStatusBar::item {border: none;}")
-
-        self.statusBar().addPermanentWidget(VLine())  # <---
-        self.statusBar().addPermanentWidget(self.lbl_info_msg, stretch=1)
+        self.statusbar = self.statusBar()
+        #
+        # self.lbl_info_msg = QLabel("Инф:")
+        # self.lbl_info_msg.setStyleSheet('border: 0);')
+        # self.lbl_info_msg.setFont(QFont('Calibri', 14))
+        #
+        # self.statusBar().reformat()
+        # self.statusBar().setStyleSheet('border: 0; background-color: #FFF8DC;')
+        # self.statusBar().setStyleSheet("QStatusBar::item {border: none;}")
+        #
+        # self.statusBar().addPermanentWidget(VLine())  # <---
+        # self.statusBar().addPermanentWidget(self.lbl_info_msg, stretch=1)
 
     def status_bar_ui(self, txt_bar):
         try:
-            self.lbl_info_msg.setText(txt_bar)
+            self.ui.statusbar.showMessage(txt_bar)
+            # self.lbl_info_msg.setText(txt_bar)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/status_bar_ui - {e}')
