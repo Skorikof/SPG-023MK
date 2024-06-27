@@ -232,6 +232,9 @@ class Model:
                     print(f'Пришла пустая посылка')
 
                 else:
+                    self.count_msg += 1
+                    self.status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+
                     self.set_regs['force_list'] = [x for x in force_list]
                     self.set_regs['move_list'] = [x for x in move_list]
                     self.set_regs['temp_list'] = [x for x in response.get('temp') if x != -100.0]
@@ -247,13 +250,13 @@ class Model:
                     print(f'Счётчик --> {self.set_regs.get("counter_time")}')
                     print(f'Усилие --> {self.set_regs.get("force_list")}')
                     print(f'Перемещение --> {self.set_regs.get("move_list")}')
-                    print(f'Состояние --> {self.set_regs.get("state")[-1]}')
+                    print(f'Состояние --> {self.set_regs.get("state")[-1]:b}')
                     print(f'Температура --> {self.set_regs.get["temp_list"]}')
                     print(f'======================')
 
-                    # self.signals.read_finish.emit(self.set_regs)
+                    self.signals.read_finish.emit(self.set_regs)
 
-                    # self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
+                    self.pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
 
             if tag == 'reg':
                 force = self.magnitude_effort(response['regs'][0], response['regs'][1])
@@ -341,18 +344,27 @@ class Model:
             if start_point < move[-1]:
                 self.set_regs['start_direction'] = 'up'
                 self.set_regs['current_direction'] = 'up'
-                print(f'Find start direction --> {self.set_regs["start_direction"]}')
 
             elif start_point > move[-1]:
                 self.set_regs['start_direction'] = 'down'
                 self.set_regs['current_direction'] = 'down'
-                print(f'Find start direction --> {self.set_regs["start_direction"]}')
 
             else:
                 self.set_regs['start_direction'] = None
 
+            print(f'Start direction --> {self.set_regs["start_direction"]}')
+
         except Exception as e:
             self.log_error(f'ERROR in model/find_start_direction - {e}')
+
+    def add_data_on_graph(self, force: list, move: list):
+        """Добавление координаты в списки усилия и перемещения"""
+        try:
+            self.force_graph.extend(force)
+            self.move_graph.extend(move)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/add_data_on_graph - {e}')
 
     def pars_response_on_circle(self, force: list, move: list):
         try:
@@ -364,38 +376,42 @@ class Model:
 
             if self.set_regs.get('current_direction') == 'up':
                 self.add_data_on_graph(force, move)
-                if max(move) != move[-1]:
-                    self.set_regs['max_pos'] = True
+                if max(move) > move[-1] + 1:
                     self.set_regs['max_point'] = max(move)
+                    self.set_regs['max_pos'] = True
+
                     print(f'Find max point --> {max(move)}')
+
                     self.set_regs['current_direction'] = 'down'
 
             elif self.set_regs.get('current_direction') == 'down':
                 self.add_data_on_graph(force, move)
-                if min(move) != move[-1]:
-                    self.set_regs['min_pos'] = True
+                if min(move) < move[-1] - 1:
                     self.set_regs['min_point'] = min(move)
+                    self.set_regs['min_pos'] = True
+
+                    # FIXME Какую подставить точку в стартовую
                     self.set_regs['start_point'] = self.set_regs.get('min_point') + 10
+
                     print(f'Find min point --> {min(move)}')
+
                     self.set_regs['current_direction'] = 'up'
 
             if self.set_regs.get('min_pos') and self.set_regs.get('max_pos') \
                     and (self.set_regs.get('start_point') in move):
 
                 print(f'Full cycle is done!')
-                self.full_circle_done(self.force_graph, self.move_graph)
+
+                force_list = [x for x in self.force_graph]
+                move_list = [x for x in self.move_graph]
+
+                self.force_graph = []
+                self.move_graph = []
+
+                self.full_circle_done(force_list, move_list)
 
         except Exception as e:
             self.log_error(f'ERROR in model/pars_response_on_circle - {e}')
-
-    def add_data_on_graph(self, force: list, move: list):
-        """Добавление координаты в списки усилия и перемещения"""
-        try:
-            self.force_graph.extend(force)
-            self.move_graph.extend(move)
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/add_data_on_graph - {e}')
 
     def approximate_data(self, x: list, y: list):
         try:
@@ -438,8 +454,6 @@ class Model:
 
             self.set_regs['min_pos'] = False
             self.set_regs['max_pos'] = False
-            self.force_graph = []
-            self.move_graph = []
 
         except Exception as e:
             self.log_error(f'ERROR in model/full_circle_done - {e}')
@@ -606,7 +620,7 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/calc_values_write - {e}')
 
-    def check_temperature(self, temp_list):
+    def check_temperature(self, temp_list: list):
         try:
             self.set_regs['temperature'] = temp_list[-1]
 
