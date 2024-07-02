@@ -12,7 +12,7 @@ class DataAmort(object):
         self.min_length = 0
         self.max_length = 0
         self.hod = 0
-        self.adapter = 0
+        self.adapter = ''
         self.speed_one = 0
         self.speed_two = 0
         self.min_comp = 0
@@ -47,7 +47,7 @@ class Amort:
                         if key == 'hod':
                             self.struct.amorts[ind].hod = int(temp_val)
                         if key == 'adapter':
-                            self.struct.amorts[ind].adapter = int(temp_val)
+                            self.struct.amorts[ind].adapter = temp_val
                         if key == 'speed_one':
                             self.struct.amorts[ind].speed_one = float(temp_val)
                         if key == 'speed_two':

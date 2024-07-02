@@ -377,11 +377,17 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/stop_test_clicked - {e}')
 
-    def convert_adapter(self, ind):
+    def convert_adapter(self, name: str):
         """Перевод номера адаптера в его длинну"""
         try:
-            if ind == 1:
-                return 20
+            if name == '069' or name == '069-01':
+                return 25
+
+            elif name == '069-02' or name == '069-03' or name == '069-04':
+                return 34
+
+            elif name == '072':
+                return 41
 
             else:
                 return 0

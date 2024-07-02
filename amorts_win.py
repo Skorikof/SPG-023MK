@@ -176,7 +176,7 @@ class AmortWin(QMainWindow):
                 self.new_amort['len_min'] = win_diag.le_length_min.text().translate(trans_table)
                 self.new_amort['len_max'] = win_diag.le_length_max.text().translate(trans_table)
                 self.new_amort['hod'] = win_diag.le_hod.text().translate(trans_table)
-                self.new_amort['adapter'] = str(win_diag.adapter_cb.currentIndex() + 1)
+                self.new_amort['adapter'] = win_diag.adapter_cb.currentText().translate(trans_table)
                 self.new_amort['speed_one'] = win_diag.le_speed_one.text().translate(trans_table)
                 self.new_amort['speed_two'] = win_diag.le_speed_two.text().translate(trans_table)
                 self.new_amort['comp_min'] = win_diag.le_comp_min.text().translate(trans_table)

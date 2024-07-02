@@ -355,6 +355,7 @@ class AmortDialog(object):
         self.adapter_cb.addItem("")
         self.adapter_cb.addItem("")
         self.adapter_cb.addItem("")
+        self.adapter_cb.addItem("")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)  # type: ignore
@@ -385,8 +386,9 @@ class AmortDialog(object):
         self.le_recoil_max.setText(_translate("Dialog", "0"))
         self.le_temper.setText(_translate("Dialog", "0"))
         self.lbl_txt4_6.setText(_translate("Dialog", "Адаптер (№)"))
-        self.adapter_cb.setItemText(0, _translate("Dialog", "1"))
-        self.adapter_cb.setItemText(1, _translate("Dialog", "2"))
-        self.adapter_cb.setItemText(2, _translate("Dialog", "3"))
-        self.adapter_cb.setItemText(3, _translate("Dialog", "4"))
-        self.adapter_cb.setItemText(4, _translate("Dialog", "5"))
+        self.adapter_cb.setItemText(0, _translate("Dialog", "069"))
+        self.adapter_cb.setItemText(1, _translate("Dialog", "069-01"))
+        self.adapter_cb.setItemText(2, _translate("Dialog", "069-02"))
+        self.adapter_cb.setItemText(3, _translate("Dialog", "069-03"))
+        self.adapter_cb.setItemText(4, _translate("Dialog", "069-04"))
+        self.adapter_cb.setItemText(5, _translate("Dialog", "072"))
