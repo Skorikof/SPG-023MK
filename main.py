@@ -5,6 +5,7 @@ from view import AppWindow
 from settings_window import SetWindow
 from tendo import singleton
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QIcon
 
 
 def main():
@@ -14,7 +15,9 @@ def main():
         m = Model()
         c = Controller(m)
         win_set = SetWindow(m)
+        win_set.setWindowIcon(QIcon('icon/settings.png'))
         win = AppWindow(m, c, win_set)
+        win.setWindowIcon(QIcon('icon/shock-absorber.png'))
         win.show()
         sys.exit(app.exec_())
 

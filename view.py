@@ -2,11 +2,10 @@ from mainui import Ui_MainWindow
 from executors_win import ExecWin
 from amorts_win import AmortWin
 from archive_win import ArchiveWin
-from datetime import datetime
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow, QFrame, QLabel
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QRect
-from PyQt5.Qt import QFont
+from PyQt5.QtWidgets import QMainWindow, QFrame
+from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QIcon
 import glob_var
 
 
@@ -35,8 +34,11 @@ class AppWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.win_exec = ExecWin()
+        self.win_exec.setWindowIcon(QIcon('icon/user.png'))
         self.win_amort = AmortWin()
+        self.win_amort.setWindowIcon(QIcon('icon/shock-absorber.png'))
         self.win_archive = ArchiveWin()
+        self.win_archive.setWindowIcon(QIcon('icon/archive.png'))
 
         self._create_statusbar_ui()
 
@@ -327,7 +329,8 @@ class AppWindow(QMainWindow):
         self.model.set_regs['operator']['name'] = name
         self.model.set_regs['operator']['rank'] = rank
 
-        self.ui.operator_le.setText(f'{name}, {rank}')
+        self.ui.operator_name_le.setText(f'{name}')
+        self.ui.operator_rank_le.setText(f'{rank}')
 
     def close_win_operator(self):
         self.main_ui_enable()
@@ -635,12 +638,12 @@ class AppWindow(QMainWindow):
 
     def color_led_lamp(self):
         try:
-            if self.model.set_regs.get('red_light') == '1':
+            if self.model.set_regs.get('red_light') is True:
                 self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
             else:
                 self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
 
-            if self.model.set_regs.get('green_light') == '1':
+            if self.model.set_regs.get('green_light') is True:
                 self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
             else:
                 self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')

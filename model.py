@@ -48,6 +48,7 @@ class Model:
         self.move_graph = []
         # self.time_response = time.monotonic()
         self.time_push_yellow = None
+        self.yellow_rattle = False
 
         self.start_param_model()
 
@@ -285,7 +286,7 @@ class Model:
             if self.count_msg == 10000:
                 self.count_msg = 0
 
-            if self.set_regs['test_launch']:
+            if self.set_regs.get('test_launch', False) is True:
                 if not self.timer_yellow.isActive():
                     self.timer_yellow.start()
                 else:
@@ -305,21 +306,18 @@ class Model:
 
     def yellow_btn_click(self):
         try:
-            if self.set_regs['yellow_btn'] == 0:
-
-                flag = self.set_regs.get('rattle_yellow')
-
-                if not flag:
+            if self.set_regs['yellow_btn'] is False:
+                if self.yellow_rattle is False:
                     self.time_push_yellow = time.monotonic()
                     self.signals.test_launch.emit()
-                    self.set_regs['rattle_yellow'] = True
+                    self.yellow_rattle = True
 
                 else:
                     time_signal = time.monotonic() - self.time_push_yellow
                     if 2 < time_signal:
                         self.time_push_yellow = time.monotonic()
                         self.signals.test_launch.emit()
-                        self.set_regs['rattle_yellow'] = True
+                        self.yellow_rattle = True
 
                     else:
                         pass
@@ -390,7 +388,6 @@ class Model:
                     self.set_regs['min_point'] = min(move)
                     self.set_regs['min_pos'] = True
 
-                    # FIXME Какую подставить точку в стартовую
                     self.set_regs['start_point'] = self.set_regs.get('min_point') + 10
 
                     print(f'Find min point --> {min(move)}')
@@ -428,8 +425,7 @@ class Model:
 
     def full_circle_done(self, force: list, move: list):
         try:
-            flag = self.set_regs.get('gear_referent')
-            if not flag:
+            if self.set_regs.get('gear_referent', False) is False:
                 teor_hod = self.amort.hod
                 if teor_hod == 120:
                     teor_hod = 118
@@ -658,15 +654,15 @@ class Model:
 
             self.set_regs['list_state'] = [int(x) for x in bits]
 
-            self.set_regs['cycle_force'] = self.set_regs.get('list_state')[0]
-            self.set_regs['red_light'] = self.set_regs.get('list_state')[1]
-            self.set_regs['green_light'] = self.set_regs.get('list_state')[2]
-            self.set_regs['lost_control'] = self.set_regs.get('list_state')[3]
-            self.set_regs['excess_force'] = self.set_regs.get('list_state')[4]
-            self.set_regs['safety_fence'] = self.set_regs.get('list_state')[8]
-            self.set_regs['state_freq'] = self.set_regs.get('list_state')[11]
-            self.set_regs['state_force'] = self.set_regs.get('list_state')[12]
-            self.set_regs['yellow_btn'] = self.set_regs.get('list_state')[13]
+            self.set_regs['cycle_force'] = bool(self.set_regs.get('list_state')[0])
+            self.set_regs['red_light'] = bool(self.set_regs.get('list_state')[1])
+            self.set_regs['green_light'] = bool(self.set_regs.get('list_state')[2])
+            self.set_regs['lost_control'] = bool(self.set_regs.get('list_state')[3])
+            self.set_regs['excess_force'] = bool(self.set_regs.get('list_state')[4])
+            self.set_regs['safety_fence'] = bool(self.set_regs.get('list_state')[8])
+            self.set_regs['state_freq'] = bool(self.set_regs.get('list_state')[11])
+            self.set_regs['state_force'] = bool(self.set_regs.get('list_state')[12])
+            self.set_regs['yellow_btn'] = bool(self.set_regs.get('list_state')[13])
 
         except Exception as e:
             self.log_error(f'ERROR in model/register_state - {e}')
@@ -686,13 +682,13 @@ class Model:
             bits = ''.join(reversed(temp))
 
             # self.set_regs['safety_fence'] = int(bits[0])
-            self.set_regs['traverse_block_1'] = int(bits[1])
-            self.set_regs['traverse_block_2'] = int(bits[2])
+            self.set_regs['traverse_block_1'] = bool(int(bits[1]))
+            self.set_regs['traverse_block_2'] = bool(int(bits[2]))
             # self.set_regs['yellow_btn'] = int(bits[3])
-            self.set_regs['alarm_highest_position'] = int(bits[8])
-            self.set_regs['alarm_lowest_position'] = int(bits[9])
-            self.set_regs['highest_position'] = int(bits[12])
-            self.set_regs['lowest_position'] = int(bits[13])
+            self.set_regs['alarm_highest_position'] = bool(int(bits[8]))
+            self.set_regs['alarm_lowest_position'] = bool(int(bits[9]))
+            self.set_regs['highest_position'] = bool(int(bits[12]))
+            self.set_regs['lowest_position'] = bool(int(bits[13]))
 
         except Exception as e:
             self.log_error(f'ERROR in model/switch_state - {e}')

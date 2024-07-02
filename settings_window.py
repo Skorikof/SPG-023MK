@@ -246,41 +246,41 @@ class SetWindow(QMainWindow):
 
     def update_color_switch(self):
         try:
-            self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(self.response.get('cycle_force')))
-            self.ui.fram_no_control.setStyleSheet(self.set_color_fram(self.response.get('lost_control')))
-            self.ui.fram_max_F.setStyleSheet(self.set_color_fram(self.response.get('excess_force')))
-            self.ui.fram_safety_fence.setStyleSheet(self.set_color_fram(self.response.get('safety_fence')))
-            self.ui.fram_condition_FC.setStyleSheet(self.set_color_fram(self.response.get('state_freq')))
-            self.ui.fram_sensor_F.setStyleSheet(self.set_color_fram(self.response.get('state_force')))
+            self.ui.fram_cycle_F.setStyleSheet(self.set_color_fram(self.response.get('cycle_force', False)))
+            self.ui.fram_no_control.setStyleSheet(self.set_color_fram(self.response.get('lost_control', False)))
+            self.ui.fram_max_F.setStyleSheet(self.set_color_fram(self.response.get('excess_force', False)))
+            self.ui.fram_safety_fence.setStyleSheet(self.set_color_fram(self.response.get('safety_fence', False)))
+            self.ui.fram_condition_FC.setStyleSheet(self.set_color_fram(self.response.get('state_freq', False)))
+            self.ui.fram_sensor_F.setStyleSheet(self.set_color_fram(self.response.get('state_force', False)))
             self.ui.fram_block_traverse_1.setStyleSheet(self.set_color_fram(
-                self.response.get('traverse_block_1'), True))
+                self.response.get('traverse_block_1', True), True))
             self.ui.fram_block_traverse_2.setStyleSheet(self.set_color_fram(
-                self.response.get('traverse_block_2'), True))
-            self.ui.fram_down_point.setStyleSheet(self.set_color_fram(self.response.get('lowest_position')))
+                self.response.get('traverse_block_2', True), True))
+            self.ui.fram_down_point.setStyleSheet(self.set_color_fram(self.response.get('lowest_position', False)))
             self.ui.fram_down__alarm_point.setStyleSheet(self.set_color_fram(
-                self.response.get('alarm_lowest_position'), True))
-            self.ui.fram_up_point.setStyleSheet(self.set_color_fram(self.response.get('highest_position')))
+                self.response.get('alarm_lowest_position', True), True))
+            self.ui.fram_up_point.setStyleSheet(self.set_color_fram(self.response.get('highest_position', False)))
             self.ui.fram_up_alarm_point.setStyleSheet(self.set_color_fram(
-                self.response.get('alarm_highest_position'), True))
-            self.ui.fram_green_light.setStyleSheet(self.set_color_fram(self.response.get('green_light')))
-            self.ui.fram_red_light.setStyleSheet(self.set_color_fram(self.response.get('red_light')))
-            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(self.response.get('yellow_btn'), True))
+                self.response.get('alarm_highest_position', True), True))
+            self.ui.fram_green_light.setStyleSheet(self.set_color_fram(self.response.get('green_light', False)))
+            self.ui.fram_red_light.setStyleSheet(self.set_color_fram(self.response.get('red_light', False)))
+            self.ui.fram_yellow_btn.setStyleSheet(self.set_color_fram(self.response.get('yellow_btn', True), True))
 
         except Exception as e:
             self.statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
 
-    def set_color_fram(self, bit, rev=False):
+    def set_color_fram(self, state, rev=False):
         try:
             if rev:
-                if bit == 0:
-                    bit = 1
+                if state is False:
+                    state = True
                 else:
-                    bit = 0
+                    state = False
             color_gray = "background-color: rgb(93, 93, 93);\n"
             color_green = "background-color: rgb(0, 255, 0);\n"
-            if bit == 0:
+            if state is False:
                 return color_gray + "border-color: rgb(0, 0, 0);"
-            elif bit == 1:
+            elif state is True:
                 return color_green + "border-color: rgb(0, 0, 0);"
 
         except Exception as e:
