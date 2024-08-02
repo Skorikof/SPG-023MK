@@ -1,0 +1,277 @@
+# -*- coding: utf-8 -*-
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtGui import QIcon
+from ui_py.amorts_ui import Ui_AmortsWindow
+from wins.amorts_new import AmortNew
+from amorts import Amort
+
+
+class WinSignals(QObject):
+    closed = pyqtSignal()
+    log_msg = pyqtSignal(str)
+    log_err = pyqtSignal(str)
+
+
+class AmortWin(QMainWindow, Ui_AmortsWindow):
+    signals = WinSignals()
+
+    def __init__(self):
+        super(AmortWin, self).__init__()
+        try:
+            self.action = ''
+            self.amorts = None
+            self.new_amort_win = AmortNew()
+            self.setupUi(self)
+            self.setWindowIcon(QIcon('icon/shock-absorber.png'))
+            self.hide()
+            self._create_statusbar_set()
+            self._init_ui()
+            self._init_signals()
+            self._init_buttons()
+
+        except Exception as e:
+            self.signals.log_err.emit(f'ERROR in amorts_win/__init__ - {e}')
+
+    def _init_ui(self):
+        try:
+            self.frame_quest.setVisible(False)
+            self.frame_warning.setVisible(False)
+            self._amort_init()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_init_ui - {e}')
+
+    def _init_signals(self):
+        try:
+            self.new_amort_win.signals.closed.connect(self._close_new_amort_win)
+            self.new_amort_win.signals.save_amort.connect(self._amort_add)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_init_signals - {e}')
+
+    def closeEvent(self, event):
+        self.signals.closed.emit()
+
+    def _create_statusbar_set(self):
+        self.statusbar = self.statusBar()
+        self.statusbar.showMessage('Окно менеджмента амортизаторов')
+
+    def _statusbar_set_ui(self, txt_bar):
+        try:
+            self.statusbar.showMessage(txt_bar)
+            self.signals.log_err.emit(txt_bar)
+
+        except Exception as e:
+            self.signals.log_err.emit(f'ERROR in amorts_win/_statusbar_set_ui - {e}')
+
+    def _init_buttons(self):
+        self.btn_exit.clicked.connect(self.close)
+        self.btn_del.clicked.connect(self._btn_del_click)
+        self.btn_add.clicked.connect(self._open_new_amort_win)
+        self.btn_ok_quest.clicked.connect(self._ok_question)
+        self.btn_cancel_quest.clicked.connect(self._cancel_question)
+        self.btn_ok_warning.clicked.connect(self._ok_warning)
+
+    def _amort_init(self):
+        try:
+            self.amorts = Amort()
+            self._amorts_update()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amort_init - {e}')
+
+    def _amorts_update(self):
+        try:
+            self.amorts.update_amort_list()
+            self.combo_Names.clear()
+            if len(self.amorts.config.sections()) == 0:
+                self.btn_del.setEnabled(False)
+                self._amorts_ui_clear()
+
+            else:
+                self.combo_Names.addItems(self.amorts.names)
+                self.combo_Names.setCurrentIndex(0)
+                self.amorts.current_index = 0
+                self.combo_Names.activated[int].connect(self._amort_select)
+                self._amort_select(0)
+                self.btn_del.setEnabled(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amorts_update - {e}')
+
+    def _amorts_ui_clear(self):
+        try:
+            self.lbl_hod.setText('')
+            self.lbl_adapter.setText('')
+            self.lbl_speed_1.setText('')
+            self.lbl_speed_2.setText('')
+            self.lbl_length_min.setText('')
+            self.lbl_length_max.setText('')
+            self.lbl_comp_min.setText('')
+            self.lbl_comp_max.setText('')
+            self.lbl_recoil_min.setText('')
+            self.lbl_recoil_max.setText('')
+            self.lbl_temper.setText('')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amorts_ui_clear - {e}')
+
+    def _amort_select(self, index):
+        try:
+            self.amorts.current_index = index
+
+            self.lbl_hod.setText(str(self.amorts.struct.amorts[index].hod))
+            self.lbl_adapter.setText(str(self.amorts.struct.amorts[index].adapter))
+            self.lbl_speed_1.setText(str(self.amorts.struct.amorts[index].speed_one))
+            self.lbl_speed_2.setText(str(self.amorts.struct.amorts[index].speed_two))
+            self.lbl_length_min.setText(str(self.amorts.struct.amorts[index].min_length))
+            self.lbl_length_max.setText(str(self.amorts.struct.amorts[index].max_length))
+            self.lbl_comp_min.setText(str(self.amorts.struct.amorts[index].min_comp))
+            self.lbl_comp_min_2.setText(str(self.amorts.struct.amorts[index].min_comp_2))
+            self.lbl_comp_max.setText(str(self.amorts.struct.amorts[index].max_comp))
+            self.lbl_comp_max_2.setText(str(self.amorts.struct.amorts[index].max_comp_2))
+            self.lbl_recoil_min.setText(str(self.amorts.struct.amorts[index].min_recoil))
+            self.lbl_recoil_min_2.setText(str(self.amorts.struct.amorts[index].min_recoil_2))
+            self.lbl_recoil_max.setText(str(self.amorts.struct.amorts[index].max_recoil))
+            self.lbl_recoil_max_2.setText(str(self.amorts.struct.amorts[index].max_recoil_2))
+            self.lbl_temper.setText(str(self.amorts.struct.amorts[index].max_temper))
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amort_select - {e}')
+
+    def _btn_del_click(self):
+        try:
+            self.action = 'del'
+            ind = self.amorts.current_index
+            self.txt_quest.setText('Вы действительно хотите<BR>удалить амортизатор<BR>' +
+                                      self.amorts.names[ind] + '<BR>из списка?')
+            self._set_frame_question(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_btn_del_click - {e}')
+
+    def _amort_delete(self):
+        try:
+            ind = self.amorts.current_index
+            amort = self.amorts.struct.amorts[ind]
+
+            name = amort.name
+            dimensions = f'{amort.min_length} - {amort.max_length}'
+            hod = f'{amort.hod}'
+            adapter = f'{amort.adapter}'
+            speed_one = f'{amort.speed_one}'
+            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
+            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
+            speed_two = f'{amort.speed_two}'
+            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
+            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
+            temper = f'{amort.max_temper}'
+
+            txt_log = f'Amort is delete --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
+                      f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
+                      f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
+                      f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
+                      f'max_temper = {temper}'
+
+            self.signals.log_msg.emit(txt_log)
+
+            self.amorts.delete_amort(ind)
+
+            self._amorts_update()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amort_delete - {e}')
+
+    def _open_new_amort_win(self):
+        try:
+            self.setDisabled(True)
+            self.new_amort_win.init_signals()
+            self.new_amort_win.show()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_open_new_amort_win - {e}')
+
+    def _close_new_amort_win(self):
+        try:
+            self.setEnabled(True)
+            self.new_amort_win.hide()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/close_new_amort_win - {e}')
+
+    def _amort_add(self, obj):
+        try:
+            self.new_amort_win.hide()
+            self.setEnabled(True)
+
+            flag_add = self._check_concurrence_name(obj.get('name'))
+            if flag_add:
+                name = obj.get('name')
+                dimensions = f'{obj.get("len_min")} - {obj.get("len_max")}'
+                hod = f'{obj.get("hod")}'
+                adapter = f'{obj.get("adapter")}'
+                speed_one = f'{obj.get("speed_one")}'
+                limit_comp_one = f'{obj.get("comp_min")} - {obj.get("comp_max")}'
+                limit_recoil_one = f'{obj.get("recoil_min")} - {obj.get("recoil_max")}'
+                speed_two = f'{obj.get("speed_two")}'
+                limit_comp_two = f'{obj.get("comp_min_2")} - {obj.get("comp_max_2")}'
+                limit_recoil_two = f'{obj.get("recoil_min_2")} - {obj.get("recoil_max_2")}'
+                temper = f'{obj.get("temper")}'
+
+                txt_log = f'Amort is added --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
+                          f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
+                          f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
+                          f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
+                          f'max_temper = {temper}'
+
+                self.signals.log_msg.emit(txt_log[:-1])
+                self.amorts.add_amort(obj)
+                self._amorts_update()
+            else:
+                self.txt_warning.setText('Такой амортизатор<BR>уже имеется в списке')
+                self._set_frame_warning(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_amort_add - {e}')
+
+    def _set_frame_question(self, bool_val):
+        self.frame_quest.setVisible(bool_val)
+        self.frame_quest.move(20, 60)
+        self.frame_btn.setEnabled(not bool_val)
+
+    def _set_frame_warning(self, bool_val):
+        self.frame_warning.setVisible(bool_val)
+        self.frame_warning.move(20, 60)
+        self.frame_btn.setVisible(not bool_val)
+
+    def _ok_warning(self):
+        self._set_frame_warning(False)
+
+    def _ok_question(self):
+        try:
+            if self.action == 'del':
+                self._amort_delete()
+                self._set_frame_question(False)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_ok_question - {e}')
+
+    def _cancel_question(self):
+        try:
+            self._set_frame_question(False)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_cancel_question - {e}')
+
+    def _check_concurrence_name(self, new_name):
+        try:
+            flag_add = True
+            for name in self.amorts.names:
+                if name.upper() == new_name.upper():
+                    flag_add = False
+
+            return flag_add
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in amorts_win/_check_concurrence_name - {e}')
