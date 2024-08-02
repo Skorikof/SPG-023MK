@@ -54,13 +54,6 @@ class Controller:
 
     def _start_param_ctrl(self):
         try:
-            # current_dir = os.getcwd()
-            # os.chdir(current_dir)
-            # if not os.path.exists('archive'):
-            #     os.mkdir('archive')
-            # if not os.path.exists('c:/System/log'):
-            #     os.mkdir('c:/System/log')
-
             self._init_signals()
             self._init_timer_test()
             self.timer_process.start()
@@ -201,7 +194,6 @@ class Controller:
 
                 if abs(self.set_trav_point - float(self.response.get('traverse_move'))) <= 1:
                     self.model.motor_stop(2)
-                    # time.sleep(0.2)
 
                     command = {'traverse_freq': 10,
                                'stage': 'wait'}
@@ -210,7 +202,6 @@ class Controller:
                     if self.response.get('repeat_test', False):
                         self.model.set_regs['repeat_test'] = False
                         self.model.reader_start_test()
-                        time.sleep(0.1)
                         self._laboratory_test_speed()
 
                     else:
@@ -221,13 +212,9 @@ class Controller:
                     self.model.motor_stop(1)
                     self._pumping_before_test()
 
-                if self.response.get('excess_force', False) is True:
-                    self._excess_force()
-
             elif stage == 'pumping':
                 if self.count_cycle >= 3:
                     self.model.motor_stop(1)
-                    # time.sleep(0.5)
 
                     if self.response.get('type_test') == 'lab':
                         self._laboratory_test_speed()
@@ -280,20 +267,9 @@ class Controller:
                     self._stop_gear_min_pos()
 
             elif stage == 'stop_gear_min_pos':
-                # point = self.response.get('min_point')
-                # move = self.response.get('move')
-                # flag = False
-                # if self.response.get('move') < self.response.get('min_point') + 5:
-                #     flag = True
                 if self.response.get('move') < self.model.main_min_point + 4:
                     self.model.motor_stop(1)
-                    # print(f'Мы остановись в минимальном положении')
                     time.sleep(0.1)
-
-                    # self.model.write_bit_force_cycle(0)
-                    # time.sleep(0.1)
-
-                    # print(f'Остановили чтение буфера и выключили опрос датчика')
 
                     command = {'stage': 'wait',
                                'force_accum_list': [],
@@ -313,12 +289,8 @@ class Controller:
 
                     else:
                         if self.response.get('test_launch', False) is True:
-                            # print(f'Команда на поднятие траверсы в исходное')
-                            # штатное завершение испытания
                             self._traverse_install_point('install')
                         else:
-                            # print(f'Команда на поднятие траверсы для завершения')
-                            # Завершение в аварийной ситуации или отмены испытания
                             self._traverse_install_point('stop_test')
 
             elif stage == 'stop_test':
@@ -342,13 +314,6 @@ class Controller:
                                'traverse_freq': 10}
 
                     self.model.update_main_dict(command)
-
-            elif not stage:
-                self.model.write_bit_unblock_control()
-                # time.sleep(0.1)
-                self.model.write_bit_force_cycle(1)
-                # time.sleep(0.1)
-                # self.model.write_bit_force_cycle(0)
 
             else:
                 pass
@@ -411,8 +376,6 @@ class Controller:
 
         self.model.reader_stop_test()
         time.sleep(0.1)
-        # self.model.write_bit_force_cycle(0)
-        # time.sleep(0.1)
 
         self.model.write_bit_red_light(1)
 
@@ -457,8 +420,6 @@ class Controller:
 
         self.model.reader_stop_test()
         time.sleep(0.1)
-        # self.model.write_bit_force_cycle(0)
-        # time.sleep(0.1)
 
         self.model.write_bit_red_light(1)
 
@@ -515,15 +476,11 @@ class Controller:
         self.model.update_main_dict(command)
 
         self.model.motor_stop(1)
-        # time.sleep(0.1)
         self.model.motor_stop(2)
-        # time.sleep(0.1)
         self.model.write_bit_red_light(1)
 
         self.model.reader_stop_test()
         time.sleep(0.1)
-        # self.model.write_bit_force_cycle(0)
-        # time.sleep(0.1)
 
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
@@ -560,8 +517,6 @@ class Controller:
 
         self.model.reader_stop_test()
         time.sleep(0.1)
-        # self.model.write_bit_force_cycle(0)
-        # time.sleep(0.1)
 
         self.model.log_error(f'alarm traverse {pos}')
         self.signals.control_msg.emit(f'alarm_traverse_{pos}')
@@ -591,8 +546,6 @@ class Controller:
             self.model.motor_stop(2)
             self.model.reader_stop_test()
             time.sleep(0.1)
-            # self.model.write_bit_force_cycle(0)
-            # time.sleep(0.1)
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
@@ -616,7 +569,7 @@ class Controller:
                                'start_pos': False,
                                'start_direction': False}
                     self.model.update_main_dict(command)
-                    self.model.refresh_min_point()
+                    self.model.reset_min_point()
 
                     # if self.response.get('lost_control'):
                     #     self.model.write_bit_unblock_control()
@@ -624,8 +577,7 @@ class Controller:
                     # if self.response.get('excess_force'):
                     #     self.model.write_bit_emergency_force()
 
-                    self.model.write_bit_force_cycle(1)
-                    # time.sleep(0.1)
+                    # self.model.write_bit_force_cycle(1)
 
                     self._traverse_install_point('start_test')
 
@@ -649,7 +601,6 @@ class Controller:
                 value = 100 * freq
 
             self.model.write_frequency(adr, value)
-            # time.sleep(0.2)
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_write_speed_motor - {e}')
@@ -684,12 +635,12 @@ class Controller:
                        }
 
             self.model.update_main_dict(command)
-            self.model.refresh_min_point()
+            self.model.reset_min_point()
 
             force = self._calc_excess_force()
             self.model.write_emergency_force(force)
 
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
 
             if self.response.get('traverse_move', 0) < 10:
                 self._traverse_referent_point()
@@ -724,12 +675,7 @@ class Controller:
                 self._stop_gear_end_test()
             else:
                 self.model.motor_stop(1)
-                # time.sleep(0.1)
                 self.model.motor_stop(2)
-                # time.sleep(0.1)
-
-                # self.model.write_bit_force_cycle(0)
-                # time.sleep(0.2)
 
                 self.signals.cancel_test.emit()
 
@@ -756,15 +702,12 @@ class Controller:
             self._move_detection()
 
             self._write_speed_motor(1, speed=0.05)
-            # time.sleep(0.1)
 
             self.count_cycle = 0
 
-            self.model.write_bit_force_cycle(1)
-            # time.sleep(0.2)
+            # self.model.write_bit_force_cycle(1)
 
             self.model.reader_start_test()
-            # time.sleep(0.2)
 
             self.model.set_regs['stage'] = 'search_hod'
 
@@ -828,14 +771,9 @@ class Controller:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
             self._write_speed_motor(2, freq=20)
-            # time.sleep(0.1)
             self.model.set_regs['traverse_freq'] = 20
             self.set_trav_point = float(set_point)
             pos_trav = self.response.get('traverse_move')
-
-            # if self.response.get('lost_control'):
-            #     self.model.write_bit_unblock_control()
-                # time.sleep(0.1)
 
             if pos_trav > self.set_trav_point:
                 self.model.motor_up(2)
@@ -848,8 +786,6 @@ class Controller:
     def _traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
-            # if self.response.get('lost_control'):
-            #     self.model.write_bit_unblock_control()
             self.signals.traverse_referent.emit()
             self._write_speed_motor(2, freq=20)
             command = {'traverse_freq': 20,
@@ -906,14 +842,12 @@ class Controller:
             self._move_detection()
 
             self._write_speed_motor(1, speed=0.05)
-            # time.sleep(0.1)
 
             self.model.set_regs['stage'] = 'test_move_cycle'
 
             self.count_cycle = 0
 
             self.model.reader_start_test()
-            # time.sleep(0.2)
 
             self.model.motor_up(1)
 

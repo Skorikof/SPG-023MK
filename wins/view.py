@@ -37,6 +37,7 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
+        self.model.write_bit_force_cycle(0)
         self.controller.timer_process.stop()
         self.model.reader_exit()
         self.model.threadpool.waitForDone()
@@ -162,7 +163,7 @@ class AppWindow(QMainWindow):
                 tag = 'attention'
 
             elif msg == 'gear_set_pos':
-                txt = 'ВНИМАНИЕ!\nПОЛОЖЕНИЕ\nДЛЯ\nРЕГУЛИРОВКИ ХОДА'
+                txt = 'ВНИМАНИЕ!\nПРОВОРОТ ПРИВОДА\nВ ПОЛОЖЕНИЕ\nДЛЯ РЕГУЛИРОВКИ ХОДА'
                 tag = 'attention'
 
             elif msg == 'pumping':
@@ -276,7 +277,6 @@ class AppWindow(QMainWindow):
             txt = 'РАБОТА ПРЕРВАНА\nПО КОМАНДЕ\nОПЕРАТОРА'
             tag = 'warning'
             self.main_ui_msg(txt, tag)
-            # self.model.write_bit_force_cycle(0)
             self.controller.work_interrupted_operator()
             self.log_msg_info_slot(f'PUSH BIG RED BUTTON')
 

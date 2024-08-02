@@ -331,8 +331,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         try:
             self.model.reader_stop_test()
             time.sleep(0.1)
-            # self.model.write_bit_force_cycle(0)
-            # time.sleep(0.1)
+            self.model.write_bit_force_cycle(0)
+            time.sleep(0.1)
 
         except Exception as e:
             print(str(e))

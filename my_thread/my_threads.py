@@ -293,8 +293,6 @@ class Reader(QRunnable):
                         else:
                             self.signals.thread_err.emit(str(rr))
 
-                    time.sleep(0.001)
-
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread Reader - {e}')
 
