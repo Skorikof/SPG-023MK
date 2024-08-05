@@ -772,15 +772,17 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_graph - {e}')
-            
+
     def _update_lab_data(self):
         try:
-            self.ui.lab_max_comp_le.setText(f'{self.response.get("max_comp", 0)}')
-            self.ui.lab_max_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
-            self.ui.test_data_now_temp_lineEdit.setText(f'{self.response.get("temperature", 0)}')
-            self.ui.test_data_max_temp_lineEdit.setText(f'{self.response.get("max_temperature", 0)}')
-            self.ui.test_data_hod_lineEdit.setText(f'{self.response.get("hod_calc", 0)}')
-            self.ui.test_data_push_force_lineEdit.setText(f'{self.response.get("push_force", 0)}')
+            pass
+            # FIXME
+            # self.ui.lab_max_comp_le.setText(f'{self.response.get("max_comp", 0)}')
+            # self.ui.lab_max_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
+            # self.ui.test_data_now_temp_lineEdit.setText(f'{self.response.get("temperature", 0)}')
+            # self.ui.test_data_max_temp_lineEdit.setText(f'{self.response.get("max_temperature", 0)}')
+            # self.ui.test_data_hod_lineEdit.setText(f'{self.response.get("hod_calc", 0)}')
+            # self.ui.test_data_push_force_lineEdit.setText(f'{self.response.get("push_force", 0)}')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
@@ -827,21 +829,6 @@ class AppWindow(QMainWindow):
             
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
-
-    # def _color_led_lamp(self):
-    #     try:
-    #         if self.response.get('red_light') is True:
-    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
-    #         else:
-    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-    #
-    #         if self.response.get('green_light') is True:
-    #             self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
-    #         else:
-    #             self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-    #
-    #     except Exception as e:
-    #         self.log_msg_err_slot(f'ERROR in view/_color_led_lamp - {e}')
 
     def repeat_test_clicked(self):
         self.model.set_regs['repeat_test'] = True
