@@ -400,14 +400,18 @@ class Model:
     def _full_circle_done(self):
         try:
             if self.set_regs.get('fill_graph', False):
+                flag_push_force = self.set_regs.get('flag_push_force')
 
                 y_point = self.set_regs.get('push_force')
                 x_list = list(map(lambda x: round(x * (-1) + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
-                y_list = list(map(lambda x: round(x * (-1) + y_point, 1), self.set_regs.get('force_accum_list')))
+                if flag_push_force:
+                    y_list = list(map(lambda x: round(x * (-1) + y_point, 1), self.set_regs.get('force_accum_list')))
+
+                else:
+                    y_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
 
                 command = {'max_comp': abs(min(y_list)),
                            'max_recoil': max(y_list),
-                           # 'push_force': y_point,
                            'force_graph': y_list[:],
                            'move_graph': x_list[:],
                            }

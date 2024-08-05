@@ -6,7 +6,7 @@ from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 import glob_var
 from archive import TestArchive, ReadArchive
 
@@ -511,7 +511,6 @@ class AppWindow(QMainWindow):
 
     def specif_ui_fill(self, obj):
         try:
-            self.ui.specif_name_lineEdit.setText(str(obj.name))
             self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
             self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
             self.ui.specif_hod_lineEdit.setText(str(obj.hod))
@@ -533,7 +532,7 @@ class AppWindow(QMainWindow):
     def specif_ui_clear(self):
         try:
             self.ui.specif_choice_comboBox.clear()
-            self.ui.specif_name_lineEdit.clear()
+            self.ui.specif_serial_lineEdit.clear()
             self.ui.specif_min_length_lineEdit.clear()
             self.ui.specif_max_length_lineEdit.clear()
             self.ui.specif_hod_lineEdit.clear()
@@ -558,8 +557,13 @@ class AppWindow(QMainWindow):
             rank = self.response.get('operator')['rank']
 
             if name != '' and rank != '':
+                self.flag_push_force_set()
                 if self.response.get('type_test') == 'lab':
-                    self.test_lab()
+                    flag = self.serial_editing_finished()
+                    if flag:
+                        self.serial_number = self.ui.specif_serial_lineEdit.text()
+                        if self.serial_number != '':
+                            self.test_lab()
                 elif self.response.get('type_test') == 'conv':
                     self.test_conveyor()
 
@@ -568,6 +572,26 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_continue_btn_click - {e}')
+
+    def serial_editing_finished(self):
+        text = self.ui.specif_serial_lineEdit.text()
+        if not text:
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          'Заполните поле серийного номера'
+                                          )
+            return False
+
+        else:
+            return True
+
+    def flag_push_force_set(self):
+        try:
+            print(self.ui.push_force_chb.isChecked())
+            self.model.set_regs['flag_push_force'] = self.ui.push_force_chb.isChecked()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
 
     def test_lab(self):
         try:
@@ -588,32 +612,55 @@ class AppWindow(QMainWindow):
             name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
             hod = f'{amort.hod}'
-            speed = f'{amort.speed_one}'
-            limit_comp = f'{amort.min_comp} - {amort.max_comp}'
-            limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
+            speed_one = f'{amort.speed_one}'
+            speed_two = f'{amort.speed_two}'
+            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
+            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
+            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
+            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
             temper = f'{amort.max_temper}'
 
             txt_log = f'Start laboratory test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                      f'speed = {speed}, limit_comp = {limit_comp}, ' \
-                      f'limit_recoil = {limit_recoil}, max_temper = {temper}'
+                      f'speed_one = {speed_one}, speed_two = {speed_two}, limit_comp_one = {limit_comp_one}, ' \
+                      f'limit_comp_two = {limit_comp_two}, limit_recoil_one = {limit_recoil_one}, ' \
+                      f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
+                      f'max_temper = {temper}'
 
             self.log_msg_info_slot(txt_log)
 
-            self.ui.test_data_name_lineEdit.setText(name)
-
-            self.ui.test_data_limit_comp_lineEdit.setText(limit_comp)
-            self.ui.test_data_limit_recoil_lineEdit.setText(limit_recoil)
-            self.ui.test_data_speed_lineEdit.setText(str(speed))
-            self.ui.test_data_hod_lineEdit.setText(hod)
-            self.ui.test_data_serial_lineEdit.setText(self.serial_number)
+            self.ui.lab_name_le.setText(name)
+            self.ui.lab_speed_set_1_le.setText(speed_one)
+            self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
+            self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
+            self.ui.lab_speed_set_2_le.setText(speed_two)
+            self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
+            self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
+            self.ui.lab_hod_le.setText(hod)
+            self.ui.lab_serial_le.setText(self.serial_number)
 
             self.controller.start_test_clicked()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/test_page - {e}')
+            self.log_msg_err_slot(f'ERROR in view/test_lab - {e}')
+
+    def _lab_win_clear(self):
+        try:
+            self.data_line_test_lab.setData([], [])
+            self.ui.lab_max_recoil_1_le.clear()
+            self.ui.lab_max_comp_1_le.clear()
+            self.ui.lab_max_recoil_2_le.clear()
+            self.ui.lab_max_comp_2_le.clear()
+            self.ui.lab_speed_le.clear()
+            self.ui.lab_now_temp_le.clear()
+            self.ui.lab_max_temp_le.clear()
+            self.ui.lab_push_force_le.clear()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_lab_win_clear - {e}')
 
     def lab_test_win(self):
         try:
+            self._lab_win_clear()
             self.ui.main_stackedWidget.setCurrentIndex(2)
 
         except Exception as e:
