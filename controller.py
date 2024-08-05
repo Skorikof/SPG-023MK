@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import time
 from functools import reduce
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal

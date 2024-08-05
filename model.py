@@ -54,11 +54,13 @@ class Model:
         self._init_timer_yellow_btn()
         start_state = PrgSettings().state
         self.update_main_dict(start_state)
+
         if self.client:
             self._init_timer_writer()
             self._init_reader()
-            time.sleep(0.1)
+            time.sleep(0.2)
             self.reader_start()
+            self.write_bit_force_cycle(1)
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -162,7 +164,7 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/update_settings_dict - {e}')
 
-    def refresh_min_point(self):
+    def reset_min_point(self):
         self.main_min_point = 0
 
     def _reader_result(self, response, tag):

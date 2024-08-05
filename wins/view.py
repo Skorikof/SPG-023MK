@@ -7,7 +7,6 @@ from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow
-# from PyQt5.QtCore import QRect
 import glob_var
 from archive import TestArchive, ReadArchive
 
@@ -69,9 +68,7 @@ class AppWindow(QMainWindow):
         self._init_buttons()
         self._init_signals()
 
-        self.ui.ok_message_btn.setText('OK')
-
-        # self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
+        self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -127,7 +124,7 @@ class AppWindow(QMainWindow):
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
         self.ui.test_save_btn.clicked.connect(self.save_btn_clicked)
-        self.ui.btn_speed_change.clicked.connect(self.change_speed_test)
+        self.ui.btn_lab_speed_change.clicked.connect(self.change_speed_test)
 
     def update_data_view(self, response):
         try:
@@ -260,6 +257,7 @@ class AppWindow(QMainWindow):
                 color = glob_var.COLOR_LYELLOW
                 self.ui.message_btn_frame.setVisible(True)
                 self.ui.ok_message_btn.setVisible(True)
+                self.ui.ok_message_btn.setEnabled(True)
                 self.ui.cancel_message_btn.setVisible(False)
                 self.main_btn_disable()
             self.ui.main_stackedWidget.setCurrentIndex(0)
@@ -325,11 +323,11 @@ class AppWindow(QMainWindow):
 
     def main_ui_enable(self):
         self.ui.main_stackedWidget.setEnabled(True)
-        self.ui.main_btn_frame.setEnabled(True)
+        # self.ui.main_btn_frame.setEnabled(True)
 
     def main_ui_disable(self):
         self.ui.main_stackedWidget.setEnabled(False)
-        self.ui.main_btn_frame.setEnabled(False)
+        # self.ui.main_btn_frame.setEnabled(False)
 
     def main_btn_enable(self):
         self.ui.main_operator_btn.setEnabled(True)
@@ -456,10 +454,10 @@ class AppWindow(QMainWindow):
         try:
             temp = self.response.get('type_test', 'hand')
             if temp == 'lab':
-                self.update_lab_graph()
+                self._update_lab_graph()
 
             elif temp == 'conv':
-                self.update_conv_graph()
+                self._update_conv_graph()
 
             elif temp == 'hand':
                 self.win_set.update_graph_hand_set()
@@ -621,21 +619,9 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/lab_test_win - {e}')
 
-    def update_lab_data(self):
-        try:
-            self.ui.test_data_max_comp_lineEdit.setText(f'{self.response.get("max_comp", 0)}')
-            self.ui.test_data_max_recoil_lineEdit.setText(f'{self.response.get("max_recoil", 0)}')
-            self.ui.test_data_now_temp_lineEdit.setText(f'{self.response.get("temperature", 0)}')
-            self.ui.test_data_max_temp_lineEdit.setText(f'{self.response.get("max_temperature", 0)}')
-            self.ui.test_data_hod_lineEdit.setText(f'{self.response.get("hod_calc", 0)}')
-            self.ui.test_data_push_force_lineEdit.setText(f'{self.response.get("push_force", 0)}')
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_lab_data - {e}')
-
     def change_speed_test(self):
         try:
-            value = self.ui.test_data_speed_lineEdit.text()
+            value = self.ui.lab_speed_le.text()
             value = float(value.replace(',', '.'))
 
             speed = self.model.calculate_freq(value)
@@ -661,12 +647,14 @@ class AppWindow(QMainWindow):
             hod = f'{amort.hod}'
             speed = f'one = {amort.speed_one} and two = {amort.speed_two}'
             limit_comp = f'{amort.min_comp} - {amort.max_comp}'
+            limit_comp_2 = f'{amort.min_comp_2} - {amort.max_comp_2}'
             limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
+            limit_recoil_2 = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
             temper = f'{amort.max_temper}'
 
             txt_log = f'Start conveyor test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                      f'speed = {speed}, limit_comp = {limit_comp}, ' \
-                      f'limit_recoil = {limit_recoil}, max_temper = {temper}'
+                      f'speed = {speed}, limit_comp_one = {limit_comp}, limit_comp_two = {limit_comp_2}' \
+                      f'limit_recoil_one = {limit_recoil}, limit_recoil_two = {limit_recoil_2}, max_temper = {temper}'
 
             self.log_msg_info_slot(txt_log)
 
@@ -674,9 +662,23 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')
+            
+    def _conv_win_clear(self):
+        try:
+            self.data_line_test_conv.setData([], [])
+            self.ui.conv_comp_le.clear()
+            self.ui.conv_recoil_le.clear()
+            self.ui.conv_speed_le.clear()
+            self.ui.conv_comp_limit_le.clear()
+            self.ui.conv_recoil_limit_le.clear()
+            self.ui.conv_temperture_le.clear()
+            
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_conv_win_clear - {e}')
 
     def conv_test_win(self):
         try:
+            self._conv_win_clear()
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
@@ -715,14 +717,26 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_init_lab_graph - {e}')
 
-    def update_lab_graph(self):
+    def _update_lab_graph(self):
         try:
             self.data_line_test_lab.setData(self.response.get('move_graph'), self.response.get('force_graph'))
 
-            self.update_lab_data()
+            self._update_lab_data()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_lab_graph - {e}')
+            self.log_msg_err_slot(f'ERROR in view/_update_lab_graph - {e}')
+            
+    def _update_lab_data(self):
+        try:
+            self.ui.lab_max_comp_le.setText(f'{self.response.get("max_comp", 0)}')
+            self.ui.lab_max_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
+            self.ui.test_data_now_temp_lineEdit.setText(f'{self.response.get("temperature", 0)}')
+            self.ui.test_data_max_temp_lineEdit.setText(f'{self.response.get("max_temperature", 0)}')
+            self.ui.test_data_hod_lineEdit.setText(f'{self.response.get("hod_calc", 0)}')
+            self.ui.test_data_push_force_lineEdit.setText(f'{self.response.get("push_force", 0)}')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
 
     def _init_conv_graph(self):
         try:
@@ -735,27 +749,52 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_init_conv_graph - {e}')
 
-    def update_conv_graph(self):
+    def _update_conv_graph(self):
         try:
             self.data_line_test_conv.setData(self.response.get('move_graph'), self.response.get('force_graph'))
+            
+            self._update_conv_data()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_conv_graph - {e}')
-
-    def color_led_lamp(self):
+            self.log_msg_err_slot(f'ERROR in view/_update_conv_graph - {e}')
+            
+    def _update_conv_data(self):
         try:
-            if self.response.get('red_light') is True:
-                self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
+            amort = self.model.set_regs.get('amort')
+            self.ui.conv_comp_le.setText(f'{self.response.get("max_comp", 0)}')
+            self.ui.conv_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
+            self.ui.conv_temperture_le.setText(f'{self.response.get("temperature", 0)}')
+            
+            if self.response.get('stage') == 'test_conv_speed_one':
+                self.ui.conv_speed_le.setText(amort.speed_one)
+                self.ui.conv_comp_le.setText(f'{amort.min_comp} - {amort.max_comp}')
+                self.ui.conv_recoil_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
+            
+            elif self.response.get('stage') == 'test_conv_speed_two':
+                self.ui.conv_speed_le.setText(amort.speed_two)
+                self.ui.conv_comp_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
+                self.ui.conv_recoil_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+                
             else:
-                self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-
-            if self.response.get('green_light') is True:
-                self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
-            else:
-                self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
-
+                pass
+            
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/color_led_lamp - {e}')
+            self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
+
+    # def _color_led_lamp(self):
+    #     try:
+    #         if self.response.get('red_light') is True:
+    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 0, 0);')
+    #         else:
+    #             self.ui.red_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+    #
+    #         if self.response.get('green_light') is True:
+    #             self.ui.green_signal.setStyleSheet('background-color: rgb(0, 255, 0);')
+    #         else:
+    #             self.ui.green_signal.setStyleSheet('background-color: rgb(255, 255, 255);')
+    #
+    #     except Exception as e:
+    #         self.log_msg_err_slot(f'ERROR in view/_color_led_lamp - {e}')
 
     def repeat_test_clicked(self):
         self.model.set_regs['repeat_test'] = True
@@ -822,7 +861,7 @@ class AppWindow(QMainWindow):
 
     def save_btn_clicked(self):
         try:
-            self.serial_number = self.ui.test_data_serial_lineEdit.text()
+            self.serial_number = self.ui.lab_serial_le.text()
             if not self.serial_number:
                 pass
 
@@ -846,7 +885,7 @@ class AppWindow(QMainWindow):
             save_test.max_recoil = self.response.get('amort').max_recoil
             save_test.min_recoil = self.response.get('amort').min_recoil
             save_test.push_force = self.response.get('push_force', 0)
-            save_test.speed = self.ui.test_data_speed_lineEdit.text()
+            save_test.speed = self.ui.lab_speed_le.text()
             save_test.temper = self.response.get('max_temperature')
             save_test.move_list = self.response.get('move_graph')[:]
             save_test.force_list = self.response.get('force_graph')[:]
