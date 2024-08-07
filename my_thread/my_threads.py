@@ -299,7 +299,7 @@ class Reader(QRunnable):
     def start_test(self):
         self.num_rec = 0
         self.count_rec = 0
-        self.result = {}
+        self.result = {'count': [], 'force': [], 'move': [], 'state': [], 'temper': []}
         self.flag_start_test = True
         self.read_tag = 'buffer'
 

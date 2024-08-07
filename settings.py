@@ -29,6 +29,7 @@ class PrgSettings:
                           'list_write': [],
                           'repeat_command': False,
                           'fc_ready': False,
+                          'flag_bit_force': False,
                           'stage': 'wait',
                           'type_test': '',
                           'test_launch': False,

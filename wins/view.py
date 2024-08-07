@@ -68,7 +68,7 @@ class AppWindow(QMainWindow):
         self._init_buttons()
         self._init_signals()
 
-        self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
+        self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -79,6 +79,7 @@ class AppWindow(QMainWindow):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_data_view)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
+        self.model.signals.write_bit_force.connect(self.slot_write_bit_force)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
@@ -138,7 +139,16 @@ class AppWindow(QMainWindow):
                 self.win_set.update_data_win_set(self.response)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_data - {e}')
+            self.log_msg_err_slot(f'ERROR in view/update_data_view - {e}')
+
+    def slot_write_bit_force(self, state):
+        try:
+            type_test = self.response.get('type_test')
+            if type_test == 'hand':
+                self.win_set.change_state_read_buffer(state)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/slot_write_bit_force - {e}')
 
     def log_msg_info_slot(self, txt_log):
         self.model.log_info(txt_log)
@@ -472,22 +482,12 @@ class AppWindow(QMainWindow):
         try:
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
-                self.ui.specif_speed_two_lineEdit.setVisible(False)
-                self.ui.specif_min_comp_lineEdit_2.setVisible(False)
-                self.ui.specif_max_comp_lineEdit_2.setVisible(False)
-                self.ui.specif_min_recoil_lineEdit_2.setVisible(False)
-                self.ui.specif_max_recoil_lineEdit_2.setVisible(False)
-                self.ui.specif_speed_one_lineEdit.setReadOnly(False)
 
             elif ind == 1:
+                self.model.set_regs['type_test'] = 'lab_cascade'
+
+            elif ind == 2:
                 self.model.set_regs['type_test'] = 'conv'
-                self.ui.specif_speed_two_lineEdit.setVisible(True)
-                self.ui.specif_min_comp_lineEdit_2.setVisible(True)
-                self.ui.specif_max_comp_lineEdit_2.setVisible(True)
-                self.ui.specif_min_recoil_lineEdit_2.setVisible(True)
-                self.ui.specif_max_recoil_lineEdit_2.setVisible(True)
-                self.ui.specif_speed_one_lineEdit.setReadOnly(True)
-                self.ui.specif_speed_two_lineEdit.setReadOnly(True)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_type_test - {e}')
@@ -599,7 +599,7 @@ class AppWindow(QMainWindow):
             self.main_btn_disable()
             self.ui.test_save_btn.setVisible(False)
             self.ui.test_repeat_btn.setVisible(False)
-            self.ui.test_cancel_btn.setText('СТОП')
+            self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
             amort = self.response.get('amort')
 
@@ -646,10 +646,8 @@ class AppWindow(QMainWindow):
     def _lab_win_clear(self):
         try:
             self.data_line_test_lab.setData([], [])
-            self.ui.lab_max_recoil_1_le.clear()
-            self.ui.lab_max_comp_1_le.clear()
-            self.ui.lab_max_recoil_2_le.clear()
-            self.ui.lab_max_comp_2_le.clear()
+            self.ui.lab_recoil_le.clear()
+            self.ui.lab_comp_le.clear()
             self.ui.lab_speed_le.clear()
             self.ui.lab_now_temp_le.clear()
             self.ui.lab_max_temp_le.clear()
@@ -837,7 +835,7 @@ class AppWindow(QMainWindow):
     def cancel_test_clicked(self):
         try:
             temp = self.ui.test_cancel_btn.text()
-            if temp == 'СТОП':
+            if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
                 self.ui.test_cancel_btn.setText('ОСТАНОВКА')
                 self.controller.stop_test_clicked()
 
@@ -845,7 +843,7 @@ class AppWindow(QMainWindow):
                 self.main_stop_disable()
                 self.main_btn_enable()
                 self.specif_page()
-                self.ui.test_cancel_btn.setText('СТОП')
+                self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')

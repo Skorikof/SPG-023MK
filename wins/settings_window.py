@@ -40,6 +40,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
+        self.model.reader_stop_test()
+        time.sleep(0.2)
+        self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
     def start_param_win_set(self):
@@ -89,54 +92,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/update_data - {e}')
-            
-    # def do_connect(self):
-    #     try:
-    #         if self.model.client:
-    #             self.connect_ui()
-    #         else:
-    #             self.disconnect_ui()
-    # 
-    #     except Exception as e:
-    #         self._statusbar_set_ui(f'ERROR in settings_window/do_connect - {e}')
-
-    # def connect_ui(self):
-    #     self.btn_connect.setText('ОТКЛЮЧИТЬСЯ')
-    #     self.btn_read.setEnabled(True)
-    #     self.btn_motor_main_start.setEnabled(True)
-    #     self.btn_motor_main_stop.setEnabled(True)
-    #     self.btn_motor_up.setEnabled(True)
-    #     self.btn_motor_down.setEnabled(True)
-    #     self.btn_motor_traverse_stop.setEnabled(True)
-    #     self.btn_hod.setEnabled(True)
-    #     self.btn_speed_main.setEnabled(True)
-    #     self.btn_freq_trverse.setEnabled(True)
-    #     self.btn_cycle_F.setEnabled(True)
-    #     self.btn_no_control.setEnabled(True)
-    #     self.btn_max_F.setEnabled(True)
-    #     self.btn_green_light.setEnabled(True)
-    #     self.btn_red_light.setEnabled(True)
-    #     txt_log = 'Контроллер подключен'
-    #     self.statusbar.showMessage(txt_log)
-    # 
-    # def disconnect_ui(self):
-    #     self.btn_connect.setText('ПОДКЛЮЧИТЬСЯ')
-    #     self.btn_read.setEnabled(False)
-    #     self.btn_motor_main_start.setEnabled(False)
-    #     self.btn_motor_main_stop.setEnabled(False)
-    #     self.btn_motor_up.setEnabled(False)
-    #     self.btn_motor_down.setEnabled(False)
-    #     self.btn_motor_traverse_stop.setEnabled(False)
-    #     self.btn_hod.setEnabled(False)
-    #     self.btn_speed_main.setEnabled(False)
-    #     self.btn_freq_trverse.setEnabled(False)
-    #     self.btn_cycle_F.setEnabled(False)
-    #     self.btn_no_control.setEnabled(False)
-    #     self.btn_max_F.setEnabled(False)
-    #     self.btn_green_light.setEnabled(False)
-    #     self.btn_red_light.setEnabled(False)
-    #     txt_log = 'Контроллер отключен'
-    #     self.statusbar.showMessage(txt_log)
 
     def _write_hod(self):
         try:
@@ -156,11 +111,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             speed = self.model.calculate_freq(value)
             self.model.write_frequency(1, speed)
 
-            # command = {'gear_speed': value}
-            # self.model.update_main_dict(command)
-            #
-            # self.model.write_bit_unblock_control()
-
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_write_speed_set - {e}')
 
@@ -169,12 +119,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             value = int(self.lineEdit_freq_traverse.text())
 
             self.model.write_frequency(2, value * 100)
-
-            # time.sleep(0.02)
-            # command = {'traverse_freq': value}
-            # self.model.update_main_dict(command)
-            #
-            # self.model.write_bit_unblock_control()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_write_frequency_set - {e}')
@@ -254,8 +198,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.lcdH_T.display(self.response.get('traverse_move'))
         self.lcdTemp.display(self.response.get('temperature', 0))
         self.lineEdit_F_alarm.setText(f'{self.response.get("force_alarm")}')
-        # self.lineEdit_speed_main.setText(f'{self.response.get("gear_speed")}')
-        # self.lineEdit_freq_traverse.setText(f'{self.response.get("traverse_freq")}')
 
         self._update_color_switch()
 
@@ -303,13 +245,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            self._start_test()
-
-        else:
-            self._stop_test()
-            
-    def _start_test(self):
-        try:
             command = {'start_pos': False,
                        'start_direction': False,
                        'current_direction': '',
@@ -320,22 +255,21 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.update_main_dict(command)
 
             self.model.write_bit_force_cycle(1)
-            time.sleep(0.2)
-            self.model.reader_start_test()
             self.graph_ui.show()
 
-        except Exception as e:
-            print(str(e))
-
-    def _stop_test(self):
-        try:
-            self.model.reader_stop_test()
-            time.sleep(0.1)
+        else:
             self.model.write_bit_force_cycle(0)
-            time.sleep(0.1)
+
+    def change_state_read_buffer(self, flag):
+        try:
+            if flag:
+                self.model.reader_start_test()
+
+            else:
+                self.model.reader_stop_test()
 
         except Exception as e:
-            print(str(e))
+            self._statusbar_set_ui(f'ERROR in settings_window/change_state_read_buffer - {e}')
 
     def update_graph_hand_set(self):
         try:

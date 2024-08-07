@@ -22,6 +22,7 @@ class WinSignals(QObject):
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal(dict)
+    write_bit_force = pyqtSignal(bool)
     full_cycle_count = pyqtSignal()
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
@@ -60,7 +61,7 @@ class Model:
             self._init_reader()
             time.sleep(0.2)
             self.reader_start()
-            self.write_bit_force_cycle(1)
+            # self.write_bit_force_cycle(1)
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -191,6 +192,12 @@ class Model:
 
     def _pars_buffer_result(self, response):
         try:
+            # print(f'Count --> {response.get("count")}')
+            # print(f'Force --> {response.get("force")}')
+            # print(f'Move --> {response.get("move")}')
+            # print(f'State --> {response.get("state")}')
+            # print(f'Temper --> {response.get("temper")}')
+
             force_list = []
             move_list = []
 
@@ -469,8 +476,8 @@ class Model:
                 self.set_regs['list_write'].pop(0)
 
                 if res == 'OK!':
-                    if tag == 'REG':
-                        pass
+                    if tag == 'reg':
+                        self._pars_result_reg_write(addr, value[0])
 
                     elif tag == 'FC':
                         if not self.set_regs.get('repeat_command'):
@@ -480,6 +487,27 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/_result_write - {e}')
+
+    def _pars_result_reg_write(self, addr, value):
+        if addr == 8195:  # Регистр состояния 0х2003
+            temp = bin(value)[2:].zfill(16)
+            bits = ''.join(reversed(temp))
+            self._switch_read_buffer(bool(int(bits[0])))
+
+    def _switch_read_buffer(self, flag):
+        try:
+            if flag:
+                if not self.set_regs.get('flag_bit_force', False):
+                    self.signals.write_bit_force.emit(flag)
+                    self.set_regs['flag_bit_force'] = True
+
+            else:
+                if self.set_regs.get('flag_bit_force', True):
+                    self.signals.write_bit_force.emit(flag)
+                    self.set_regs['flag_bit_force'] = False
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_switch_read_buffer - {e}')
 
     def write_out(self, tag, values=None, reg_write=None, freq_command=None):
         try:
