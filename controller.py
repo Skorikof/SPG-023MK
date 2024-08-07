@@ -62,6 +62,7 @@ class Controller:
 
     def _init_signals(self):
         try:
+            self.model.signals.write_bit_force.connect(self.change_state_read_buffer)
             self.model.signals.full_cycle_count.connect(self._update_full_cycle)
             self.model.signals.test_launch.connect(self._yellow_btn_push)
 
@@ -81,6 +82,17 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_update_full_cycle - {e}')
+
+    def change_state_read_buffer(self, flag):
+        try:
+            if flag:
+                self.model.reader_start_test()
+
+            else:
+                self.model.reader_stop_test()
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/change_state_read_buffer_ctrl - {e}')
 
     def _init_timer_test(self):
         try:

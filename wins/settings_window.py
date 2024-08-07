@@ -260,17 +260,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         else:
             self.model.write_bit_force_cycle(0)
 
-    def change_state_read_buffer(self, flag):
-        try:
-            if flag:
-                self.model.reader_start_test()
-
-            else:
-                self.model.reader_stop_test()
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in settings_window/change_state_read_buffer - {e}')
-
     def update_graph_hand_set(self):
         try:
             self.graph_ui.data_line_test.setData(self.response.get('move_graph'), self.response.get('force_graph'))

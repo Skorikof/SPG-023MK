@@ -79,7 +79,6 @@ class AppWindow(QMainWindow):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_data_view)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
-        self.model.signals.write_bit_force.connect(self.slot_write_bit_force)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
@@ -140,15 +139,6 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_data_view - {e}')
-
-    def slot_write_bit_force(self, state):
-        try:
-            type_test = self.response.get('type_test')
-            if type_test == 'hand':
-                self.win_set.change_state_read_buffer(state)
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_write_bit_force - {e}')
 
     def log_msg_info_slot(self, txt_log):
         self.model.log_info(txt_log)

@@ -3443,7 +3443,7 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Максимальное усилие отбоя, кгс:</string>
+              <string>Пределы усилия отбоя, кгс:</string>
              </property>
             </widget>
             <widget class="QLabel" name="lbl_10">
@@ -3505,7 +3505,7 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Максимальное усилие сжатия, кгс:</string>
+              <string>Пределы усилия сжатия, кгс:</string>
              </property>
             </widget>
             <widget class="QLineEdit" name="conv_comp_limit_le">
