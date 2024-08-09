@@ -87,7 +87,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           'Внимание',
                                           'Заполните поле названия амортизатора'
                                           )
-            self.lineEdit_name.setFocus(True)
+            # self.lineEdit_name.setFocus(True)
             self.lineEdit_name.signal.connect(self.name_editing_finished)
             return
 
@@ -104,7 +104,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле длины в сжатом состоянии'
                                               )
-                self.le_length_min.setFocus(True)
+                # self.le_length_min.setFocus(True)
                 self.le_length_min.signal.connect(self.len_min_editing_finished)
                 return
 
@@ -118,7 +118,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
                                               )
-                self.le_length_min.setFocus(True)
+                # self.le_length_min.setFocus(True)
                 self.le_length_min.signal.connect(self.len_min_editing_finished)
                 return
 
@@ -129,7 +129,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео некорректное значение в поле -->\n'
                                           f'длина в сжатом состоянии</b>'
                                           )
-            self.le_length_min.setFocus(True)
+            # self.le_length_min.setFocus(True)
             self.le_length_min.signal.connect(self.len_min_editing_finished)
 
         except Exception as e:
@@ -144,7 +144,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле длины в разжатом состоянии'
                                               )
-                self.le_length_max.setFocus(True)
+                # self.le_length_max.setFocus(True)
                 self.le_length_max.signal.connect(self.len_max_editing_finished)
                 return
 
@@ -158,7 +158,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
                                               )
-                self.le_length_max.setFocus(True)
+                # self.le_length_max.setFocus(True)
                 self.le_length_max.signal.connect(self.len_max_editing_finished)
                 return
 
@@ -169,7 +169,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Длина в разжатом состоянии</b>'
                                           )
-            self.le_length_max.setFocus(True)
+            # self.le_length_max.setFocus(True)
             self.le_length_max.signal.connect(self.len_max_editing_finished)
 
         except Exception as e:
@@ -184,7 +184,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле испытательного хода'
                                               )
-                self.le_hod.setFocus(True)
+                # self.le_hod.setFocus(True)
                 self.le_hod.signal.connect(self.hod_editing_finished)
                 return
 
@@ -198,7 +198,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               f'Ход (<b style="color: #f00;">{hod}</b>) или меньше 40 или больше 120'
                                               )
-                self.le_hod.setFocus(True)
+                # self.le_hod.setFocus(True)
                 self.le_hod.signal.connect(self.hod_editing_finished)
                 return
 
@@ -208,7 +208,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           'Внимание',
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле --> Ход</b>'
                                           )
-            self.le_hod.setFocus(True)
+            # self.le_hod.setFocus(True)
             self.le_hod.signal.connect(self.hod_editing_finished)
 
         except Exception as e:
@@ -223,7 +223,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле первой скорости испытания'
                                               )
-                self.le_speed_one.setFocus(True)
+                # self.le_speed_one.setFocus(True)
                 self.le_speed_one.signal.connect(self.one_speed_editing_finished)
                 return
 
@@ -239,7 +239,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Первая скорость (<b style="color: #f00;">{temp}</b>)'
                                               f'не попадает в диапазон от 0.02 до {max_speed}'
                                               )
-                self.le_speed_one.setFocus(True)
+                # self.le_speed_one.setFocus(True)
                 self.le_speed_one.signal.connect(self.one_speed_editing_finished)
                 return
 
@@ -250,7 +250,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Первая скорость испытания</b>'
                                           )
-            self.le_speed_one.setFocus(True)
+            # self.le_speed_one.setFocus(True)
             self.le_speed_one.signal.connect(self.one_speed_editing_finished)
 
         except Exception as e:
@@ -265,7 +265,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле второй скорости испытания'
                                               )
-                self.le_speed_two.setFocus(True)
+                # self.le_speed_two.setFocus(True)
                 self.le_speed_two.signal.connect(self.two_speed_editing_finished)
                 return
 
@@ -281,7 +281,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Вторая скорость (<b style="color: #f00;">{temp}</b>)'
                                               f'не попадает в диапазон от 0.0 до {max_speed}'
                                               )
-                self.le_speed_two.setFocus(True)
+                # self.le_speed_two.setFocus(True)
                 self.le_speed_two.signal.connect(self.two_speed_editing_finished)
                 return
 
@@ -292,7 +292,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Вторая скорость испытания</b>'
                                           )
-            self.le_speed_two.setFocus(True)
+            # self.le_speed_two.setFocus(True)
             self.le_speed_two.signal.connect(self.two_speed_editing_finished)
 
         except Exception as e:
@@ -330,7 +330,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия сжатия'
                                               )
-                self.le_comp_min.setFocus(True)
+                # self.le_comp_min.setFocus(True)
                 self.le_comp_min.signal.connect(self.comp_min_editing_finished)
                 return
 
@@ -345,7 +345,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Минимальное усилие сжатия -- (<b style="color: #f00;">{temp}</b>) '
                                               f'введено неверное значение'
                                               )
-                self.le_comp_min.setFocus(True)
+                # self.le_comp_min.setFocus(True)
                 self.le_comp_min.signal.connect(self.comp_min_editing_finished)
                 return
 
@@ -356,7 +356,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия</b>'
                                           )
-            self.le_comp_min.setFocus(True)
+            # self.le_comp_min.setFocus(True)
             self.le_comp_min.signal.connect(self.comp_min_editing_finished)
 
         except Exception as e:
@@ -371,7 +371,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия сжатия для второй скорости'
                                               )
-                self.le_comp_min_two.setFocus(True)
+                # self.le_comp_min_two.setFocus(True)
                 self.le_comp_min_two.signal.connect(self.two_comp_min_editing_finished)
                 return
 
@@ -386,7 +386,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Минимальное усилие сжатия для второй скорости -- (<b style="color: #f00;">{temp}</b>)'
                                               f'введено неверное значение'
                                               )
-                self.le_comp_min_two.setFocus(True)
+                # self.le_comp_min_two.setFocus(True)
                 self.le_comp_min_two.signal.connect(self.two_comp_min_editing_finished)
                 return
 
@@ -397,7 +397,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия для второй скорости</b>'
                                           )
-            self.le_comp_min_two.setFocus(True)
+            # self.le_comp_min_two.setFocus(True)
             self.le_comp_min_two.signal.connect(self.two_comp_min_editing_finished)
 
         except Exception as e:
@@ -412,7 +412,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия сжатия'
                                               )
-                self.le_comp_max.setFocus(True)
+                # self.le_comp_max.setFocus(True)
                 self.le_comp_max.signal.connect(self.comp_max_editing_finished)
                 return
 
@@ -427,7 +427,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Максимальное усилие сжатия (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неверное число'
                                               )
-                self.le_comp_max.setFocus(True)
+                # self.le_comp_max.setFocus(True)
                 self.le_comp_max.signal.connect(self.comp_max_editing_finished)
                 return
 
@@ -438,7 +438,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия</b>'
                                           )
-            self.le_comp_max.setFocus(True)
+            # self.le_comp_max.setFocus(True)
             self.le_comp_max.signal.connect(self.comp_max_editing_finished)
 
         except Exception as e:
@@ -453,7 +453,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия сжатия для второй скорости'
                                               )
-                self.le_comp_max_two.setFocus(True)
+                # self.le_comp_max_two.setFocus(True)
                 self.le_comp_max_two.signal.connect(self.two_comp_max_editing_finished)
                 return
 
@@ -468,7 +468,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Максимальное усилие сжатия для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неверное число'
                                               )
-                self.le_comp_max_two.setFocus(True)
+                # self.le_comp_max_two.setFocus(True)
                 self.le_comp_max_two.signal.connect(self.two_comp_max_editing_finished)
                 return
 
@@ -479,7 +479,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия для второй скорости</b>'
                                           )
-            self.le_comp_max_two.setFocus(True)
+            # self.le_comp_max_two.setFocus(True)
             self.le_comp_max_two.signal.connect(self.two_comp_max_editing_finished)
 
         except Exception as e:
@@ -494,7 +494,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия отбоя'
                                               )
-                self.le_recoil_min.setFocus(True)
+                # self.le_recoil_min.setFocus(True)
                 self.le_recoil_min.signal.connect(self.recoil_min_editing_finished)
                 return
 
@@ -509,7 +509,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Минимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное число'
                                               )
-                self.le_recoil_min.setFocus(True)
+                # self.le_recoil_min.setFocus(True)
                 self.le_recoil_min.signal.connect(self.recoil_min_editing_finished)
                 return
 
@@ -520,7 +520,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя</b>'
                                           )
-            self.le_recoil_min.setFocus(True)
+            # self.le_recoil_min.setFocus(True)
             self.le_recoil_min.signal.connect(self.recoil_min_editing_finished)
 
         except Exception as e:
@@ -535,7 +535,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия отбоя для второй скорости'
                                               )
-                self.le_recoil_min_two.setFocus(True)
+                # self.le_recoil_min_two.setFocus(True)
                 self.le_recoil_min_two.signal.connect(self.two_recoil_min_editing_finished)
                 return
 
@@ -550,7 +550,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Минимальное усилие отбоя для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное число'
                                               )
-                self.le_recoil_min_two.setFocus(True)
+                # self.le_recoil_min_two.setFocus(True)
                 self.le_recoil_min_two.signal.connect(self.two_recoil_min_editing_finished)
                 return
 
@@ -561,7 +561,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя для второй скорости</b>'
                                           )
-            self.le_recoil_min_two.setFocus(True)
+            # self.le_recoil_min_two.setFocus(True)
             self.le_recoil_min_two.signal.connect(self.two_recoil_min_editing_finished)
 
         except Exception as e:
@@ -576,7 +576,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия отбоя'
                                               )
-                self.le_recoil_max.setFocus(True)
+                # self.le_recoil_max.setFocus(True)
                 self.le_recoil_max.signal.connect(self.recoil_max_editing_finished)
                 return
 
@@ -591,7 +591,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное значение'
                                               )
-                self.le_recoil_max.setFocus(True)
+                # self.le_recoil_max.setFocus(True)
                 self.le_recoil_max.signal.connect(self.recoil_max_editing_finished)
                 return
 
@@ -602,7 +602,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
-            self.le_recoil_max.setFocus(True)
+            # self.le_recoil_max.setFocus(True)
             self.le_recoil_max.signal.connect(self.recoil_max_editing_finished)
 
         except Exception as e:
@@ -617,7 +617,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия отбоя'
                                               )
-                self.le_recoil_max_two.setFocus(True)
+                # self.le_recoil_max_two.setFocus(True)
                 self.le_recoil_max_two.signal.connect(self.two_recoil_max_editing_finished)
                 return
 
@@ -632,7 +632,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное значение'
                                               )
-                self.le_recoil_max_two.setFocus(True)
+                # self.le_recoil_max_two.setFocus(True)
                 self.le_recoil_max_two.signal.connect(self.two_recoil_max_editing_finished)
                 return
 
@@ -643,7 +643,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
-            self.le_recoil_max_two.setFocus(True)
+            # self.le_recoil_max_two.setFocus(True)
             self.le_recoil_max_two.signal.connect(self.two_recoil_max_editing_finished)
 
         except Exception as e:
@@ -658,7 +658,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимальной температуры'
                                               )
-                self.le_temper.setFocus(True)
+                # self.le_temper.setFocus(True)
                 self.le_temper.signal.connect(self.temper_editing_finished)
                 return
 
@@ -673,7 +673,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               f'Максимальная температура (<b style="color: #f00;">{temp}</b>) '
                                               f'или меньше 0 или больше 120'
                                               )
-                self.le_temper.setFocus(True)
+                # self.le_temper.setFocus(True)
                 self.le_temper.signal.connect(self.temper_editing_finished)
                 return
 
@@ -684,7 +684,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
                                           f'Максимальная температура</b>'
                                           )
-            self.le_temper.setFocus(True)
+            # self.le_temper.setFocus(True)
             self.le_temper.signal.connect(self.temper_editing_finished)
 
         except Exception as e:
@@ -742,7 +742,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                                   f'Проверьте введённые параметры\n'
                                                   f'Какой-то введён некорректно'
                                                   )
-                    self.lineEdit_name.setFocus(True)
+                    # self.lineEdit_name.setFocus(True)
                     break
 
             if flag:

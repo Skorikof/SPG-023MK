@@ -15,6 +15,7 @@ class ControlSignals(QObject):
     conv_lamp = pyqtSignal(str)
     lab_win_test = pyqtSignal()
     lab_test_cancel = pyqtSignal()
+    lab_save_result = pyqtSignal()
     cancel_test = pyqtSignal()
     search_hod = pyqtSignal()
     reset_ui = pyqtSignal()
@@ -195,7 +196,7 @@ class Controller:
                     if self.response.get('repeat_test', False):
                         self.model.set_regs['repeat_test'] = False
                         self.model.write_bit_force_cycle(1)
-                        self._laboratory_test_speed()
+                        self._test_on_two_speed(1)
 
                     else:
                         self._test_move_cycle()
@@ -207,38 +208,36 @@ class Controller:
 
             elif stage == 'pumping':
                 if self.count_cycle >= 3:
-                    self.model.motor_stop(1)
-
-                    if self.response.get('type_test') == 'lab':
-                        self._laboratory_test_speed()
-
-                    elif self.response.get('type_test') == 'conv':
-                        self._conv_test_speed(1)
-                    else:
-                        pass
+                    self._test_on_two_speed(1)
 
             elif stage == 'test_lab':
                 """Лабораторное испытание, крутим до ручной остановки"""
                 pass
 
-            elif stage == 'test_conv_speed_one':
+            elif stage == 'test_speed_one':
                 if self.count_cycle >= 6:
-                    max_comp = self.response.get('max_comp')
-                    max_recoil = self.response.get('max_recoil')
-                    self._result_conveyor_test('one', max_comp, max_recoil)
-                    if self.response.get('amort').speed_two < 0.03:
-                        command = {'stage': 'wait',
-                                   'fill_graph': False}
-                        self.model.update_main_dict(command)
-                        self._stop_gear_end_test()
-                    else:
-                        self._conv_test_speed(2)
+                    type_test = self.response.get('type_test')
+                    if type_test == 'conv':
+                        max_comp = self.response.get('max_comp')
+                        max_recoil = self.response.get('max_recoil')
+                        self._result_conveyor_test('one', max_comp, max_recoil)
 
-            elif stage == 'test_conv_speed_two':
+                    elif type_test == 'lab':
+                        self.signals.lab_save_result.emit()
+
+                    self._test_on_two_speed(2)
+
+            elif stage == 'test_speed_two':
                 if self.count_cycle >= 6:
-                    max_comp = self.response.get('max_comp')
-                    max_recoil = self.response.get('max_recoil')
-                    self._result_conveyor_test('two', max_comp, max_recoil)
+                    type_test = self.response.get('type_test')
+                    if type_test == 'conv':
+                        max_comp = self.response.get('max_comp')
+                        max_recoil = self.response.get('max_recoil')
+                        self._result_conveyor_test('two', max_comp, max_recoil)
+
+                    elif type_test == 'lab':
+                        self.signals.lab_save_result.emit()
+
                     command = {'stage': 'wait',
                                'fill_graph': False}
                     self.model.update_main_dict(command)
@@ -881,17 +880,20 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_pumping_before_test - {e}')
 
-    def _conv_test_speed(self, ind):
-        """Сигнал на окно конвейерного испытания, разгон до скорости индекса(1 или 2)"""
+    def _test_on_two_speed(self, ind):
         try:
-            self.signals.conv_win_test.emit()
+            type_test = self.response.get('type_test')
+            if type_test == 'conv':
+                self.signals.conv_win_test.emit()
+            elif type_test == 'lab':
+                self.signals.lab_win_test.emit()
+
             amort = self.response.get('amort')
 
             if ind == 1:
                 self._write_speed_motor(1, speed=amort.speed_one)
-
                 command = {'gear_speed': amort.speed_one,
-                           'stage': 'test_conv_speed_one',
+                           'stage': 'test_speed_one',
                            'force_accum_list': [],
                            'move_accum_list': [],
                            'fill_graph': True,
@@ -902,7 +904,7 @@ class Controller:
 
             elif ind == 2:
                 command = {'gear_speed': amort.speed_one,
-                           'stage': 'test_conv_speed_two',
+                           'stage': 'test_speed_two',
                            }
                 self.model.update_main_dict(command)
 
@@ -911,29 +913,7 @@ class Controller:
             self.count_cycle = 0
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/conv_test - {e}')
-
-    def _laboratory_test_speed(self):
-        """Сигнал на окно лабораторного испытания, разгон до заданной скорости"""
-        try:
-            self.signals.lab_win_test.emit()
-
-            amort = self.response.get('amort')
-            speed = amort.speed_one
-            command = {'stage': 'test_lab',
-                       'gear_speed': speed,
-                       'fill_graph': True,
-                       }
-            self.model.update_main_dict(command)
-
-            self._write_speed_motor(1, speed=speed)
-
-            self.count_cycle = 0
-
-            self.model.motor_up(1)
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/start_laboratory_test - {e}')
+            self.model.log_error(f'ERROR in controller/_test_on_two_speed - {e}')
 
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""

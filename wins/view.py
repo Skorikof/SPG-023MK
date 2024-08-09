@@ -88,6 +88,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
+        self.controller.signals.lab_save_result.connect(self.save_btn_clicked)
         self.controller.signals.search_hod.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self.slot_start_page)
 
@@ -472,9 +473,11 @@ class AppWindow(QMainWindow):
         try:
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
+                self.ui.btn_lab_speed_change.setVisible(False)
 
             elif ind == 1:
                 self.model.set_regs['type_test'] = 'lab_cascade'
+                self.ui.btn_lab_speed_change.setVisible(False)
 
             elif ind == 2:
                 self.model.set_regs['type_test'] = 'conv'
@@ -553,9 +556,9 @@ class AppWindow(QMainWindow):
                     if flag:
                         self.serial_number = self.ui.specif_serial_lineEdit.text()
                         if self.serial_number != '':
-                            self.test_lab()
+                            self.begin_test()
                 elif self.response.get('type_test') == 'conv':
-                    self.test_conveyor()
+                    self.begin_test()
 
             else:
                 self.open_win_operator()
@@ -577,27 +580,18 @@ class AppWindow(QMainWindow):
 
     def flag_push_force_set(self):
         try:
-            print(self.ui.push_force_chb.isChecked())
             self.model.set_regs['flag_push_force'] = self.ui.push_force_chb.isChecked()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
 
-    def test_lab(self):
+    def begin_test(self):
         try:
             self.main_stop_enable()
             self.main_btn_disable()
-            self.ui.test_save_btn.setVisible(False)
-            self.ui.test_repeat_btn.setVisible(False)
-            self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
             amort = self.response.get('amort')
-
-            temp = float(self.ui.specif_speed_one_lineEdit.text())
-            if temp != amort.speed_one:
-                amort.speed_one = temp
-
-            self.model.set_regs['hod'] = amort.hod
+            type_test = self.response.get('type_test')
 
             name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
@@ -610,7 +604,7 @@ class AppWindow(QMainWindow):
             limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
             temper = f'{amort.max_temper}'
 
-            txt_log = f'Start laboratory test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
+            txt_log = f'Start {type_test} test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
                       f'speed_one = {speed_one}, speed_two = {speed_two}, limit_comp_one = {limit_comp_one}, ' \
                       f'limit_comp_two = {limit_comp_two}, limit_recoil_one = {limit_recoil_one}, ' \
                       f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
@@ -618,20 +612,29 @@ class AppWindow(QMainWindow):
 
             self.log_msg_info_slot(txt_log)
 
-            self.ui.lab_name_le.setText(name)
-            self.ui.lab_speed_set_1_le.setText(speed_one)
-            self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
-            self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
-            self.ui.lab_speed_set_2_le.setText(speed_two)
-            self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
-            self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
-            self.ui.lab_hod_le.setText(hod)
-            self.ui.lab_serial_le.setText(self.serial_number)
+            self.model.set_regs['hod'] = amort.hod
 
-            self.controller.start_test_clicked()
+            if type_test == 'lab':
+                self.ui.test_repeat_btn.setVisible(False)
+                self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+
+                self.ui.lab_name_le.setText(name)
+                self.ui.lab_speed_set_1_le.setText(speed_one)
+                self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
+                self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
+                self.ui.lab_speed_set_2_le.setText(speed_two)
+                self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
+                self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
+                self.ui.lab_hod_le.setText(hod)
+                self.ui.lab_serial_le.setText(self.serial_number)
+
+                self.controller.start_test_clicked()
+
+            elif type_test == 'conv':
+                self.controller.start_test_clicked()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/test_lab - {e}')
+            self.log_msg_err_slot(f'ERROR in view/begin_test - {e}')
 
     def _lab_win_clear(self):
         try:
@@ -669,35 +672,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_test - {e}')
 
-    def test_conveyor(self):
-        try:
-            self.main_btn_disable()
-            self.main_stop_enable()
-            amort = self.response.get('amort')
-
-            self.model.set_regs['hod'] = amort.hod
-
-            name = amort.name
-            dimensions = f'{amort.min_length} - {amort.max_length}'
-            hod = f'{amort.hod}'
-            speed = f'one = {amort.speed_one} and two = {amort.speed_two}'
-            limit_comp = f'{amort.min_comp} - {amort.max_comp}'
-            limit_comp_2 = f'{amort.min_comp_2} - {amort.max_comp_2}'
-            limit_recoil = f'{amort.min_recoil} - {amort.max_recoil}'
-            limit_recoil_2 = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
-            temper = f'{amort.max_temper}'
-
-            txt_log = f'Start conveyor test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                      f'speed = {speed}, limit_comp_one = {limit_comp}, limit_comp_two = {limit_comp_2}' \
-                      f'limit_recoil_one = {limit_recoil}, limit_recoil_two = {limit_recoil_2}, max_temper = {temper}'
-
-            self.log_msg_info_slot(txt_log)
-
-            self.controller.start_test_clicked()
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/test_conveyor - {e}')
-            
     def _conv_win_clear(self):
         try:
             self.data_line_test_conv.setData([], [])
@@ -802,12 +776,12 @@ class AppWindow(QMainWindow):
             self.ui.conv_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
             self.ui.conv_temperture_le.setText(f'{self.response.get("temperature", 0)}')
             
-            if self.response.get('stage') == 'test_conv_speed_one':
+            if self.response.get('stage') == 'test_speed_one':
                 self.ui.conv_speed_le.setText(amort.speed_one)
                 self.ui.conv_comp_le.setText(f'{amort.min_comp} - {amort.max_comp}')
                 self.ui.conv_recoil_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             
-            elif self.response.get('stage') == 'test_conv_speed_two':
+            elif self.response.get('stage') == 'test_speed_two':
                 self.ui.conv_speed_le.setText(amort.speed_two)
                 self.ui.conv_comp_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
                 self.ui.conv_recoil_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
@@ -848,7 +822,6 @@ class AppWindow(QMainWindow):
     def cancel_test_slot(self):
         try:
             if self.response.get('type_test') == 'lab':
-                self.ui.test_save_btn.setVisible(True)
                 self.ui.test_repeat_btn.setVisible(True)
                 self.ui.test_cancel_btn.setText('НАЗАД')
                 self.ui.main_stackedWidget.setCurrentIndex(2)
@@ -883,12 +856,7 @@ class AppWindow(QMainWindow):
 
     def save_btn_clicked(self):
         try:
-            self.serial_number = self.ui.lab_serial_le.text()
-            if not self.serial_number:
-                pass
-
-            else:
-                self.save_data_in_archive()
+            self.save_data_in_archive()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_btn_clicked - {e}')
@@ -908,13 +876,11 @@ class AppWindow(QMainWindow):
             save_test.min_recoil = self.response.get('amort').min_recoil
             save_test.push_force = self.response.get('push_force', 0)
             save_test.speed = self.ui.lab_speed_le.text()
-            save_test.temper = self.response.get('max_temperature')
-            save_test.move_list = self.response.get('move_graph')[:]
-            save_test.force_list = self.response.get('force_graph')[:]
+            save_test.temper = self.response.get('max_temperature', 0)
+            save_test.move_list = self.response.get('move_graph', [])[:]
+            save_test.force_list = self.response.get('force_graph', [])[:]
 
             ReadArchive().save_test_in_archive(save_test)
-            self.serial_number = ''
-            self.ui.test_save_btn.setVisible(False)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')
