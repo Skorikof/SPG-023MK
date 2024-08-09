@@ -15,6 +15,7 @@ class ControlSignals(QObject):
     conv_lamp = pyqtSignal(str)
     lab_win_test = pyqtSignal()
     lab_test_cancel = pyqtSignal()
+    lab_test_stop = pyqtSignal()
     lab_save_result = pyqtSignal()
     cancel_test = pyqtSignal()
     search_hod = pyqtSignal()
@@ -173,7 +174,7 @@ class Controller:
                     command = {'traverse_referent': True,
                                'stage': 'wait'}
                     self.model.update_main_dict(command)
-                    self._traverse_install_point('install')
+                    self.traverse_install_point('install')
 
             elif stage == 'install_amort':
                 flag = self._control_traverse_move()
@@ -278,12 +279,15 @@ class Controller:
                     if self.response.get('search_hod', False):
                         self.model.set_regs['search_hod'] = False
                         self.signals.search_hod.emit()
+                        
+                    elif self.response.get('type_test') == 'lab':
+                        self.signals.lab_test_stop.emit()
 
                     else:
                         if self.response.get('test_launch', False) is True:
-                            self._traverse_install_point('install')
+                            self.traverse_install_point('install')
                         else:
-                            self._traverse_install_point('stop_test')
+                            self.traverse_install_point('stop_test')
 
             elif stage == 'stop_test':
                 flag = self._control_traverse_move()
@@ -574,9 +578,7 @@ class Controller:
                     # if self.response.get('excess_force'):
                     #     self.model.write_bit_emergency_force()
 
-                    self.model.write_bit_force_cycle(1)
-
-                    self._traverse_install_point('start_test')
+                    self.traverse_install_point('start_test')
 
                 else:
                     self.model.set_regs['test_flag'] = False
@@ -637,13 +639,11 @@ class Controller:
             force = self._calc_excess_force()
             self.model.write_emergency_force(force)
 
-            self.model.write_bit_force_cycle(1)
-
             if self.response.get('traverse_move', 0) < 10:
                 self._traverse_referent_point()
 
             else:
-                self._traverse_install_point('install')
+                self.traverse_install_point('install')
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
@@ -692,6 +692,7 @@ class Controller:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
+                       'gear_speed': 0.05,
                        }
 
             self.model.update_main_dict(command)
@@ -724,6 +725,7 @@ class Controller:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
+                       'gear_speed': 0.03,
                        }
             self.model.update_main_dict(command)
 
@@ -791,7 +793,7 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_traverse_referent_point - {e}')
 
-    def _traverse_install_point(self, tag):
+    def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
             amort = self.response.get('amort')
@@ -829,7 +831,7 @@ class Controller:
                 self._traverse_move_position(end_point)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_traverse_install_point - {e}')
+            self.model.log_error(f'ERROR in controller/traverse_install_point - {e}')
 
     def _test_move_cycle(self):
         """Проверочный ход"""
@@ -837,8 +839,11 @@ class Controller:
             self._move_detection()
 
             self._write_speed_motor(1, speed=0.05)
-
-            self.model.set_regs['stage'] = 'test_move_cycle'
+            
+            command = {'stage': 'test_move_cycle',
+                       'gear_speed': 0.05}
+            
+            self.model.update_main_dict(command)
 
             self.count_cycle = 0
 
@@ -871,7 +876,7 @@ class Controller:
             self._write_speed_motor(1, speed=0.05)
 
             command = {'stage': 'pumping',
-                       'gear_speed': 0.1,
+                       'gear_speed': 0.05,
                        }
             self.model.update_main_dict(command)
             self.count_cycle = 0
@@ -931,10 +936,10 @@ class Controller:
                 min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
 
             if min_comp < comp < max_comp and min_recoil < recoil < max_recoil:
-                self.model.write_bit_green_light(1)
+                self.lamp_green_switch_on()
 
             else:
-                self.model.write_bit_red_light(1)
+                self.lamp_red_switch_on()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_result_conveyor_test - {e}')
@@ -989,3 +994,27 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/lamp_all_switch_off - {e}')
+
+    def lamp_green_switch_on(self):
+        """Выключение зелёного индикатора"""
+        try:
+            if not self.response.get('green_light'):
+                self.model.write_bit_green_light(1)
+            if self.response.get('red_light'):
+                self.model.write_bit_red_light(0)
+            self.signals.conv_lamp.emit('green_on')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_green_switch_on - {e}')
+
+    def lamp_red_switch_on(self):
+        """Выключение красного индикатора"""
+        try:
+            if self.response.get('green_light'):
+                self.model.write_bit_green_light(0)
+            if not self.response.get('red_light'):
+                self.model.write_bit_red_light(1)
+            self.signals.conv_lamp.emit('red_on')
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/lamp_red_switch_on - {e}')

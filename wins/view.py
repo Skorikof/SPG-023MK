@@ -614,7 +614,7 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['hod'] = amort.hod
 
-            if type_test == 'lab':
+            if type_test == 'lab' or type_test == 'lab_cascade':
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -628,10 +628,7 @@ class AppWindow(QMainWindow):
                 self.ui.lab_hod_le.setText(hod)
                 self.ui.lab_serial_le.setText(self.serial_number)
 
-                self.controller.start_test_clicked()
-
-            elif type_test == 'conv':
-                self.controller.start_test_clicked()
+            self.controller.start_test_clicked()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/begin_test - {e}')
@@ -737,14 +734,12 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            pass
-            # FIXME
-            # self.ui.lab_max_comp_le.setText(f'{self.response.get("max_comp", 0)}')
-            # self.ui.lab_max_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
-            # self.ui.test_data_now_temp_lineEdit.setText(f'{self.response.get("temperature", 0)}')
-            # self.ui.test_data_max_temp_lineEdit.setText(f'{self.response.get("max_temperature", 0)}')
-            # self.ui.test_data_hod_lineEdit.setText(f'{self.response.get("hod_calc", 0)}')
-            # self.ui.test_data_push_force_lineEdit.setText(f'{self.response.get("push_force", 0)}')
+            self.ui.lab_comp_le.setText(f'{self.response.get("max_comp", 0)}')
+            self.ui.lab_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
+            self.ui.lab_now_temp_le.setText(f'{self.response.get("temperature", 0)}')
+            self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
+            self.ui.lab_push_force_le.setText(f'{self.response.get("push_force", 0)}')
+            self.ui.lab_speed_le.setText(f'{self.response.get("gear_speed", 0)}')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
@@ -804,13 +799,16 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
-                self.main_stop_disable()
-                self.main_btn_enable()
-                self.specif_page()
+                self.model.set_regs['test_launch'] = False
+                self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')
+
+    def slot_lab_test_slot(self):
+        self.ui.test_cancel_btn.setText('НАЗАД')
+        self.ui.test_repeat_btn.setVisible(True)
 
     def cancel_test_conv_clicked(self):
         try:
@@ -821,15 +819,9 @@ class AppWindow(QMainWindow):
 
     def cancel_test_slot(self):
         try:
-            if self.response.get('type_test') == 'lab':
-                self.ui.test_repeat_btn.setVisible(True)
-                self.ui.test_cancel_btn.setText('НАЗАД')
-                self.ui.main_stackedWidget.setCurrentIndex(2)
-
-            elif self.response.get('type_test') == 'conv':
-                self.main_stop_disable()
-                self.main_btn_enable()
-                self.specif_page()
+            self.main_stop_disable()
+            self.main_btn_enable()
+            self.specif_page()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_slot - {e}')
