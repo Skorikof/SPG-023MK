@@ -88,7 +88,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
-        self.controller.signals.lab_save_result.connect(self.save_btn_clicked)
+        self.controller.signals.lab_save_result.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self.slot_start_page)
 
@@ -454,7 +454,7 @@ class AppWindow(QMainWindow):
     def update_graph_view(self):
         try:
             temp = self.response.get('type_test', 'hand')
-            if temp == 'lab':
+            if temp == 'lab' or temp == 'lab_cascade':
                 self._update_lab_graph()
 
             elif temp == 'conv':
@@ -845,6 +845,19 @@ class AppWindow(QMainWindow):
         self.model.set_regs['type_test'] = None
         self.main_ui_enable()
         self.win_set.hide()
+
+    # FIXME
+    def slot_save_lab_result(self):
+        try:
+            type_test = self.response.get('type_test', 'lab')
+            if type_test == 'lab':
+                self.save_btn_clicked()
+
+            elif type_test == 'lab_cascade':
+                pass
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
     def save_btn_clicked(self):
         try:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os.path
 from pathlib import Path
 from datetime import datetime
 
@@ -187,3 +188,24 @@ class ReadArchive:
 
         except Exception as e:
             print('{}'.format(e))
+
+    #FIXME
+    def save_test_in_archive_new(self):
+        try:
+            flag_add_title = True
+            nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
+            time_t = datetime.now().strftime('%H:%M:%S')
+            path_file = 'archive/' + nam_f
+            if os.path.isfile(path_file):
+                flag_add_title = False
+
+            with open('archive/' + nam_f, 'a') as file_arch:
+                if flag_add_title:
+                    str_t = (f'Время;ФИО оператора;Должность;Название гасителя;Серийный номер;'
+                             f'Длина в сжатом состоянии, мм;Длина в разжатом состоянии, мм;'
+                             f'Мин усилие отбоя, кгс;Макс усилие отбоя, кгс;Мин усилие сжатия, кгс;'
+                             f'Макс усилие сжатия, кгс;Выталкивающая сила, кгс;Макс температура, °С')
+
+
+        except Exception as e:
+            print(f'Exception in archive - {e}')

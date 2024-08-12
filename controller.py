@@ -36,6 +36,9 @@ class Controller:
             self.stop_point = 0
             self.count_cycle = 0
             self.set_trav_point = 0
+            self.speed_cascade = 0.1
+            self.max_speed_cascade = 0.1
+            self.count_lab_cascade = 1
             # self.time_start_wait = None
             # self.time_all_wait = None
             # self.time_tag_wait = None
@@ -204,16 +207,12 @@ class Controller:
 
             elif stage == 'test_move_cycle':
                 if self.count_cycle >= 1:
-                    self.model.motor_stop(1)
+                    # self.model.motor_stop(1)
                     self._pumping_before_test()
 
             elif stage == 'pumping':
                 if self.count_cycle >= 3:
                     self._test_on_two_speed(1)
-
-            elif stage == 'test_lab':
-                """Лабораторное испытание, крутим до ручной остановки"""
-                pass
 
             elif stage == 'test_speed_one':
                 if self.count_cycle >= 6:
@@ -243,6 +242,31 @@ class Controller:
                                'fill_graph': False}
                     self.model.update_main_dict(command)
                     self._stop_gear_end_test()
+
+            elif stage == 'test_lab_cascade':
+                if self.count_cycle >= 6:
+                    self.signals.lab_save_result.emit()
+                    self.speed_cascade += 0.1
+                    if self.speed_cascade <= self.max_speed_cascade:
+                        self.count_lab_cascade += 1
+                        self._write_speed_motor(1, speed=self.speed_cascade)
+                        command = {'gear_speed': self.speed_cascade,
+                                   'stage': 'test_lab_cascade',
+                                   'count_cascade': self.count_lab_cascade,
+                                   'force_accum_list': [],
+                                   'move_accum_list': [],
+                                   'fill_graph': True,
+                                   }
+                        self.model.update_main_dict(command)
+
+                    else:
+                        self.speed_cascade = 0.1
+                        self.count_lab_cascade = 1
+                        self.max_speed_cascade = 0.1
+                        command = {'stage': 'wait',
+                                   'fill_graph': False}
+                        self.model.update_main_dict(command)
+                        self._stop_gear_end_test()
 
             elif stage == 'stop_gear_end_test':
                 move_list = self.response.get('move_list')
@@ -888,34 +912,38 @@ class Controller:
     def _test_on_two_speed(self, ind):
         try:
             type_test = self.response.get('type_test')
-            if type_test == 'conv':
-                self.signals.conv_win_test.emit()
-            elif type_test == 'lab':
-                self.signals.lab_win_test.emit()
+            if type_test == 'lab_cascade':
+                self._test_lab_cascade()
 
-            amort = self.response.get('amort')
+            else:
+                if type_test == 'conv':
+                    self.signals.conv_win_test.emit()
+                elif type_test == 'lab':
+                    self.signals.lab_win_test.emit()
 
-            if ind == 1:
-                self._write_speed_motor(1, speed=amort.speed_one)
-                command = {'gear_speed': amort.speed_one,
-                           'stage': 'test_speed_one',
-                           'force_accum_list': [],
-                           'move_accum_list': [],
-                           'fill_graph': True,
-                           }
-                self.model.update_main_dict(command)
+                amort = self.response.get('amort')
 
-                self.model.motor_up(1)
+                if ind == 1:
+                    self._write_speed_motor(1, speed=amort.speed_one)
+                    command = {'gear_speed': amort.speed_one,
+                               'stage': 'test_speed_one',
+                               'force_accum_list': [],
+                               'move_accum_list': [],
+                               'fill_graph': True,
+                               }
+                    self.model.update_main_dict(command)
 
-            elif ind == 2:
-                command = {'gear_speed': amort.speed_one,
-                           'stage': 'test_speed_two',
-                           }
-                self.model.update_main_dict(command)
+                    self.model.motor_up(1)
 
-                self._write_speed_motor(1, speed=amort.speed_two)
+                elif ind == 2:
+                    command = {'gear_speed': amort.speed_one,
+                               'stage': 'test_speed_two',
+                               }
+                    self.model.update_main_dict(command)
 
-            self.count_cycle = 0
+                    self._write_speed_motor(1, speed=amort.speed_two)
+
+                self.count_cycle = 0
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_test_on_two_speed - {e}')
@@ -943,6 +971,49 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_result_conveyor_test - {e}')
+
+    def _test_lab_cascade(self):
+        try:
+            self.signals.lab_win_test.emit()
+            amort = self.response.get('amort')
+            self.max_speed_cascade = self._calc_max_speed_for_hod(amort.hod)
+
+            self._write_speed_motor(1, speed=self.speed_cascade)
+            command = {'gear_speed': self.speed_cascade,
+                       'stage': 'test_lab_cascade',
+                       'count_cascade': self.count_lab_cascade,
+                       'force_accum_list': [],
+                       'move_accum_list': [],
+                       'fill_graph': True,
+                       }
+            self.model.update_main_dict(command)
+
+            self.model.motor_up(1)
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/_test_lab_cascade - {e}')
+
+    def _calc_max_speed_for_hod(self, hod):
+        if 40 <= hod < 50:
+            return 0.34
+        elif 50 <= hod < 60:
+            return 0.42
+        elif 60 <= hod < 70:
+            return 0.51
+        elif 70 <= hod < 80:
+            return 0.59
+        elif 80 <= hod < 90:
+            return 0.68
+        elif 90 <= hod < 100:
+            return 0.77
+        elif 100 <= hod < 110:
+            return 0.85
+        elif 110 <= hod < 120:
+            return 0.94
+        elif hod == 120:
+            return 1.02
+        else:
+            return 0.55
 
     def _stop_gear_end_test(self):
         """Остановка двигателя после испытания и перед исходным положением"""
