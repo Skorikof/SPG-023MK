@@ -186,7 +186,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
     def _open_new_amort_win(self):
         try:
             self.setDisabled(True)
-            self.new_amort_win.init_signals()
+            self.new_amort_win.start_param_new_amort()
             self.new_amort_win.show()
 
         except Exception as e:

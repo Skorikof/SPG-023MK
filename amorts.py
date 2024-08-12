@@ -58,27 +58,27 @@ class Amort:
                         if key == 'speed_two':
                             self.struct.amorts[ind].speed_two = float(temp_val)
                         if key == 'min_length':
-                            self.struct.amorts[ind].min_length = int(temp_val)
+                            self.struct.amorts[ind].min_length = float(temp_val)
                         if key == 'max_length':
-                            self.struct.amorts[ind].max_length = int(temp_val)
+                            self.struct.amorts[ind].max_length = float(temp_val)
                         if key == 'min_comp':
-                            self.struct.amorts[ind].min_comp = int(temp_val)
+                            self.struct.amorts[ind].min_comp = float(temp_val)
                         if key == 'min_comp_2':
-                            self.struct.amorts[ind].min_comp_2 = int(temp_val)
+                            self.struct.amorts[ind].min_comp_2 = float(temp_val)
                         if key == 'max_comp':
-                            self.struct.amorts[ind].max_comp = int(temp_val)
+                            self.struct.amorts[ind].max_comp = float(temp_val)
                         if key == 'max_comp_2':
-                            self.struct.amorts[ind].max_comp_2 = int(temp_val)
+                            self.struct.amorts[ind].max_comp_2 = float(temp_val)
                         if key == 'min_recoil':
-                            self.struct.amorts[ind].min_recoil = int(temp_val)
+                            self.struct.amorts[ind].min_recoil = float(temp_val)
                         if key == 'min_recoil_2':
-                            self.struct.amorts[ind].min_recoil_2 = int(temp_val)
+                            self.struct.amorts[ind].min_recoil_2 = float(temp_val)
                         if key == 'max_recoil':
-                            self.struct.amorts[ind].max_recoil = int(temp_val)
+                            self.struct.amorts[ind].max_recoil = float(temp_val)
                         if key == 'max_recoil_2':
-                            self.struct.amorts[ind].max_recoil_2 = int(temp_val)
+                            self.struct.amorts[ind].max_recoil_2 = float(temp_val)
                         if key == 'max_temper':
-                            self.struct.amorts[ind].max_temper = int(temp_val)
+                            self.struct.amorts[ind].max_temper = float(temp_val)
 
                 except Exception as e:
                     print(str(e))
