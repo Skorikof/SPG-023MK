@@ -217,25 +217,25 @@ class AmortNew(QMainWindow, Ui_MainWindow):
     def calculate_speed_limit(self):
         hod = int(self.response.get('hod', 40))
         if 40 <= hod < 50:
-            return 0.55
+            return 0.34
         elif 50 <= hod < 60:
-            return 0.7
+            return 0.42
         elif 60 <= hod < 70:
-            return 0.85
+            return 0.51
         elif 70 <= hod < 80:
-            return 1.0
+            return 0.59
         elif 80 <= hod < 90:
-            return 1.15
+            return 0.68
         elif 90 <= hod < 100:
-            return 1.3
+            return 0.77
         elif 100 <= hod < 110:
-            return 1.45
+            return 0.85
         elif 110 <= hod < 120:
-            return 1.6
+            return 0.94
         elif hod == 120:
-            return 1.75
+            return 1.02
         else:
-            return 0.55
+            return 0.34
 
     def comp_min_editing_finished(self):
         try:

@@ -88,6 +88,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
+        self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.lab_save_result.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self.slot_start_page)
@@ -615,6 +616,7 @@ class AppWindow(QMainWindow):
             self.model.set_regs['hod'] = amort.hod
 
             if type_test == 'lab' or type_test == 'lab_cascade':
+                self.ui.lbl_push_force_lab.setText(self.fill_lbl_push_force)
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -628,10 +630,24 @@ class AppWindow(QMainWindow):
                 self.ui.lab_hod_le.setText(hod)
                 self.ui.lab_serial_le.setText(self.serial_number)
 
+            elif type_test == 'conv':
+                self.ui.lbl_push_force_conv.setText(self.fill_lbl_push_force)
+
             self.controller.start_test_clicked()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/begin_test - {e}')
+
+    def fill_lbl_push_force(self):
+        try:
+            flag = self.response.get('flag_push_force')
+            if flag:
+                return 'Выталкивающая\nсила\nучитываетcя'
+            else:
+                return 'Выталкивающая\nсила\nне учитывается'
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/fill_lbl_push_force - {e}')
 
     def _lab_win_clear(self):
         try:
@@ -773,13 +789,13 @@ class AppWindow(QMainWindow):
             
             if self.response.get('stage') == 'test_speed_one':
                 self.ui.conv_speed_le.setText(amort.speed_one)
-                self.ui.conv_comp_le.setText(f'{amort.min_comp} - {amort.max_comp}')
-                self.ui.conv_recoil_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
+                self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
+                self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             
             elif self.response.get('stage') == 'test_speed_two':
                 self.ui.conv_speed_le.setText(amort.speed_two)
-                self.ui.conv_comp_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
-                self.ui.conv_recoil_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+                self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
+                self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
                 
             else:
                 pass
@@ -806,7 +822,7 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')
 
-    def slot_lab_test_slot(self):
+    def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 

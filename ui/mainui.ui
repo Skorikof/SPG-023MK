@@ -852,7 +852,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>2</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -2906,7 +2906,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_21">
              <property name="geometry">
               <rect>
-               <x>140</x>
+               <x>170</x>
                <y>170</y>
                <width>208</width>
                <height>30</height>
@@ -2937,7 +2937,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_26">
              <property name="geometry">
               <rect>
-               <x>140</x>
+               <x>170</x>
                <y>210</y>
                <width>208</width>
                <height>30</height>
@@ -2968,7 +2968,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_recoil_le">
              <property name="geometry">
               <rect>
-               <x>370</x>
+               <x>390</x>
                <y>170</y>
                <width>100</width>
                <height>30</height>
@@ -3005,7 +3005,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_comp_le">
              <property name="geometry">
               <rect>
-               <x>370</x>
+               <x>390</x>
                <y>210</y>
                <width>100</width>
                <height>30</height>
@@ -3037,6 +3037,47 @@ QPushButton:checked
              </property>
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLabel" name="lbl_push_force_lab">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>170</y>
+               <width>141</width>
+               <height>71</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Выталкивающая
+сила
+учитываетcя</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </widget>
@@ -3387,7 +3428,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_8">
              <property name="geometry">
               <rect>
-               <x>120</x>
+               <x>170</x>
                <y>5</y>
                <width>145</width>
                <height>30</height>
@@ -3418,9 +3459,9 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_9">
              <property name="geometry">
               <rect>
-               <x>460</x>
+               <x>500</x>
                <y>5</y>
-               <width>250</width>
+               <width>220</width>
                <height>30</height>
               </rect>
              </property>
@@ -3449,7 +3490,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_10">
              <property name="geometry">
               <rect>
-               <x>120</x>
+               <x>170</x>
                <y>40</y>
                <width>145</width>
                <height>30</height>
@@ -3480,9 +3521,9 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_11">
              <property name="geometry">
               <rect>
-               <x>460</x>
+               <x>500</x>
                <y>40</y>
-               <width>250</width>
+               <width>220</width>
                <height>30</height>
               </rect>
              </property>
@@ -3582,7 +3623,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_recoil_le">
              <property name="geometry">
               <rect>
-               <x>300</x>
+               <x>320</x>
                <y>5</y>
                <width>120</width>
                <height>30</height>
@@ -3616,7 +3657,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_comp_le">
              <property name="geometry">
               <rect>
-               <x>300</x>
+               <x>320</x>
                <y>40</y>
                <width>120</width>
                <height>30</height>
@@ -3650,7 +3691,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_12">
              <property name="geometry">
               <rect>
-               <x>120</x>
+               <x>170</x>
                <y>75</y>
                <width>145</width>
                <height>30</height>
@@ -3681,7 +3722,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_speed_le">
              <property name="geometry">
               <rect>
-               <x>300</x>
+               <x>320</x>
                <y>75</y>
                <width>120</width>
                <height>30</height>
@@ -3749,7 +3790,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_13">
              <property name="geometry">
               <rect>
-               <x>560</x>
+               <x>580</x>
                <y>75</y>
                <width>145</width>
                <height>30</height>
@@ -3775,6 +3816,47 @@ QPushButton:checked
              </property>
              <property name="text">
               <string>Температура, °С:</string>
+             </property>
+            </widget>
+            <widget class="QLabel" name="lbl_push_force_conv">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>20</y>
+               <width>141</width>
+               <height>71</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Выталкивающая
+сила
+учитываетcя</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </widget>
