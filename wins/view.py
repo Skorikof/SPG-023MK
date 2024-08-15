@@ -5,6 +5,7 @@ from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
+from my_obj.graph_lab_cascade import DataGraphCascade
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 import glob_var
@@ -21,6 +22,7 @@ class AppWindow(QMainWindow):
         self.pen_test_conv = None
         self.data_line_test_conv = None
         self.serial_number = ''
+        self.dict_lab_cascade = {}
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -760,6 +762,16 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
 
+    # FIXME
+    def _update_lab_cascade_graph(self):
+        try:
+            if self.dict_lab_cascade:
+                for key, value in self.dict_lab_cascade.items():
+                    self.ui.lab_GraphWidget.plot(value.move, value.force, pen=self.pen_test_lab)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_update_lab_cascade_graph - {e}')
+
     def _init_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.showGrid(True, True)
@@ -825,6 +837,9 @@ class AppWindow(QMainWindow):
     def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
+        if self.response.get('type_test') == 'lab_cascade':
+            self._update_lab_cascade_graph()
+            self.save_data_in_archive()
 
     def cancel_test_conv_clicked(self):
         try:
@@ -867,13 +882,27 @@ class AppWindow(QMainWindow):
         try:
             type_test = self.response.get('type_test', 'lab')
             if type_test == 'lab':
-                self.save_btn_clicked()
+                self.save_data_in_archive()
 
             elif type_test == 'lab_cascade':
-                pass
+                self.fill_data_on_lab_cascade()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
+
+    # FIXME
+    def fill_data_on_lab_cascade(self):
+        try:
+            number = self.response.get('count_cascade', 1)
+            data_graph = DataGraphCascade()
+            data_graph.move = self.response.get('move_graph')[:]
+            data_graph.force = self.response.get('force_graph')[:]
+            data_graph.speed = self.response.get('gear_speed')
+
+            self.dict_lab_cascade[number] = data_graph
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/fill_data_on_lab_cascade - {e}')
 
     def save_btn_clicked(self):
         try:
@@ -882,24 +911,41 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_btn_clicked - {e}')
 
+    # FIXME
     def save_data_in_archive(self):
         try:
-            save_test = TestArchive()
-            save_test.operator = self.response.get('operator')['name']
-            save_test.rank = self.response.get('operator')['rank']
-            save_test.serial_number = self.serial_number
-            save_test.name = self.response.get('amort').name
-            save_test.max_len = self.response.get('amort').max_length
-            save_test.min_len = self.response.get('amort').min_length
-            save_test.max_comp = self.response.get('amort').max_comp
-            save_test.min_comp = self.response.get('amort').min_comp
-            save_test.max_recoil = self.response.get('amort').max_recoil
-            save_test.min_recoil = self.response.get('amort').min_recoil
-            save_test.push_force = self.response.get('push_force', 0)
-            save_test.speed = self.ui.lab_speed_le.text()
-            save_test.temper = self.response.get('max_temperature', 0)
-            save_test.move_list = self.response.get('move_graph', [])[:]
-            save_test.force_list = self.response.get('force_graph', [])[:]
+            data_dict = {}
+            if self.response.get('type_test') == 'lab_cascade':
+                data_dict['cascade_graph'] = self.dict_lab_cascade.copy()
+
+            elif self.response.get('type_test') == 'lab':
+                data_dict['move_graph'] = self.response.get('move_graph')[:]
+                data_dict['force_graph'] = self.response.get('force_graph')[:]
+
+            data_dict['type_test'] = self.response.get('type_test')
+            data_dict['operator'] = self.response.get('operator').copy()
+            data_dict['serial'] = self.serial_number
+            data_dict['amort'] = self.response.get('amort')
+            data_dict['flag_push_force'] = self.response.get('flag_push_force')
+            data_dict['speed'] = self.ui.lab_speed_le.text()
+            data_dict['max_temperature'] = self.response.get('max_temperature')
+
+            # save_test = TestArchive()
+            # save_test.operator = self.response.get('operator')['name']
+            # save_test.rank = self.response.get('operator')['rank']
+            # save_test.serial_number = self.serial_number
+            # save_test.name = self.response.get('amort').name
+            # save_test.max_len = self.response.get('amort').max_length
+            # save_test.min_len = self.response.get('amort').min_length
+            # save_test.max_comp = self.response.get('amort').max_comp
+            # save_test.min_comp = self.response.get('amort').min_comp
+            # save_test.max_recoil = self.response.get('amort').max_recoil
+            # save_test.min_recoil = self.response.get('amort').min_recoil
+            # save_test.push_force = self.response.get('push_force', 0)
+            # save_test.speed = self.ui.lab_speed_le.text()
+            # save_test.temper = self.response.get('max_temperature', 0)
+            # save_test.move_list = self.response.get('move_graph', [])[:]
+            # save_test.force_list = self.response.get('force_graph', [])[:]
 
             ReadArchive().save_test_in_archive(save_test)
 

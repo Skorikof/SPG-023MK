@@ -302,7 +302,7 @@ class Controller:
                         self.model.set_regs['search_hod'] = False
                         self.signals.search_hod.emit()
                         
-                    elif self.response.get('type_test') == 'lab':
+                    elif self.response.get('type_test') == 'lab' or self.response.get('type_test') == 'lab_cascade':
                         self.signals.lab_test_stop.emit()
 
                     else:
