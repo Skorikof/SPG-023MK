@@ -921,13 +921,14 @@ class AppWindow(QMainWindow):
             elif self.response.get('type_test') == 'lab':
                 data_dict['move_graph'] = self.response.get('move_graph')[:]
                 data_dict['force_graph'] = self.response.get('force_graph')[:]
+                data_dict['speed'] = self.ui.lab_speed_le.text()
 
             data_dict['type_test'] = self.response.get('type_test')
             data_dict['operator'] = self.response.get('operator').copy()
             data_dict['serial'] = self.serial_number
             data_dict['amort'] = self.response.get('amort')
             data_dict['flag_push_force'] = self.response.get('flag_push_force')
-            data_dict['speed'] = self.ui.lab_speed_le.text()
+            data_dict['push_force'] = self.response.get('push_force')
             data_dict['max_temperature'] = self.response.get('max_temperature')
 
             # save_test = TestArchive()

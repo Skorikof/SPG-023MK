@@ -190,7 +190,7 @@ class ReadArchive:
             print('{}'.format(e))
 
     #FIXME
-    def save_test_in_archive_new(self):
+    def save_test_in_archive_new(self, obj):
         try:
             flag_add_title = True
             nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
@@ -201,12 +201,52 @@ class ReadArchive:
 
             with open('archive/' + nam_f, 'a') as file_arch:
                 if flag_add_title:
-                    str_t = (f'Время;ФИО оператора;Должность;Тип испытания;Название гасителя;Серийный номер;'
-                             f'Длина в сжатом состоянии, мм;Длина в разжатом состоянии, мм;'
-                             f'Мин усилие отбоя, кгс;Макс усилие отбоя, кгс;Мин усилие сжатия, кгс;'
-                             f'Макс усилие сжатия, кгс;Выталкивающая сила, кгс;Макс температура, °С;'
+                    str_t = (f'Время;'
+                             f'ФИО оператора;'
+                             f'Должность;'
+                             f'Тип испытания;'
+                             f'Название гасителя;'
+                             f'Серийный номер;'
+                             f'Длина в сжатом состоянии, мм;'
+                             f'Длина в разжатом состоянии, мм;'
+                             f'1-я скорость исытания, м/с;'
+                             f'Мин усилие отбоя, кгс;'
+                             f'Макс усилие отбоя, кгс;'
+                             f'Мин усилие сжатия, кгс;'
+                             f'Макс усилие сжатия, кгс;'
+                             f'2-я скорость испытания, м/с;'
+                             f'Мин усилие отбоя, кгс;'
+                             f'Макс усилие отбоя, кгс;'
+                             f'Мин усилие сжатия, кгс;'
+                             f'Макс усилие сжатия, кгс;'
+                             f'Выталкивающая сила, кгс;'
+                             f'Макс температура, °С;'
+                             f'Скорость испытания, м/с;'
                              f'Перемещение, мм/Усилие, кгс')
+                    file_arch.write(str_t + '\n')
 
+                write_str = (f'{time_t};'
+                             f'{obj["operator"]["name"]};'
+                             f'{obj["operator"]["rank"]};'
+                             f'{obj["type_test"]};'
+                             f'{obj["amort"].name};'
+                             f'{obj["serial"]};'
+                             f'{obj["amort"].min_length};'
+                             f'{obj["amort"].max_length};'
+                             f'{obj["amort"].speed_one};'
+                             f'{obj["amort"].min_recoil};'
+                             f'{obj["amort"].max_recoil};'
+                             f'{obj["amort"].min_comp};'
+                             f'{obj["amort"].max_comp};'
+                             f'{obj["amort"].speed_two};'
+                             f'{obj["amort"].min_recoil_2};'
+                             f'{obj["amort"].max_recoil_2};'
+                             f'{obj["amort"].min_comp_2};'
+                             f'{obj["amort"].max_comp_2};'
+                             f'{obj["push_force"]};'
+                             f'{obj["max_temperature"]};')
+
+                # Ещё запись скорости и самих данных на график
 
         except Exception as e:
             print(f'Exception in archive - {e}')
