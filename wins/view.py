@@ -927,7 +927,7 @@ class AppWindow(QMainWindow):
             data_dict['operator'] = self.response.get('operator').copy()
             data_dict['serial'] = self.serial_number
             data_dict['amort'] = self.response.get('amort')
-            data_dict['flag_push_force'] = self.response.get('flag_push_force')
+            data_dict['flag_push_force'] = int(self.response.get('flag_push_force'))
             data_dict['push_force'] = self.response.get('push_force')
             data_dict['max_temperature'] = self.response.get('max_temperature')
 

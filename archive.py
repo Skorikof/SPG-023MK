@@ -219,19 +219,21 @@ class ReadArchive:
                              f'Макс усилие отбоя, кгс;'
                              f'Мин усилие сжатия, кгс;'
                              f'Макс усилие сжатия, кгс;'
+                             f'Флаг выталкивающей силы;'
                              f'Выталкивающая сила, кгс;'
                              f'Макс температура, °С;'
                              f'Скорость испытания, м/с;'
                              f'Перемещение, мм/Усилие, кгс')
                     file_arch.write(str_t + '\n')
 
-                write_str = (f'{time_t};'
-                             f'{obj["operator"]["name"]};'
-                             f'{obj["operator"]["rank"]};'
-                             f'{obj["type_test"]};'
-                             f'{obj["amort"].name};'
-                             f'{obj["serial"]};'
-                             f'{obj["amort"].min_length};'
+                write_name = (f'{time_t};'
+                              f'{obj["operator"]["name"]};'
+                              f'{obj["operator"]["rank"]};'
+                              f'{obj["type_test"]};'
+                              f'{obj["amort"].name};'
+                              f'{obj["serial"]};')
+
+                write_str = (f'{obj["amort"].min_length};'
                              f'{obj["amort"].max_length};'
                              f'{obj["amort"].speed_one};'
                              f'{obj["amort"].min_recoil};'
@@ -243,10 +245,36 @@ class ReadArchive:
                              f'{obj["amort"].max_recoil_2};'
                              f'{obj["amort"].min_comp_2};'
                              f'{obj["amort"].max_comp_2};'
+                             f'{obj["flag_push_force"]};'
                              f'{obj["push_force"]};'
                              f'{obj["max_temperature"]};')
 
+                write_str = write_str.replace('.', '.')
+
+                if obj['type_test'] == 'lab':
+                    speed = str(obj['speed']).replace('.', ',')
+                    move = self._change_data_for_save(obj['move_graph'])
+                    force = self._change_data_for_save(obj['force_graph'])
+
+                    write_data = f'{speed};{move};\n'
+
+
+
+                    write_data = (f'{obj["speed"]};')
                 # Ещё запись скорости и самих данных на график
 
         except Exception as e:
             print(f'Exception in archive - {e}')
+
+    def _change_data_for_save(self, data: list):
+        try:
+            data = str(data)
+            data = data[1:-1]
+            data = data.replace(' ', '')
+            data = data.replace(',', ';')
+            data = data.replace('.', ',')
+
+            return data
+
+        except Exception as e:
+            print(f'Exception in archive/_change_data_for_save - {e}')
