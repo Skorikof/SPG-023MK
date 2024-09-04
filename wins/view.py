@@ -9,7 +9,7 @@ from my_obj.graph_lab_cascade import DataGraphCascade
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 import glob_var
-from archive import TestArchive, ReadArchive
+from archive import ReadArchive
 
 
 class AppWindow(QMainWindow):
@@ -21,7 +21,6 @@ class AppWindow(QMainWindow):
         self.data_line_test_lab = None
         self.pen_test_conv = None
         self.data_line_test_conv = None
-        self.serial_number = ''
         self.dict_lab_cascade = {}
 
         self.ui = Ui_MainWindow()
@@ -557,8 +556,9 @@ class AppWindow(QMainWindow):
                 if self.response.get('type_test') == 'lab':
                     flag = self.serial_editing_finished()
                     if flag:
-                        self.serial_number = self.ui.specif_serial_lineEdit.text()
-                        if self.serial_number != '':
+                        serial_number = self.ui.specif_serial_lineEdit.text()
+                        if serial_number != '':
+                            self.model.set_regs['serial_number'] = serial_number
                             self.begin_test()
                 elif self.response.get('type_test') == 'conv':
                     self.begin_test()
@@ -630,7 +630,7 @@ class AppWindow(QMainWindow):
                 self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
                 self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
                 self.ui.lab_hod_le.setText(hod)
-                self.ui.lab_serial_le.setText(self.serial_number)
+                self.ui.lab_serial_le.setText(self.response.get('serial_number'))
 
             elif type_test == 'conv':
                 self.ui.lbl_push_force_conv.setText(self.fill_lbl_push_force)
@@ -925,30 +925,15 @@ class AppWindow(QMainWindow):
 
             data_dict['type_test'] = self.response.get('type_test')
             data_dict['operator'] = self.response.get('operator').copy()
-            data_dict['serial'] = self.serial_number
+            data_dict['serial'] = self.response.get('serial_number')
             data_dict['amort'] = self.response.get('amort')
             data_dict['flag_push_force'] = int(self.response.get('flag_push_force'))
             data_dict['push_force'] = self.response.get('push_force')
             data_dict['max_temperature'] = self.response.get('max_temperature')
 
-            # save_test = TestArchive()
-            # save_test.operator = self.response.get('operator')['name']
-            # save_test.rank = self.response.get('operator')['rank']
-            # save_test.serial_number = self.serial_number
-            # save_test.name = self.response.get('amort').name
-            # save_test.max_len = self.response.get('amort').max_length
-            # save_test.min_len = self.response.get('amort').min_length
-            # save_test.max_comp = self.response.get('amort').max_comp
-            # save_test.min_comp = self.response.get('amort').min_comp
-            # save_test.max_recoil = self.response.get('amort').max_recoil
-            # save_test.min_recoil = self.response.get('amort').min_recoil
-            # save_test.push_force = self.response.get('push_force', 0)
-            # save_test.speed = self.ui.lab_speed_le.text()
-            # save_test.temper = self.response.get('max_temperature', 0)
-            # save_test.move_list = self.response.get('move_graph', [])[:]
-            # save_test.force_list = self.response.get('force_graph', [])[:]
+            ReadArchive().save_test_in_archive(data_dict)
 
-            ReadArchive().save_test_in_archive(save_test)
+            self.dict_lab_cascade.clear()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')

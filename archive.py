@@ -162,36 +162,6 @@ class ReadArchive:
 
     def save_test_in_archive(self, obj):
         try:
-            nam_f = str(datetime.now().day).zfill(2) + '.' + str(datetime.now().month).zfill(2) + \
-                    '.' + str(datetime.now().year) + '.csv'
-            time_t = datetime.now().strftime('%H:%M:%S')
-            with open('archive/' + nam_f, 'a', encoding='cp1251') as file_arch:
-                file_arch.write('Испытание; ' + '\n')
-                file_arch.write('Время;' + time_t + '\n')
-                file_arch.write('Оператор;' + str(obj.rank + ' ' + obj.operator) + '\n')
-                file_arch.write('Серийный номер;' + str(obj.serial_number) + '\n')
-                file_arch.write('Наименование;' + obj.name + '\n')
-                file_arch.write('Максимальная длина;' + str(obj.max_len) + '\n')
-                file_arch.write('Минимальная длина;' + str(obj.min_len) + '\n')
-                file_arch.write('Скорость;' + str(obj.speed) + '\n')
-                file_arch.write('Мин усилие сжатия;' + str(obj.min_comp) + '\n')
-                file_arch.write('Макс усилие сжатия;' + str(obj.max_comp) + '\n')
-                file_arch.write('Мин усилие отбоя;' + str(obj.min_recoil) + '\n')
-                file_arch.write('Макс усилие отбоя;' + str(obj.max_recoil) + '\n')
-                file_arch.write('Выталкивающая сила;' + str(obj.push_force) + '\n')
-                file_arch.write('Макс температура;' + str(obj.temper) + '\n')
-                file_arch.write('Усилие;Перемещение' + '\n')
-                for i in range(len(obj.move_list)):
-                    val_f = str(obj.force_list[i])
-                    val_m = str(obj.move_list[i]).replace('.', ',')
-                    file_arch.write(val_m + ';' + val_f + '\n')
-
-        except Exception as e:
-            print('{}'.format(e))
-
-    #FIXME
-    def save_test_in_archive_new(self, obj):
-        try:
             flag_add_title = True
             nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
             time_t = datetime.now().strftime('%H:%M:%S')
@@ -256,12 +226,28 @@ class ReadArchive:
                     move = self._change_data_for_save(obj['move_graph'])
                     force = self._change_data_for_save(obj['force_graph'])
 
-                    write_data = f'{speed};{move};\n'
+                    write_data = (f'{speed};{move};\n'
+                                  f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
+                    file_arch.write(write_name + write_str + write_data)
 
+                elif obj['type_test'] == 'lab_cascade':
+                    write_data = ''
 
-                    write_data = (f'{obj["speed"]};')
-                # Ещё запись скорости и самих данных на график
+                    for key, value in obj['cascade_graph'].items():
+                        speed = str(value.speed).replace('.', ',')
+                        move = self._change_data_for_save(value.move)
+                        force = self._change_data_for_save(value.force)
+
+                        if key == 1:
+                            write_data = write_data + (f'{speed};{move};\n'
+                                                       f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
+
+                        else:
+                            write_data = write_data + (f';;;;;;;;;;;;;;;;;;;;;{speed};{move};\n'
+                                                       f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
+
+                    file_arch.write(write_name + write_str + write_data)
 
         except Exception as e:
             print(f'Exception in archive - {e}')
