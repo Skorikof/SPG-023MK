@@ -917,6 +917,7 @@ class AppWindow(QMainWindow):
             data_dict = {}
             if self.response.get('type_test') == 'lab_cascade':
                 data_dict['cascade_graph'] = self.dict_lab_cascade.copy()
+                self.dict_lab_cascade.clear()
 
             elif self.response.get('type_test') == 'lab':
                 data_dict['move_graph'] = self.response.get('move_graph')[:]
@@ -932,8 +933,6 @@ class AppWindow(QMainWindow):
             data_dict['max_temperature'] = self.response.get('max_temperature')
 
             ReadArchive().save_test_in_archive(data_dict)
-
-            self.dict_lab_cascade.clear()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')
