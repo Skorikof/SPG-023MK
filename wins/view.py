@@ -127,7 +127,6 @@ class AppWindow(QMainWindow):
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
         self.ui.test_save_btn.clicked.connect(self.save_btn_clicked)
-        self.ui.btn_lab_speed_change.clicked.connect(self.change_speed_test)
 
     def update_data_view(self, response):
         try:
@@ -475,11 +474,9 @@ class AppWindow(QMainWindow):
         try:
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
-                self.ui.btn_lab_speed_change.setVisible(False)
 
             elif ind == 1:
                 self.model.set_regs['type_test'] = 'lab_cascade'
-                self.ui.btn_lab_speed_change.setVisible(False)
 
             elif ind == 2:
                 self.model.set_regs['type_test'] = 'conv'

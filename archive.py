@@ -2,6 +2,8 @@
 import os.path
 from pathlib import Path
 from datetime import datetime
+from amorts import DataAmort
+from my_obj.graph_lab_cascade import DataGraphCascade
 
 
 class FileArchive:
@@ -11,25 +13,20 @@ class FileArchive:
 
 class TestArchive:
     def __init__(self):
-        self.test_id = ''
-        self.time = ''
-        self.data_arch = ''
-        self.operator = ''
-        self.rank = ''
-        self.name = ''
+        self.time_test = ''
+        self.operator_name = ''
+        self.operator_rank = ''
+        self.type_test = ''
         self.serial_number = ''
-        self.min_len = ''
-        self.max_len = ''
-        self.min_comp = ''
-        self.max_comp = ''
-        self.min_recoil = ''
-        self.max_recoil = ''
+        self.flag_push_force = ''
         self.push_force = ''
         self.speed = ''
-        self.temper = ''
-        self.graph = []
         self.move_list = []
         self.force_list = []
+
+        self.amort = DataAmort()
+
+        self.cascade = {}
 
 
 class ReadArchive:
@@ -41,7 +38,8 @@ class ReadArchive:
         self.count_files = 0
 
         self.struct = None
-        self.count_tests = -1
+        self.ind_test = -1
+        self.ind_casc = 0
         self.index_archive = None
         self.glob_arr = None
 
@@ -62,103 +60,99 @@ class ReadArchive:
         except Exception as e:
             print(str(e))
 
+    # FIXME
     def select_file(self, data):
         try:
+            self.ind_test = -1
+            self.ind_casc = 0
             self.struct = FileArchive()
-            self.count_tests = -1
 
             self.index_archive = self.files_name_arr.index(data)
 
             with open(self.files_arr[self.index_archive]) as f:
-                self.glob_arr = f.readlines()
-                for i in range(len(self.glob_arr)):
-                    flag_data_grf = True
-                    if self.glob_arr[i].find('Испытание') >= 0:
-                        self.count_tests += 1
-                        flag_data_grf = False
-                        self.struct.tests.append(TestArchive())
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].test_id = temp_val[1][:-1]
+                archive_str = f.readlines()
+                for i in archive_str:
+                    archive_list = i.split(';')
 
-                    if self.glob_arr[i].find('Время') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].time = temp_val[1][:-1]
-                        self.struct.tests[self.count_tests].date_arch = data
+                    if archive_list[0] == 'Время':
+                        continue
 
-                    if self.glob_arr[i].find('Оператор') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].operator = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Серийный номер') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].serial_number = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Наименование') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].name = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Тип испытания') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].type_test = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Максимальная длина') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].max_len = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Минимальная длина') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].min_len = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Скорость') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].speed = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Мин усилие сжатия') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].min_comp = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Макс усилие сжатия') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].max_comp = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Мин усилие отбоя') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].min_recoil = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Макс усилие отбоя') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].max_recoil = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Выталкивающая сила') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].push_force = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Макс температура') >= 0:
-                        flag_data_grf = False
-                        temp_val = self.glob_arr[i].split(';')
-                        self.struct.tests[self.count_tests].temper = temp_val[1][:-1]
-
-                    if self.glob_arr[i].find('Усилие') >= 0:
-                        flag_data_grf = False
-
-                    if flag_data_grf:
-                        self.struct.tests[self.count_tests].graph.append(self.glob_arr[i][:-1])
+                    else:
+                        self._pars_str_archive(archive_list)
 
         except Exception as e:
-            print(str(e))
+            print(f'Exception in archive/select_file - {e}')
+
+    def _pars_str_archive(self, archive_list):
+        try:
+            if not archive_list[0] == '*':
+                self.ind_test += 1
+                self.struct.tests.append(TestArchive())
+
+                self.struct.tests[self.ind_test].time_test = archive_list[0]
+                self.struct.tests[self.ind_test].operator_name = archive_list[1]
+                self.struct.tests[self.ind_test].operator_rank = archive_list[2]
+                self.struct.tests[self.ind_test].type_test = archive_list[3]
+                self.struct.tests[self.ind_test].amort.name = archive_list[4]
+                self.struct.tests[self.ind_test].serial_number = archive_list[5]
+                self.struct.tests[self.ind_test].amort.min_length = archive_list[6]
+                self.struct.tests[self.ind_test].amort.max_length = archive_list[7]
+                self.struct.tests[self.ind_test].amort.hod = archive_list[8]
+                self.struct.tests[self.ind_test].amort.speed_one = archive_list[9]
+                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[10]
+                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[11]
+                self.struct.tests[self.ind_test].amort.min_comp = archive_list[12]
+                self.struct.tests[self.ind_test].amort.max_comp = archive_list[13]
+                self.struct.tests[self.ind_test].amort.speed_two = archive_list[14]
+                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[15]
+                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[16]
+                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17]
+                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18]
+                self.struct.tests[self.ind_test].flag_push_force = archive_list[19]
+                self.struct.tests[self.ind_test].push_force = archive_list[20]
+                self.struct.tests[self.ind_test].amort.max_temper = archive_list[21]
+
+                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
+
+                if archive_list[3] == 'lab':
+                    self.struct.tests[self.ind_test].speed = archive_list[22].replace(',', '.')
+                    
+                    self.struct.tests[self.ind_test].move_list = temp_list[:]
+
+                elif archive_list[3] == 'lab_cascade':
+                    self.ind_casc += 1
+                    self.struct.tests[self.ind_test].cascade[self.ind_casc] = DataGraphCascade()
+                    
+                    self.struct.tests[self.ind_test].cascade[self.ind_casc].speed = archive_list[22].replace(',', '.')
+                    self.struct.tests[self.ind_test].cascade[self.ind_casc].move = temp_list[:]
+                    
+            elif archive_list[0] == '*':
+                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
+                
+                if self.struct.tests[self.ind_test].type_test == 'lab':
+                    
+                    self.struct.tests[self.ind_test].force_list = temp_list[:]
+
+                elif self.struct.tests[self.ind_test].type_test == 'lab_cascade':
+                    if archive_list[22] == '':
+                        self.struct.tests[self.ind_test].cascade[self.ind_casc].force = temp_list[:]
+                        
+                    else:
+                        self.ind_casc += 1
+                        self.struct.tests[self.ind_test].cascade[self.ind_casc] = DataGraphCascade()
+
+                        self.struct.tests[self.ind_test].cascade[self.ind_casc].speed = archive_list[22].replace(',', '.')
+                        self.struct.tests[self.ind_test].cascade[self.ind_casc].move = temp_list[:]
+                        
+        except Exception as e:
+            print(f'Exception in archive/_pars_str_archihve - {e}')
+
+    def _add_data_on_list_graph(self, data_list):
+        try:
+            return [float(x.replace(',', '.')) for x in data_list]
+
+        except Exception as e:
+            print(f'Exception in archive/_add_data_on_list_graph - {e}')
 
     def save_test_in_archive(self, obj):
         try:
@@ -179,6 +173,7 @@ class ReadArchive:
                              f'Серийный номер;'
                              f'Длина в сжатом состоянии, мм;'
                              f'Длина в разжатом состоянии, мм;'
+                             f'Ход испытания, мм;'
                              f'1-я скорость исытания, м/с;'
                              f'Мин усилие отбоя, кгс;'
                              f'Макс усилие отбоя, кгс;'
@@ -205,6 +200,7 @@ class ReadArchive:
 
                 write_str = (f'{obj["amort"].min_length};'
                              f'{obj["amort"].max_length};'
+                             f'{obj["amort"].hod};'
                              f'{obj["amort"].speed_one};'
                              f'{obj["amort"].min_recoil};'
                              f'{obj["amort"].max_recoil};'
@@ -227,7 +223,7 @@ class ReadArchive:
                     force = self._change_data_for_save(obj['force_graph'])
 
                     write_data = (f'{speed};{move};\n'
-                                  f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                                  f'*;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                     file_arch.write(write_name + write_str + write_data)
 
@@ -241,16 +237,16 @@ class ReadArchive:
 
                         if key == 1:
                             write_data = write_data + (f'{speed};{move};\n'
-                                                       f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                                                       f'*;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                         else:
-                            write_data = write_data + (f';;;;;;;;;;;;;;;;;;;;;{speed};{move};\n'
-                                                       f';;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                            write_data = write_data + (f'*;;;;;;;;;;;;;;;;;;;;;;{speed};{move};\n'
+                                                       f'*;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                     file_arch.write(write_name + write_str + write_data)
 
         except Exception as e:
-            print(f'Exception in archive - {e}')
+            print(f'Exception in archive/save_test_in_archive - {e}')
 
     def _change_data_for_save(self, data: list):
         try:

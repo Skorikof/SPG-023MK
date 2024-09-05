@@ -51,9 +51,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.btn_exit.clicked.connect(self.close)
         self.btn_print.clicked.connect(self._archive_save_form)
 
-    # def archive_save_test(self, obj):
-    #     self.archive.save_test_in_archive(obj)
-
     def archive_update(self):
         try:
             self.archive.init_arch()
@@ -76,18 +73,23 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_ui_clear(self):
         try:
+            self.graphwidget.clear()
             self.name_le.setText('')
-            self.max_comp_le.setText('')
-            self.max_recoil_le.setText('')
-            self.date_le.setText('')
             self.operator_le.setText('')
-            self.conclusion_le.setText('')
+            self.speed_set_1_le.setText('')
+            self.limit_recoil_1_le.setText('')
+            self.limit_comp_1_le.setText('')
+            self.speed_set_2_le.setText('')
+            self.limit_recoil_2_le.setText('')
+            self.limit_comp_2_le.setText('')
+            self.recoil_le.setText('')
+            self.comp_le.setText('')
             self.serial_le.setText('')
-            self.limit_comp_le.setText('')
-            self.limit_recoil_le.setText('')
+            self.date_le.setText('')
             self.speed_le.setText('')
+            self.max_temp_le.setText('')
+            self.hod_le.setText('')
             self.push_force_le.setText('')
-            self.temper_le.setText('')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')

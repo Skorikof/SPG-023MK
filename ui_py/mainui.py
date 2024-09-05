@@ -823,39 +823,6 @@ class Ui_MainWindow(object):
         self.lab_speed_le.setAlignment(QtCore.Qt.AlignCenter)
         self.lab_speed_le.setReadOnly(False)
         self.lab_speed_le.setObjectName("lab_speed_le")
-        self.btn_lab_speed_change = QtWidgets.QPushButton(self.test_data_frame)
-        self.btn_lab_speed_change.setGeometry(QtCore.QRect(970, 50, 30, 30))
-        self.btn_lab_speed_change.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_lab_speed_change.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_lab_speed_change.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    background-color: rgb(0, 255, 0)\n"
-"    \n"
-"}")
-        self.btn_lab_speed_change.setText("")
-        self.btn_lab_speed_change.setCheckable(False)
-        self.btn_lab_speed_change.setChecked(False)
-        self.btn_lab_speed_change.setObjectName("btn_lab_speed_change")
         self.lbl_16 = QtWidgets.QLabel(self.test_data_frame)
         self.lbl_16.setGeometry(QtCore.QRect(640, 90, 200, 30))
         self.lbl_16.setMinimumSize(QtCore.QSize(0, 30))
@@ -976,7 +943,7 @@ class Ui_MainWindow(object):
         self.lab_limit_comp_2_le.setReadOnly(True)
         self.lab_limit_comp_2_le.setObjectName("lab_limit_comp_2_le")
         self.lbl_21 = QtWidgets.QLabel(self.test_data_frame)
-        self.lbl_21.setGeometry(QtCore.QRect(170, 170, 208, 30))
+        self.lbl_21.setGeometry(QtCore.QRect(170, 170, 250, 30))
         self.lbl_21.setMinimumSize(QtCore.QSize(0, 30))
         self.lbl_21.setMaximumSize(QtCore.QSize(16777215, 30))
         font = QtGui.QFont()
@@ -985,7 +952,7 @@ class Ui_MainWindow(object):
         self.lbl_21.setFont(font)
         self.lbl_21.setObjectName("lbl_21")
         self.lbl_26 = QtWidgets.QLabel(self.test_data_frame)
-        self.lbl_26.setGeometry(QtCore.QRect(170, 210, 208, 30))
+        self.lbl_26.setGeometry(QtCore.QRect(170, 210, 250, 30))
         self.lbl_26.setMinimumSize(QtCore.QSize(0, 30))
         self.lbl_26.setMaximumSize(QtCore.QSize(16777215, 30))
         font = QtGui.QFont()
@@ -994,7 +961,7 @@ class Ui_MainWindow(object):
         self.lbl_26.setFont(font)
         self.lbl_26.setObjectName("lbl_26")
         self.lab_recoil_le = QtWidgets.QLineEdit(self.test_data_frame)
-        self.lab_recoil_le.setGeometry(QtCore.QRect(390, 170, 100, 30))
+        self.lab_recoil_le.setGeometry(QtCore.QRect(430, 170, 100, 30))
         self.lab_recoil_le.setMinimumSize(QtCore.QSize(100, 30))
         self.lab_recoil_le.setMaximumSize(QtCore.QSize(100, 30))
         font = QtGui.QFont()
@@ -1006,7 +973,7 @@ class Ui_MainWindow(object):
         self.lab_recoil_le.setReadOnly(True)
         self.lab_recoil_le.setObjectName("lab_recoil_le")
         self.lab_comp_le = QtWidgets.QLineEdit(self.test_data_frame)
-        self.lab_comp_le.setGeometry(QtCore.QRect(390, 210, 100, 30))
+        self.lab_comp_le.setGeometry(QtCore.QRect(430, 210, 100, 30))
         self.lab_comp_le.setMinimumSize(QtCore.QSize(100, 30))
         self.lab_comp_le.setMaximumSize(QtCore.QSize(100, 30))
         font = QtGui.QFont()
@@ -1392,8 +1359,8 @@ class Ui_MainWindow(object):
         self.lbl_24.setText(_translate("MainWindow", "Ход исытания, мм:"))
         self.lbl_18.setText(_translate("MainWindow", "Выталкивающая сила, кгс:"))
         self.lbl_25.setText(_translate("MainWindow", "Скорость испытания, м/с:"))
-        self.lbl_21.setText(_translate("MainWindow", "Текущее усилие отбоя, кгс:"))
-        self.lbl_26.setText(_translate("MainWindow", "Текущее усилие сжатия, кгс:"))
+        self.lbl_21.setText(_translate("MainWindow", "Максимальное усилие отбоя, кгс:"))
+        self.lbl_26.setText(_translate("MainWindow", "Максимальное усилие сжатия, кгс:"))
         self.lbl_push_force_lab.setText(_translate("MainWindow", "Выталкивающая\n"
 "сила\n"
 "учитываетcя"))
