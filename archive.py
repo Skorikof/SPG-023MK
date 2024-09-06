@@ -95,22 +95,22 @@ class ReadArchive:
                 self.struct.tests[self.ind_test].type_test = archive_list[3]
                 self.struct.tests[self.ind_test].amort.name = archive_list[4]
                 self.struct.tests[self.ind_test].serial_number = archive_list[5]
-                self.struct.tests[self.ind_test].amort.min_length = archive_list[6]
-                self.struct.tests[self.ind_test].amort.max_length = archive_list[7]
+                self.struct.tests[self.ind_test].amort.min_length = archive_list[6].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_length = archive_list[7].replace(',', '.')
                 self.struct.tests[self.ind_test].amort.hod = archive_list[8]
-                self.struct.tests[self.ind_test].amort.speed_one = archive_list[9]
-                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[10]
-                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[11]
-                self.struct.tests[self.ind_test].amort.min_comp = archive_list[12]
-                self.struct.tests[self.ind_test].amort.max_comp = archive_list[13]
-                self.struct.tests[self.ind_test].amort.speed_two = archive_list[14]
-                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[15]
-                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[16]
-                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17]
-                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18]
+                self.struct.tests[self.ind_test].amort.speed_one = archive_list[9].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[10].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[11].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_comp = archive_list[12].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_comp = archive_list[13].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.speed_two = archive_list[14].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[15].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[16].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18].replace(',', '.')
                 self.struct.tests[self.ind_test].flag_push_force = archive_list[19]
-                self.struct.tests[self.ind_test].push_force = archive_list[20]
-                self.struct.tests[self.ind_test].amort.max_temper = archive_list[21]
+                self.struct.tests[self.ind_test].push_force = archive_list[20].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_temper = archive_list[21].replace(',', '.')
 
                 temp_list = self._add_data_on_list_graph(archive_list[23:-1])
 
@@ -215,7 +215,7 @@ class ReadArchive:
                              f'{obj["push_force"]};'
                              f'{obj["max_temperature"]};')
 
-                write_str = write_str.replace('.', '.')
+                write_str = write_str.replace('.', ',')
 
                 if obj['type_test'] == 'lab':
                     speed = str(obj['speed']).replace('.', ',')

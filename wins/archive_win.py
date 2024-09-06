@@ -101,8 +101,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.archive.select_file(data)
 
             for i in range(len(self.archive.struct.tests)):
-                temp = self.archive.struct.tests[i].time + ' - ' + self.archive.struct.tests[i].name + \
-                       ' - ' + self.archive.struct.tests[i].serial_number
+                temp = (f'{self.archive.struct.tests[i].time_test} - '
+                        f'{self.archive.struct.tests[i].amort.name} - '
+                        f'{self.archive.struct.tests[i].serial_number}')
                 temp_arr.append(temp)
 
             self.combo_test.addItems(temp_arr)
@@ -115,32 +116,79 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
 
-    def _archive_test_select(self, data):
+    def _archive_test_select(self, index):
         try:
-            select_archive = self.archive.files_name_arr[self.archive.index_archive]
-            date_arr = select_archive + ' - ' + self.archive.struct.tests[data].time
-            min_comp = self.archive.struct.tests[data].min_comp
-            max_comp = self.archive.struct.tests[data].max_comp
-            min_recoil = self.archive.struct.tests[data].min_recoil
-            max_recoil = self.archive.struct.tests[data].max_recoil
-            limit_comp = min_comp + ' - ' + max_comp
-            limit_recoil = min_recoil + ' - ' + max_recoil
+            user_name = self.archive.struct.tests[index].operator_name
+            user_rank = self.archive.struct.tests[index].operator_rank
 
-            self.name_le.setText(self.archive.struct.tests[data].name)
-            self.limit_comp_le.setText(limit_comp)
-            self.max_comp_le.setText(max_comp)
-            self.limit_recoil_le.setText(limit_recoil)
-            self.max_recoil_le.setText(max_recoil)
-            self.speed_le.setText(self.archive.struct.tests[data].speed)
-            self.temper_le.setText(self.archive.struct.tests[data].temper)
-            self.date_le.setText(date_arr)
-            self.operator_le.setText(self.archive.struct.tests[data].operator)
-            self.serial_le.setText(self.archive.struct.tests[data].serial_number)
-            self.push_force_le.setText(self.archive.struct.tests[data].push_force)
+            select_archive = self.archive.files_name_arr[self.archive.index_archive]
+            time_test = self.archive.struct.tests[index].time_test
+
+            min_comp = self.archive.struct.tests[index].amort.min_comp
+            min_comp_2 = self.archive.struct.tests[index].amort.min_comp_2
+            max_comp = self.archive.struct.tests[index].amort.max_comp
+            max_comp_2 = self.archive.struct.tests[index].amort.max_comp_2
+            min_recoil = self.archive.struct.tests[index].amort.min_recoil
+            min_recoil_2 = self.archive.struct.tests[index].amort.min_recoil_2
+            max_recoil = self.archive.struct.tests[index].amort.max_recoil
+            max_recoil_2 = self.archive.struct.tests[index].amort.max_recoil_2
+
+            self.name_le.setText(f'{self.archive.struct.tests[index].amort.name}')
+            self.operator_le.setText(f'{user_rank} {user_name}')
+            self.speed_set_1_le.setText(f'{self.archive.struct.tests[index].amort.speed_one}')
+            self.speed_set_2_le.setText(f'{self.archive.struct.tests[index].amort.speed_two}')
+            self.limit_recoil_1_le.setText(f'{min_recoil} - {max_recoil}')
+            self.limit_recoil_2_le.setText(f'{min_recoil_2} - {max_recoil_2}')
+            self.limit_comp_1_le.setText(f'{min_comp} - {max_comp}')
+            self.limit_comp_2_le.setText(f'{min_comp_2} - {max_comp_2}')
+            self.serial_le.setText(f'{self.archive.struct.tests[index].serial_number}')
+            self.date_le.setText(f'{select_archive} - {time_test}')
+            self.max_temp_le.setText(f'{self.archive.struct.tests[index].amort.max_temper}')
+            self.hod_le.setText(f'{self.archive.struct.tests[index].amort.hod}')
+
+            self.push_force_le.setText(f'{self.archive.struct.tests[index].push_force}')
+
+            # максимальные отбой/сжатие
+
+            self._fill_flag_push_force(index)
+            self._fill_speed_now(index)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
 
+    def _fill_speed_now(self, index):
+        try:
+            txt = ''
+            type_test = self.archive.struct.tests[index].type_test
+            if type_test == 'lab':
+                txt = f'{self.archive.struct.tests[index].speed}'
+
+            elif type_test == 'lab_cascade':
+                speed_list = []
+                for key, value in self.archive.struct.tests[index].cascade.items():
+                    speed_list.append(float(value.speed))
+
+                min_speed = min(speed_list)
+                max_speed = max(speed_list)
+
+                txt = f'{min_speed} - {max_speed}'
+
+            self.speed_le.setText(txt)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_speed_now - {e}')
+
+    def _fill_flag_push_force(self, index):
+        txt = ''
+        flag = self.archive.struct.tests[index].flag_push_force
+        if flag == '1':
+            txt = f'Выталкивающая\nсила\nучитываетcя'
+        elif flag == '0':
+            txt = f'Выталкивающая\nсила\nне учитывается'
+
+        self.lbl_push_force.setText(txt)
+
+    # FIXME
     def _archive_graph(self, data):
         try:
             self.graphwidget.clear()
