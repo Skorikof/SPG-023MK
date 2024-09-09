@@ -270,7 +270,7 @@ class Reader(QRunnable):
                                     self.result['temper'].append(round(rr[ind + 5] * 0.01, 1))
 
                                 else:
-                                    # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}')
+                                    # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
                                     break
 
                             delta_r = 16384 + self.buffer_all - self.reg_buffer

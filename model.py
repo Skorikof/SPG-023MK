@@ -61,7 +61,7 @@ class Model:
             self._init_reader()
             time.sleep(0.2)
             self.reader_start()
-            # self.write_bit_force_cycle(1)
+            self.write_bit_force_cycle(1)
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -207,7 +207,8 @@ class Model:
                     move_list.append(response.get('move')[count])
 
             if not force_list:
-                print(f'Пришла пустая посылка')
+                # print(f'Пришла пустая посылка')
+                pass
 
             else:
                 command = {'force': force_list[-1],
@@ -315,18 +316,16 @@ class Model:
 
     def _find_start_direction(self, move: list):
         try:
+            direction = False
             start_point = self.set_regs.get('start_point')
             if start_point < move[-1] + 1:
-                command = {'start_direction': 'up',
-                           'current_direction': 'up'}
+                direction = 'up'
 
             elif start_point > move[-1] - 1:
-                command = {'start_direction': 'down',
-                           'current_direction': 'down'}
+                direction = 'down'
 
-            else:
-                command = {'start_direction': False}
-
+            command = {'start_direction': direction,
+                       'current_direction': direction}
             self.update_main_dict(command)
 
         except Exception as e:
@@ -498,12 +497,12 @@ class Model:
         try:
             if flag:
                 if not self.set_regs.get('flag_bit_force', False):
-                    self.signals.write_bit_force.emit(flag)
+                    # self.signals.write_bit_force.emit(flag)
                     self.set_regs['flag_bit_force'] = True
 
             else:
                 if self.set_regs.get('flag_bit_force', True):
-                    self.signals.write_bit_force.emit(flag)
+                    # self.signals.write_bit_force.emit(flag)
                     self.set_regs['flag_bit_force'] = False
 
         except Exception as e:

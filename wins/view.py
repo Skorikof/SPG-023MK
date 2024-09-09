@@ -70,6 +70,7 @@ class AppWindow(QMainWindow):
         self._init_signals()
 
         self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
+        self.ui.test_save_btn.setVisible(False)
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -126,7 +127,7 @@ class AppWindow(QMainWindow):
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
-        self.ui.test_save_btn.clicked.connect(self.save_btn_clicked)
+        # self.ui.test_save_btn.clicked.connect(self.save_btn_clicked)
 
     def update_data_view(self, response):
         try:
@@ -550,7 +551,7 @@ class AppWindow(QMainWindow):
 
             if name != '' and rank != '':
                 self.flag_push_force_set()
-                if self.response.get('type_test') == 'lab':
+                if self.response.get('type_test') == 'lab' or self.response.get('type_test') == 'lab_cascade':
                     flag = self.serial_editing_finished()
                     if flag:
                         serial_number = self.ui.specif_serial_lineEdit.text()
@@ -580,16 +581,19 @@ class AppWindow(QMainWindow):
 
     def flag_push_force_set(self):
         try:
-            self.model.set_regs['flag_push_force'] = self.ui.push_force_chb.isChecked()
+            if self.ui.push_force_chb.isChecked():
+                self.model.set_regs['flag_push_force'] = True
+                self.model.set_regs['lbl_push_force'] = f'Выталкивающая\nсила\nучитываетcя'
+
+            else:
+                self.model.set_regs['flag_push_force'] = False
+                self.model.set_regs['lbl_push_force'] = f'Выталкивающая\nсила\nне учитываетcя'
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
 
-    def begin_test(self):
+    def save_log_begin_test(self):
         try:
-            self.main_stop_enable()
-            self.main_btn_disable()
-
             amort = self.response.get('amort')
             type_test = self.response.get('type_test')
 
@@ -614,39 +618,56 @@ class AppWindow(QMainWindow):
 
             self.model.set_regs['hod'] = amort.hod
 
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/save_log_begin_test - {e}')
+
+    def fill_gui_lab_test(self):
+        try:
+            amort = self.response.get('amort')
+            name = amort.name
+            hod = f'{amort.hod}'
+            speed_one = f'{amort.speed_one}'
+            speed_two = f'{amort.speed_two}'
+            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
+            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
+            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
+            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
+
+            self.ui.lab_name_le.setText(name)
+            self.ui.lab_speed_set_1_le.setText(speed_one)
+            self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
+            self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
+            self.ui.lab_speed_set_2_le.setText(speed_two)
+            self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
+            self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
+            self.ui.lab_hod_le.setText(hod)
+
+            self.ui.lbl_push_force_lab.setText(self.model.set_regs.get('lbl_push_force', ''))
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/fill_gui_lab_test - {e}')
+
+    def begin_test(self):
+        try:
+            self.main_stop_enable()
+            self.main_btn_disable()
+
+            self.save_log_begin_test()
+
+            type_test = self.response.get('type_test')
+
             if type_test == 'lab' or type_test == 'lab_cascade':
-                self.ui.lbl_push_force_lab.setText(self.fill_lbl_push_force)
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
-
-                self.ui.lab_name_le.setText(name)
-                self.ui.lab_speed_set_1_le.setText(speed_one)
-                self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
-                self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
-                self.ui.lab_speed_set_2_le.setText(speed_two)
-                self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
-                self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
-                self.ui.lab_hod_le.setText(hod)
-                self.ui.lab_serial_le.setText(self.response.get('serial_number'))
+                self.fill_gui_lab_test()
 
             elif type_test == 'conv':
-                self.ui.lbl_push_force_conv.setText(self.fill_lbl_push_force)
+                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
             self.controller.start_test_clicked()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/begin_test - {e}')
-
-    def fill_lbl_push_force(self):
-        try:
-            flag = self.response.get('flag_push_force')
-            if flag:
-                return 'Выталкивающая\nсила\nучитываетcя'
-            else:
-                return 'Выталкивающая\nсила\nне учитывается'
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/fill_lbl_push_force - {e}')
 
     def _lab_win_clear(self):
         try:
@@ -755,6 +776,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
             self.ui.lab_push_force_le.setText(f'{self.response.get("push_force", 0)}')
             self.ui.lab_speed_le.setText(f'{self.response.get("gear_speed", 0)}')
+            self.ui.lab_serial_le.setText(f'{self.response.get("serial_number", 0)}')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
@@ -795,17 +817,17 @@ class AppWindow(QMainWindow):
             self.ui.conv_comp_le.setText(f'{self.response.get("max_comp", 0)}')
             self.ui.conv_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
             self.ui.conv_temperture_le.setText(f'{self.response.get("temperature", 0)}')
-            
+
             if self.response.get('stage') == 'test_speed_one':
-                self.ui.conv_speed_le.setText(amort.speed_one)
+                self.ui.conv_speed_le.setText(f'{amort.speed_one}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             
             elif self.response.get('stage') == 'test_speed_two':
-                self.ui.conv_speed_le.setText(amort.speed_two)
+                self.ui.conv_speed_le.setText(f'{amort.speed_two}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
-                
+
             else:
                 pass
             

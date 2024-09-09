@@ -40,9 +40,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
-        self.model.reader_stop_test()
-        time.sleep(0.2)
-        self.model.write_bit_force_cycle(0)
+        # self.model.reader_stop_test()
+        # time.sleep(0.2)
+        # self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
     def start_param_win_set(self):
@@ -64,7 +64,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
-        self.btn_test.clicked.connect(self._btn_test_clicked)
+        # self.btn_test.clicked.connect(self._btn_test_clicked)
         self.btn_hod.clicked.connect(self._write_hod)
         self.btn_speed_main.clicked.connect(self._write_speed_set)
         self.btn_freq_trverse.clicked.connect(self._write_frequency_set)
@@ -254,11 +254,13 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
             self.model.update_main_dict(command)
 
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
+            self.model.reader_start_test()
             self.graph_ui.show()
 
         else:
-            self.model.write_bit_force_cycle(0)
+            # self.model.write_bit_force_cycle(0)
+            self.model.reader_stop_test()
 
     def update_graph_hand_set(self):
         try:

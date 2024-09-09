@@ -86,6 +86,14 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_update_full_cycle - {e}')
 
+    def _check_state_bit_force(self, state):
+        try:
+            if not self.response.get('cycle_force') == state:
+                pass
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/_check_state_bit_force - {e}')
+
     def change_state_read_buffer(self, flag):
         try:
             if flag:
@@ -150,7 +158,7 @@ class Controller:
 
             elif stage == 'search_hod':
                 if self.count_cycle >= 2:
-                    self.model.motor_stop(1)
+                    # self.model.motor_stop(1)
                     self.model.set_regs['stage'] = 'wait'
                     self._stop_gear_min_pos()
 
@@ -164,7 +172,8 @@ class Controller:
                                        }
                             self.model.update_main_dict(command)
 
-                            self.model.write_bit_force_cycle(0)
+                            # self.model.write_bit_force_cycle(0)
+                            self.model.reader_stop_test()
 
                             self.signals.reset_ui.emit()
 
@@ -195,13 +204,7 @@ class Controller:
                                'stage': 'wait'}
                     self.model.update_main_dict(command)
 
-                    if self.response.get('repeat_test', False):
-                        self.model.set_regs['repeat_test'] = False
-                        self.model.write_bit_force_cycle(1)
-                        self._test_on_two_speed(1)
-
-                    else:
-                        self._test_move_cycle()
+                    self._test_move_cycle()
 
             elif stage == 'test_move_cycle':
                 if self.count_cycle >= 1:
@@ -402,7 +405,8 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
+        self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
 
@@ -445,7 +449,8 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
+        self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
 
@@ -505,7 +510,8 @@ class Controller:
         self.model.motor_stop(2)
         self.model.write_bit_red_light(1)
 
-        self.model.write_bit_force_cycle(0)
+        #self.model.write_bit_force_cycle(0)
+        self.model.reader_stop_test()
 
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
@@ -540,7 +546,8 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
+        self.model.reader_stop_test()
 
         self.model.log_error(f'alarm traverse {pos}')
         self.signals.control_msg.emit(f'alarm_traverse_{pos}')
@@ -568,7 +575,8 @@ class Controller:
         if self.model.client:
             self.model.motor_stop(1)
             self.model.motor_stop(2)
-            self.model.write_bit_force_cycle(0)
+            # self.model.write_bit_force_cycle(0)
+            self.model.reader_stop_test()
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
@@ -594,11 +602,11 @@ class Controller:
                     self.model.update_main_dict(command)
                     self.model.reset_min_point()
 
-                    # if self.response.get('lost_control'):
-                    #     self.model.write_bit_unblock_control()
+                    if self.response.get('lost_control'):
+                        self.model.write_bit_unblock_control()
 
-                    # if self.response.get('excess_force'):
-                    #     self.model.write_bit_emergency_force()
+                    if self.response.get('excess_force'):
+                        self.model.write_bit_emergency_force()
 
                     self.traverse_install_point('start_test')
 
@@ -632,11 +640,11 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            # if self.response.get('excess_force', False) is True:
-            #     self.model.write_bit_emergency_force()
+            if self.response.get('excess_force', False) is True:
+                self.model.write_bit_emergency_force()
 
-            # if self.response.get('lost_control', False) is True:
-            #     self.model.write_bit_unblock_control()
+            if self.response.get('lost_control', False) is True:
+                self.model.write_bit_unblock_control()
 
             self.lamp_all_switch_off()
 
@@ -661,11 +669,18 @@ class Controller:
             force = self._calc_excess_force()
             self.model.write_emergency_force(force)
 
-            if self.response.get('traverse_move', 0) < 10:
-                self._traverse_referent_point()
+            if self.model.set_regs.get('repeat_test', False):
+                self.model.set_regs['repeat_test'] = False
+                # self.model.write_bit_force_cycle(1)
+                self.model.reader_start_test()
+                self._test_on_two_speed(1)
 
             else:
-                self.traverse_install_point('install')
+                if self.response.get('traverse_move', 0) < 10:
+                    self._traverse_referent_point()
+
+                else:
+                    self.traverse_install_point('install')
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
@@ -725,7 +740,8 @@ class Controller:
 
             self.count_cycle = 0
 
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
+            self.model.reader_start_test()
 
             self.model.set_regs['stage'] = 'search_hod'
 
@@ -757,7 +773,8 @@ class Controller:
 
             self.count_cycle = 0
 
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
+            self.model.reader_start_test()
 
             self.model.set_regs['stage'] = 'pos_set_gear'
 
@@ -869,7 +886,8 @@ class Controller:
 
             self.count_cycle = 0
 
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
+            self.model.reader_start_test()
 
             self.model.motor_up(1)
 
@@ -934,7 +952,7 @@ class Controller:
                     self.model.motor_up(1)
 
                 elif ind == 2:
-                    command = {'gear_speed': amort.speed_one,
+                    command = {'gear_speed': amort.speed_two,
                                'stage': 'test_speed_two',
                                }
                     self.model.update_main_dict(command)
@@ -1026,7 +1044,8 @@ class Controller:
     def _stop_gear_min_pos(self):
         """Снижение скорости и остановка привода в нижней точке"""
         try:
-            self.model.write_bit_force_cycle(0)
+            # self.model.write_bit_force_cycle(0)
+            self.model.reader_stop_test()
 
             self._write_speed_motor(1, speed=0.03)
 
