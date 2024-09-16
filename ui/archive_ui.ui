@@ -159,7 +159,7 @@
          </property>
          <item>
           <property name="text">
-           <string>Перемещение / Усилие</string>
+           <string>Усилие / Перемещение</string>
           </property>
          </item>
          <item>

@@ -5,7 +5,6 @@ from PyQt5.QtGui import QPageLayout, QPixmap, QPainter, QIcon
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QAbstractPrintDialog
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
-from datetime import datetime
 from PIL import ImageGrab
 import pyqtgraph as pg
 
@@ -22,6 +21,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def __init__(self):
         super(ArchiveWin, self).__init__()
         try:
+            self.type_graph = 'move'
+            self.ind_type_test = -1
+            self.index_test = 0
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -62,11 +64,19 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_ui_clear()
 
             else:
+                self.btn_print.setEnabled(True)
                 self.combo_dates.addItems(self.archive.files_name_sort)
                 self.combo_dates.setCurrentIndex(0)
-                self.combo_dates.activated[str].connect(self._archive_selected)
                 self._archive_selected(self.archive.files_name_sort[0])
-                self.btn_print.setEnabled(True)
+                self.combo_dates.activated[str].connect(self._archive_selected)
+
+                self._archive_test_select(0)
+                self._archive_graph(0)
+                self.combo_test.activated[int].connect(self._archive_test_select)
+                self.combo_test.activated[int].connect(self._archive_graph)
+
+                self._select_type_graph(0)
+                self.combo_type.activated[int].connect(self._select_type_graph)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/archive_update - {e}')
@@ -94,11 +104,51 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
 
-    def _archive_selected(self, data):
+    def _select_type_graph(self, index):
+        try:
+            if self.ind_type_test != index:
+                self.ind_type_test = index
+                if index == 0:
+                    self.type_graph = 'move'
+                    self._gui_move_graph()
+
+                elif index == 1:
+                    self.type_graph = 'speed'
+                    self._gui_speed_graph()
+                self._archive_graph(self.index_test)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
+
+    def _gui_move_graph(self):
+        try:
+            self.graphwidget.clear()
+            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
+            self.graphwidget.setLabel('bottom', 'Перемещение', units='мм')
+            self.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ ПЕРЕМЕЩЕНИЯ')
+            self.graphwidget.showGrid(True, True)
+            self.graphwidget.setBackground('w')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_graph - {e}')
+
+    def _gui_speed_graph(self):
+        try:
+            self.graphwidget.clear()
+            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
+            self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
+            self.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ СКОРОСТИ')
+            self.graphwidget.showGrid(True, True)
+            self.graphwidget.setBackground('w')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
+
+    def _archive_selected(self, date):
         try:
             self.combo_test.clear()
             temp_arr = []
-            self.archive.select_file(data)
+            self.archive.select_file(date)
 
             for i in range(len(self.archive.struct.tests)):
                 temp = (f'{self.archive.struct.tests[i].time_test} - '
@@ -107,11 +157,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 temp_arr.append(temp)
 
             self.combo_test.addItems(temp_arr)
-
-            self._archive_test_select(0)
-            self._archive_graph(0)
-            self.combo_test.activated[int].connect(self._archive_test_select)
-            self.combo_test.activated[int].connect(self._archive_graph)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
@@ -147,8 +192,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.hod_le.setText(f'{self.archive.struct.tests[index].amort.hod}')
 
             self.push_force_le.setText(f'{self.archive.struct.tests[index].push_force}')
-
-            # максимальные отбой/сжатие
 
             self._fill_flag_push_force(index)
             self._fill_speed_now(index)
@@ -188,63 +231,79 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         self.lbl_push_force.setText(txt)
 
-    # FIXME
-    def _archive_graph(self, data):
+    def _archive_graph(self, index):
         try:
+            self.index_test = index
             self.graphwidget.clear()
-            self.graphwidget.setLabel('left', 'СЖАТИЕ ---------------------УСИЛИЕ ------------ОТБОЙ', units='кгс')
-            self.graphwidget.setLabel('bottom', 'Перемещение', units='мм')
-            self.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ ПЕРЕМЕЩЕНИЯ')
+            type_test = self.archive.struct.tests[index].type_test
+            if type_test == 'lab':
+                self._pars_lab_graph(index)
 
-            list_x = []
-            list_y = []
-
-            flag_mirror = False
-            temp_val = self.archive.struct.tests[data].date_arch
-            dat_curr = datetime.strptime(temp_val, "%d.%m.%Y")
-            dat_m = datetime.strptime('20.04.2022', "%d.%m.%Y")
-            if dat_curr < dat_m:
-                flag_mirror = True
-
-            for i in range(len(self.archive.struct.tests[data].graph)):
-                temp_val = self.archive.struct.tests[data].graph[i]
-                temp_val = temp_val.replace(',', '.')
-                temp_val = temp_val.split(";")
-                list_x.append(float(temp_val[0]))
-                if flag_mirror:
-                    list_y.append(-float(temp_val[1]))
-                else:
-                    list_y.append(float(temp_val[1]))
-                # list_y.append(float(temp_val[1]))
-
-            temp_val = self.archive.struct.tests[data].graph[0]
-            temp_val = temp_val.replace(',', '.')
-            temp_val = temp_val.split(";")
-            list_x.append(float(temp_val[0]))
-            if flag_mirror:
-                list_y.append(-float(temp_val[1]))
-            else:
-                list_y.append(float(temp_val[1]))
-            # list_y.append(float(temp_val[1]))
-
-            max_y = str(max(list_y))
-            min_y = str(abs(min(list_y)))
-
-            self.graphwidget.showGrid(True, True)
-
-            self.graphwidget.setBackground('w')
-
-            pen = pg.mkPen(color='k', width=3)
-
-            self.graphwidget.plot(list_x, list_y, pen=pen)
-            # if flag_mirror:
-
-            # else:
-            self.max_comp_le.setText(min_y)
-            self.max_recoil_le.setText(max_y)
+            elif type_test == 'lab_cascade':
+                self._pars_cascade_graph(index)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
+
+    def _pars_lab_graph(self, index):
+        try:
+            move_list = self.archive.struct.tests[index].move_list
+            force_list = self.archive.struct.tests[index].force_list
+
+            max_recoil = max(force_list)
+            max_comp = abs(min(force_list))
+
+            pen = pg.mkPen(color='black', width=3)
+
+            if self.type_graph == 'speed':
+                move_list = self._convert_move_in_speed(move_list)
+
+            self.graphwidget.plot(move_list, force_list, pen=pen)
+
+            self.comp_le.setText(f'{max_comp}')
+            self.recoil_le.setText(f'{max_recoil}')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_graph - {e}')
+
+    def _pars_cascade_graph(self, index):
+        try:
+            pen = pg.mkPen(color='black', width=3)
+            data_dict = self.archive.struct.tests[index].cascade
+            for key, value in data_dict.items():
+                if self.type_graph == 'speed':
+                    move_list = self._convert_move_in_speed(value.move)
+                else:
+                    move_list = value.move.copy()
+                self.graphwidget.plot(move_list, value.force, pen=pen)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_cascade_graph - {e}')
+
+    def _convert_move_in_speed(self, move_list):
+        try:
+            sum_list = []
+            response_list = []
+            begin_5_points = move_list[0:5]
+            end_5_points = move_list[-5:]
+            temp_list = end_5_points + move_list + begin_5_points
+
+            for i in range(len(move_list)):
+                for j in range(i, i + 10):
+                    sum_list.append(round(abs(abs(temp_list[j]) - abs(temp_list[j + 1])), 2))
+
+                temp_sum = 0
+                for k in range(len(sum_list) - 1):
+                    temp_sum = temp_sum + abs(sum_list[k] - sum_list[k + 1])
+
+                response_list.append(round(temp_sum, 10))
+
+                sum_list = []
+
+            return response_list
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_convert_move_in_speed - {e}')
 
     def _archive_save_form(self):
         try:
@@ -252,8 +311,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             pos = rect.getRect()
             x = pos[0] + 1
             y = pos[1] + 80
-            height = 810
-            width = 1014
+            height = 820
+            width = 1024
 
             image = ImageGrab.grab((x, y, x + width, y + height))
             image.save("screen.bmp", "BMP")

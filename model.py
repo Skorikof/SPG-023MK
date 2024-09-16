@@ -47,7 +47,9 @@ class Model:
         self.yellow_rattle = False
         self.count_msg = 0
         self.adjust_x = 0
-        self.main_min_point = 0
+        self.main_min_point = 100
+        self.min_point = 0
+        self.max_point = 0
         self._start_param_model()
 
     def _start_param_model(self):
@@ -166,7 +168,7 @@ class Model:
             self.log_error(f'ERROR in model/update_settings_dict - {e}')
 
     def reset_min_point(self):
-        self.main_min_point = 0
+        self.main_min_point = 100
 
     def _reader_result(self, response, tag):
         try:
@@ -305,24 +307,16 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/_yellow_btn_click - {e}')
 
-    def _find_start_point(self, move: float):
-        try:
-            command = {'start_point': move,
-                       'start_pos': True}
-            self.update_main_dict(command)
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/_find_start_point - {e}')
-
     def _find_start_direction(self, move: list):
         try:
-            direction = False
-            start_point = self.set_regs.get('start_point')
-            if start_point < move[-1] + 1:
+            if move[0] < move[-1]:
                 direction = 'up'
 
-            elif start_point > move[-1] - 1:
+            elif move[0] > move[-1]:
                 direction = 'down'
+
+            else:
+                direction = False
 
             command = {'start_direction': direction,
                        'current_direction': direction}
@@ -331,86 +325,76 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/_find_start_direction - {e}')
 
-    def _pars_response_on_circle(self, force: list, move: list):
+    def _find_direction_and_point(self, force, move):
         try:
-            flag_graph = self.set_regs.get('fill_graph', False)
-
-            if not self.set_regs.get('start_pos'):
-                self._find_start_point(move[0])
-
-            if not self.set_regs.get('start_direction', False):
-                self._find_start_direction(move)
-
-            if self.set_regs.get('current_direction') == 'up':
-                if flag_graph is True:
-                    self.set_regs['force_accum_list'].extend(force)
-                    self.set_regs['move_accum_list'].extend(move)
+            direction = self.set_regs.get('current_direction')
+            if direction == 'up':
                 if max(move) > move[-1]:
-                    command = {'max_point': max(move),
-                               'push_force': force[move.index(max(move))],
-                               'max_pos': True,
-                               'current_direction': 'down',
-                               }
+                    if not -1 < max(move) < 1:
+                        self.max_point = max(move)
+                        command = {'max_point': self.max_point,
+                                   'push_force': force[move.index(self.max_point)],
+                                   'max_pos': True,
+                                   'current_direction': 'down',
+                                   }
 
-                    self.update_main_dict(command)
+                        self.update_main_dict(command)
+                        print(f'{self.max_point=}')
 
-            elif self.set_regs.get('current_direction') == 'down':
-                if flag_graph is True:
-                    self.set_regs['force_accum_list'].extend(force)
-                    self.set_regs['move_accum_list'].extend(move)
+            elif direction == 'down':
                 if min(move) < move[-1]:
-                    command = {'min_point': min(move),
-                               'start_point': min(move) + 2,
-                               'min_pos': True,
-                               'current_direction': 'up',
-                               }
+                    if not -1 < min(move) < 1:
+                        self.min_point = min(move)
+                        command = {'min_point': self.min_point,
+                                   'min_pos': True,
+                                   'current_direction': 'up',
+                                   }
 
-                    self.update_main_dict(command)
-                    if min(move) < self.main_min_point:
-                        self.main_min_point = min(move)
+                        self.update_main_dict(command)
+                        if self.min_point < self.main_min_point:
+                            self.main_min_point = self.min_point
 
-            if (self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and
-                    (self.set_regs.get('start_point') in move)):
-
-                if self.set_regs.get('gear_referent', False) is False:
-                    # amort = self.set_regs.get('amort')
-                    # if not amort.hod:
-                    #     amort.hod = 118
-                    # teor_hod = amort.hod
-                    # if amort.hod == 120:
-                    #     teor_hod = 118
-                    # fact_hod = abs(self.set_regs.get('min_point')) + abs(self.set_regs.get('max_point'))
-                    #
-                    # if abs(teor_hod - fact_hod) > 2:
-                    #     print(f'Ход несоответствует заданному')
-                    #
-                    # else:
-                    command = {'force_accum_list': [],
-                               'move_accum_list': [],
-                               'force_graph': [],
-                               'move_graph': [],
-                               'start_pos': False,
-                               'start_direction': False,
-                               'min_pos': False,
-                               'max_pos': False,
-                               'gear_referent': True}
-
-                    self.update_main_dict(command)
-
-                else:
-                    self._full_circle_done()
+                        print(f'{self.min_point=}')
 
         except Exception as e:
-            self.log_error(f'ERROR in model/_pars_response_on_circle - {e}')
+            self.log_error(f'ERROR in model/_find_direction_and_point - {e}')
+
+    def _add_data_in_list_graph(self, force, move):
+        try:
+            self.set_regs['force_accum_list'].extend(force)
+            self.set_regs['move_accum_list'].extend(move)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_add_data_in_list_graph - {e}')
+
+    def _check_full_circle(self):
+        try:
+            if self.set_regs.get('gear_referent', False) is False:
+                command = {'force_accum_list': [],
+                           'move_accum_list': [],
+                           'force_graph': [],
+                           'move_graph': [],
+                           'start_direction': False,
+                           'min_pos': False,
+                           'max_pos': False,
+                           'gear_referent': True}
+
+                self.update_main_dict(command)
+
+            else:
+                self._full_circle_done()
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_check_full_circle - {e}')
 
     def _full_circle_done(self):
         try:
             if self.set_regs.get('fill_graph', False):
-                flag_push_force = self.set_regs.get('flag_push_force')
 
                 y_point = self.set_regs.get('push_force')
-                x_list = list(map(lambda x: round(x * (-1) + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
-                if flag_push_force:
+                # x_list = list(map(lambda x: round(x * (-1) + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
+
+                if self.set_regs.get('flag_push_force', False):
                     y_list = list(map(lambda x: round(x * (-1) + y_point, 1), self.set_regs.get('force_accum_list')))
 
                 else:
@@ -419,20 +403,21 @@ class Model:
                 command = {'max_comp': abs(min(y_list)),
                            'max_recoil': max(y_list),
                            'force_graph': y_list[:],
-                           'move_graph': x_list[:],
+                           'move_graph': list(map(lambda x: round(x * (-1) + self.adjust_x, 1),
+                                                  self.set_regs.get('move_accum_list'))),
+                           'force_accum_list': [],
+                           'move_accum_list': [],
                            }
 
                 self.update_main_dict(command)
 
                 self.signals.update_data_graph.emit()
 
-            self.set_regs['hod_calc'] = round(abs(self.set_regs.get('max_point')) + abs(self.set_regs.get('min_point')), 1)
-
             self.signals.full_cycle_count.emit()
 
-            command = {'force_accum_list': [],
-                       'move_accum_list': [],
-                       'min_pos': False,
+            print(f'Signal full circle is done')
+
+            command = {'min_pos': False,
                        'max_pos': False,
                        }
 
@@ -441,14 +426,40 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/_full_circle_done - {e}')
 
-    # def map(self, func, iterable):
-    #     result = []
-    #     for item in iterable:
-    #         result.append(func(item))
-    #     return result
-
     def change_adjust_x(self, value):
         self.adjust_x = value
+
+    def _pars_response_on_circle(self, force: list, move: list):
+        try:
+            if not self.set_regs.get('start_direction', False):
+                self._find_start_direction(move)
+
+            else:
+                if self.set_regs.get('fill_graph', False):
+                    self._add_data_in_list_graph(force, move)
+
+                if self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and min(move) <= self.min_point <= max(move):
+                    hod = round(abs(self.min_point) + abs(self.max_point), 1)
+                    hod_dif = self.set_regs.get('hod', 120)
+                    print(f'{hod=}')
+                    if self.set_regs.get('search_hod') is False:
+                        if hod > hod_dif - 5:
+                            self._check_full_circle()
+                        else:
+                            command = {'min_pos': False,
+                                       'max_pos': False,
+                                       }
+
+                            self.update_main_dict(command)
+
+                    else:
+                        self._check_full_circle()
+
+                else:
+                    self._find_direction_and_point(force, move)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_pars_response_on_circle - {e}')
 
     def _init_timer_writer(self):
         self.timer_writer = QTimer()
@@ -538,7 +549,7 @@ class Model:
             writer_flag_init = True
             # self.threadpool.start(writer)
 
-            return(writer)
+            return writer
 
         except Exception as e:
             self.log_error(f'ERROR in model/_init_writer - {e}')

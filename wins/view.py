@@ -15,12 +15,8 @@ from archive import ReadArchive
 class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
-        self.response = {}
 
-        self.pen_test_lab = None
-        self.data_line_test_lab = None
-        self.pen_test_conv = None
-        self.data_line_test_conv = None
+        self.response = {}
         self.dict_lab_cascade = {}
 
         self.ui = Ui_MainWindow()
@@ -260,7 +256,6 @@ class AppWindow(QMainWindow):
                 color = glob_var.COLOR_LYELLOW
                 self.ui.message_btn_frame.setVisible(True)
                 self.ui.ok_message_btn.setVisible(True)
-                self.ui.ok_message_btn.setEnabled(True)
                 self.ui.cancel_message_btn.setVisible(False)
                 self.main_btn_disable()
             self.ui.main_stackedWidget.setCurrentIndex(0)
@@ -358,8 +353,6 @@ class AppWindow(QMainWindow):
 
     def slot_start_page(self):
         try:
-            self.main_ui_enable()
-            self.main_stop_disable()
             self._start_page()
 
         except Exception as e:
@@ -410,7 +403,7 @@ class AppWindow(QMainWindow):
 
     def btn_search_hod_clicked(self):
         try:
-            self.main_ui_disable()
+            self.main_btn_disable()
             self.main_stop_enable()
             self.controller.search_hod_gear()
 
@@ -419,9 +412,11 @@ class AppWindow(QMainWindow):
 
     def slot_search_hod(self):
         try:
-            hod = round(abs(self.response.get('min_point')) + abs(self.response.get('max_point')), 1)
+            # hod = round(abs(self.response.get('min_point')) + abs(self.response.get('max_point')), 1)
+            hod = self.response.get('hod_measure', 0)
             self.ui.hod_le.setText(f'{hod}')
             self.main_ui_enable()
+            self.main_btn_enable()
             self.main_stop_disable()
             self._start_page()
 
@@ -430,7 +425,7 @@ class AppWindow(QMainWindow):
 
     def btn_gear_set_pos(self):
         try:
-            self.main_ui_disable()
+            self.main_btn_disable()
             self.main_stop_enable()
             self.controller.move_gear_set_pos()
 
@@ -657,11 +652,13 @@ class AppWindow(QMainWindow):
             type_test = self.response.get('type_test')
 
             if type_test == 'lab' or type_test == 'lab_cascade':
+                self._lab_win_clear()
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
                 self.fill_gui_lab_test()
 
             elif type_test == 'conv':
+                self._conv_win_clear()
                 self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
             self.controller.start_test_clicked()
@@ -671,20 +668,20 @@ class AppWindow(QMainWindow):
 
     def _lab_win_clear(self):
         try:
-            self.data_line_test_lab.setData([], [])
+            self.ui.lab_GraphWidget.clear()
             self.ui.lab_recoil_le.clear()
             self.ui.lab_comp_le.clear()
             self.ui.lab_speed_le.clear()
             self.ui.lab_now_temp_le.clear()
             self.ui.lab_max_temp_le.clear()
             self.ui.lab_push_force_le.clear()
+            self.ui.lab_serial_le.clear()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_lab_win_clear - {e}')
 
     def lab_test_win(self):
         try:
-            self._lab_win_clear()
             self.ui.main_stackedWidget.setCurrentIndex(2)
 
         except Exception as e:
@@ -707,7 +704,6 @@ class AppWindow(QMainWindow):
 
     def _conv_win_clear(self):
         try:
-            self.data_line_test_conv.setData([], [])
             self.ui.conv_comp_le.clear()
             self.ui.conv_recoil_le.clear()
             self.ui.conv_speed_le.clear()
@@ -720,7 +716,6 @@ class AppWindow(QMainWindow):
 
     def conv_test_win(self):
         try:
-            self._conv_win_clear()
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
@@ -753,15 +748,14 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.showGrid(True, True)
             self.ui.lab_GraphWidget.setBackground('w')
 
-            self.pen_test_lab = pg.mkPen(color='black', width=3)
-            self.data_line_test_lab = self.ui.lab_GraphWidget.plot([], [], pen=self.pen_test_lab)
-
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_init_lab_graph - {e}')
 
     def _update_lab_graph(self):
         try:
-            self.data_line_test_lab.setData(self.response.get('move_graph'), self.response.get('force_graph'))
+            self.ui.lab_GraphWidget.clear()
+            pen = pg.mkPen(color='black', width=3)
+            self.ui.lab_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
 
             self._update_lab_data()
 
@@ -781,12 +775,14 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
 
-    # FIXME
     def _update_lab_cascade_graph(self):
         try:
+            self.ui.lab_GraphWidget.clear()
+            pen = pg.mkPen(color='black', width=3)
+
             if self.dict_lab_cascade:
                 for key, value in self.dict_lab_cascade.items():
-                    self.ui.lab_GraphWidget.plot(value.move, value.force, pen=self.pen_test_lab)
+                    self.ui.lab_GraphWidget.plot(value.move, value.force, pen=pen)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_cascade_graph - {e}')
@@ -796,15 +792,14 @@ class AppWindow(QMainWindow):
             self.ui.conv_GraphWidget.showGrid(True, True)
             self.ui.conv_GraphWidget.setBackground('w')
 
-            self.pen_test_conv = pg.mkPen(color='black', width=3)
-            self.data_line_test_conv = self.ui.conv_GraphWidget.plot([], [], pen=self.pen_test_conv)
-
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_init_conv_graph - {e}')
 
     def _update_conv_graph(self):
         try:
-            self.data_line_test_conv.setData(self.response.get('move_graph'), self.response.get('force_graph'))
+            self.ui.conv_GraphWidget.clear()
+            pen = pg.mkPen(color='black', width=3)
+            self.ui.conv_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
             
             self._update_conv_data()
 
@@ -896,7 +891,6 @@ class AppWindow(QMainWindow):
         self.main_ui_enable()
         self.win_set.hide()
 
-    # FIXME
     def slot_save_lab_result(self):
         try:
             type_test = self.response.get('type_test', 'lab')
@@ -909,7 +903,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
-    # FIXME
     def fill_data_on_lab_cascade(self):
         try:
             number = self.response.get('count_cascade', 1)
@@ -930,7 +923,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_btn_clicked - {e}')
 
-    # FIXME
     def save_data_in_archive(self):
         try:
             data_dict = {}

@@ -500,7 +500,7 @@ class Ui_WindowArch(object):
     def retranslateUi(self, WindowArch):
         _translate = QtCore.QCoreApplication.translate
         WindowArch.setWindowTitle(_translate("WindowArch", "Archive"))
-        self.combo_type.setItemText(0, _translate("WindowArch", "Перемещение / Усилие"))
+        self.combo_type.setItemText(0, _translate("WindowArch", "Усилие / Перемещение"))
         self.combo_type.setItemText(1, _translate("WindowArch", "Усилие / Скорость"))
         self.lbl_17.setText(_translate("WindowArch", "Пределы усилия сжатия, кгс:"))
         self.lbl_14.setText(_translate("WindowArch", "Наименование:"))

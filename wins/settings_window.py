@@ -245,8 +245,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            command = {'start_pos': False,
-                       'start_direction': False,
+            command = {'start_direction': False,
                        'current_direction': '',
                        'min_pos': False,
                        'max_pos': False,
