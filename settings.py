@@ -44,6 +44,7 @@ class PrgSettings:
                           'min_point': 0,
                           'max_pos': False,
                           'max_point': 0,
+                          'force_koef': 0,
                           'force': 0,
                           'force_list': [],
                           'force_accum_list': [],
@@ -59,7 +60,6 @@ class PrgSettings:
                           'max_temperature': 0,
                           'traverse_referent': False,
                           'gear_referent': False,
-                          'gear_speed': 0.02,
                           'traverse_freq': 10,
                           }
 

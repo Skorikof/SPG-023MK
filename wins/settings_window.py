@@ -40,9 +40,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
-        # self.model.reader_stop_test()
-        # time.sleep(0.2)
-        # self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
     def start_param_win_set(self):
@@ -64,7 +61,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
-        # self.btn_test.clicked.connect(self._btn_test_clicked)
         self.btn_hod.clicked.connect(self._write_hod)
         self.btn_speed_main.clicked.connect(self._write_speed_set)
         self.btn_freq_trverse.clicked.connect(self._write_frequency_set)
@@ -193,7 +189,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _update_win(self):
         self.lcdTime.display(self.response.get('count'))
-        self.lcdF.display(self.response.get('force'))
+        self.lcdF.display(self.response.get('force_real'))
         self.lcdH.display(self.response.get('move'))
         self.lcdH_T.display(self.response.get('traverse_move'))
         self.lcdTemp.display(self.response.get('temperature', 0))

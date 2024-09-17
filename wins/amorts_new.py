@@ -79,7 +79,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео некорректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
                                           f'длина в сжатом состоянии</b>'
                                           )
             self.response['len_min'] = ''
@@ -110,7 +110,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Длина в разжатом состоянии</b>'
                                           )
             self.response['len_max'] = ''
@@ -141,7 +141,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле --> Ход</b>'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле --> Ход</b>'
                                           )
             self.response['hod'] = ''
 
@@ -173,7 +173,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Первая скорость испытания</b>'
                                           )
             self.response['speed_one'] = ''
@@ -206,7 +206,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Вторая скорость испытания</b>'
                                           )
             self.response['speed_two'] = ''
@@ -261,7 +261,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия</b>'
                                           )
             self.response['comp_min'] = ''
@@ -293,7 +293,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия для второй скорости</b>'
                                           )
             self.response['comp_min_2'] = ''
@@ -325,7 +325,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия</b>'
                                           )
             self.response['comp_max'] = ''
@@ -357,7 +357,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия для второй скорости</b>'
                                           )
             self.response['comp_max_2'] = ''
@@ -389,7 +389,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя</b>'
                                           )
             self.response['recoil_min'] = ''
@@ -421,7 +421,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя для второй скорости</b>'
                                           )
             self.response['recoil_min_2'] = ''
@@ -453,7 +453,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
             self.response['recoil_max'] = ''
@@ -485,7 +485,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
             self.response['recoil_max_2'] = ''
@@ -516,7 +516,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео не корректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальная температура</b>'
                                           )
             self.response['temper'] = ''

@@ -167,19 +167,19 @@
           <x>10</x>
           <y>5</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -198,21 +198,21 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>60</y>
+          <y>55</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -264,21 +264,21 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>170</y>
+          <y>155</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -297,21 +297,21 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>115</y>
+          <y>105</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -684,21 +684,21 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>280</y>
+          <y>255</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -776,21 +776,21 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>225</y>
+          <y>205</y>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </rect>
         </property>
         <property name="minimumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>220</width>
-          <height>50</height>
+          <height>45</height>
          </size>
         </property>
         <property name="font">
@@ -803,6 +803,39 @@
         </property>
         <property name="text">
          <string>НАСТРОЙКА ХОДА</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="main_correct_force_btn">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>305</y>
+          <width>220</width>
+          <height>45</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>220</width>
+          <height>45</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>220</width>
+          <height>45</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial Black</family>
+          <pointsize>12</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>ОБНУЛИТЬ ДАТЧИК</string>
         </property>
        </widget>
       </widget>
@@ -852,7 +885,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1082,13 +1115,13 @@
               <widget class="QComboBox" name="specif_type_test_comboBox">
                <property name="minimumSize">
                 <size>
-                 <width>300</width>
+                 <width>485</width>
                  <height>40</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>300</width>
+                 <width>485</width>
                  <height>40</height>
                 </size>
                </property>
@@ -1103,12 +1136,17 @@
                </property>
                <item>
                 <property name="text">
-                 <string>Лабороторное</string>
+                 <string>Лабораторное с заданными скоростями</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Лабороторное каскадом</string>
+                 <string>Лабораторное с произвольной скоростью</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Лабораторное  с каскадом скоростей</string>
                 </property>
                </item>
                <item>
@@ -1151,21 +1189,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>380</y>
+               <y>310</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1188,21 +1226,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>500</y>
+               <y>410</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1225,21 +1263,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>560</y>
+               <y>510</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1262,9 +1300,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>20</y>
+               <y>10</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1284,9 +1322,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>140</y>
+               <y>110</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1306,9 +1344,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>260</y>
+               <y>210</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1328,9 +1366,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>80</y>
+               <y>60</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1350,21 +1388,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>80</y>
+               <y>60</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1387,21 +1425,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>20</y>
+               <y>10</y>
                <width>300</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>300</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>300</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1424,9 +1462,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>440</y>
+               <y>360</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1446,9 +1484,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>320</y>
+               <y>260</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1468,21 +1506,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>140</y>
+               <y>110</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1505,21 +1543,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>320</y>
+               <y>260</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1542,9 +1580,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>380</y>
+               <y>310</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1564,21 +1602,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>440</y>
+               <y>360</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1601,9 +1639,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>500</y>
+               <y>410</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1623,9 +1661,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>560</y>
+               <y>510</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1645,21 +1683,21 @@
              <property name="geometry">
               <rect>
                <x>505</x>
-               <y>260</y>
+               <y>210</y>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1682,21 +1720,21 @@
              <property name="geometry">
               <rect>
                <x>705</x>
-               <y>260</y>
+               <y>210</y>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>100</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1719,9 +1757,9 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>200</y>
+               <y>160</y>
                <width>340</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1741,21 +1779,21 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>200</y>
+               <y>160</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1778,21 +1816,21 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>320</y>
+               <y>260</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1815,21 +1853,21 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>380</y>
+               <y>310</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1852,21 +1890,21 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>440</y>
+               <y>360</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1889,21 +1927,21 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>500</y>
+               <y>410</y>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>150</width>
-               <height>40</height>
+               <height>35</height>
               </size>
              </property>
              <property name="font">
@@ -1925,10 +1963,10 @@
             <widget class="QCheckBox" name="push_force_chb">
              <property name="geometry">
               <rect>
-               <x>350</x>
-               <y>620</y>
-               <width>360</width>
-               <height>40</height>
+               <x>630</x>
+               <y>460</y>
+               <width>380</width>
+               <height>35</height>
               </rect>
              </property>
              <property name="font">
@@ -1938,10 +1976,232 @@
               </font>
              </property>
              <property name="text">
-              <string>Учитывать выталкивающую силу</string>
+              <string>Динамическая выталкивающая сила</string>
              </property>
              <property name="checked">
               <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QTableView" name="specif_lab_cascade_speed_table">
+             <property name="geometry">
+              <rect>
+               <x>860</x>
+               <y>210</y>
+               <width>100</width>
+               <height>235</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>18</pointsize>
+              </font>
+             </property>
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
+            <widget class="QLabel" name="specif_data_label8_2">
+             <property name="geometry">
+              <rect>
+               <x>40</x>
+               <y>460</y>
+               <width>400</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Статическая выталкивающая сила, кгс:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="specif_static_push_force_lineEdit">
+             <property name="geometry">
+              <rect>
+               <x>505</x>
+               <y>460</y>
+               <width>100</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>18</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>false</bool>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="btn_add_speed">
+             <property name="geometry">
+              <rect>
+               <x>700</x>
+               <y>210</y>
+               <width>35</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>35</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>35</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial Black</family>
+               <pointsize>18</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 5px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	background-color: rgb(0, 255, 0)
+	
+}</string>
+             </property>
+             <property name="text">
+              <string>+</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="btn_reduce_speed">
+             <property name="geometry">
+              <rect>
+               <x>780</x>
+               <y>210</y>
+               <width>35</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>35</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>35</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial Black</family>
+               <pointsize>18</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 5px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	background-color: rgb(0, 255, 0)
+	
+}</string>
+             </property>
+             <property name="text">
+              <string>-</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
              </property>
             </widget>
            </widget>
@@ -2986,7 +3246,7 @@
               <rect>
                <x>10</x>
                <y>170</y>
-               <width>141</width>
+               <width>145</width>
                <height>71</height>
               </rect>
              </property>
@@ -3011,9 +3271,9 @@
               </font>
              </property>
              <property name="text">
-              <string>Выталкивающая
-сила
-учитываетcя</string>
+              <string>Динамическая
+выталкивающая
+сила</string>
              </property>
              <property name="textFormat">
               <enum>Qt::AutoText</enum>
@@ -3117,16 +3377,16 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="test_save_btn">
+              <widget class="QPushButton" name="test_change_speed_btn">
                <property name="minimumSize">
                 <size>
-                 <width>170</width>
+                 <width>280</width>
                  <height>40</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>170</width>
+                 <width>280</width>
                  <height>40</height>
                 </size>
                </property>
@@ -3137,7 +3397,7 @@
                 </font>
                </property>
                <property name="text">
-                <string>СОХРАНИТЬ</string>
+                <string>ИЗМЕНИТЬ СКОРОСТЬ</string>
                </property>
               </widget>
              </item>
@@ -3765,7 +4025,7 @@
               <rect>
                <x>10</x>
                <y>20</y>
-               <width>141</width>
+               <width>145</width>
                <height>71</height>
               </rect>
              </property>
@@ -3790,9 +4050,9 @@
               </font>
              </property>
              <property name="text">
-              <string>Выталкивающая
-сила
-учитываетcя</string>
+              <string>Динамическая
+выталкивающая
+сила</string>
              </property>
              <property name="textFormat">
               <enum>Qt::AutoText</enum>

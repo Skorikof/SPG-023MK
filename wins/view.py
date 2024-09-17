@@ -7,7 +7,7 @@ from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
 from my_obj.graph_lab_cascade import DataGraphCascade
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidget, QTableWidgetItem
 import glob_var
 from archive import ReadArchive
 
@@ -66,7 +66,6 @@ class AppWindow(QMainWindow):
         self._init_signals()
 
         self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
-        self.ui.test_save_btn.setVisible(False)
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -118,12 +117,14 @@ class AppWindow(QMainWindow):
         self.ui.main_amorts_btn.clicked.connect(self.open_win_amort)
         self.ui.main_set_gear_hod_btn.clicked.connect(self.btn_gear_set_pos)
         self.ui.main_search_hod_btn.clicked.connect(self.btn_search_hod_clicked)
+        self.ui.main_correct_force_btn.clicked.connect(self.btn_correct_force_clicked)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
+        self.ui.btn_add_speed.clicked.connect(self.specif_lab_cascade_table)
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
-        # self.ui.test_save_btn.clicked.connect(self.save_btn_clicked)
+        self.ui.test_change_speed_btn.clicked.connect(self.change_speed_lab_test)
 
     def update_data_view(self, response):
         try:
@@ -321,11 +322,9 @@ class AppWindow(QMainWindow):
 
     def main_ui_enable(self):
         self.ui.main_stackedWidget.setEnabled(True)
-        # self.ui.main_btn_frame.setEnabled(True)
 
     def main_ui_disable(self):
         self.ui.main_stackedWidget.setEnabled(False)
-        # self.ui.main_btn_frame.setEnabled(False)
 
     def main_btn_enable(self):
         self.ui.main_operator_btn.setEnabled(True)
@@ -432,6 +431,13 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/btn_gear_set_pos - {e}')
 
+    def btn_correct_force_clicked(self):
+        try:
+            self.model.save_koef_force()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'btn_correct_force_clicked - {e}')
+
     def specif_page(self):
         self.specif_ui_clear()
         self.ui.main_stackedWidget.setCurrentIndex(1)
@@ -448,6 +454,7 @@ class AppWindow(QMainWindow):
         self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
         self.select_type_test(0)
 
+    # FIXME
     def update_graph_view(self):
         try:
             temp = self.response.get('type_test', 'hand')
@@ -470,15 +477,61 @@ class AppWindow(QMainWindow):
         try:
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
+                self.specif_lab_gui()
 
             elif ind == 1:
-                self.model.set_regs['type_test'] = 'lab_cascade'
+                self.model.set_regs['type_test'] = 'lab_hand'
+                self.specif_lab_hand_gui()
 
             elif ind == 2:
+                self.model.set_regs['type_test'] = 'lab_cascade'
+                self.specif_lab_cascade_gui()
+
+            elif ind == 3:
                 self.model.set_regs['type_test'] = 'conv'
+                self.specif_lab_gui()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_type_test - {e}')
+
+    def specif_lab_gui(self):
+        self.ui.specif_speed_one_lineEdit.setReadOnly(True)
+
+        self.ui.specif_speed_two_lineEdit.setVisible(True)
+        self.ui.specif_min_recoil_lineEdit_2.setVisible(True)
+        self.ui.specif_max_recoil_lineEdit_2.setVisible(True)
+        self.ui.specif_min_comp_lineEdit_2.setVisible(True)
+        self.ui.specif_max_comp_lineEdit_2.setVisible(True)
+
+        self.ui.btn_add_speed.setVisible(False)
+        self.ui.btn_reduce_speed.setVisible(False)
+        self.ui.specif_lab_cascade_speed_table.setVisible(False)
+
+    def specif_lab_hand_gui(self):
+        self.ui.specif_speed_one_lineEdit.setReadOnly(False)
+
+        self.ui.specif_speed_two_lineEdit.setVisible(False)
+        self.ui.specif_min_recoil_lineEdit_2.setVisible(False)
+        self.ui.specif_max_recoil_lineEdit_2.setVisible(False)
+        self.ui.specif_min_comp_lineEdit_2.setVisible(False)
+        self.ui.specif_max_comp_lineEdit_2.setVisible(False)
+
+        self.ui.btn_add_speed.setVisible(False)
+        self.ui.btn_reduce_speed.setVisible(False)
+        self.ui.specif_lab_cascade_speed_table.setVisible(False)
+
+    def specif_lab_cascade_gui(self):
+        self.ui.specif_speed_one_lineEdit.setReadOnly(False)
+
+        self.ui.specif_speed_two_lineEdit.setVisible(False)
+        self.ui.specif_min_recoil_lineEdit_2.setVisible(False)
+        self.ui.specif_max_recoil_lineEdit_2.setVisible(False)
+        self.ui.specif_min_comp_lineEdit_2.setVisible(False)
+        self.ui.specif_max_comp_lineEdit_2.setVisible(False)
+
+        self.ui.btn_add_speed.setVisible(True)
+        self.ui.btn_reduce_speed.setVisible(True)
+        self.ui.specif_lab_cascade_speed_table.setVisible(True)
 
     def select_amort(self, ind):
         try:
@@ -539,6 +592,75 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_ui_clear - {e}')
 
+    def calculate_speed_limit(self):
+        hod = int(self.response.get('hod', 40))
+        if 40 <= hod < 50:
+            return 0.34
+        elif 50 <= hod < 60:
+            return 0.42
+        elif 60 <= hod < 70:
+            return 0.51
+        elif 70 <= hod < 80:
+            return 0.59
+        elif 80 <= hod < 90:
+            return 0.68
+        elif 90 <= hod < 100:
+            return 0.77
+        elif 100 <= hod < 110:
+            return 0.85
+        elif 110 <= hod < 120:
+            return 0.94
+        elif hod == 120:
+            return 1.02
+        else:
+            return 0.34
+
+    def specif_lab_input_speed(self, obj):
+        try:
+            text = obj.text()
+            if not text:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              'Заполните поле скорости испытания'
+                                              )
+
+            speed = float(text.replace(',', '.'))
+            max_speed = self.calculate_speed_limit()
+            if 0.02 <= speed <= max_speed:
+                return speed
+
+            else:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              f'Данная скорость (<b style="color: #f00;">{speed}</b>)'
+                                              f'не попадает в диапазон от 0.02 до {max_speed}'
+                                              )
+
+        except ValueError:
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
+                                          f'Скорость испытания</b>'
+                                          )
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/specif_lab_cascade_add_speed - {e}')
+
+    # FIXME
+    def specif_lab_cascade_table(self):
+        try:
+            self.ui.specif_lab_cascade_speed_table = QTableWidget()
+            self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
+            speed = self.specif_lab_cascade_add_speed()
+            if speed:
+                rows_tab = self.ui.specif_lab_cascade_speed_table.rowCount()
+                self.ui.specif_lab_cascade_speed_table.insertRow(rows_tab)
+                self.ui.specif_lab_cascade_speed_table.setItem(rows_tab, 0, QTableWidgetItem(f'{speed}'))
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/specif_lab_cascade_table - {e}')
+
+    # FIXME
     def specif_continue_btn_click(self):
         try:
             name = self.response.get('operator')['name']
@@ -546,15 +668,33 @@ class AppWindow(QMainWindow):
 
             if name != '' and rank != '':
                 self.flag_push_force_set()
-                if self.response.get('type_test') == 'lab' or self.response.get('type_test') == 'lab_cascade':
+
+                type_test = self.response.get('type_test')
+
+                if type_test == 'conv':
+                    self.begin_test()
+
+                else:
+                    self.ui.test_change_speed_btn.setVisible(False)
+                    self.ui.lab_speed_le.setReadOnly(True)
                     flag = self.serial_editing_finished()
                     if flag:
                         serial_number = self.ui.specif_serial_lineEdit.text()
                         if serial_number != '':
                             self.model.set_regs['serial_number'] = serial_number
-                            self.begin_test()
-                elif self.response.get('type_test') == 'conv':
-                    self.begin_test()
+                            flag = self.static_push_force_editing()
+                            if flag:
+                                if type_test == 'lab_cascade':
+                                    pass
+
+                                elif type_test == 'lab_hand':
+                                    speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                    if speed:
+                                        self.model.set_regs['speed'] = speed
+                                        self.begin_test()
+
+                                else:
+                                    self.begin_test()
 
             else:
                 self.open_win_operator()
@@ -574,23 +714,52 @@ class AppWindow(QMainWindow):
         else:
             return True
 
+    def static_push_force_editing(self):
+        try:
+            text = self.ui.specif_static_push_force_lineEdit.text()
+            if not text:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              'Заполните поле статической выталкивающей силы'
+                                              )
+                return False
+
+            push_force = float(text.replace(',', '.'))
+            self.model.set_regs['static_push_force'] = push_force
+
+            return True
+
+        except ValueError:
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Введенео некорректное значение в поле -->\n'
+                                          f'Статическая выталкивающая сила</b>'
+                                          )
+
     def flag_push_force_set(self):
         try:
             if self.ui.push_force_chb.isChecked():
                 self.model.set_regs['flag_push_force'] = True
-                self.model.set_regs['lbl_push_force'] = f'Выталкивающая\nсила\nучитываетcя'
+                self.model.set_regs['lbl_push_force'] = f'Динамическая\nвыталкивающая\nсила'
 
             else:
                 self.model.set_regs['flag_push_force'] = False
-                self.model.set_regs['lbl_push_force'] = f'Выталкивающая\nсила\nне учитываетcя'
+                self.model.set_regs['lbl_push_force'] = f'Статическая\nвыталкивающая\nсила'
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
 
+    # FIXME
     def save_log_begin_test(self):
         try:
             amort = self.response.get('amort')
             type_test = self.response.get('type_test')
+            if type_test == 'lab_hand':
+                speed = self.response.get('speed')
+            elif type_test == 'lab_cascade':
+                speed = -1
+            else:
+                speed = amort.speed_one
 
             name = amort.name
             dimensions = f'{amort.min_length} - {amort.max_length}'
@@ -603,11 +772,11 @@ class AppWindow(QMainWindow):
             limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
             temper = f'{amort.max_temper}'
 
-            txt_log = f'Start {type_test} test --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                      f'speed_one = {speed_one}, speed_two = {speed_two}, limit_comp_one = {limit_comp_one}, ' \
-                      f'limit_comp_two = {limit_comp_two}, limit_recoil_one = {limit_recoil_one}, ' \
-                      f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
-                      f'max_temper = {temper}'
+            txt_log = (f'Start {type_test} test --> name = {name}, speed = {speed}, dimensions = {dimensions}, '
+                       f'hod = {hod}, speed_one = {speed_one}, speed_two = {speed_two}, '
+                       f'limit_comp_one = {limit_comp_one}, limit_comp_two = {limit_comp_two}, '
+                       f'limit_recoil_one = {limit_recoil_one}, limit_comp_two = {limit_comp_two}, '
+                       f'limit_recoil_two = {limit_recoil_two}, max_temper = {temper}')
 
             self.log_msg_info_slot(txt_log)
 
@@ -651,15 +820,15 @@ class AppWindow(QMainWindow):
 
             type_test = self.response.get('type_test')
 
-            if type_test == 'lab' or type_test == 'lab_cascade':
+            if type_test == 'conv':
+                self._conv_win_clear()
+                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
+
+            else:
                 self._lab_win_clear()
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
                 self.fill_gui_lab_test()
-
-            elif type_test == 'conv':
-                self._conv_win_clear()
-                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
             self.controller.start_test_clicked()
 
@@ -769,7 +938,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_now_temp_le.setText(f'{self.response.get("temperature", 0)}')
             self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
             self.ui.lab_push_force_le.setText(f'{self.response.get("push_force", 0)}')
-            self.ui.lab_speed_le.setText(f'{self.response.get("gear_speed", 0)}')
+            self.ui.lab_speed_le.setText(f'{self.response.get("speed", 0)}')
             self.ui.lab_serial_le.setText(f'{self.response.get("serial_number", 0)}')
 
         except Exception as e:
@@ -848,12 +1017,22 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')
 
+    def change_speed_lab_test(self):
+        try:
+            speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
+            if speed:
+                self.model.set_regs['speed'] = speed
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/change_speed_lab_test - {e}')
+
     def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
-        if self.response.get('type_test') == 'lab_cascade':
-            self._update_lab_cascade_graph()
-            self.save_data_in_archive()
+
+        if self.response.get('type_test') == 'lab_hand':
+            self.ui.lab_speed_le.setReadOnly(False)
+            self.ui.test_change_speed_btn.setVisible(True)
 
     def cancel_test_conv_clicked(self):
         try:
@@ -893,55 +1072,34 @@ class AppWindow(QMainWindow):
 
     def slot_save_lab_result(self):
         try:
-            type_test = self.response.get('type_test', 'lab')
-            if type_test == 'lab':
-                self.save_data_in_archive()
-
-            elif type_test == 'lab_cascade':
-                self.fill_data_on_lab_cascade()
+            self.save_data_in_archive()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
+    # FIXME
     def fill_data_on_lab_cascade(self):
         try:
             number = self.response.get('count_cascade', 1)
             data_graph = DataGraphCascade()
             data_graph.move = self.response.get('move_graph')[:]
             data_graph.force = self.response.get('force_graph')[:]
-            data_graph.speed = self.response.get('gear_speed')
+            data_graph.speed = self.response.get('speed')
 
             self.dict_lab_cascade[number] = data_graph
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/fill_data_on_lab_cascade - {e}')
 
-    def save_btn_clicked(self):
-        try:
-            self.save_data_in_archive()
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/save_btn_clicked - {e}')
-
     def save_data_in_archive(self):
         try:
-            data_dict = {}
-            if self.response.get('type_test') == 'lab_cascade':
-                data_dict['cascade_graph'] = self.dict_lab_cascade.copy()
-                self.dict_lab_cascade.clear()
-
-            elif self.response.get('type_test') == 'lab':
-                data_dict['move_graph'] = self.response.get('move_graph')[:]
-                data_dict['force_graph'] = self.response.get('force_graph')[:]
-                data_dict['speed'] = self.ui.lab_speed_le.text()
-
-            data_dict['type_test'] = self.response.get('type_test')
-            data_dict['operator'] = self.response.get('operator').copy()
-            data_dict['serial'] = self.response.get('serial_number')
-            data_dict['amort'] = self.response.get('amort')
-            data_dict['flag_push_force'] = int(self.response.get('flag_push_force'))
-            data_dict['push_force'] = self.response.get('push_force')
-            data_dict['max_temperature'] = self.response.get('max_temperature')
+            data_dict = {'move_graph': self.response.get('move_graph')[:],
+                         'force_graph': self.response.get('force_graph')[:], 'speed': self.response.get('speed'),
+                         'operator': self.response.get('operator').copy(), 'serial': self.response.get('serial_number'),
+                         'amort': self.response.get('amort'),
+                         'flag_push_force': int(self.response.get('flag_push_force')),
+                         'push_force': self.response.get('push_force'),
+                         'max_temperature': self.response.get('max_temperature')}
 
             ReadArchive().save_test_in_archive(data_dict)
 

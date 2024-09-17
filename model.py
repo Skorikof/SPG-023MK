@@ -167,6 +167,20 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/update_settings_dict - {e}')
 
+    def save_koef_force(self):
+        try:
+            self.set_regs['force_koef'] = self.set_regs.get('force_real', 0)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/save_koef_force - {e}')
+
+    def correct_force(self, force):
+        try:
+            return round(force - self.set_regs.get('force_koef', 0), 1)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/correct_force - {e}')
+
     def reset_min_point(self):
         self.main_min_point = 100
 
@@ -213,9 +227,10 @@ class Model:
                 pass
 
             else:
-                command = {'force': force_list[-1],
+                command = {'force_real': force_list[-1],
+                           'force': self.correct_force(force_list[-1]),
                            'move': move_list[-1],
-                           'force_list': force_list.copy(),
+                           'force_list': [self.correct_force(x) for x in force_list],
                            'move_list': move_list.copy(),
                            'temp_list': [x for x in response.get('temper', [0]) if x != -100.0],
                            'count': response.get('count', [-32000])[-1],
@@ -249,7 +264,8 @@ class Model:
                 if force != -100000:
                     command = {
                         'contact': True,
-                        'force': force,
+                        'force_real': force,
+                        'force': self.correct_force(force),
                         'move': self._movement_amount(response.get('regs', temp_list)[2]),
                         'count': self._counter_time(response.get('regs', temp_list)[4]),
                         'traverse_move': round(0.5 * self._movement_amount(response.get('regs', temp_list)[6]), 1),

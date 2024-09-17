@@ -212,7 +212,13 @@ class Controller:
 
             elif stage == 'pumping':
                 if self.count_cycle >= 3:
-                    self._test_on_two_speed(1)
+                    type_test = self.response.get('type_test')
+                    if type_test == 'lab_hand':
+                        self._test_lab_hand_speed()
+                    elif type_test == 'lab_cascade':
+                        self._test_lab_cascade()
+                    else:
+                        self._test_on_two_speed(1)
 
             elif stage == 'test_speed_one':
                 if self.count_cycle >= 4:
@@ -243,6 +249,15 @@ class Controller:
                     self.model.update_main_dict(command)
                     self._stop_gear_end_test()
 
+            elif stage == 'test_lab_hand_speed':
+                if self.count_cycle >= 4:
+                    command = {'stage': 'wait',
+                               'fill_graph': False}
+                    self.model.update_main_dict(command)
+                    self.signals.lab_save_result.emit()
+                    self._stop_gear_end_test()
+
+            # FIXME
             elif stage == 'test_lab_cascade':
                 if self.count_cycle >= 4:
                     self.signals.lab_save_result.emit()
@@ -251,7 +266,7 @@ class Controller:
                     if self.speed_cascade <= self.max_speed_cascade:
                         self.count_lab_cascade += 1
                         self._write_speed_motor(1, speed=self.speed_cascade)
-                        command = {'gear_speed': self.speed_cascade,
+                        command = {'speed': self.speed_cascade,
                                    'stage': 'test_lab_cascade',
                                    'count_cascade': self.count_lab_cascade,
                                    'force_accum_list': [],
@@ -304,15 +319,15 @@ class Controller:
                     if self.response.get('search_hod', False):
                         self.model.set_regs['search_hod'] = False
                         self.signals.search_hod.emit()
-                        
-                    elif self.response.get('type_test') == 'lab' or self.response.get('type_test') == 'lab_cascade':
-                        self.signals.lab_test_stop.emit()
 
-                    else:
+                    if self.response.get('type_test') == 'conv':
                         if self.response.get('test_launch', False) is True:
                             self.traverse_install_point('install')
                         else:
                             self.traverse_install_point('stop_test')
+
+                    else:
+                        self.signals.lab_test_stop.emit()
 
             elif stage == 'stop_test':
                 flag = self._control_traverse_move()
@@ -674,9 +689,17 @@ class Controller:
 
             if self.model.set_regs.get('repeat_test', False):
                 self.model.set_regs['repeat_test'] = False
+                type_test = self.model.set_regs.get('type_test')
                 # self.model.write_bit_force_cycle(1)
                 self.model.reader_start_test()
-                self._test_on_two_speed(1)
+                if type_test == 'lab_hand':
+                    self._test_lab_hand_speed()
+
+                elif type_test == 'lab_cascade':
+                    self._test_lab_cascade()
+
+                else:
+                    self._test_on_two_speed(1)
 
             else:
                 if self.response.get('traverse_move', 0) < 10:
@@ -738,7 +761,6 @@ class Controller:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
-                       'gear_speed': speed,
                        }
 
             self.model.update_main_dict(command)
@@ -779,7 +801,6 @@ class Controller:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
-                       'gear_speed': speed,
                        }
             self.model.update_main_dict(command)
 
@@ -901,11 +922,8 @@ class Controller:
                 speed = 0.03
 
             self._write_speed_motor(1, speed=speed)
-            
-            command = {'stage': 'test_move_cycle',
-                       'gear_speed': speed}
-            
-            self.model.update_main_dict(command)
+
+            self.model.set_regs['stage'] = 'test_move_cycle'
 
             self.count_cycle = 0
 
@@ -945,10 +963,8 @@ class Controller:
             
             self._write_speed_motor(1, speed=speed)
 
-            command = {'stage': 'pumping',
-                       'gear_speed': speed,
-                       }
-            self.model.update_main_dict(command)
+            self.model.set_regs['stage'] = 'pumping'
+
             self.count_cycle = 0
             self.model.motor_up(1)
 
@@ -958,41 +974,57 @@ class Controller:
     def _test_on_two_speed(self, ind):
         try:
             type_test = self.response.get('type_test')
-            if type_test == 'lab_cascade':
-                self._test_lab_cascade()
+            if type_test == 'conv':
+                self.signals.conv_win_test.emit()
+            elif type_test == 'lab':
+                self.signals.lab_win_test.emit()
 
-            else:
-                if type_test == 'conv':
-                    self.signals.conv_win_test.emit()
-                elif type_test == 'lab':
-                    self.signals.lab_win_test.emit()
+            speed_one = self.response.get('amort').speed_one
+            speed_two = self.response.get('amort').speed_two
 
-                amort = self.response.get('amort')
+            if ind == 1:
+                self._write_speed_motor(1, speed=speed_one)
+                command = {'speed': speed_one,
+                           'stage': 'test_speed_one',
+                           'force_accum_list': [],
+                           'move_accum_list': [],
+                           'fill_graph': True,
+                           }
+                self.model.update_main_dict(command)
 
-                if ind == 1:
-                    self._write_speed_motor(1, speed=amort.speed_one)
-                    command = {'gear_speed': amort.speed_one,
-                               'stage': 'test_speed_one',
-                               'force_accum_list': [],
-                               'move_accum_list': [],
-                               'fill_graph': True,
-                               }
-                    self.model.update_main_dict(command)
+                self.model.motor_up(1)
 
-                    self.model.motor_up(1)
+            elif ind == 2:
+                command = {'speed': speed_two,
+                           'stage': 'test_speed_two',
+                           }
+                self.model.update_main_dict(command)
 
-                elif ind == 2:
-                    command = {'gear_speed': amort.speed_two,
-                               'stage': 'test_speed_two',
-                               }
-                    self.model.update_main_dict(command)
+                self._write_speed_motor(1, speed=speed_two)
 
-                    self._write_speed_motor(1, speed=amort.speed_two)
-
-                self.count_cycle = 0
+            self.count_cycle = 0
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_test_on_two_speed - {e}')
+
+    def _test_lab_hand_speed(self):
+        try:
+            self.signals.lab_win_test.emit()
+            speed = self.response.get('speed')
+            self._write_speed_motor(1, speed=speed)
+            command = {'stage': 'test_lab_hand_speed',
+                       'force_accum_list': [],
+                       'move_accum_list': [],
+                       'fill_graph': True,
+                       }
+            self.model.update_main_dict(command)
+
+            self.model.motor_up(1)
+
+            self.count_cycle = 0
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
@@ -1018,6 +1050,7 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_result_conveyor_test - {e}')
 
+    # FIXME
     def _test_lab_cascade(self):
         try:
             self.signals.lab_win_test.emit()
@@ -1025,7 +1058,7 @@ class Controller:
             self.max_speed_cascade = self._calc_max_speed_for_hod(amort.hod)
 
             self._write_speed_motor(1, speed=self.speed_cascade)
-            command = {'gear_speed': self.speed_cascade,
+            command = {'speed': self.speed_cascade,
                        'stage': 'test_lab_cascade',
                        'count_cascade': self.count_lab_cascade,
                        'force_accum_list': [],
@@ -1092,10 +1125,7 @@ class Controller:
 
             self.model.motor_up(1)
 
-            command = {'stage': 'stop_gear_min_pos',
-                       'gear_speed': speed,
-                       }
-            self.model.update_main_dict(command)
+            self.model.set_regs['stage'] = 'stop_gear_min_pos'
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_stop_gear_min_pos - {e}')
