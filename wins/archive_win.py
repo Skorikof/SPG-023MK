@@ -192,42 +192,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.hod_le.setText(f'{self.archive.struct.tests[index].amort.hod}')
 
             self.push_force_le.setText(f'{self.archive.struct.tests[index].push_force}')
+            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
 
             self._fill_flag_push_force(index)
-            self._fill_speed_now(index)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
-
-    def _fill_speed_now(self, index):
-        try:
-            txt = ''
-            type_test = self.archive.struct.tests[index].type_test
-            if type_test == 'lab':
-                txt = f'{self.archive.struct.tests[index].speed}'
-
-            elif type_test == 'lab_cascade':
-                speed_list = []
-                for key, value in self.archive.struct.tests[index].cascade.items():
-                    speed_list.append(float(value.speed))
-
-                min_speed = min(speed_list)
-                max_speed = max(speed_list)
-
-                txt = f'{min_speed} - {max_speed}'
-
-            self.speed_le.setText(txt)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_speed_now - {e}')
 
     def _fill_flag_push_force(self, index):
         txt = ''
         flag = self.archive.struct.tests[index].flag_push_force
         if flag == '1':
-            txt = f'Выталкивающая\nсила\nучитываетcя'
+            txt = f'Динамическая\nвыталкивающая\nсила'
         elif flag == '0':
-            txt = f'Выталкивающая\nсила\nне учитывается'
+            txt = f'Статическая\nвыталкивающая\nсила'
 
         self.lbl_push_force.setText(txt)
 
@@ -235,12 +213,22 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             self.index_test = index
             self.graphwidget.clear()
-            type_test = self.archive.struct.tests[index].type_test
-            if type_test == 'lab':
-                self._pars_lab_graph(index)
 
-            elif type_test == 'lab_cascade':
-                self._pars_cascade_graph(index)
+            move_list = self.archive.struct.tests[index].move_list
+            force_list = self.archive.struct.tests[index].force_list
+
+            max_recoil = max(force_list)
+            max_comp = abs(min(force_list))
+
+            pen = pg.mkPen(color='black', width=3)
+
+            if self.type_graph == 'speed':
+                move_list = self._convert_move_in_speed(move_list)
+
+            self.graphwidget.plot(move_list, force_list, pen=pen)
+
+            self.comp_le.setText(f'{max_comp}')
+            self.recoil_le.setText(f'{max_recoil}')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
@@ -265,20 +253,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_graph - {e}')
-
-    def _pars_cascade_graph(self, index):
-        try:
-            pen = pg.mkPen(color='black', width=3)
-            data_dict = self.archive.struct.tests[index].cascade
-            for key, value in data_dict.items():
-                if self.type_graph == 'speed':
-                    move_list = self._convert_move_in_speed(value.move)
-                else:
-                    move_list = value.move.copy()
-                self.graphwidget.plot(move_list, value.force, pen=pen)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_cascade_graph - {e}')
 
     def _convert_move_in_speed(self, move_list):
         try:
