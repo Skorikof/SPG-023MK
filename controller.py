@@ -34,9 +34,9 @@ class Controller:
             self.stop_point = 0
             self.count_cycle = 0
             self.set_trav_point = 0
-            self.speed_cascade = 0.1
-            self.max_speed_cascade = 0.1
-            self.count_lab_cascade = 1
+            self.cascade = 1
+            self.max_cascade = 0
+
             # self.time_start_wait = None
             # self.time_all_wait = None
             # self.time_tag_wait = None
@@ -257,33 +257,28 @@ class Controller:
                     self.signals.lab_save_result.emit()
                     self._stop_gear_end_test()
 
-            # FIXME
             elif stage == 'test_lab_cascade':
                 if self.count_cycle >= 4:
                     self.signals.lab_save_result.emit()
-                    self.speed_cascade = round(self.speed_cascade + 0.1, 1)
-
-                    if self.speed_cascade <= self.max_speed_cascade:
-                        self.count_lab_cascade += 1
-                        self._write_speed_motor(1, speed=self.speed_cascade)
-                        command = {'speed': self.speed_cascade,
-                                   'stage': 'test_lab_cascade',
-                                   'count_cascade': self.count_lab_cascade,
+                    if self.cascade < self.max_cascade:
+                        speed = self.response.get('speed_cascade')[self.cascade]
+                        self._write_speed_motor(1, speed=speed)
+                        command = {'speed': speed,
                                    'force_accum_list': [],
                                    'move_accum_list': [],
                                    'fill_graph': True,
                                    }
                         self.model.update_main_dict(command)
 
+                        self.cascade += 1
+
                         self.count_cycle = 0
 
                     else:
-                        self.speed_cascade = 0.1
-                        self.count_lab_cascade = 1
-                        self.max_speed_cascade = 0.1
                         command = {'stage': 'wait',
                                    'fill_graph': False}
                         self.model.update_main_dict(command)
+                        self.cascade = 1
                         self._stop_gear_end_test()
 
             elif stage == 'stop_gear_end_test':
@@ -1050,17 +1045,15 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_result_conveyor_test - {e}')
 
-    # FIXME
     def _test_lab_cascade(self):
         try:
             self.signals.lab_win_test.emit()
-            amort = self.response.get('amort')
-            self.max_speed_cascade = self._calc_max_speed_for_hod(amort.hod)
-
-            self._write_speed_motor(1, speed=self.speed_cascade)
-            command = {'speed': self.speed_cascade,
+            speed_list = self.response.get('speed_cascade')
+            self.cascade = 1
+            self.max_cascade = len(speed_list)
+            self._write_speed_motor(1, speed=speed_list[0])
+            command = {'speed': speed_list[0],
                        'stage': 'test_lab_cascade',
-                       'count_cascade': self.count_lab_cascade,
                        'force_accum_list': [],
                        'move_accum_list': [],
                        'fill_graph': True,
@@ -1073,28 +1066,6 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_test_lab_cascade - {e}')
-
-    def _calc_max_speed_for_hod(self, hod):
-        if 40 <= hod < 50:
-            return 0.34
-        elif 50 <= hod < 60:
-            return 0.42
-        elif 60 <= hod < 70:
-            return 0.51
-        elif 70 <= hod < 80:
-            return 0.59
-        elif 80 <= hod < 90:
-            return 0.68
-        elif 90 <= hod < 100:
-            return 0.77
-        elif 100 <= hod < 110:
-            return 0.85
-        elif 110 <= hod < 120:
-            return 0.94
-        elif hod == 120:
-            return 1.02
-        else:
-            return 0.55
 
     def _stop_gear_end_test(self):
         """Остановка двигателя после испытания и перед исходным положением"""

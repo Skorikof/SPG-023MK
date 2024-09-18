@@ -5,9 +5,8 @@ from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
-from my_obj.graph_lab_cascade import DataGraphCascade
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 import glob_var
 from archive import ReadArchive
 
@@ -120,7 +119,8 @@ class AppWindow(QMainWindow):
         self.ui.main_correct_force_btn.clicked.connect(self.btn_correct_force_clicked)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
-        self.ui.btn_add_speed.clicked.connect(self.specif_lab_cascade_table)
+        self.ui.btn_add_speed.clicked.connect(self.specif_add_lab_cascade_table)
+        self.ui.btn_reduce_speed.clicked.connect(self.specif_reduce_lab_cascade_table)
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
@@ -334,6 +334,7 @@ class AppWindow(QMainWindow):
         self.ui.main_hand_debug_btn.setEnabled(True)
         self.ui.main_set_gear_hod_btn.setEnabled(True)
         self.ui.main_search_hod_btn.setEnabled(True)
+        self.ui.main_correct_force_btn.setEnabled(True)
 
     def main_btn_disable(self):
         self.ui.main_operator_btn.setEnabled(False)
@@ -343,6 +344,7 @@ class AppWindow(QMainWindow):
         self.ui.main_hand_debug_btn.setEnabled(False)
         self.ui.main_set_gear_hod_btn.setEnabled(False)
         self.ui.main_search_hod_btn.setEnabled(False)
+        self.ui.main_correct_force_btn.setEnabled(False)
 
     def main_stop_enable(self):
         self.ui.main_STOP_btn.setEnabled(True)
@@ -411,7 +413,6 @@ class AppWindow(QMainWindow):
 
     def slot_search_hod(self):
         try:
-            # hod = round(abs(self.response.get('min_point')) + abs(self.response.get('max_point')), 1)
             hod = self.response.get('hod_measure', 0)
             self.ui.hod_le.setText(f'{hod}')
             self.main_ui_enable()
@@ -454,21 +455,17 @@ class AppWindow(QMainWindow):
         self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
         self.select_type_test(0)
 
-    # FIXME
     def update_graph_view(self):
         try:
             temp = self.response.get('type_test', 'hand')
-            if temp == 'lab' or temp == 'lab_cascade':
-                self._update_lab_graph()
-
-            elif temp == 'conv':
+            if temp == 'conv':
                 self._update_conv_graph()
 
             elif temp == 'hand':
                 self.win_set.update_graph_hand_set()
 
             else:
-                pass
+                self._update_lab_graph()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_graph - {e}')
@@ -588,6 +585,8 @@ class AppWindow(QMainWindow):
             self.ui.specif_max_recoil_lineEdit.clear()
             self.ui.specif_max_recoil_lineEdit_2.clear()
             self.ui.specif_max_temp_lineEdit.clear()
+            self.ui.specif_static_push_force_lineEdit.clear()
+            self.ui.specif_lab_cascade_speed_table.clear()
             
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_ui_clear - {e}')
@@ -644,23 +643,54 @@ class AppWindow(QMainWindow):
                                           )
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_lab_cascade_add_speed - {e}')
+            self.log_msg_err_slot(f'ERROR in view/specif_lab_input_speed - {e}')
 
-    # FIXME
-    def specif_lab_cascade_table(self):
+    def specif_add_lab_cascade_table(self):
         try:
-            self.ui.specif_lab_cascade_speed_table = QTableWidget()
             self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
-            speed = self.specif_lab_cascade_add_speed()
+            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
             if speed:
-                rows_tab = self.ui.specif_lab_cascade_speed_table.rowCount()
-                self.ui.specif_lab_cascade_speed_table.insertRow(rows_tab)
-                self.ui.specif_lab_cascade_speed_table.setItem(rows_tab, 0, QTableWidgetItem(f'{speed}'))
+                count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+
+                self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
+
+                self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_lab_cascade_table - {e}')
+            self.log_msg_err_slot(f'ERROR in view/specif_add_lab_cascade_table - {e}')
 
-    # FIXME
+    def specif_reduce_lab_cascade_table(self):
+        try:
+            count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+            if count_rows > 0:
+                self.ui.specif_lab_cascade_speed_table.removeRow(count_rows - 1)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/specif_reduce_lab_cascade_table - {e}')
+
+    def specif_read_lab_cascade_table(self):
+        try:
+            list_speed = []
+            count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+            if count_rows == 0:
+                return False
+
+            else:
+                for i in range(count_rows):
+                    list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
+
+                self.model.set_regs['speed_cascade'] = list_speed[:]
+                return True
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/specif_read_lab_cascade_table - {e}')
+
+    def specif_msg_none_cascade_speed(self):
+        msg = QMessageBox.information(self,
+                                      'Внимание',
+                                      f'<b style="color: #f00;">Не введено ни одной скорости для испытания</b>'
+                                      )
+
     def specif_continue_btn_click(self):
         try:
             name = self.response.get('operator')['name']
@@ -685,7 +715,11 @@ class AppWindow(QMainWindow):
                             flag = self.static_push_force_editing()
                             if flag:
                                 if type_test == 'lab_cascade':
-                                    pass
+                                    flag = self.specif_read_lab_cascade_table()
+                                    if flag:
+                                        self.begin_test()
+                                    else:
+                                        self.specif_msg_none_cascade_speed()
 
                                 elif type_test == 'lab_hand':
                                     speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
@@ -732,7 +766,7 @@ class AppWindow(QMainWindow):
         except ValueError:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Введенео некорректное значение в поле -->\n'
+                                          f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
                                           f'Статическая выталкивающая сила</b>'
                                           )
 
@@ -757,7 +791,7 @@ class AppWindow(QMainWindow):
             if type_test == 'lab_hand':
                 speed = self.response.get('speed')
             elif type_test == 'lab_cascade':
-                speed = -1
+                speed = self.model.set_regs.get('speed_cascade')
             else:
                 speed = amort.speed_one
 
@@ -1077,25 +1111,13 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
-    # FIXME
-    def fill_data_on_lab_cascade(self):
-        try:
-            number = self.response.get('count_cascade', 1)
-            data_graph = DataGraphCascade()
-            data_graph.move = self.response.get('move_graph')[:]
-            data_graph.force = self.response.get('force_graph')[:]
-            data_graph.speed = self.response.get('speed')
-
-            self.dict_lab_cascade[number] = data_graph
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/fill_data_on_lab_cascade - {e}')
-
     def save_data_in_archive(self):
         try:
             data_dict = {'move_graph': self.response.get('move_graph')[:],
-                         'force_graph': self.response.get('force_graph')[:], 'speed': self.response.get('speed'),
-                         'operator': self.response.get('operator').copy(), 'serial': self.response.get('serial_number'),
+                         'force_graph': self.response.get('force_graph')[:],
+                         'speed': self.response.get('speed'),
+                         'operator': self.response.get('operator').copy(),
+                         'serial': self.response.get('serial_number'),
                          'amort': self.response.get('amort'),
                          'flag_push_force': int(self.response.get('flag_push_force')),
                          'push_force': self.response.get('push_force'),

@@ -885,7 +885,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1982,7 +1982,7 @@
               <bool>true</bool>
              </property>
             </widget>
-            <widget class="QTableView" name="specif_lab_cascade_speed_table">
+            <widget class="QTableWidget" name="specif_lab_cascade_speed_table">
              <property name="geometry">
               <rect>
                <x>860</x>
@@ -2012,6 +2012,13 @@
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
              </property>
+             <property name="columnCount">
+              <number>1</number>
+             </property>
+             <attribute name="horizontalHeaderVisible">
+              <bool>false</bool>
+             </attribute>
+             <column/>
             </widget>
             <widget class="QLabel" name="specif_data_label8_2">
              <property name="geometry">

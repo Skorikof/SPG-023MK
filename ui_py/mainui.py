@@ -291,7 +291,7 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.main_correct_force_btn.setFont(font)
-        self.main_correct_force_btn.setObjectName("main_search_hod_btn_2")
+        self.main_correct_force_btn.setObjectName("main_correct_force_btn")
         self.main_stack_frame = QtWidgets.QFrame(self.content_bar)
         self.main_stack_frame.setGeometry(QtCore.QRect(240, 0, 1024, 850))
         self.main_stack_frame.setMinimumSize(QtCore.QSize(0, 0))
@@ -676,7 +676,7 @@ class Ui_MainWindow(object):
         self.push_force_chb.setFont(font)
         self.push_force_chb.setChecked(True)
         self.push_force_chb.setObjectName("push_force_chb")
-        self.specif_lab_cascade_speed_table = QtWidgets.QTableView(self.specif_data_frame)
+        self.specif_lab_cascade_speed_table = QtWidgets.QTableWidget(self.specif_data_frame)
         self.specif_lab_cascade_speed_table.setGeometry(QtCore.QRect(860, 210, 100, 235))
         self.specif_lab_cascade_speed_table.setMinimumSize(QtCore.QSize(100, 0))
         self.specif_lab_cascade_speed_table.setMaximumSize(QtCore.QSize(100, 16777215))
@@ -685,7 +685,10 @@ class Ui_MainWindow(object):
         font.setPointSize(18)
         self.specif_lab_cascade_speed_table.setFont(font)
         self.specif_lab_cascade_speed_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.specif_lab_cascade_speed_table.setColumnCount(1)
         self.specif_lab_cascade_speed_table.setObjectName("specif_lab_cascade_speed_table")
+        self.specif_lab_cascade_speed_table.setRowCount(0)
+        self.specif_lab_cascade_speed_table.horizontalHeader().setVisible(False)
         self.specif_data_label8_2 = QtWidgets.QLabel(self.specif_data_frame)
         self.specif_data_label8_2.setGeometry(QtCore.QRect(40, 460, 400, 35))
         font = QtGui.QFont()
@@ -1421,7 +1424,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.main_stackedWidget.setCurrentIndex(0)
+        self.main_stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

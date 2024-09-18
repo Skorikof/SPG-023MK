@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import inspect
 import time
-
 import crcmod
 import serial
-# import numpy as np
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack
@@ -38,7 +36,6 @@ class Model:
         self.log_writer = None
         self.set_regs = {}
         self.reader = None
-        # self.writer = None
         self.writer_flag_init = False
         self.flag_write = False
         self.time_response = None
@@ -341,7 +338,7 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/_find_start_direction - {e}')
 
-    def _find_direction_and_point(self, force, move):
+    def _find_direction_and_point(self, move):
         try:
             direction = self.set_regs.get('current_direction')
             if direction == 'up':
@@ -349,7 +346,6 @@ class Model:
                     if not -1 < max(move) < 1:
                         self.max_point = max(move)
                         command = {'max_point': self.max_point,
-                                   'push_force': force[move.index(self.max_point)],
                                    'max_pos': True,
                                    'current_direction': 'down',
                                    }
@@ -403,22 +399,34 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/_check_full_circle - {e}')
 
+    def _calc_dynamic_push_force(self):
+        try:
+            if self.set_regs.get('flag_push_force', False):
+                min_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('min_point'))
+                force_min = abs(self.set_regs.get('force_accum_list')[min_index])
+
+                max_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('max_point'))
+                force_max = abs(self.set_regs.get('force_accum_list')[max_index])
+
+                push_force = round((force_min + force_max) / 2, 1)
+
+            else:
+                push_force = self.set_regs.get('static_push_force', 0)
+
+            return push_force
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_calc_dynamic_push_force - {e}')
+
     def _full_circle_done(self):
         try:
             if self.set_regs.get('fill_graph', False):
 
-                y_point = self.set_regs.get('push_force')
-                # x_list = list(map(lambda x: round(x * (-1) + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
-
-                if self.set_regs.get('flag_push_force', False):
-                    y_list = list(map(lambda x: round(x * (-1) + y_point, 1), self.set_regs.get('force_accum_list')))
-
-                else:
-                    y_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
-
-                command = {'max_comp': abs(min(y_list)),
-                           'max_recoil': max(y_list),
-                           'force_graph': y_list[:],
+                command = {'max_comp': abs(min(self.set_regs.get('force_accum_list'))),
+                           'max_recoil': max(self.set_regs.get('force_accum_list')),
+                           'push_force': self._calc_dynamic_push_force(),
+                           'force_graph': list(map(lambda x: round(x * (-1), 1),
+                                                   self.set_regs.get('force_accum_list'))),
                            'move_graph': list(map(lambda x: round(x * (-1) + self.adjust_x, 1),
                                                   self.set_regs.get('move_accum_list'))),
                            'force_accum_list': [],
@@ -454,7 +462,8 @@ class Model:
                 if self.set_regs.get('fill_graph', False):
                     self._add_data_in_list_graph(force, move)
 
-                if self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and min(move) <= self.min_point <= max(move):
+                if (self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and
+                        min(move) <= self.min_point <= max(move)):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
                     hod_dif = self.set_regs.get('hod', 120)
                     print(f'{hod=}')
@@ -472,7 +481,7 @@ class Model:
                         self._check_full_circle()
 
                 else:
-                    self._find_direction_and_point(force, move)
+                    self._find_direction_and_point(move)
 
         except Exception as e:
             self.log_error(f'ERROR in model/_pars_response_on_circle - {e}')
