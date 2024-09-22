@@ -16,6 +16,7 @@ class ControlSignals(QObject):
     lab_test_stop = pyqtSignal()
     lab_save_result = pyqtSignal()
     cancel_test = pyqtSignal()
+    end_test = pyqtSignal()
     search_hod = pyqtSignal()
     reset_ui = pyqtSignal()
 
@@ -230,6 +231,7 @@ class Controller:
 
                     elif type_test == 'lab':
                         self.signals.lab_save_result.emit()
+                        self.signals.end_test.emit()
 
                     self._test_on_two_speed(2)
 
@@ -243,6 +245,7 @@ class Controller:
 
                     elif type_test == 'lab':
                         self.signals.lab_save_result.emit()
+                        self.signals.end_test.emit()
 
                     command = {'stage': 'wait',
                                'fill_graph': False}
@@ -255,6 +258,7 @@ class Controller:
                                'fill_graph': False}
                     self.model.update_main_dict(command)
                     self.signals.lab_save_result.emit()
+                    self.signals.end_test.emit()
                     self._stop_gear_end_test()
 
             elif stage == 'test_lab_cascade':
@@ -279,6 +283,7 @@ class Controller:
                                    'fill_graph': False}
                         self.model.update_main_dict(command)
                         self.cascade = 1
+                        self.signals.end_test.emit()
                         self._stop_gear_end_test()
 
             elif stage == 'stop_gear_end_test':
@@ -815,24 +820,6 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/move_gear_set_pos - {e}')
 
-    def _convert_adapter(self, name: str):
-        """Перевод номера адаптера в его длинну"""
-        try:
-            if name == '069' or name == '069-01':
-                return 25
-
-            elif name == '069-02' or name == '069-03' or name == '069-04':
-                return 34
-
-            elif name == '072':
-                return 41
-
-            else:
-                return 0
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/_convert_adapter - {e}')
-
     def _traverse_move_position(self, set_point):
         """Непосредственно включение и перемещение траверсы"""
         try:
@@ -873,7 +860,7 @@ class Controller:
             len_min = amort.min_length
             len_max = amort.max_length
             mid_point = (len_max - len_min) / 2
-            adapter = self._convert_adapter(amort.adapter)
+            adapter = amort.adapter_len
 
             if tag == 'install':
                 install_point = int((stock_point + hod / 2) - len_max - adapter)
@@ -949,10 +936,10 @@ class Controller:
         try:
             self._pumping_msg()
             hod = self.response.get('hod', 120)
-            if hod > 100:
-                speed = 0.07
+            if hod >= 100:
+                speed = 0.2
             elif 50 < hod <= 100:
-                speed = 0.05
+                speed = 0.1
             else:
                 speed = 0.03
             

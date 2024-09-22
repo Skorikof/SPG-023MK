@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os.path
+import random
 from pathlib import Path
 from datetime import datetime
 from amorts import DataAmort
-from my_obj.graph_lab_cascade import DataGraphCascade
 
 
 class FileArchive:
@@ -26,6 +26,9 @@ class TestArchive:
 
         self.amort = DataAmort()
 
+
+class TestCascade:
+    def __init__(self):
         self.cascade = {}
 
 
@@ -36,8 +39,10 @@ class ReadArchive:
         self.files_name_arr = []
         self.files_name_sort = []
         self.count_files = 0
+        self.cascade_list = []
 
         self.struct = None
+        self.struct_cascade = TestCascade()
         self.ind_test = -1
         self.ind_casc = 0
         self.index_archive = None
@@ -63,7 +68,8 @@ class ReadArchive:
     def select_file(self, data):
         try:
             self.ind_test = -1
-            self.ind_casc = 0
+            self.ind_casc = 1
+            self.cascade_list = []
             self.struct = FileArchive()
 
             self.index_archive = self.files_name_arr.index(data)
@@ -84,42 +90,52 @@ class ReadArchive:
 
     def _pars_str_archive(self, archive_list):
         try:
-            if not archive_list[0] == '*':
+            if not archive_list[0] == '*' and not archive_list[0] == 'end_test':
                 self.ind_test += 1
                 self.struct.tests.append(TestArchive())
 
                 self.struct.tests[self.ind_test].time_test = archive_list[0]
                 self.struct.tests[self.ind_test].operator_name = archive_list[1]
                 self.struct.tests[self.ind_test].operator_rank = archive_list[2]
-                self.struct.tests[self.ind_test].amort.name = archive_list[3]
-                self.struct.tests[self.ind_test].serial_number = archive_list[4]
-                self.struct.tests[self.ind_test].amort.min_length = archive_list[5].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_length = archive_list[6].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.hod = archive_list[7]
-                self.struct.tests[self.ind_test].amort.speed_one = archive_list[8].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[9].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[10].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_comp = archive_list[11].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_comp = archive_list[12].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.speed_two = archive_list[13].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[14].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[15].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[16].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[17].replace(',', '.')
-                self.struct.tests[self.ind_test].flag_push_force = archive_list[18]
-                self.struct.tests[self.ind_test].push_force = archive_list[19].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_temper = archive_list[20].replace(',', '.')
+                self.struct.tests[self.ind_test].type_test = archive_list[3]
+                self.struct.tests[self.ind_test].amort.name = archive_list[4]
+                self.struct.tests[self.ind_test].serial_number = archive_list[5]
+                self.struct.tests[self.ind_test].amort.min_length = archive_list[6].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_length = archive_list[7].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.hod = archive_list[8]
+                self.struct.tests[self.ind_test].amort.speed_one = archive_list[9].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[10].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[11].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_comp = archive_list[12].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_comp = archive_list[13].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.speed_two = archive_list[14].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[15].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[16].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18].replace(',', '.')
+                self.struct.tests[self.ind_test].flag_push_force = archive_list[19]
+                self.struct.tests[self.ind_test].push_force = archive_list[20].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_temper = archive_list[21].replace(',', '.')
 
-                self.struct.tests[self.ind_test].speed = archive_list[21].replace(',', '.')
+                self.struct.tests[self.ind_test].speed = archive_list[22].replace(',', '.')
 
-                temp_list = self._add_data_on_list_graph(archive_list[22:-1])
+                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
 
                 self.struct.tests[self.ind_test].move_list = temp_list[:]
 
             elif archive_list[0] == '*':
-                temp_list = self._add_data_on_list_graph(archive_list[22:-1])
+                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
 
                 self.struct.tests[self.ind_test].force_list = temp_list[:]
+
+            if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
+                self.cascade_list.append(self.struct.tests[self.ind_test])
+
+            if archive_list[0] == 'end_test':
+                if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
+                    self.struct_cascade.cascade[self.ind_casc] = self.cascade_list.copy()
+                    self.ind_casc += 1
+                    self.cascade_list = []
 
         except Exception as e:
             print(f'Exception in archive/_pars_str_archihve - {e}')
@@ -145,6 +161,7 @@ class ReadArchive:
                     str_t = (f'Время;'
                              f'ФИО оператора;'
                              f'Должность;'
+                             f'Тип испытания;'
                              f'Название гасителя;'
                              f'Серийный номер;'
                              f'Длина в сжатом состоянии, мм;'
@@ -170,6 +187,7 @@ class ReadArchive:
                 write_name = (f'{time_t};'
                               f'{obj["operator"]["name"]};'
                               f'{obj["operator"]["rank"]};'
+                              f'{obj["type_test"]};'
                               f'{obj["amort"].name};'
                               f'{obj["serial"]};')
 
@@ -197,7 +215,7 @@ class ReadArchive:
                 force = self._change_data_for_save(obj['force_graph'])
 
                 write_data = (f'{speed};{move};\n'
-                              f'*;;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                              f'*;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                 file_arch.write(write_name + write_str + write_data)
 
@@ -216,3 +234,14 @@ class ReadArchive:
 
         except Exception as e:
             print(f'Exception in archive/_change_data_for_save - {e}')
+
+    def write_end_test_in_archive(self):
+        try:
+            nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
+
+            with open('archive/' + nam_f, 'a') as file_arch:
+                str_t = f'end_test;\n'
+                file_arch.write(str_t)
+
+        except Exception as e:
+            print(f'Exception in archive/_write_end_test_in_archive - {e}')

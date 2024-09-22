@@ -351,7 +351,6 @@ class Model:
                                    }
 
                         self.update_main_dict(command)
-                        print(f'{self.max_point=}')
 
             elif direction == 'down':
                 if min(move) < move[-1]:
@@ -365,8 +364,6 @@ class Model:
                         self.update_main_dict(command)
                         if self.min_point < self.main_min_point:
                             self.main_min_point = self.min_point
-
-                        print(f'{self.min_point=}')
 
         except Exception as e:
             self.log_error(f'ERROR in model/_find_direction_and_point - {e}')
@@ -401,6 +398,7 @@ class Model:
 
     def _calc_dynamic_push_force(self):
         try:
+            push_force = self.set_regs.get('static_push_force', 0)
             if self.set_regs.get('flag_push_force', False):
                 min_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('min_point'))
                 force_min = abs(self.set_regs.get('force_accum_list')[min_index])
@@ -408,10 +406,8 @@ class Model:
                 max_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('max_point'))
                 force_max = abs(self.set_regs.get('force_accum_list')[max_index])
 
-                push_force = round((force_min + force_max) / 2, 1)
-
-            else:
-                push_force = self.set_regs.get('static_push_force', 0)
+                push_force_mid = round((force_min + force_max) / 2, 1)
+                push_force = round((push_force_mid - push_force) / 2 + push_force, 2)
 
             return push_force
 
@@ -421,13 +417,13 @@ class Model:
     def _full_circle_done(self):
         try:
             if self.set_regs.get('fill_graph', False):
-
-                command = {'max_comp': abs(min(self.set_regs.get('force_accum_list'))),
-                           'max_recoil': max(self.set_regs.get('force_accum_list')),
-                           'push_force': self._calc_dynamic_push_force(),
+                push_force = self._calc_dynamic_push_force()
+                command = {'max_comp': round(max(self.set_regs.get('force_accum_list')) - push_force, 2),
+                           'max_recoil': round(abs(min(self.set_regs.get('force_accum_list'))) + push_force, 2),
+                           'push_force': push_force,
                            'force_graph': list(map(lambda x: round(x * (-1), 1),
                                                    self.set_regs.get('force_accum_list'))),
-                           'move_graph': list(map(lambda x: round(x * (-1) + self.adjust_x, 1),
+                           'move_graph': list(map(lambda x: round(x + self.adjust_x, 1),
                                                   self.set_regs.get('move_accum_list'))),
                            'force_accum_list': [],
                            'move_accum_list': [],
@@ -438,8 +434,6 @@ class Model:
                 self.signals.update_data_graph.emit()
 
             self.signals.full_cycle_count.emit()
-
-            print(f'Signal full circle is done')
 
             command = {'min_pos': False,
                        'max_pos': False,
@@ -466,7 +460,6 @@ class Model:
                         min(move) <= self.min_point <= max(move)):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
                     hod_dif = self.set_regs.get('hod', 120)
-                    print(f'{hod=}')
                     if self.set_regs.get('search_hod') is False:
                         if hod > hod_dif - 5:
                             self._check_full_circle()
@@ -840,7 +833,7 @@ class Model:
             # freq1 = int((rotate / 30) * 100)  # Полученная частота для этих оборотов, 100 - для записи, 30 - постоянный коэффициент
             # print(f'freq moia --> {freq1 / 100}')
 
-            koef = (2 * 17.99) / (2 * 3.1415 * 0.98)
+            koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
             hod = self.set_regs.get('hod', 120) / 1000
             radius = hod / 2
             freq = int(100 * (koef * speed) / radius)

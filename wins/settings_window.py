@@ -76,6 +76,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.btn_green_light.clicked.connect(self._btn_set_doclick)
         self.btn_red_light.clicked.connect(self._btn_set_doclick)
 
+        self.btn_test.clicked.connect(self._btn_test_clicked)
+
         self.lineEdit_F_alarm.returnPressed.connect(self._write_alarm_force)
 
         self.btn_connect.setVisible(False)

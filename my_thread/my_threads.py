@@ -248,7 +248,7 @@ class Reader(QRunnable):
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr[ind] - self.current_rec) < 100 or abs(rr[ind] - self.current_rec) > 60000:
+                                    if abs(rr[ind] - self.current_rec) < 2 or abs(rr[ind] - self.current_rec) > 65530:
                                         flag_add = True
 
                                 if flag_add:

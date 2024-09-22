@@ -14,6 +14,7 @@ class DataAmort(object):
         self.max_length = 0
         self.hod = 0
         self.adapter = ''
+        self.adapter_len = 0
         self.speed_one = 0
         self.speed_two = 0
         self.min_comp = 0
@@ -34,6 +35,24 @@ class Amort:
         self.struct = StructAmort()
         self.config = configparser.ConfigParser()
 
+    def _convert_adapter(self, name: str):
+        """Перевод номера адаптера в его длинну"""
+        try:
+            if name == '069' or name == '069-01':
+                return 25
+
+            elif name == '069-02' or name == '069-03' or name == '069-04':
+                return 34
+
+            elif name == '072':
+                return 41
+
+            else:
+                return 0
+
+        except Exception as e:
+            print(str(e))
+
     def update_amort_list(self):
         try:
             self.names = []
@@ -53,6 +72,7 @@ class Amort:
                             self.struct.amorts[ind].hod = int(temp_val)
                         if key == 'adapter':
                             self.struct.amorts[ind].adapter = temp_val
+                            self.struct.amorts[ind].adapter_len = self._convert_adapter(temp_val)
                         if key == 'speed_one':
                             self.struct.amorts[ind].speed_one = float(temp_val)
                         if key == 'speed_two':

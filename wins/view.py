@@ -64,7 +64,7 @@ class AppWindow(QMainWindow):
         self._init_buttons()
         self._init_signals()
 
-        self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
+        self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -84,6 +84,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
+        self.controller.signals.end_test.connect(self.slot_write_end_test)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.lab_save_result.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod.connect(self.slot_search_hod)
@@ -541,7 +542,7 @@ class AppWindow(QMainWindow):
 
             self.specif_ui_fill(amort)
 
-            adjust_x = int((amort.max_length - amort.min_length) / 2)
+            adjust_x = int((amort.max_length - amort.min_length - amort.adapter_len) / 2)
             self.model.change_adjust_x(adjust_x)
 
         except Exception as e:
@@ -586,8 +587,9 @@ class AppWindow(QMainWindow):
             self.ui.specif_max_recoil_lineEdit_2.clear()
             self.ui.specif_max_temp_lineEdit.clear()
             self.ui.specif_static_push_force_lineEdit.clear()
-            self.ui.specif_lab_cascade_speed_table.clear()
-            
+
+            self.ui.specif_lab_cascade_speed_table.setRowCount(0)
+
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_ui_clear - {e}')
 
@@ -783,7 +785,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
 
-    # FIXME
     def save_log_begin_test(self):
         try:
             amort = self.response.get('amort')
@@ -877,7 +878,6 @@ class AppWindow(QMainWindow):
             self.ui.lab_speed_le.clear()
             self.ui.lab_now_temp_le.clear()
             self.ui.lab_max_temp_le.clear()
-            self.ui.lab_push_force_le.clear()
             self.ui.lab_serial_le.clear()
 
         except Exception as e:
@@ -971,7 +971,6 @@ class AppWindow(QMainWindow):
             self.ui.lab_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
             self.ui.lab_now_temp_le.setText(f'{self.response.get("temperature", 0)}')
             self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
-            self.ui.lab_push_force_le.setText(f'{self.response.get("push_force", 0)}')
             self.ui.lab_speed_le.setText(f'{self.response.get("speed", 0)}')
             self.ui.lab_serial_le.setText(f'{self.response.get("serial_number", 0)}')
 
@@ -1087,7 +1086,7 @@ class AppWindow(QMainWindow):
     def open_win_archive(self):
         self.main_ui_disable()
         self.win_archive.show()
-        self.win_archive.archive_update()
+        self.win_archive.read_path_archive()
 
     def close_win_archive(self):
         self.main_ui_enable()
@@ -1115,6 +1114,7 @@ class AppWindow(QMainWindow):
         try:
             data_dict = {'move_graph': self.response.get('move_graph')[:],
                          'force_graph': self.response.get('force_graph')[:],
+                         'type_test': self.response.get('type_test'),
                          'speed': self.response.get('speed'),
                          'operator': self.response.get('operator').copy(),
                          'serial': self.response.get('serial_number'),
@@ -1127,3 +1127,10 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')
+
+    def slot_write_end_test(self):
+        try:
+            ReadArchive().write_end_test_in_archive()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/slot_write_end_test - {e}')

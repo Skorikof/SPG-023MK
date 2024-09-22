@@ -22,8 +22,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         super(ArchiveWin, self).__init__()
         try:
             self.type_graph = 'move'
-            self.ind_type_test = -1
+            self.ind_type_test = 0
+            self.index_date = ''
             self.index_test = 0
+            self.index_test_cascade = 0
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -53,33 +55,36 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.btn_exit.clicked.connect(self.close)
         self.btn_print.clicked.connect(self._archive_save_form)
 
-    def archive_update(self):
+        self.combo_dates.activated[str].connect(self._change_index_date)
+        self.combo_test.activated[int].connect(self._change_index_test)
+        self.combo_type.activated[int].connect(self._change_type_graph)
+
+    def read_path_archive(self):
         try:
-            self.archive.init_arch()
             self.combo_dates.clear()
             self.combo_test.clear()
+            self.archive.init_arch()
 
             if len(self.archive.files_arr) == 0:
-                self.btn_print.setEnabled(False)
                 self._archive_ui_clear()
 
             else:
-                self.btn_print.setEnabled(True)
                 self.combo_dates.addItems(self.archive.files_name_sort)
                 self.combo_dates.setCurrentIndex(0)
-                self._archive_selected(self.archive.files_name_sort[0])
-                self.combo_dates.activated[str].connect(self._archive_selected)
-
-                self._archive_test_select(0)
-                self._archive_graph(0)
-                self.combo_test.activated[int].connect(self._archive_test_select)
-                self.combo_test.activated[int].connect(self._archive_graph)
-
-                self._select_type_graph(0)
-                self.combo_type.activated[int].connect(self._select_type_graph)
+                self.index_date = self.archive.files_name_sort[0]
+                self._archive_update()
 
         except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/archive_update - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/read_path_archive - {e}')
+
+    # FIXME
+    def _archive_update(self):
+        try:
+            self._archive_selected()
+            self._archive_graph()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_archive_update - {e}')
 
     def _archive_ui_clear(self):
         try:
@@ -99,26 +104,81 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.speed_le.setText('')
             self.max_temp_le.setText('')
             self.hod_le.setText('')
-            self.push_force_le.setText('')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
 
-    def _select_type_graph(self, index):
+    def _change_index_date(self, date):
+        try:
+            if self.index_date != date:
+                self.index_date = date
+                self._archive_update()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
+
+    def _change_index_test(self, index):
+        try:
+            if self.type_graph == 'move':
+                if self.index_test != index:
+                    self.index_test = index
+                    self._archive_test_select()
+                    self._archive_graph()
+
+            elif self.type_graph == 'speed':
+                if self.index_test_cascade != index:
+                    self.index_test_cascade = index
+                    self._archive_test_select()
+                    self._archive_graph()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_test - {e}')
+
+    def _change_type_graph(self, index):
         try:
             if self.ind_type_test != index:
                 self.ind_type_test = index
                 if index == 0:
                     self.type_graph = 'move'
-                    self._gui_move_graph()
 
                 elif index == 1:
                     self.type_graph = 'speed'
-                    self._gui_speed_graph()
-                self._archive_graph(self.index_test)
+
+                self._archive_update()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
+
+    def _archive_selected(self):
+        try:
+            date = self.index_date
+            self.combo_test.clear()
+            temp_arr = []
+            self.archive.select_file(date)
+
+            if self.type_graph == 'move':
+                for i in range(len(self.archive.struct.tests)):
+                    temp = (f'{self.archive.struct.tests[i].time_test} - '
+                            f'{self.archive.struct.tests[i].amort.name} - '
+                            f'{self.archive.struct.tests[i].serial_number}')
+                    temp_arr.append(temp)
+
+            elif self.type_graph == 'speed':
+                for key, value in self.archive.struct_cascade.cascade.items():
+                    temp = (f'{value[0].time_test} - '
+                            f'{value[0].amort.name} - '
+                            f'{value[0].serial_number}')
+                    temp_arr.append(temp)
+
+            if temp_arr:
+                self.combo_test.addItems(temp_arr)
+                self._archive_test_select()
+                self._archive_graph()
+            else:
+                pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
 
     def _gui_move_graph(self):
         try:
@@ -144,107 +204,122 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
 
-    def _archive_selected(self, date):
+    def _archive_test_select(self):
         try:
-            self.combo_test.clear()
-            temp_arr = []
-            self.archive.select_file(date)
+            if self.type_graph == 'move':
+                self._pars_lab_data()
 
-            for i in range(len(self.archive.struct.tests)):
-                temp = (f'{self.archive.struct.tests[i].time_test} - '
-                        f'{self.archive.struct.tests[i].amort.name} - '
-                        f'{self.archive.struct.tests[i].serial_number}')
-                temp_arr.append(temp)
-
-            self.combo_test.addItems(temp_arr)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
-
-    def _archive_test_select(self, index):
-        try:
-            user_name = self.archive.struct.tests[index].operator_name
-            user_rank = self.archive.struct.tests[index].operator_rank
-
-            select_archive = self.archive.files_name_arr[self.archive.index_archive]
-            time_test = self.archive.struct.tests[index].time_test
-
-            min_comp = self.archive.struct.tests[index].amort.min_comp
-            min_comp_2 = self.archive.struct.tests[index].amort.min_comp_2
-            max_comp = self.archive.struct.tests[index].amort.max_comp
-            max_comp_2 = self.archive.struct.tests[index].amort.max_comp_2
-            min_recoil = self.archive.struct.tests[index].amort.min_recoil
-            min_recoil_2 = self.archive.struct.tests[index].amort.min_recoil_2
-            max_recoil = self.archive.struct.tests[index].amort.max_recoil
-            max_recoil_2 = self.archive.struct.tests[index].amort.max_recoil_2
-
-            self.name_le.setText(f'{self.archive.struct.tests[index].amort.name}')
-            self.operator_le.setText(f'{user_rank} {user_name}')
-            self.speed_set_1_le.setText(f'{self.archive.struct.tests[index].amort.speed_one}')
-            self.speed_set_2_le.setText(f'{self.archive.struct.tests[index].amort.speed_two}')
-            self.limit_recoil_1_le.setText(f'{min_recoil} - {max_recoil}')
-            self.limit_recoil_2_le.setText(f'{min_recoil_2} - {max_recoil_2}')
-            self.limit_comp_1_le.setText(f'{min_comp} - {max_comp}')
-            self.limit_comp_2_le.setText(f'{min_comp_2} - {max_comp_2}')
-            self.serial_le.setText(f'{self.archive.struct.tests[index].serial_number}')
-            self.date_le.setText(f'{select_archive} - {time_test}')
-            self.max_temp_le.setText(f'{self.archive.struct.tests[index].amort.max_temper}')
-            self.hod_le.setText(f'{self.archive.struct.tests[index].amort.hod}')
-
-            self.push_force_le.setText(f'{self.archive.struct.tests[index].push_force}')
-            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-
-            self._fill_flag_push_force(index)
+            if self.type_graph == 'speed':
+                self._pars_lab_cascade_data()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
 
-    def _fill_flag_push_force(self, index):
+    def _pars_lab_data(self):
+        try:
+            index = self.index_test
+
+            if self.archive.struct.tests[index]:
+
+                self._fill_archive_data_gui(self.archive.struct.tests[index])
+
+                self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
+
+                self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+
+            else:
+                pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_data - {e}')
+
+    def _pars_lab_cascade_data(self):
+        try:
+            index = self.index_test_cascade
+            if not self.archive.struct_cascade.cascade.get(index + 1) is None:
+                data = self.archive.struct_cascade.cascade.get(index + 1)
+                self._fill_archive_data_gui(data[0])
+
+                self._fill_flag_push_force(data[0].flag_push_force)
+
+                speed_list = []
+                for obj in data:
+                    speed_list.append(obj.speed)
+
+                self.speed_le.setText(f'{speed_list[0]} - {speed_list[-1]}')
+
+            else:
+                pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
+
+    def _fill_archive_data_gui(self, obj):
+        try:
+            user_name = obj.operator_name
+            user_rank = obj.operator_rank
+
+            select_archive = self.archive.files_name_arr[self.archive.index_archive]
+            time_test = obj.time_test
+
+            min_comp = obj.amort.min_comp
+            min_comp_2 = obj.amort.min_comp_2
+            max_comp = obj.amort.max_comp
+            max_comp_2 = obj.amort.max_comp_2
+            min_recoil = obj.amort.min_recoil
+            min_recoil_2 = obj.amort.min_recoil_2
+            max_recoil = obj.amort.max_recoil
+            max_recoil_2 = obj.amort.max_recoil_2
+
+            self.name_le.setText(f'{obj.amort.name}')
+            self.operator_le.setText(f'{user_rank} {user_name}')
+            self.speed_set_1_le.setText(f'{obj.amort.speed_one}')
+            self.speed_set_2_le.setText(f'{obj.amort.speed_two}')
+            self.limit_recoil_1_le.setText(f'{min_recoil} - {max_recoil}')
+            self.limit_recoil_2_le.setText(f'{min_recoil_2} - {max_recoil_2}')
+            self.limit_comp_1_le.setText(f'{min_comp} - {max_comp}')
+            self.limit_comp_2_le.setText(f'{min_comp_2} - {max_comp_2}')
+            self.serial_le.setText(f'{obj.serial_number}')
+            self.date_le.setText(f'{select_archive} - {time_test}')
+            self.max_temp_le.setText(f'{obj.amort.max_temper}')
+            self.hod_le.setText(f'{obj.amort.hod}')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_archive_data_gui - {e}')
+
+    def _fill_flag_push_force(self, index: str):
         txt = ''
-        flag = self.archive.struct.tests[index].flag_push_force
-        if flag == '1':
+        if index == '1':
             txt = f'Динамическая\nвыталкивающая\nсила'
-        elif flag == '0':
+        elif index == '0':
             txt = f'Статическая\nвыталкивающая\nсила'
 
         self.lbl_push_force.setText(txt)
 
-    def _archive_graph(self, index):
+    def _archive_graph(self):
         try:
-            self.index_test = index
             self.graphwidget.clear()
+            if self.type_graph == 'move':
+                self._gui_move_graph()
+                self._fill_lab_graph()
 
-            move_list = self.archive.struct.tests[index].move_list
-            force_list = self.archive.struct.tests[index].force_list
-
-            max_recoil = max(force_list)
-            max_comp = abs(min(force_list))
-
-            pen = pg.mkPen(color='black', width=3)
-
-            if self.type_graph == 'speed':
-                move_list = self._convert_move_in_speed(move_list)
-
-            self.graphwidget.plot(move_list, force_list, pen=pen)
-
-            self.comp_le.setText(f'{max_comp}')
-            self.recoil_le.setText(f'{max_recoil}')
+            elif self.type_graph == 'speed':
+                self._gui_speed_graph()
+                self._fill_lab_cascade_graph()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
 
-    def _pars_lab_graph(self, index):
+    def _fill_lab_graph(self):
         try:
+            index = self.index_test
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
 
-            max_recoil = max(force_list)
-            max_comp = abs(min(force_list))
+            max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].push_force), 2)
+            max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].push_force), 2)
 
             pen = pg.mkPen(color='black', width=3)
-
-            if self.type_graph == 'speed':
-                move_list = self._convert_move_in_speed(move_list)
 
             self.graphwidget.plot(move_list, force_list, pen=pen)
 
@@ -252,7 +327,71 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.recoil_le.setText(f'{max_recoil}')
 
         except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_graph - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
+
+    def _fill_lab_cascade_graph(self):
+        try:
+            index = self.index_test_cascade
+            speed_list = [0]
+            comp_list = [0]
+            recoil_list = [0]
+            data = self.archive.struct_cascade.cascade.get(index + 1)
+
+            for obj in data:
+                speed_list.append(float(obj.speed))
+                recoil_list.append(round(max(obj.force_list) + float(obj.push_force), 2))
+                comp_list.append(round(min(obj.force_list) + float(obj.push_force), 2))
+
+            pen = pg.mkPen(color='black', width=3)
+
+            self.graphwidget.plot(speed_list, recoil_list, pen=pen)
+            self.graphwidget.plot(speed_list, comp_list, pen=pen)
+
+            self.recoil_le.setText(f'{max(recoil_list)}')
+            self.comp_le.setText(f'{abs(min(comp_list))}')
+
+            self._fill_limit_lab_cascade_graph(data[0])
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_cascade_graph - {e}')
+
+    def _fill_limit_lab_cascade_graph(self, obj):
+        try:
+            speed_1 = []
+            speed_2 = []
+            limit_recoil_1 = []
+            limit_recoil_2 = []
+            limit_comp_1 = []
+            limit_comp_2 = []
+
+            speed_1.append(float(obj.amort.speed_one))
+            speed_1.append(float(obj.amort.speed_one))
+
+            speed_2.append(float(obj.amort.speed_two))
+            speed_2.append(float(obj.amort.speed_two))
+
+            limit_recoil_1.append(float(obj.amort.min_recoil))
+            limit_recoil_1.append(float(obj.amort.max_recoil))
+
+            limit_recoil_2.append(float(obj.amort.min_recoil_2))
+            limit_recoil_2.append(float(obj.amort.max_recoil_2))
+
+            limit_comp_1.append(float(obj.amort.min_comp) * -1)
+            limit_comp_1.append(float(obj.amort.max_comp) * -1)
+
+            limit_comp_2.append(float(obj.amort.min_comp_2) * -1)
+            limit_comp_2.append(float(obj.amort.max_comp_2) * -1)
+
+            pen = pg.mkPen(color='red', width=3)
+
+            self.graphwidget.plot(speed_1, limit_recoil_1, pen=pen)
+            self.graphwidget.plot(speed_1, limit_comp_1, pen=pen)
+            self.graphwidget.plot(speed_2, limit_recoil_2, pen=pen)
+            self.graphwidget.plot(speed_2, limit_comp_2, pen=pen)
+
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
 
     def _convert_move_in_speed(self, move_list):
         try:
