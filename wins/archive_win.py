@@ -77,7 +77,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/read_path_archive - {e}')
 
-    # FIXME
     def _archive_update(self):
         try:
             self._archive_selected()
