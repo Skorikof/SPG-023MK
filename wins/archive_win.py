@@ -325,6 +325,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.comp_le.setText(f'{max_comp}')
             self.recoil_le.setText(f'{max_recoil}')
 
+            power = self._calc_power(move_list, force_list)
+            print(f'{power=}')
+
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
 
@@ -392,30 +395,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
 
-    def _convert_move_in_speed(self, move_list):
+    def _calc_power(self, move: list, force: list):
         try:
-            sum_list = []
-            response_list = []
-            begin_5_points = move_list[0:5]
-            end_5_points = move_list[-5:]
-            temp_list = end_5_points + move_list + begin_5_points
+            temp = 0
+            for i in range(1, len(move)):
+                temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
 
-            for i in range(len(move_list)):
-                for j in range(i, i + 10):
-                    sum_list.append(round(abs(abs(temp_list[j]) - abs(temp_list[j + 1])), 2))
+            temp = round(temp * 0.009807, 1)
 
-                temp_sum = 0
-                for k in range(len(sum_list) - 1):
-                    temp_sum = temp_sum + abs(sum_list[k] - sum_list[k + 1])
-
-                response_list.append(round(temp_sum, 10))
-
-                sum_list = []
-
-            return response_list
+            return temp
 
         except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_convert_move_in_speed - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_power - {e}')
 
     def _archive_save_form(self):
         try:
