@@ -191,6 +191,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_graph - {e}')
 
+    def _gui_move_data(self):
+        try:
+            self.power_le.setVisible(True)
+            self.power_lbl.setVisible(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_data - {e}')
+
     def _gui_speed_graph(self):
         try:
             self.graphwidget.clear()
@@ -202,6 +210,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
+
+    def _gui_speed_data(self):
+        try:
+            self.power_le.setVisible(False)
+            self.power_lbl.setVisible(False)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_data - {e}')
 
     def _archive_test_select(self):
         try:
@@ -299,10 +315,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             self.graphwidget.clear()
             if self.type_graph == 'move':
+                self._gui_move_data()
                 self._gui_move_graph()
                 self._fill_lab_graph()
 
             elif self.type_graph == 'speed':
+                self._gui_speed_data()
                 self._gui_speed_graph()
                 self._fill_lab_cascade_graph()
 
@@ -311,12 +329,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_lab_graph(self):
         try:
+            max_comp = 0
+            max_recoil = 0
             index = self.index_test
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
 
-            max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].push_force), 2)
-            max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].push_force), 2)
+            flag_push_force = self.archive.struct.tests[index].flag_push_force
+            if flag_push_force == '1':
+                max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].dynamic_push_force), 2)
+                max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].dynamic_push_force), 2)
+
+            elif flag_push_force == '0':
+                max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].static_push_force), 2)
+                max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].static_push_force), 2)
 
             pen = pg.mkPen(color='black', width=3)
 
@@ -326,7 +352,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.recoil_le.setText(f'{max_recoil}')
 
             power = self._calc_power(move_list, force_list)
-            print(f'{power=}')
+            self.power_le.setText(f'{power}')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
@@ -341,8 +367,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             for obj in data:
                 speed_list.append(float(obj.speed))
-                recoil_list.append(round(max(obj.force_list) + float(obj.push_force), 2))
-                comp_list.append(round(min(obj.force_list) + float(obj.push_force), 2))
+                flag_push_force = obj.flag_push_force
+                if flag_push_force == '1':
+                    recoil_list.append(round(max(obj.force_list) + float(obj.dynamic_push_force), 2))
+                    comp_list.append(round(min(obj.force_list) + float(obj.dynamic_push_force), 2))
+
+                elif flag_push_force == '0':
+                    recoil_list.append(round(max(obj.force_list) + float(obj.static_push_force), 2))
+                    comp_list.append(round(min(obj.force_list) + float(obj.static_push_force), 2))
 
             pen = pg.mkPen(color='black', width=3)
 
@@ -401,7 +433,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             for i in range(1, len(move)):
                 temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
 
-            temp = round(temp * 0.009807, 1)
+            temp = round((temp * 0.009807) / 1000, 1)
 
             return temp
 

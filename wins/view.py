@@ -1120,7 +1120,8 @@ class AppWindow(QMainWindow):
                          'serial': self.response.get('serial_number'),
                          'amort': self.response.get('amort'),
                          'flag_push_force': int(self.response.get('flag_push_force')),
-                         'push_force': self.response.get('push_force'),
+                         'static_push_force': self.response.get('static_push_force'),
+                         'dynamic_push_force': self.response.get('dynamic_push_force'),
                          'max_temperature': self.response.get('max_temperature')}
 
             ReadArchive().save_test_in_archive(data_dict)

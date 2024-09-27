@@ -603,7 +603,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Скорость текущая, м/с:</string>
+         <string>Скорость поршня, м/с:</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="speed_le">
@@ -671,7 +671,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Ход исытания, мм:</string>
+         <string>Ход поршня, мм:</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="hod_le">
@@ -1056,9 +1056,9 @@
          </font>
         </property>
         <property name="text">
-         <string>Выталкивающая
-сила
-учитываетcя</string>
+         <string>Динамическая
+выталкивающая
+сила</string>
         </property>
         <property name="textFormat">
          <enum>Qt::AutoText</enum>
@@ -1184,6 +1184,74 @@
         <property name="maximumSize">
          <size>
           <width>350</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="power_lbl">
+        <property name="geometry">
+         <rect>
+          <x>640</x>
+          <y>210</y>
+          <width>186</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Arial</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Мощность, кВТ:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="power_le">
+        <property name="geometry">
+         <rect>
+          <x>880</x>
+          <y>210</y>
+          <width>80</width>
+          <height>30</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>80</width>
           <height>30</height>
          </size>
         </property>

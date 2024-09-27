@@ -398,29 +398,38 @@ class Model:
 
     def _calc_dynamic_push_force(self):
         try:
-            push_force = self.set_regs.get('static_push_force', 0)
-            if self.set_regs.get('flag_push_force', False):
-                min_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('min_point'))
-                force_min = abs(self.set_regs.get('force_accum_list')[min_index])
+            static_push_force = self.set_regs.get('static_push_force', 0)
 
-                max_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('max_point'))
-                force_max = abs(self.set_regs.get('force_accum_list')[max_index])
+            min_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('min_point'))
+            force_min = abs(self.set_regs.get('force_accum_list')[min_index])
 
-                push_force_mid = round((force_min + force_max) / 2, 1)
-                push_force = round((push_force_mid - push_force) / 2 + push_force, 2)
+            max_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('max_point'))
+            force_max = abs(self.set_regs.get('force_accum_list')[max_index])
 
-            return push_force
+            push_force_mid = round((force_min + force_max) / 2, 1)
+            self.set_regs['dynamic_push_force'] = round((push_force_mid - static_push_force) / 2 + static_push_force, 2)
 
         except Exception as e:
             self.log_error(f'ERROR in model/_calc_dynamic_push_force - {e}')
 
+    def _choice_push_force(self):
+        try:
+            if self.set_regs.get('flag_push_force', False):
+                return self.set_regs.get('dynamic_push_force', 0)
+
+            else:
+                return self.set_regs.get('static_push_force', 0)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_choice_push_force - {e}')
+
     def _full_circle_done(self):
         try:
             if self.set_regs.get('fill_graph', False):
-                push_force = self._calc_dynamic_push_force()
+                self._calc_dynamic_push_force()
+                push_force = self._choice_push_force()
                 command = {'max_comp': round(max(self.set_regs.get('force_accum_list')) - push_force, 2),
                            'max_recoil': round(abs(min(self.set_regs.get('force_accum_list'))) + push_force, 2),
-                           'push_force': push_force,
                            'force_graph': list(map(lambda x: round(x * (-1), 1),
                                                    self.set_regs.get('force_accum_list'))),
                            'move_graph': list(map(lambda x: round(x + self.adjust_x, 1),

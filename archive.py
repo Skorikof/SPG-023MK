@@ -19,7 +19,8 @@ class TestArchive:
         self.type_test = ''
         self.serial_number = ''
         self.flag_push_force = ''
-        self.push_force = ''
+        self.static_push_force = ''
+        self.dynamic_push_force = ''
         self.speed = ''
         self.move_list = []
         self.force_list = []
@@ -114,17 +115,18 @@ class ReadArchive:
                 self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17].replace(',', '.')
                 self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18].replace(',', '.')
                 self.struct.tests[self.ind_test].flag_push_force = archive_list[19]
-                self.struct.tests[self.ind_test].push_force = archive_list[20].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_temper = archive_list[21].replace(',', '.')
+                self.struct.tests[self.ind_test].static_push_force = archive_list[20].replace(',', '.')
+                self.struct.tests[self.ind_test].dynamic_push_force = archive_list[21].replace(',', '.')
+                self.struct.tests[self.ind_test].amort.max_temper = archive_list[22].replace(',', '.')
 
-                self.struct.tests[self.ind_test].speed = archive_list[22].replace(',', '.')
+                self.struct.tests[self.ind_test].speed = archive_list[23].replace(',', '.')
 
-                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
+                temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 
                 self.struct.tests[self.ind_test].move_list = temp_list[:]
 
             elif archive_list[0] == '*':
-                temp_list = self._add_data_on_list_graph(archive_list[23:-1])
+                temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 
                 self.struct.tests[self.ind_test].force_list = temp_list[:]
 
@@ -178,7 +180,8 @@ class ReadArchive:
                              f'Мин усилие сжатия, кгс;'
                              f'Макс усилие сжатия, кгс;'
                              f'Флаг выталкивающей силы;'
-                             f'Выталкивающая сила, кгс;'
+                             f'Выталкивающая сила статичная, кгс;'
+                             f'Выталкивающая сила динамическая, кгс;'
                              f'Макс температура, °С;'
                              f'Скорость испытания, м/с;'
                              f'Перемещение, мм/Усилие, кгс')
@@ -205,7 +208,8 @@ class ReadArchive:
                              f'{obj["amort"].min_comp_2};'
                              f'{obj["amort"].max_comp_2};'
                              f'{obj["flag_push_force"]};'
-                             f'{obj["push_force"]};'
+                             f'{obj["static_push_force"]};'
+                             f'{obj["dynamic_push_force"]};'
                              f'{obj["max_temperature"]};')
 
                 write_str = write_str.replace('.', ',')
@@ -215,7 +219,7 @@ class ReadArchive:
                 force = self._change_data_for_save(obj['force_graph'])
 
                 write_data = (f'{speed};{move};\n'
-                              f'*;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                              f'*;;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                 file_arch.write(write_name + write_str + write_data)
 
