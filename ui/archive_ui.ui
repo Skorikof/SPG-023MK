@@ -119,13 +119,13 @@
         <widget class="QComboBox" name="combo_test">
          <property name="minimumSize">
           <size>
-           <width>500</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>500</width>
+           <width>450</width>
            <height>30</height>
           </size>
          </property>
@@ -141,13 +141,13 @@
         <widget class="QComboBox" name="combo_type">
          <property name="minimumSize">
           <size>
-           <width>250</width>
+           <width>300</width>
            <height>30</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>250</width>
+           <width>300</width>
            <height>30</height>
           </size>
          </property>
@@ -159,12 +159,27 @@
          </property>
          <item>
           <property name="text">
-           <string>Усилие / Перемещение</string>
+           <string>Усилие/Перемещение</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Усилие / Скорость</string>
+           <string>Усилие/Скорость</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Ход/Скорость/Сопротивление</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Скорость/Сопротивление</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Температура/Сопротивление</string>
           </property>
          </item>
         </widget>

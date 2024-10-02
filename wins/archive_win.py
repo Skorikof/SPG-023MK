@@ -26,6 +26,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_date = ''
             self.index_test = 0
             self.index_test_cascade = 0
+            self.index_test_temper = 0
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -103,6 +104,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.speed_le.setText('')
             self.max_temp_le.setText('')
             self.hod_le.setText('')
+            self.power_le.setText('')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
@@ -118,15 +120,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _change_index_test(self, index):
         try:
-            if self.type_graph == 'move':
-                if self.index_test != index:
-                    self.index_test = index
+            if self.type_graph == 'speed':
+                if self.index_test_cascade != index:
+                    self.index_test_cascade = index
                     self._archive_test_select()
                     self._archive_graph()
 
-            elif self.type_graph == 'speed':
-                if self.index_test_cascade != index:
-                    self.index_test_cascade = index
+            elif self.type_graph == 'temper':
+                if self.index_test_temper != index:
+                    self.index_test_temper = index
+                    self._archive_test_select()
+                    self._archive_graph()
+
+            else:
+                if self.index_test != index:
+                    self.index_test = index
                     self._archive_test_select()
                     self._archive_graph()
 
@@ -143,11 +151,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 elif index == 1:
                     self.type_graph = 'speed'
 
+                elif index == 2:
+                    self.type_graph = 'triple'
+
+                elif index == 3:
+                    self.type_graph = 'boost'
+
+                elif index == 4:
+                    self.type_graph = 'temper'
+
                 self._archive_update()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
 
+    # FIXME
     def _archive_selected(self):
         try:
             date = self.index_date
@@ -155,18 +173,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             temp_arr = []
             self.archive.select_file(date)
 
-            if self.type_graph == 'move':
-                for i in range(len(self.archive.struct.tests)):
-                    temp = (f'{self.archive.struct.tests[i].time_test} - '
-                            f'{self.archive.struct.tests[i].amort.name} - '
-                            f'{self.archive.struct.tests[i].serial_number}')
-                    temp_arr.append(temp)
-
-            elif self.type_graph == 'speed':
+            if self.type_graph == 'speed':
                 for key, value in self.archive.struct_cascade.cascade.items():
                     temp = (f'{value[0].time_test} - '
                             f'{value[0].amort.name} - '
                             f'{value[0].serial_number}')
+                    temp_arr.append(temp)
+
+            elif self.type_graph == 'temper':
+                pass
+
+            else:
+                for i in range(len(self.archive.struct.tests)):
+                    temp = (f'{self.archive.struct.tests[i].time_test} - '
+                            f'{self.archive.struct.tests[i].amort.name} - '
+                            f'{self.archive.struct.tests[i].serial_number}')
                     temp_arr.append(temp)
 
             if temp_arr:
@@ -174,7 +195,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_test_select()
                 self._archive_graph()
             else:
-                pass
+                self._archive_ui_clear()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
@@ -182,9 +203,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _gui_move_graph(self):
         try:
             self.graphwidget.clear()
-            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
-            self.graphwidget.setLabel('bottom', 'Перемещение', units='мм')
-            self.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ ПЕРЕМЕЩЕНИЯ')
+            self.graphwidget.setLabel('left', 'Усилие', units='кгс', color='k')
+            self.graphwidget.setLabel('bottom', 'Перемещение', units='мм', color='k')
+            self.graphwidget.setLabel('right', 'Усилие', units='кгс', color='k')
+            self.graphwidget.setTitle('График зависимости усилия от перемещения', color='k', size='14pt')
             self.graphwidget.showGrid(True, True)
             self.graphwidget.setBackground('w')
 
@@ -204,7 +226,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.clear()
             self.graphwidget.setLabel('left', 'Усилие', units='кгс')
             self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
-            self.graphwidget.setWindowTitle('ГРАФИК ЗАВИСИМОСТИ УСИЛИЯ ОТ СКОРОСТИ')
+            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
+            self.graphwidget.setTitle('График зависимости усилия от скорости')
             self.graphwidget.showGrid(True, True)
             self.graphwidget.setBackground('w')
 
@@ -219,12 +242,75 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_data - {e}')
 
+    def _gui_triple_graph(self):
+        try:
+            self.graphwidget.clear()
+            self.graphwidget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с')
+            self.graphwidget.setLabel('bottom', 'ω * t', units='[°]')
+            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
+            self.graphwidget.setTitle('Диаграмма хода, скорости, силы сопротивления')
+            self.graphwidget.showGrid(True, True)
+            self.graphwidget.setBackground('w')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_graph - {e}')
+
+    def _gui_triple_data(self):
+        try:
+            self.power_le.setVisible(True)
+            self.power_lbl.setVisible(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_data - {e}')
+
+    def _gui_boost_graph(self):
+        try:
+            self.graphwidget.clear()
+            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
+            self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
+            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
+            self.graphwidget.setTitle('График зависимости усилия от скорости')
+            self.graphwidget.showGrid(True, True)
+            self.graphwidget.setBackground('w')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_graph - {e}')
+
+    def _gui_boost_data(self):
+        try:
+            self.power_le.setVisible(True)
+            self.power_lbl.setVisible(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_data - {e}')
+
+    def _gui_temper_graph(self):
+        try:
+            self.graphwidget.clear()
+            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
+            self.graphwidget.setLabel('bottom', 'Температура', units='℃')
+            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
+            self.graphwidget.setTitle('График зависимости усилия от температуры')
+            self.graphwidget.showGrid(True, True)
+            self.graphwidget.setBackground('w')
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_graph - {e}')
+
+    def _gui_temper_data(self):
+        try:
+            self.power_le.setVisible(True)
+            self.power_lbl.setVisible(True)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_data - {e}')
+
     def _archive_test_select(self):
         try:
             if self.type_graph == 'move':
                 self._pars_lab_data()
 
-            if self.type_graph == 'speed':
+            elif self.type_graph == 'speed':
                 self._pars_lab_cascade_data()
 
         except Exception as e:
@@ -323,6 +409,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._gui_speed_data()
                 self._gui_speed_graph()
                 self._fill_lab_cascade_graph()
+
+            elif self.type_graph == 'triple':
+                self._gui_triple_data()
+                self._gui_triple_graph()
+                self._fill_triple_graph()
+
+            elif self.type_graph == 'boost':
+                self._gui_boost_data()
+                self._gui_boost_graph()
+                self._fill_boost_graph()
+
+            elif self.type_graph == 'temper':
+                self._gui_temper_data()
+                self._gui_temper_graph()
+                self._fill_temper_graph()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
@@ -426,6 +527,37 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
+
+    # FIXME
+    def _fill_triple_graph(self):
+        try:
+            index = self.index_test
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
+
+    def _calc_hod_triple_list(self, hod):
+        try:
+            mid_hod = hod / 2
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
+
+    # FIXME
+    def _fill_boost_graph(self):
+        try:
+            pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
+
+    # FIXME
+    def _fill_temper_graph(self):
+        try:
+            pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
 
     def _calc_power(self, move: list, force: list):
         try:
