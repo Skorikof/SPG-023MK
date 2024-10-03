@@ -336,7 +336,7 @@ class Controller:
                         self.signals.cancel_test.emit()
 
                     command = {'stage': 'wait',
-                               'traverse_freq': 10}
+                               'traverse_freq': 8}
 
                     self.model.update_main_dict(command)
 
@@ -348,7 +348,7 @@ class Controller:
 
     def _control_traverse_move(self) -> bool:  # Функция отслеживания траверсы, при достижении точки останов
         try:
-            if 5 < abs(self.set_trav_point - self.response.get('traverse_move')) <= 15:
+            if 5 < abs(self.set_trav_point - self.response.get('traverse_move')) <= 10:
                 if not self.flag_freq_1_step:
                     self._write_speed_motor(2, freq=10)
                     self.flag_freq_1_step = True

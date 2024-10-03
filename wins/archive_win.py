@@ -7,6 +7,7 @@ from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from PIL import ImageGrab
 import pyqtgraph as pg
+import numpy as np
 
 
 class WinSignals(QObject):
@@ -246,7 +247,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             self.graphwidget.clear()
             self.graphwidget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с')
-            self.graphwidget.setLabel('bottom', 'ω * t', units='[°]')
+            self.graphwidget.setLabel('bottom', 'ω * t', units='°')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс')
             self.graphwidget.setTitle('Диаграмма хода, скорости, силы сопротивления')
             self.graphwidget.showGrid(True, True)
@@ -257,8 +258,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_triple_data(self):
         try:
-            self.power_le.setVisible(True)
-            self.power_lbl.setVisible(True)
+            self.power_le.setVisible(False)
+            self.power_lbl.setVisible(False)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_data - {e}')
@@ -278,8 +279,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_boost_data(self):
         try:
-            self.power_le.setVisible(True)
-            self.power_lbl.setVisible(True)
+            self.power_le.setVisible(False)
+            self.power_lbl.setVisible(False)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_data - {e}')
@@ -299,19 +300,22 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_temper_data(self):
         try:
-            self.power_le.setVisible(True)
-            self.power_lbl.setVisible(True)
+            self.power_le.setVisible(False)
+            self.power_lbl.setVisible(False)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_data - {e}')
 
     def _archive_test_select(self):
         try:
-            if self.type_graph == 'move':
-                self._pars_lab_data()
-
-            elif self.type_graph == 'speed':
+            if self.type_graph == 'speed':
                 self._pars_lab_cascade_data()
+
+            elif self.type_graph == 'temper':
+                pass
+
+            else:
+                self._pars_lab_data()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
@@ -532,16 +536,86 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_triple_graph(self):
         try:
             index = self.index_test
+            hod = int(self.archive.struct.tests[index].amort.hod)
+            move_list = self.archive.struct.tests[index].move_list
+            force_list = self.archive.struct.tests[index].force_list
+
+            self._fill_triple_hod_graph(hod)
+
+            self._fill_triple_force_graph(move_list, force_list, hod)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
 
-    def _calc_hod_triple_list(self, hod):
+    def _fill_triple_hod_graph(self, hod):
+        try:
+            hod_x, hod_y = self._calc_hod_triple_coord(hod)
+            pen = pg.mkPen(color='black', width=3)
+            self.graphwidget.plot(hod_x, hod_y, pen=pen)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
+
+    def _calc_hod_triple_coord(self, hod):
         try:
             mid_hod = hod / 2
+            fs = 360
+            f = 1
+            x = np.arange(360)
+            y = np.sin(2 * np.pi * f * x / fs) * mid_hod
+
+            return x, y
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
+
+    def _fill_triple_force_graph(self, move: list, force: list, hod: int):
+        try:
+            force_x, force_y = self._calc_triple_force_coord(move, force, hod)
+            pen = pg.mkPen(color='blue', width=3)
+            self.graphwidget.plot(force_x, force_y, pen=pen)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
+
+    def _calc_triple_force_coord(self, move: list, force: list, hod):
+        try:
+            way = []
+            start = move[0]
+            index = 0
+            if start < 0:
+                temp_list = list(map(lambda x: round(x + abs(start), 1), move))
+
+            else:
+                temp_list = list(map(lambda x: round(x - start, 1), move))
+
+            max_point = max(temp_list)
+            max_index = temp_list.index(max_point)
+
+            for i in range(len(temp_list)):
+                point = temp_list[i]
+                if i > max_index:
+                    point = round(max_point - abs(temp_list[i]) + max_point, 1)
+
+                way.append(point)
+
+            max_way = max(way)
+
+            x_coord = list(map(lambda x: round(360 * x / max_way, 1), way))
+
+            mid_hod = hod / 2
+
+            for point in temp_list:
+                if mid_hod - 1 < point < mid_hod + 1:
+                    index = temp_list.index(point)
+                    continue
+
+            y_coord = force[-1 * index:] + force[:index]
+
+            return x_coord, y_coord
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
 
     # FIXME
     def _fill_boost_graph(self):
