@@ -8,6 +8,7 @@ from archive import ReadArchive
 from PIL import ImageGrab
 import pyqtgraph as pg
 import numpy as np
+from functools import reduce
 
 
 class WinSignals(QObject):
@@ -311,6 +312,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             if self.type_graph == 'speed':
                 self._pars_lab_cascade_data()
 
+            elif self.type_graph == 'triple':
+                self._pars_triple_data()
+
             elif self.type_graph == 'temper':
                 pass
 
@@ -359,6 +363,23 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
 
+    def _pars_triple_data(self):
+        try:
+            index = self.index_test
+            if self.archive.struct.tests[index]:
+
+                self._fill_archive_data_gui(self.archive.struct.tests[index])
+
+                self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
+
+                self._fill_flag_push_force('2')
+
+            else:
+                pass
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_triple_data - {e}')
+
     def _fill_archive_data_gui(self, obj):
         try:
             user_name = obj.operator_name
@@ -396,8 +417,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         txt = ''
         if index == '1':
             txt = f'Динамическая\nвыталкивающая\nсила'
+
         elif index == '0':
             txt = f'Статическая\nвыталкивающая\nсила'
+
+        elif index == '2':
+            txt = f'Выталкивающая\nсила\nне учитывается'
 
         self.lbl_push_force.setText(txt)
 
@@ -540,9 +565,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
 
+            self.comp_le.setText(f'{abs(min(force_list))}')
+            self.recoil_le.setText(f'{max(force_list)}')
+
             self._fill_triple_hod_graph(hod)
 
-            self._fill_triple_force_graph(move_list, force_list, hod)
+            x_coord = self._convert_triple_move_in_degrees_coord(move_list)
+
+            self._fill_triple_force_graph(x_coord, force_list)
+
+            self._fill_triple_speed_graph(move_list, x_coord)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
@@ -569,25 +601,36 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
 
-    def _fill_triple_force_graph(self, move: list, force: list, hod: int):
+    def _fill_triple_force_graph(self, x_coord: list, force: list):
         try:
-            force_x, force_y = self._calc_triple_force_coord(move, force, hod)
+            force_y = self._calc_triple_force_coord(force)
             pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(force_x, force_y, pen=pen)
+            self.graphwidget.plot(x_coord, force_y, pen=pen)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
 
-    def _calc_triple_force_coord(self, move: list, force: list, hod):
+    def _calc_triple_force_coord(self, force: list):
+        try:
+            index = int(force.index(min(force)) / 2)
+
+            y_coord = force[index:] + force[:index]
+            y_coord = list(map(lambda x: round(x * (-1), 1), y_coord))
+
+            return y_coord
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
+
+    def _convert_triple_move_in_degrees_coord(self, move: list):
         try:
             way = []
-            start = move[0]
-            index = 0
-            if start < 0:
-                temp_list = list(map(lambda x: round(x + abs(start), 1), move))
+            start_point = move[0]
+            if start_point < 0:
+                temp_list = list(map(lambda x: round(x + abs(start_point), 1), move))
 
             else:
-                temp_list = list(map(lambda x: round(x - start, 1), move))
+                temp_list = list(map(lambda x: round(x - start_point, 1), move))
 
             max_point = max(temp_list)
             max_index = temp_list.index(max_point)
@@ -603,19 +646,47 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             x_coord = list(map(lambda x: round(360 * x / max_way, 1), way))
 
-            mid_hod = hod / 2
-
-            for point in temp_list:
-                if mid_hod - 1 < point < mid_hod + 1:
-                    index = temp_list.index(point)
-                    continue
-
-            y_coord = force[-1 * index:] + force[:index]
-
-            return x_coord, y_coord
+            return x_coord
 
         except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_x_coord - {e}')
+
+    def _fill_triple_speed_graph(self, move: list, x_coord: list):
+        try:
+            speed_y = self._calc_triple_speed_coord(move)
+            pen = pg.mkPen(color='red', width=3)
+            self.graphwidget.plot(x_coord, speed_y, pen=pen)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_speed_graph - {e}')
+
+    # FIXME
+    def _calc_triple_speed_coord(self, move: list):
+        try:
+            speed_list = []
+            y_coord = []
+            temp_list = move[5:] + move + move[:5]
+
+            for i in range(len(move)):
+                for j in range(10):
+                    speed_list.append(round(abs(abs(temp_list[i + j]) - abs(temp_list[i + j + 1])), 3))
+
+                temp = reduce(lambda x, y: round(x + y, 3), speed_list)
+                y_coord.append(temp)
+                speed_list = []
+                # temp = reduce(lambda x, y: round(abs(abs(x) + abs(y)), 3), temp_list[i:i + 10])
+                # y_coord.append(temp)
+
+            print(f'{y_coord=}')
+
+            y_coord = list(map(lambda x: round(x * 100, 1), y_coord))
+
+            print(f'{y_coord=}')
+
+            return y_coord
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
 
     # FIXME
     def _fill_boost_graph(self):
