@@ -476,7 +476,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             pen = pg.mkPen(color='black', width=3)
 
-            self.graphwidget.plot(move_list, force_list, pen=pen)
+            self.graphwidget.plot(move_list, force_list, pen=pen, label='Рабочая диаграмма')
 
             self.comp_le.setText(f'{max_comp}')
             self.recoil_le.setText(f'{max_recoil}')
@@ -506,10 +506,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     recoil_list.append(round(max(obj.force_list) + float(obj.static_push_force), 2))
                     comp_list.append(round(min(obj.force_list) + float(obj.static_push_force), 2))
 
-            pen = pg.mkPen(color='black', width=3)
+            pen_recoil = pg.mkPen(color='black', width=3)
+            pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.graphwidget.plot(speed_list, recoil_list, pen=pen)
-            self.graphwidget.plot(speed_list, comp_list, pen=pen)
+            self.graphwidget.plot(speed_list, recoil_list, pen=pen_recoil, label='Отбой')
+            self.graphwidget.plot(speed_list, comp_list, pen=pen_comp, label='Сжатие')
 
             self.recoil_le.setText(f'{max(recoil_list)}')
             self.comp_le.setText(f'{abs(min(comp_list))}')
@@ -557,7 +558,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
 
-    # FIXME
     def _fill_triple_graph(self):
         try:
             index = self.index_test
@@ -572,9 +572,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             x_coord = self._convert_triple_move_in_degrees_coord(move_list)
 
-            self._fill_triple_force_graph(x_coord, force_list)
+            index_mid_hod = self._calc_index_middle_hod_triple(x_coord, hod)
 
-            self._fill_triple_speed_graph(move_list, x_coord)
+            self._fill_triple_force_graph(x_coord, force_list, index_mid_hod)
+
+            self._fill_triple_speed_graph(move_list, x_coord, index_mid_hod)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
@@ -583,7 +585,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             hod_x, hod_y = self._calc_hod_triple_coord(hod)
             pen = pg.mkPen(color='black', width=3)
-            self.graphwidget.plot(hod_x, hod_y, pen=pen)
+            self.graphwidget.plot(hod_x, hod_y, pen=pen, label='Смещение')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
@@ -601,23 +603,28 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
 
-    def _fill_triple_force_graph(self, x_coord: list, force: list):
+    def _calc_index_middle_hod_triple(self, x_coord: list, hod: int):
         try:
-            force_y = self._calc_triple_force_coord(force)
+            mid_hod = hod / 2
+            for point in x_coord:
+                if mid_hod - 1 < point < mid_hod + 1:
+                    return x_coord.index(point)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_start_point_triple - {e}')
+
+    def _fill_triple_force_graph(self, x_coord: list, force: list, index):
+        try:
+            force_y = self._calc_triple_force_coord(force, index)
             pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(x_coord, force_y, pen=pen)
+            self.graphwidget.plot(x_coord, force_y, pen=pen, label='Сила амортизатора')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
 
-    def _calc_triple_force_coord(self, force: list):
+    def _calc_triple_force_coord(self, force: list, index):
         try:
-            index = int(force.index(min(force)) / 2)
-
-            y_coord = force[index:] + force[:index]
-            y_coord = list(map(lambda x: round(x * (-1), 1), y_coord))
-
-            return y_coord
+            return list(map(lambda x: round(x * (-1), 1), force[index:] + force[:index]))
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
@@ -644,28 +651,31 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             max_way = max(way)
 
-            x_coord = list(map(lambda x: round(360 * x / max_way, 1), way))
-
-            return x_coord
+            return list(map(lambda x: round(360 * x / max_way, 1), way))
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_x_coord - {e}')
 
-    def _fill_triple_speed_graph(self, move: list, x_coord: list):
+    def _fill_triple_speed_graph(self, move: list, x_coord: list, index):
         try:
-            speed_y = self._calc_triple_speed_coord(move)
+            speed_y = self._calc_triple_speed_coord(move, index)
             pen = pg.mkPen(color='red', width=3)
-            self.graphwidget.plot(x_coord, speed_y, pen=pen)
+            self.graphwidget.plot(x_coord, speed_y, pen=pen, label='Скорость')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_speed_graph - {e}')
 
-    # FIXME
-    def _calc_triple_speed_coord(self, move: list):
+    def _calc_triple_speed_coord(self, move: list, index):
         try:
             speed_list = []
             y_coord = []
-            temp_list = move[5:] + move + move[:5]
+
+            if index != 0:
+                shift_list = move[index:] + move[:index]
+                temp_list = shift_list[5:] + shift_list + shift_list[:5]
+
+            else:
+                temp_list = move[5:] + move + move[:5]
 
             for i in range(len(move)):
                 for j in range(10):
@@ -674,24 +684,31 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 temp = reduce(lambda x, y: round(x + y, 3), speed_list)
                 y_coord.append(temp)
                 speed_list = []
-                # temp = reduce(lambda x, y: round(abs(abs(x) + abs(y)), 3), temp_list[i:i + 10])
-                # y_coord.append(temp)
 
-            print(f'{y_coord=}')
+            y_approxy = self._averaging_speed_line(y_coord)
 
-            y_coord = list(map(lambda x: round(x * 100, 1), y_coord))
-
-            print(f'{y_coord=}')
-
-            return y_coord
+            return list(map(lambda x: round(x * 100, 1), y_approxy))
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
 
-    # FIXME
+    def _averaging_speed_line(self, speed_y):
+        w = np.hanning(150)
+        return np.convolve(w / w.sum(), speed_y, mode='same')
+
     def _fill_boost_graph(self):
         try:
-            pass
+            index = self.index_test
+            move_list = self.archive.struct.tests[index].move_list
+            force_list = self.archive.struct.tests[index].force_list
+
+            self.comp_le.setText(f'{abs(min(force_list))}')
+            self.recoil_le.setText(f'{max(force_list)}')
+
+            x_coord = self._calc_triple_speed_coord(move_list, 0)
+
+            pen = pg.mkPen(color='blue', width=3)
+            self.graphwidget.plot(x_coord, force_list, pen=pen, label='Скорость')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
