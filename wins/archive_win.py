@@ -204,7 +204,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_move_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             self.graphwidget.setLabel('left', 'Усилие', units='кгс', color='k')
             self.graphwidget.setLabel('bottom', 'Перемещение', units='мм', color='k')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс', color='k')
@@ -225,7 +225,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_speed_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             self.graphwidget.setLabel('left', 'Усилие', units='кгс')
             self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс')
@@ -246,7 +246,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_triple_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             self.graphwidget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с')
             self.graphwidget.setLabel('bottom', 'ω * t', units='°')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс')
@@ -267,7 +267,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_boost_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             self.graphwidget.setLabel('left', 'Усилие', units='кгс')
             self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс')
@@ -288,7 +288,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _gui_temper_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             self.graphwidget.setLabel('left', 'Усилие', units='кгс')
             self.graphwidget.setLabel('bottom', 'Температура', units='℃')
             self.graphwidget.setLabel('right', 'Усилие', units='кгс')
@@ -428,7 +428,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_graph(self):
         try:
-            self.graphwidget.clear()
+            self.graphwidget.plot(clear=True)
             if self.type_graph == 'move':
                 self._gui_move_data()
                 self._gui_move_graph()
@@ -454,6 +454,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._gui_temper_graph()
                 self._fill_temper_graph()
 
+            self.graphwidget.addLegend()
+
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
 
@@ -476,7 +478,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             pen = pg.mkPen(color='black', width=3)
 
-            self.graphwidget.plot(move_list, force_list, pen=pen, label='Рабочая диаграмма')
+            self.graphwidget.plot(move_list, force_list, pen=pen, name='Рабочая диаграмма')
 
             self.comp_le.setText(f'{max_comp}')
             self.recoil_le.setText(f'{max_recoil}')
@@ -509,8 +511,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.graphwidget.plot(speed_list, recoil_list, pen=pen_recoil, label='Отбой')
-            self.graphwidget.plot(speed_list, comp_list, pen=pen_comp, label='Сжатие')
+            self.graphwidget.plot(speed_list, recoil_list, pen=pen_recoil, name='Отбой')
+            self.graphwidget.plot(speed_list, comp_list, pen=pen_comp, name='Сжатие')
 
             self.recoil_le.setText(f'{max(recoil_list)}')
             self.comp_le.setText(f'{abs(min(comp_list))}')
@@ -554,7 +556,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(speed_2, limit_recoil_2, pen=pen)
             self.graphwidget.plot(speed_2, limit_comp_2, pen=pen)
 
-
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
 
@@ -585,7 +586,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             hod_x, hod_y = self._calc_hod_triple_coord(hod)
             pen = pg.mkPen(color='black', width=3)
-            self.graphwidget.plot(hod_x, hod_y, pen=pen, label='Смещение')
+            self.graphwidget.plot(hod_x, hod_y, pen=pen, name='Смещение')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
@@ -617,7 +618,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             force_y = self._calc_triple_force_coord(force, index)
             pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(x_coord, force_y, pen=pen, label='Сила амортизатора')
+            self.graphwidget.plot(x_coord, force_y, pen=pen, name='Сила амортизатора')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
@@ -660,7 +661,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             speed_y = self._calc_triple_speed_coord(move, index)
             pen = pg.mkPen(color='red', width=3)
-            self.graphwidget.plot(x_coord, speed_y, pen=pen, label='Скорость')
+            self.graphwidget.plot(x_coord, speed_y,
+                                  pen=pen,
+                                  name='Скорость')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_speed_graph - {e}')
@@ -685,16 +688,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 y_coord.append(temp)
                 speed_list = []
 
-            y_approxy = self._averaging_speed_line(y_coord)
+            w = np.hanning(150)
+            y_approxy = np.convolve(w / w.sum(), y_coord, mode='same')
 
             return list(map(lambda x: round(x * 100, 1), y_approxy))
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
-
-    def _averaging_speed_line(self, speed_y):
-        w = np.hanning(150)
-        return np.convolve(w / w.sum(), speed_y, mode='same')
 
     def _fill_boost_graph(self):
         try:
@@ -708,7 +708,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             x_coord = self._calc_triple_speed_coord(move_list, 0)
 
             pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(x_coord, force_list, pen=pen, label='Скорость')
+            self.graphwidget.plot(x_coord, force_list, pen=pen, name='Скорость')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
