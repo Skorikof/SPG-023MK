@@ -417,9 +417,120 @@ class Ui_WindowArch(object):
         self.frame_btn.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_btn.setObjectName("frame_btn")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.frame_btn)
-        self.horizontalLayout_2.setContentsMargins(10, 5, 10, 10)
+        self.horizontalLayout_2.setContentsMargins(5, 5, 5, 5)
         self.horizontalLayout_2.setSpacing(10)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.btn_compare = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_compare.setMinimumSize(QtCore.QSize(140, 35))
+        self.btn_compare.setMaximumSize(QtCore.QSize(140, 35))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(20)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_compare.setFont(font)
+        self.btn_compare.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_compare.setObjectName("btn_compare")
+        self.horizontalLayout_2.addWidget(self.btn_compare)
+        self.btn_clier = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_clier.setMinimumSize(QtCore.QSize(140, 35))
+        self.btn_clier.setMaximumSize(QtCore.QSize(140, 35))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(20)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_clier.setFont(font)
+        self.btn_clier.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_clier.setObjectName("btn_clier")
+        self.horizontalLayout_2.addWidget(self.btn_clier)
+        self.btn_show = QtWidgets.QPushButton(self.frame_btn)
+        self.btn_show.setMinimumSize(QtCore.QSize(140, 35))
+        self.btn_show.setMaximumSize(QtCore.QSize(140, 35))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(20)
+        font.setBold(False)
+        font.setWeight(50)
+        self.btn_show.setFont(font)
+        self.btn_show.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 10px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    \n"
+"    background-color: rgb(0, 0, 255);\n"
+"    \n"
+"}")
+        self.btn_show.setObjectName("btn_show")
+        self.horizontalLayout_2.addWidget(self.btn_show)
         self.btn_print = QtWidgets.QPushButton(self.frame_btn)
         self.btn_print.setMinimumSize(QtCore.QSize(220, 35))
         self.btn_print.setMaximumSize(QtCore.QSize(220, 35))
@@ -524,6 +635,9 @@ class Ui_WindowArch(object):
         self.lbl_27.setText(_translate("WindowArch", "Дата испытания:"))
         self.lbl_16.setText(_translate("WindowArch", "Оператор:"))
         self.power_lbl.setText(_translate("WindowArch", "Мощность, кВТ:"))
+        self.btn_compare.setText(_translate("WindowArch", "Сравнить"))
+        self.btn_clier.setText(_translate("WindowArch", "Очистить"))
+        self.btn_show.setText(_translate("WindowArch", "Показать"))
         self.btn_print.setText(_translate("WindowArch", "Печать"))
         self.btn_exit.setText(_translate("WindowArch", "Выход"))
 from pyqtgraph import PlotWidget

@@ -24,6 +24,7 @@ class TestArchive:
         self.speed = ''
         self.move_list = []
         self.force_list = []
+        self.temper_list = []
 
         self.amort = DataAmort()
 
@@ -44,8 +45,10 @@ class ReadArchive:
 
         self.struct = None
         self.struct_cascade = TestCascade()
+        self.struct_temper = None
         self.ind_test = -1
         self.ind_casc = 0
+        self.ind_temp = -1
         self.index_archive = None
         self.glob_arr = None
 
@@ -70,8 +73,10 @@ class ReadArchive:
         try:
             self.ind_test = -1
             self.ind_casc = 1
+            self.ind_temp = -1
             self.cascade_list = []
             self.struct = FileArchive()
+            self.struct_temper = FileArchive()
 
             self.index_archive = self.files_name_arr.index(data)
 
@@ -89,41 +94,23 @@ class ReadArchive:
         except Exception as e:
             print(f'Exception in archive/select_file - {e}')
 
+    # FIXME
     def _pars_str_archive(self, archive_list):
         try:
             if not archive_list[0] == '*' and not archive_list[0] == 'end_test':
-                self.ind_test += 1
-                self.struct.tests.append(TestArchive())
+                if archive_list[3] == 'temper':
+                    self.ind_temp += 1
+                    self.struct_temper.tests.append()
 
-                self.struct.tests[self.ind_test].time_test = archive_list[0]
-                self.struct.tests[self.ind_test].operator_name = archive_list[1]
-                self.struct.tests[self.ind_test].operator_rank = archive_list[2]
-                self.struct.tests[self.ind_test].type_test = archive_list[3]
-                self.struct.tests[self.ind_test].amort.name = archive_list[4]
-                self.struct.tests[self.ind_test].serial_number = archive_list[5]
-                self.struct.tests[self.ind_test].amort.min_length = archive_list[6].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_length = archive_list[7].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.hod = archive_list[8]
-                self.struct.tests[self.ind_test].amort.speed_one = archive_list[9].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_recoil = archive_list[10].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_recoil = archive_list[11].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_comp = archive_list[12].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_comp = archive_list[13].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.speed_two = archive_list[14].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_recoil_2 = archive_list[15].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_recoil_2 = archive_list[16].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.min_comp_2 = archive_list[17].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_comp_2 = archive_list[18].replace(',', '.')
-                self.struct.tests[self.ind_test].flag_push_force = archive_list[19]
-                self.struct.tests[self.ind_test].static_push_force = archive_list[20].replace(',', '.')
-                self.struct.tests[self.ind_test].dynamic_push_force = archive_list[21].replace(',', '.')
-                self.struct.tests[self.ind_test].amort.max_temper = archive_list[22].replace(',', '.')
+                else:
+                    self.ind_test += 1
+                    self.struct.tests.append(TestArchive())
 
-                self.struct.tests[self.ind_test].speed = archive_list[23].replace(',', '.')
+                    self._fill_obj_archive_data(self.struct.tests[self.ind_test], archive_list)
 
-                temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+                    temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 
-                self.struct.tests[self.ind_test].move_list = temp_list[:]
+                    self.struct.tests[self.ind_test].move_list = temp_list[:]
 
             elif archive_list[0] == '*':
                 temp_list = self._add_data_on_list_graph(archive_list[24:-1])
@@ -135,12 +122,43 @@ class ReadArchive:
 
             if archive_list[0] == 'end_test':
                 if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
-                    self.struct_cascade.cascade[self.ind_casc] = self.cascade_list.copy()
+                    self.struct_cascade.cascade[self.ind_casc] = self.cascade_list[:]
                     self.ind_casc += 1
                     self.cascade_list = []
 
         except Exception as e:
             print(f'Exception in archive/_pars_str_archihve - {e}')
+
+    # FIXME
+    def _fill_obj_archive_data(self, obj, data):
+        try:
+            obj.time_test = data[0]
+            obj.operator_name = data[1]
+            obj.operator_rank = data[2]
+            obj.type_test = data[3]
+            obj.amort.name = data[4]
+            obj.serial_number = data[5]
+            obj.amort.min_length = data[6].replace(',', '.')
+            obj.amort.max_length = data[7].replace(',', '.')
+            obj.amort.hod = data[8]
+            obj.amort.speed_one = data[9].replace(',', '.')
+            obj.amort.min_recoil = data[10].replace(',', '.')
+            obj.amort.max_recoil = data[11].replace(',', '.')
+            obj.amort.min_comp = data[12].replace(',', '.')
+            obj.amort.max_comp = data[13].replace(',', '.')
+            obj.amort.speed_two = data[14].replace(',', '.')
+            obj.amort.min_recoil_2 = data[15].replace(',', '.')
+            obj.amort.max_recoil_2 = data[16].replace(',', '.')
+            obj.amort.min_comp_2 = data[17].replace(',', '.')
+            obj.amort.max_comp_2 = data[18].replace(',', '.')
+            obj.flag_push_force = data[19]
+            obj.static_push_force = data[20].replace(',', '.')
+            obj.dynamic_push_force = data[21].replace(',', '.')
+            obj.amort.max_temper = data[22].replace(',', '.')
+            obj.speed = data[23].replace(',', '.')
+
+        except Exception as e:
+            print(f'Exception in archive/_fill_obj_archihve_data - {e}')
 
     def _add_data_on_list_graph(self, data_list):
         try:
@@ -184,7 +202,7 @@ class ReadArchive:
                              f'Выталкивающая сила динамическая, кгс;'
                              f'Макс температура, °С;'
                              f'Скорость испытания, м/с;'
-                             f'Перемещение, мм/Усилие, кгс')
+                             f'Перемещение, мм(Температура, ℃)/Усилие, кгс')
                     file_arch.write(str_t + '\n')
 
                 write_name = (f'{time_t};'
@@ -215,10 +233,16 @@ class ReadArchive:
                 write_str = write_str.replace('.', ',')
 
                 speed = str(obj['speed']).replace('.', ',')
-                move = self._change_data_for_save(obj['move_graph'])
+
+                if obj['type_test'] == 'temper':
+                    data = self._change_data_for_save(obj['temper_graph'])
+
+                else:
+                    data = self._change_data_for_save(obj['move_graph'])
+
                 force = self._change_data_for_save(obj['force_graph'])
 
-                write_data = (f'{speed};{move};\n'
+                write_data = (f'{speed};{data};\n'
                               f'*;;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
 
                 file_arch.write(write_name + write_str + write_data)

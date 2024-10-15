@@ -23,12 +23,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def __init__(self):
         super(ArchiveWin, self).__init__()
         try:
+            self.compare_data = []
             self.type_graph = 'move'
             self.ind_type_test = 0
             self.index_date = ''
             self.index_test = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
+            self.pen = ['black', 'blue', 'red', 'green', 'yellow']
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -57,6 +59,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
         self.btn_print.clicked.connect(self._archive_save_form)
+        self.btn_compare.clicked.connect(self._add_compare_data)
+        self.btn_clier.clicked.connect(self._clear_compare_data)
+        self.btn_show.clicked.connect(self._show_compare_data)
 
         self.combo_dates.activated[str].connect(self._change_index_date)
         self.combo_test.activated[int].connect(self._change_index_test)
@@ -309,6 +314,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_test_select(self):
         try:
+            self.btn_compare.setVisible(True)
             if self.type_graph == 'speed':
                 self._pars_lab_cascade_data()
 
@@ -767,3 +773,55 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_printImage - {e}')
+
+    def _clear_compare_data(self):
+        try:
+            self.compare_data.clear()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
+
+    def _add_compare_data(self):
+        try:
+            len_data = len(self.compare_data)
+            if self.type_graph == 'speed':
+                index = self.index_test_cascade
+                if not self.archive.struct_cascade.cascade[index] in self.compare_data:
+                    self.compare_data.append(self.archive.struct_cascade.cascade[index])
+            elif self.type_graph == 'temper':
+                index = self.index_test_temper
+            else:
+                index = self.index_test
+                if not self.archive.struct.tests[index] in self.compare_data:
+                    self.compare_data.append(self.archive.struct.tests[index])
+            self.btn_compare.setVisible(False)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_add_compare_data - {e}')
+
+    # FIXME
+    def _show_compare_data(self):
+        try:
+            if self.compare_data is False:
+                pass
+            else:
+                self._show_graph(self.compare_data)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
+
+    # FIXME
+    def _show_graph(self, obj):
+        try:
+            self.graphwidget.plot(clear=True)
+            if self.type_graph == 'move':
+                for graph in obj:
+                    x_list = graph.move_list
+                    y_list = graph.force_list
+                    pen = pg.mkPen(color=self.pen[obj.index(graph)], width=3)
+                    self.graphwidget.plot(x_list, y_list, pen=pen)
+
+            self.graphwidget.addLegend()
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_show_graph - {e}')

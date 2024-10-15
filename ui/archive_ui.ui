@@ -1314,17 +1314,182 @@
         <number>10</number>
        </property>
        <property name="leftMargin">
-        <number>10</number>
+        <number>5</number>
        </property>
        <property name="topMargin">
         <number>5</number>
        </property>
        <property name="rightMargin">
-        <number>10</number>
+        <number>5</number>
        </property>
        <property name="bottomMargin">
-        <number>10</number>
+        <number>5</number>
        </property>
+       <item>
+        <widget class="QPushButton" name="btn_compare">
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Calibri</family>
+           <pointsize>20</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+         </property>
+         <property name="text">
+          <string>Сравнить</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_clier">
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Calibri</family>
+           <pointsize>20</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+         </property>
+         <property name="text">
+          <string>Очистить</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_show">
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>140</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Calibri</family>
+           <pointsize>20</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 10px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	
+	background-color: rgb(0, 0, 255);
+	
+}</string>
+         </property>
+         <property name="text">
+          <string>Показать</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QPushButton" name="btn_print">
          <property name="minimumSize">

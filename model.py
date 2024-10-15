@@ -228,7 +228,7 @@ class Model:
                            'force': self.correct_force(force_list[-1]),
                            'move': move_list[-1],
                            'force_list': [self.correct_force(x) for x in force_list],
-                           'move_list': move_list.copy(),
+                           'move_list': move_list[:],
                            'temp_list': [x for x in response.get('temper', [0]) if x != -100.0],
                            'count': response.get('count', [-32000])[-1],
                            }
