@@ -48,7 +48,7 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>375</y>
+       <y>465</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -108,7 +108,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>330</y>
+       <y>420</y>
        <width>340</width>
        <height>35</height>
       </rect>
@@ -138,7 +138,7 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>420</y>
+       <y>330</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -318,7 +318,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>420</y>
+       <y>330</y>
        <width>340</width>
        <height>35</height>
       </rect>
@@ -348,7 +348,7 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>330</y>
+       <y>420</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -378,7 +378,7 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>465</y>
+       <y>375</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -464,7 +464,7 @@
       <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
-      <string>Длина в разжатом состоянии (мм)</string>
+      <string>Длина в растянутом состоянии (мм)</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -474,7 +474,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>375</y>
+       <y>465</y>
        <width>340</width>
        <height>35</height>
       </rect>
@@ -504,7 +504,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>465</y>
+       <y>375</y>
        <width>340</width>
        <height>35</height>
       </rect>
@@ -744,7 +744,7 @@
      <property name="geometry">
       <rect>
        <x>490</x>
-       <y>330</y>
+       <y>420</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -774,7 +774,7 @@
      <property name="geometry">
       <rect>
        <x>490</x>
-       <y>375</y>
+       <y>465</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -804,7 +804,7 @@
      <property name="geometry">
       <rect>
        <x>490</x>
-       <y>420</y>
+       <y>330</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -834,7 +834,7 @@
      <property name="geometry">
       <rect>
        <x>490</x>
-       <y>465</y>
+       <y>375</y>
        <width>110</width>
        <height>35</height>
       </rect>
@@ -872,14 +872,14 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>0</width>
-      <height>0</height>
+      <width>615</width>
+      <height>80</height>
      </size>
     </property>
     <property name="maximumSize">
      <size>
-      <width>1500</width>
-      <height>1000</height>
+      <width>615</width>
+      <height>80</height>
      </size>
     </property>
     <property name="frameShape">
@@ -891,37 +891,37 @@
     <property name="lineWidth">
      <number>2</number>
     </property>
-    <widget class="QPushButton" name="btn_add">
-     <property name="geometry">
-      <rect>
-       <x>25</x>
-       <y>20</y>
-       <width>140</width>
-       <height>40</height>
-      </rect>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="leftMargin">
+      <number>5</number>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
+     <property name="rightMargin">
+      <number>5</number>
      </property>
-     <property name="maximumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
+     <item>
+      <widget class="QPushButton" name="btn_add">
+       <property name="minimumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri</family>
+         <pointsize>18</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton 
 {
 	color: rgb(0, 0, 0);
 	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
@@ -947,42 +947,36 @@ QPushButton:checked
 	background-color: rgb(0, 0, 255);
 	
 }</string>
-     </property>
-     <property name="text">
-      <string>Добавить</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_del">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>20</y>
-       <width>140</width>
-       <height>40</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
+       </property>
+       <property name="text">
+        <string>Добавить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_del">
+       <property name="minimumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri</family>
+         <pointsize>18</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton 
 {
 	color: rgb(0, 0, 0);
 	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
@@ -1008,42 +1002,36 @@ QPushButton:checked
 	background-color: rgb(0, 0, 255);
 	
 }</string>
-     </property>
-     <property name="text">
-      <string>Удалить</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="btn_exit">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>20</y>
-       <width>140</width>
-       <height>40</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>140</width>
-       <height>40</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Calibri</family>
-       <pointsize>18</pointsize>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton 
+       </property>
+       <property name="text">
+        <string>Удалить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_exit">
+       <property name="minimumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>140</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri</family>
+         <pointsize>18</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton 
 {
 	color: rgb(0, 0, 0);
 	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
@@ -1069,11 +1057,13 @@ QPushButton:checked
 	background-color: rgb(0, 0, 255);
 	
 }</string>
-     </property>
-     <property name="text">
-      <string>Выход</string>
-     </property>
-    </widget>
+       </property>
+       <property name="text">
+        <string>Выход</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
    <widget class="QFrame" name="frame_quest">
     <property name="geometry">

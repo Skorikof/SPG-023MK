@@ -9,7 +9,6 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-# from my_obj.exam_lineedit import LineEdit
 
 
 class Ui_MainWindow(object):
@@ -347,7 +346,7 @@ class Ui_MainWindow(object):
         self.lbl_txt5.setText(_translate("MainWindow", "Минимальное усилие сжатия (кгс)"))
         self.lbl_txt4.setText(_translate("MainWindow", "Длина в сжатом состоянии (мм)"))
         self.lbl_txt6.setText(_translate("MainWindow", "Минимальное усилие отбоя (кгс)"))
-        self.lbl_txt4_2.setText(_translate("MainWindow", "Длина в разжатом состоянии (мм)"))
+        self.lbl_txt4_2.setText(_translate("MainWindow", "Длина в растянутом состоянии (мм)"))
         self.lbl_txt5_2.setText(_translate("MainWindow", "Максимальное усилие сжатия (кгс)"))
         self.lbl_txt6_2.setText(_translate("MainWindow", "Максимальная усилие отбоя (кгс)"))
         self.lbl_txt4_3.setText(_translate("MainWindow", "Ход (мм)"))

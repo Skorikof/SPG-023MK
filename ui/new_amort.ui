@@ -188,7 +188,7 @@
       <enum>QFrame::NoFrame</enum>
      </property>
      <property name="text">
-      <string>Длина в разжатом состоянии (мм)</string>
+      <string>Длина в растянутом состоянии (мм)</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

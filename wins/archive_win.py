@@ -184,7 +184,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 for key, value in self.archive.struct_cascade.cascade.items():
                     temp = (f'{value[0].time_test} - '
                             f'{value[0].amort.name} - '
-                            f'{value[0].serial_number}')
+                            f'{value[0].serial_number} - '
+                            f'{value[0].speed}~{value[-1].speed}')
                     temp_arr.append(temp)
 
             elif self.type_graph == 'temper':
@@ -194,7 +195,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 for i in range(len(self.archive.struct.tests)):
                     temp = (f'{self.archive.struct.tests[i].time_test} - '
                             f'{self.archive.struct.tests[i].amort.name} - '
-                            f'{self.archive.struct.tests[i].serial_number}')
+                            f'{self.archive.struct.tests[i].serial_number} - '
+                            f'{self.archive.struct.tests[i].speed}')
                     temp_arr.append(temp)
 
             if temp_arr:
