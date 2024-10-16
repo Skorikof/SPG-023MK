@@ -603,7 +603,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -2116,7 +2116,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_name_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>10</y>
                <width>350</width>
                <height>25</height>
@@ -2512,7 +2512,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_recoil_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>40</y>
                <width>80</width>
                <height>25</height>
@@ -2549,7 +2549,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_comp_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>70</y>
                <width>80</width>
                <height>25</height>
@@ -2586,9 +2586,9 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_push_force_lab">
              <property name="geometry">
               <rect>
-               <x>550</x>
+               <x>525</x>
                <y>160</y>
-               <width>320</width>
+               <width>350</width>
                <height>25</height>
               </rect>
              </property>
@@ -2718,7 +2718,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_speed_set_1_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>100</y>
                <width>80</width>
                <height>25</height>
@@ -2755,7 +2755,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_limit_recoil_1_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>130</y>
                <width>120</width>
                <height>25</height>
@@ -2792,7 +2792,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_limit_comp_1_le">
              <property name="geometry">
               <rect>
-               <x>275</x>
+               <x>270</x>
                <y>160</y>
                <width>120</width>
                <height>25</height>
@@ -2829,7 +2829,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_speed_set_2_le">
              <property name="geometry">
               <rect>
-               <x>405</x>
+               <x>400</x>
                <y>100</y>
                <width>80</width>
                <height>25</height>
@@ -2866,21 +2866,21 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_limit_recoil_2_le">
              <property name="geometry">
               <rect>
-               <x>405</x>
+               <x>400</x>
                <y>130</y>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </size>
              </property>
@@ -2903,21 +2903,21 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_limit_comp_2_le">
              <property name="geometry">
               <rect>
-               <x>405</x>
+               <x>400</x>
                <y>160</y>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>140</width>
+               <width>120</width>
                <height>25</height>
               </size>
              </property>
@@ -2940,7 +2940,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_27">
              <property name="geometry">
               <rect>
-               <x>405</x>
+               <x>400</x>
                <y>40</y>
                <width>115</width>
                <height>25</height>
@@ -2971,7 +2971,7 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_28">
              <property name="geometry">
               <rect>
-               <x>405</x>
+               <x>400</x>
                <y>70</y>
                <width>115</width>
                <height>25</height>
@@ -3002,7 +3002,7 @@ QPushButton:checked
             <widget class="QLineEdit" name="lab_power_le">
              <property name="geometry">
               <rect>
-               <x>545</x>
+               <x>540</x>
                <y>40</y>
                <width>80</width>
                <height>25</height>
@@ -3033,13 +3033,13 @@ QPushButton:checked
               <set>Qt::AlignCenter</set>
              </property>
              <property name="readOnly">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
             <widget class="QLineEdit" name="lab_freq_le">
              <property name="geometry">
               <rect>
-               <x>545</x>
+               <x>540</x>
                <y>70</y>
                <width>80</width>
                <height>25</height>
@@ -3070,7 +3070,7 @@ QPushButton:checked
               <set>Qt::AlignCenter</set>
              </property>
              <property name="readOnly">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
             <widget class="QLineEdit" name="lab_push_force_le">
@@ -3107,7 +3107,7 @@ QPushButton:checked
               <set>Qt::AlignCenter</set>
              </property>
              <property name="readOnly">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
            </widget>
