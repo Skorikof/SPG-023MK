@@ -59,6 +59,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
         self.btn_print.clicked.connect(self._archive_save_form)
+        # self.btn_save.clicked.connect()
         self.btn_compare.clicked.connect(self._add_compare_data)
         self.btn_clier.clicked.connect(self._clear_compare_data)
         self.btn_show.clicked.connect(self._show_compare_data)
@@ -424,13 +425,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_flag_push_force(self, index: str):
         txt = ''
         if index == '1':
-            txt = f'Динамическая\nвыталкивающая\nсила'
+            txt = f'Динамическая выталкивающая сила'
 
         elif index == '0':
-            txt = f'Статическая\nвыталкивающая\nсила'
+            txt = f'Статическая выталкивающая сила'
 
         elif index == '2':
-            txt = f'Выталкивающая\nсила\nне учитывается'
+            txt = f'Выталкивающая сила не учитывается'
 
         self.lbl_push_force.setText(txt)
 

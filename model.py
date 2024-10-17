@@ -171,6 +171,13 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/save_koef_force - {e}')
 
+    def cancel_koef_force(self):
+        try:
+            self.set_regs['force_koef'] = 0
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/cancel_koef_force - {e}')
+
     def correct_force(self, force):
         try:
             return round(force - self.set_regs.get('force_koef', 0), 1)

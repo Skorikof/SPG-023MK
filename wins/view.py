@@ -18,6 +18,9 @@ class AppWindow(QMainWindow):
         self.response = {}
         self.dict_lab_cascade = {}
 
+        self.index_amort = 0
+        self.index_type_test = 0
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -48,16 +51,6 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/status_bar_ui - {e}')
-
-    def update_data_on_left_bar(self):
-        try:
-            self.ui.force_le.setText(f'{self.response.get("force")}')
-            self.ui.move_motor_le.setText(f'{self.response.get("move")}')
-            self.ui.move_traverse_le.setText(f'{self.response.get("traverse_move")}')
-            self.ui.temperature_le.setText(f'{self.response.get("temperature")}')
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_data_on_left_bar - {e}')
 
     def _start_param_view(self):
         self._create_statusbar_ui()
@@ -118,6 +111,7 @@ class AppWindow(QMainWindow):
         self.ui.main_set_gear_hod_btn.clicked.connect(self.btn_gear_set_pos)
         self.ui.main_search_hod_btn.clicked.connect(self.btn_search_hod_clicked)
         self.ui.main_correct_force_btn.clicked.connect(self.btn_correct_force_clicked)
+        self.ui.main_cancel_correct_force_btn.clicked.connect(self.btn_cancel_correct_force_clicked)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
         self.ui.btn_add_speed.clicked.connect(self.specif_add_lab_cascade_table)
@@ -130,8 +124,6 @@ class AppWindow(QMainWindow):
     def update_data_view(self, response):
         try:
             self.response = {**self.response, **response}
-
-            self.update_data_on_left_bar()
 
             self.controller.update_data_ctrl(self.response)
 
@@ -259,7 +251,7 @@ class AppWindow(QMainWindow):
                 self.ui.message_btn_frame.setVisible(True)
                 self.ui.ok_message_btn.setVisible(True)
                 self.ui.cancel_message_btn.setVisible(False)
-                self.main_btn_disable()
+                self.main_btn_state(False)
             self.ui.main_stackedWidget.setCurrentIndex(0)
             self.ui.stack_start_label.setText(txt)
             self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
@@ -300,8 +292,8 @@ class AppWindow(QMainWindow):
             elif tag == 'question':
                 self.controller.lamp_all_switch_off()
                 time.sleep(0.1)
-                self.main_btn_disable()
-                self.main_stop_enable()
+                self.main_btn_state(False)
+                self.main_stop_state(True)
                 self.model.signals.test_launch.emit(True)
 
         except Exception as e:
@@ -321,37 +313,22 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/btn_cancel_message_clicked - {e}')
 
-    def main_ui_enable(self):
-        self.ui.main_stackedWidget.setEnabled(True)
+    def main_ui_state(self, state):
+        self.ui.main_stackedWidget.setEnabled(state)
 
-    def main_ui_disable(self):
-        self.ui.main_stackedWidget.setEnabled(False)
+    def main_btn_state(self, state):
+        self.ui.main_operator_btn.setEnabled(state)
+        self.ui.main_test_btn.setEnabled(state)
+        self.ui.main_archive_btn.setEnabled(state)
+        self.ui.main_amorts_btn.setEnabled(state)
+        self.ui.main_hand_debug_btn.setEnabled(state)
+        self.ui.main_set_gear_hod_btn.setEnabled(state)
+        self.ui.main_search_hod_btn.setEnabled(state)
+        self.ui.main_correct_force_btn.setEnabled(state)
+        self.ui.main_cancel_correct_force_btn.setEnabled(state)
 
-    def main_btn_enable(self):
-        self.ui.main_operator_btn.setEnabled(True)
-        self.ui.main_test_btn.setEnabled(True)
-        self.ui.main_archive_btn.setEnabled(True)
-        self.ui.main_amorts_btn.setEnabled(True)
-        self.ui.main_hand_debug_btn.setEnabled(True)
-        self.ui.main_set_gear_hod_btn.setEnabled(True)
-        self.ui.main_search_hod_btn.setEnabled(True)
-        self.ui.main_correct_force_btn.setEnabled(True)
-
-    def main_btn_disable(self):
-        self.ui.main_operator_btn.setEnabled(False)
-        self.ui.main_test_btn.setEnabled(False)
-        self.ui.main_archive_btn.setEnabled(False)
-        self.ui.main_amorts_btn.setEnabled(False)
-        self.ui.main_hand_debug_btn.setEnabled(False)
-        self.ui.main_set_gear_hod_btn.setEnabled(False)
-        self.ui.main_search_hod_btn.setEnabled(False)
-        self.ui.main_correct_force_btn.setEnabled(False)
-
-    def main_stop_enable(self):
-        self.ui.main_STOP_btn.setEnabled(True)
-
-    def main_stop_disable(self):
-        self.ui.main_STOP_btn.setEnabled(False)
+    def main_stop_state(self, state):
+        self.ui.main_STOP_btn.setEnabled(state)
 
     def slot_start_page(self):
         try:
@@ -362,25 +339,25 @@ class AppWindow(QMainWindow):
 
     def _start_page(self):
         try:
-            self.main_stop_disable()
+            self.main_stop_state(False)
             if self.model.client:
                 txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
                 tag = 'info'
                 self.main_ui_msg(txt, tag)
-                self.main_btn_enable()
-                self.main_ui_enable()
+                self.main_btn_state(True)
+                self.main_ui_state(True)
 
             else:
                 txt = "ОТСУТСТВУЕТ\nПОДКЛЮЧЕНИЕ\nК\nКОНТРОЛЛЕРУ."
                 tag = 'attention'
                 self.main_ui_msg(txt, tag)
-                self.main_ui_disable()
+                self.main_ui_state(False)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_start_page - {e}')
 
     def open_win_operator(self):
-        self.main_ui_disable()
+        self.main_ui_state(False)
         self.win_exec.show()
 
     def operator_select(self, name, rank):
@@ -392,42 +369,47 @@ class AppWindow(QMainWindow):
         self.ui.operator_rank_le.setText(f'{rank}')
 
     def close_win_operator(self):
-        self.main_ui_enable()
+        self.main_ui_state(True)
         self.win_exec.hide()
 
     def open_win_amort(self):
-        self.main_ui_disable()
+        self.main_ui_state(False)
         self.win_amort.show()
 
     def close_win_amort(self):
-        self.main_ui_enable()
+        self.main_ui_state(True)
         self.win_amort.hide()
 
     def btn_search_hod_clicked(self):
         try:
-            self.main_btn_disable()
-            self.main_stop_enable()
+            self.main_btn_state(False)
+            self.main_stop_state(True)
             self.controller.search_hod_gear()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/btn_search_hod_clicked - {e}')
 
+    # FIXME
     def slot_search_hod(self):
         try:
             hod = self.response.get('hod_measure', 0)
-            self.ui.hod_le.setText(f'{hod}')
-            self.main_ui_enable()
-            self.main_btn_enable()
-            self.main_stop_disable()
+            self.main_ui_state(True)
+            self.main_btn_state(True)
+            self.main_stop_state(False)
             self._start_page()
+
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
+                                          )
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_search_hod - {e}')
 
     def btn_gear_set_pos(self):
         try:
-            self.main_btn_disable()
-            self.main_stop_enable()
+            self.main_btn_state(False)
+            self.main_stop_state(True)
             self.controller.move_gear_set_pos()
 
         except Exception as e:
@@ -436,9 +418,24 @@ class AppWindow(QMainWindow):
     def btn_correct_force_clicked(self):
         try:
             self.model.save_koef_force()
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
+                                          )
 
         except Exception as e:
             self.log_msg_err_slot(f'btn_correct_force_clicked - {e}')
+
+    def btn_cancel_correct_force_clicked(self):
+        try:
+            self.model.cancel_koef_force()
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Корректировка датчика усилия сброшена</b>'
+                                          )
+
+        except Exception as e:
+            self.log_msg_err_slot(f'btn_cancel_correct_force_clicked - {e}')
 
     def specif_page(self):
         self.specif_ui_clear()
@@ -449,12 +446,20 @@ class AppWindow(QMainWindow):
         else:
             self.ui.specif_continue_btn.setEnabled(True)
             self.ui.specif_choice_comboBox.setCurrentIndex(0)
-            self.ui.specif_choice_comboBox.activated[int].connect(self.select_amort)
-            self.select_amort(0)
+            self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
+            self.change_index_select_amort(0)
 
         self.ui.specif_type_test_comboBox.setCurrentIndex(0)
-        self.ui.specif_type_test_comboBox.activated[int].connect(self.select_type_test)
-        self.select_type_test(0)
+        self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
+        self.change_index_type_test(0)
+
+    def change_index_select_amort(self, index):
+        self.index_amort = index
+        self.select_amort()
+
+    def change_index_type_test(self, index):
+        self.index_type_test = index
+        self.select_type_test()
 
     def update_graph_view(self):
         try:
@@ -471,8 +476,9 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_graph - {e}')
 
-    def select_type_test(self, ind):
+    def select_type_test(self):
         try:
+            ind = self.index_type_test
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
                 self.specif_lab_gui()
@@ -531,8 +537,9 @@ class AppWindow(QMainWindow):
         self.ui.btn_reduce_speed.setVisible(True)
         self.ui.specif_lab_cascade_speed_table.setVisible(True)
 
-    def select_amort(self, ind):
+    def select_amort(self):
         try:
+            ind = self.index_amort
             amort = self.win_amort.amorts.struct.amorts[ind]
 
             command = {'amort': amort,
@@ -848,8 +855,8 @@ class AppWindow(QMainWindow):
 
     def begin_test(self):
         try:
-            self.main_stop_enable()
-            self.main_btn_disable()
+            self.main_stop_state(True)
+            self.main_btn_state(False)
 
             self.save_log_begin_test()
 
@@ -1076,31 +1083,31 @@ class AppWindow(QMainWindow):
 
     def cancel_test_slot(self):
         try:
-            self.main_stop_disable()
-            self.main_btn_enable()
+            self.main_stop_state(False)
+            self.main_btn_state(True)
             self.specif_page()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/cancel_test_slot - {e}')
 
     def open_win_archive(self):
-        self.main_ui_disable()
+        self.main_ui_state(False)
         self.win_archive.show()
         self.win_archive.read_path_archive()
 
     def close_win_archive(self):
-        self.main_ui_enable()
+        self.main_ui_state(True)
         self.win_archive.hide()
 
     def open_win_settings(self):
-        self.main_ui_disable()
+        self.main_ui_state(False)
         self.model.set_regs['type_test'] = 'hand'
         self.win_set.show()
         self.win_set.start_param_win_set()
 
     def close_win_settings(self):
         self.model.set_regs['type_test'] = None
-        self.main_ui_enable()
+        self.main_ui_state(True)
         self.win_set.hide()
 
     def slot_save_lab_result(self):
