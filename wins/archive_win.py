@@ -182,19 +182,23 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.archive.select_file(date)
 
             if self.type_graph == 'speed':
+                index = 1
                 for key, value in self.archive.struct_cascade.cascade.items():
-                    temp = (f'{value[0].time_test} - '
+                    temp = (f'{index}) '
+                            f'{value[0].time_test} - '
                             f'{value[0].amort.name} - '
                             f'{value[0].serial_number} - '
                             f'{value[0].speed}~{value[-1].speed}')
                     temp_arr.append(temp)
+                    index += 1
 
             elif self.type_graph == 'temper':
                 pass
 
             else:
                 for i in range(len(self.archive.struct.tests)):
-                    temp = (f'{self.archive.struct.tests[i].time_test} - '
+                    temp = (f'{i + 1}) '
+                            f'{self.archive.struct.tests[i].time_test} - '
                             f'{self.archive.struct.tests[i].amort.name} - '
                             f'{self.archive.struct.tests[i].serial_number} - '
                             f'{self.archive.struct.tests[i].speed}')
@@ -210,6 +214,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
 
+    def _gui_power_freq_visible(self, state):
+        try:
+            self.power_le.setVisible(state)
+            self.power_lbl.setVisible(state)
+            self.power_lbl_2.setVisible(state)
+            self.freq_le.setVisible(state)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_gui_power_freq_visible - {e}')
+
     def _gui_move_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -222,14 +236,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_graph - {e}')
-
-    def _gui_move_data(self):
-        try:
-            self.power_le.setVisible(True)
-            self.power_lbl.setVisible(True)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_data - {e}')
 
     def _gui_speed_graph(self):
         try:
@@ -244,14 +250,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
 
-    def _gui_speed_data(self):
-        try:
-            self.power_le.setVisible(False)
-            self.power_lbl.setVisible(False)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_data - {e}')
-
     def _gui_triple_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -264,14 +262,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_graph - {e}')
-
-    def _gui_triple_data(self):
-        try:
-            self.power_le.setVisible(False)
-            self.power_lbl.setVisible(False)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_data - {e}')
 
     def _gui_boost_graph(self):
         try:
@@ -286,14 +276,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_graph - {e}')
 
-    def _gui_boost_data(self):
-        try:
-            self.power_le.setVisible(False)
-            self.power_lbl.setVisible(False)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_data - {e}')
-
     def _gui_temper_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -306,14 +288,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_graph - {e}')
-
-    def _gui_temper_data(self):
-        try:
-            self.power_le.setVisible(False)
-            self.power_lbl.setVisible(False)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_data - {e}')
 
     def _archive_test_select(self):
         try:
@@ -424,6 +398,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_flag_push_force(self, index: str):
         txt = ''
+        self.push_force_le.setVisible(True)
         if index == '1':
             txt = f'Динамическая выталкивающая сила'
 
@@ -432,6 +407,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         elif index == '2':
             txt = f'Выталкивающая сила не учитывается'
+            self.push_force_le.setVisible(False)
 
         self.lbl_push_force.setText(txt)
 
@@ -439,27 +415,27 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             self.graphwidget.plot(clear=True)
             if self.type_graph == 'move':
-                self._gui_move_data()
+                self._gui_power_freq_visible(True)
                 self._gui_move_graph()
                 self._fill_lab_graph()
 
             elif self.type_graph == 'speed':
-                self._gui_speed_data()
+                self._gui_power_freq_visible(False)
                 self._gui_speed_graph()
                 self._fill_lab_cascade_graph()
 
             elif self.type_graph == 'triple':
-                self._gui_triple_data()
+                self._gui_power_freq_visible(False)
                 self._gui_triple_graph()
                 self._fill_triple_graph()
 
             elif self.type_graph == 'boost':
-                self._gui_boost_data()
+                self._gui_power_freq_visible(False)
                 self._gui_boost_graph()
                 self._fill_boost_graph()
 
             elif self.type_graph == 'temper':
-                self._gui_temper_data()
+                self._gui_power_freq_visible(False)
                 self._gui_temper_graph()
                 self._fill_temper_graph()
 
@@ -470,30 +446,27 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_lab_graph(self):
         try:
-            max_comp = 0
-            max_recoil = 0
             index = self.index_test
-            move_list = self.archive.struct.tests[index].move_list
-            force_list = self.archive.struct.tests[index].force_list
+            obj = self.archive.struct.tests[index]
+            move_list = obj.move_list
+            force_list = obj.force_list
+            push_force = self._select_push_force(obj)
+            max_recoil = round(max(force_list) + push_force, 2)
+            max_comp = round(abs(min(force_list)) - push_force, 2)
+            power = self._calc_power(move_list, force_list)
+            speed = float(obj.speed)
+            hod = float(obj.amort.hod)
+            freq = self._calc_freq_piston(speed, hod)
 
-            flag_push_force = self.archive.struct.tests[index].flag_push_force
-            if flag_push_force == '1':
-                max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].dynamic_push_force), 2)
-                max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].dynamic_push_force), 2)
-
-            elif flag_push_force == '0':
-                max_recoil = round(max(force_list) + float(self.archive.struct.tests[index].static_push_force), 2)
-                max_comp = round(abs(min(force_list)) - float(self.archive.struct.tests[index].static_push_force), 2)
+            self.push_force_le.setText(f'{push_force}')
+            self.power_le.setText(f'{power}')
+            self.comp_le.setText(f'{max_comp}')
+            self.recoil_le.setText(f'{max_recoil}')
+            self.freq_le.setText(f'{freq}')
 
             pen = pg.mkPen(color='black', width=3)
 
             self.graphwidget.plot(move_list, force_list, pen=pen, name='Рабочая диаграмма')
-
-            self.comp_le.setText(f'{max_comp}')
-            self.recoil_le.setText(f'{max_recoil}')
-
-            power = self._calc_power(move_list, force_list)
-            self.power_le.setText(f'{power}')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
@@ -533,37 +506,32 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_limit_lab_cascade_graph(self, obj):
         try:
-            speed_1 = []
-            speed_2 = []
-            limit_recoil_1 = []
-            limit_recoil_2 = []
-            limit_comp_1 = []
-            limit_comp_2 = []
+            lim_speed = []
+            lim_recoil = []
+            lim_comp = []
 
-            speed_1.append(float(obj.amort.speed_one))
-            speed_1.append(float(obj.amort.speed_one))
+            lim_speed.append(float(obj.amort.speed_one))
+            lim_speed.append(float(obj.amort.speed_one))
+            lim_speed.append(float(obj.amort.speed_two))
+            lim_speed.append(float(obj.amort.speed_two))
+            lim_speed.append(float(obj.amort.speed_one))
 
-            speed_2.append(float(obj.amort.speed_two))
-            speed_2.append(float(obj.amort.speed_two))
+            lim_recoil.append(float(obj.amort.min_recoil))
+            lim_recoil.append(float(obj.amort.max_recoil))
+            lim_recoil.append(float(obj.amort.max_recoil_2))
+            lim_recoil.append(float(obj.amort.min_recoil_2))
+            lim_recoil.append(float(obj.amort.min_recoil))
 
-            limit_recoil_1.append(float(obj.amort.min_recoil))
-            limit_recoil_1.append(float(obj.amort.max_recoil))
+            lim_comp.append(float(obj.amort.min_comp) * -1)
+            lim_comp.append(float(obj.amort.max_comp) * -1)
+            lim_comp.append(float(obj.amort.max_comp_2) * -1)
+            lim_comp.append(float(obj.amort.min_comp_2) * -1)
+            lim_comp.append(float(obj.amort.min_comp) * -1)
 
-            limit_recoil_2.append(float(obj.amort.min_recoil_2))
-            limit_recoil_2.append(float(obj.amort.max_recoil_2))
+            pen = pg.mkPen(color='red', width=2)
 
-            limit_comp_1.append(float(obj.amort.min_comp) * -1)
-            limit_comp_1.append(float(obj.amort.max_comp) * -1)
-
-            limit_comp_2.append(float(obj.amort.min_comp_2) * -1)
-            limit_comp_2.append(float(obj.amort.max_comp_2) * -1)
-
-            pen = pg.mkPen(color='red', width=3)
-
-            self.graphwidget.plot(speed_1, limit_recoil_1, pen=pen)
-            self.graphwidget.plot(speed_1, limit_comp_1, pen=pen)
-            self.graphwidget.plot(speed_2, limit_recoil_2, pen=pen)
-            self.graphwidget.plot(speed_2, limit_comp_2, pen=pen)
+            self.graphwidget.plot(lim_speed, lim_recoil, pen=pen)
+            self.graphwidget.plot(lim_speed, lim_comp, pen=pen)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
@@ -574,6 +542,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             hod = int(self.archive.struct.tests[index].amort.hod)
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
+            push_force = self._select_push_force(self.archive.struct.tests[index])
+            self.push_force_le.setText(f'{push_force}')
 
             self.comp_le.setText(f'{abs(min(force_list))}')
             self.recoil_le.setText(f'{max(force_list)}')
@@ -710,6 +680,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             index = self.index_test
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
+            push_force = self._select_push_force(self.archive.struct.tests[index])
+            self.push_force_le.setText(f'{push_force}')
 
             self.comp_le.setText(f'{abs(min(force_list))}')
             self.recoil_le.setText(f'{max(force_list)}')
@@ -730,6 +702,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
 
+    def _select_push_force(self, obj):
+        try:
+            flag_push_force = obj.flag_push_force
+            if flag_push_force == '1':
+                return float(obj.dynamic_push_force)
+
+            elif flag_push_force == '0':
+                return float(obj.static_push_force)
+
+            else:
+                return 0
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_select_push_force - {e}')
+
     def _calc_power(self, move: list, force: list):
         try:
             temp = 0
@@ -742,6 +729,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_power - {e}')
+
+    def _calc_freq_piston(self, speed, hod):
+        try:
+            return round(speed / (hod * 0.002), 2)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_calc_freq_piston - {e}')
 
     def _archive_save_form(self):
         try:

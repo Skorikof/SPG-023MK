@@ -389,19 +389,16 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/btn_search_hod_clicked - {e}')
 
-    # FIXME
     def slot_search_hod(self):
         try:
-            hod = self.response.get('hod_measure', 0)
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Ход шатуна равен {self.response.get("hod_measure", 0)}</b>'
+                                          )
             self.main_ui_state(True)
             self.main_btn_state(True)
             self.main_stop_state(False)
             self._start_page()
-
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
-                                          )
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_search_hod - {e}')
@@ -420,7 +417,7 @@ class AppWindow(QMainWindow):
             self.model.save_koef_force()
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
+                                          f'<b style="color: #f00;">Датчик усилия откорректирован к нулю</b>'
                                           )
 
         except Exception as e:
