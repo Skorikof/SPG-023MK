@@ -603,7 +603,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1927,6 +1927,39 @@ QPushButton:checked
              </property>
              <property name="checked">
               <bool>false</bool>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="select_temp_sensor_btn">
+             <property name="geometry">
+              <rect>
+               <x>640</x>
+               <y>510</y>
+               <width>360</width>
+               <height>35</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>360</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>360</width>
+               <height>35</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Первый датчик темературы</string>
              </property>
             </widget>
            </widget>

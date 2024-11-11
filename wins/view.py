@@ -114,6 +114,7 @@ class AppWindow(QMainWindow):
         self.ui.main_cancel_correct_force_btn.clicked.connect(self.btn_cancel_correct_force_clicked)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
+        self.ui.select_temp_sensor_btn.clicked.connect(self.change_temper_sensor_slot)
         self.ui.btn_add_speed.clicked.connect(self.specif_add_lab_cascade_table)
         self.ui.btn_reduce_speed.clicked.connect(self.specif_reduce_lab_cascade_table)
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
@@ -417,7 +418,7 @@ class AppWindow(QMainWindow):
             self.model.save_koef_force()
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Датчик усилия откорректирован к нулю</b>'
+                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
                                           )
 
         except Exception as e:
@@ -697,6 +698,30 @@ class AppWindow(QMainWindow):
                                       f'<b style="color: #f00;">Не введено ни одной скорости для испытания</b>'
                                       )
 
+    def change_temper_sensor_slot(self):
+        try:
+            btn = self.ui.select_temp_sensor_btn.text()
+            if 'Первый' in btn:
+                self.ui.select_temp_sensor_btn.setText('Второй датчик температуры')
+
+            elif 'Второй' in btn:
+                self.ui.select_temp_sensor_btn.setText('Первый датчик температуры')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/change_temper_sensor_slot - {e}')
+
+    def select_temper_sensor(self):
+        try:
+            btn = self.ui.select_temp_sensor_btn.text()
+            if 'Первый' in btn:
+                self.model.write_bit_select_temper(0)
+
+            elif 'Второй' in btn:
+                self.model.write_bit_select_temper(1)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/select_temper_sensor - {e}')
+
     def specif_continue_btn_click(self):
         try:
             name = self.response.get('operator')['name']
@@ -723,6 +748,7 @@ class AppWindow(QMainWindow):
                                 if type_test == 'lab_cascade':
                                     flag = self.specif_read_lab_cascade_table()
                                     if flag:
+                                        self.select_temper_sensor()
                                         self.begin_test()
                                     else:
                                         self.specif_msg_none_cascade_speed()
@@ -731,9 +757,11 @@ class AppWindow(QMainWindow):
                                     speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                     if speed:
                                         self.model.set_regs['speed'] = speed
+                                        self.select_temper_sensor()
                                         self.begin_test()
 
                                 else:
+                                    self.select_temper_sensor()
                                     self.begin_test()
 
             else:

@@ -202,7 +202,7 @@ class Reader(QRunnable):
 
         self.dev_id = 1
         self.start_reg = 0x2000
-        self.count_reg = 12
+        self.count_reg = 14
 
         self.reg_buffer = 0x4000
         self.buffer_count = 20

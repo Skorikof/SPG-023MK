@@ -267,16 +267,17 @@ class Model:
                 force = self._magnitude_effort(response.get('regs', temp_list)[0], response.get('regs', temp_list)[1])
                 if force != -100000:
                     command = {
-                        'contact': True,
                         'force_real': force,
                         'force': self.correct_force(force),
                         'move': self._movement_amount(response.get('regs', temp_list)[2]),
                         'count': self._counter_time(response.get('regs', temp_list)[4]),
                         'traverse_move': round(0.5 * self._movement_amount(response.get('regs', temp_list)[6]), 1),
-                        'temperature': self._temperature_value(response.get('regs', temp_list)[7],
-                                                               response.get('regs', temp_list)[8]),
+                        'temper_first': self._temperature_value(response.get('regs', temp_list)[7],
+                                                                response.get('regs', temp_list)[8]),
                         'force_alarm': self._emergency_force(response.get('regs', temp_list)[10],
-                                                             response.get('regs', temp_list)[11])
+                                                             response.get('regs', temp_list)[11]),
+                        'temper_second': self._temperature_value(response.get('regs', temp_list)[12],
+                                                                 response.get('regs', temp_list)[13]),
                     }
 
                     self.update_main_dict(command)
@@ -644,6 +645,15 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_emergency_force - {e}')
 
+    def write_bit_select_temper(self, value):
+        try:
+            ind = self.set_regs.get('select_temper', 0)
+            if ind != value:
+                self._write_reg_state(6, value)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_bit_select_temper - {e}')
+
     def write_emergency_force(self, value):
         try:
             arr = []
@@ -775,6 +785,7 @@ class Model:
                        'green_light': bool(int(bits[2])),
                        'lost_control': bool(int(bits[3])),
                        'excess_force': bool(int(bits[4])),
+                       'select_temper': int(bits[6]),
                        'safety_fence': bool(int(bits[8])),
                        'traverse_block': bool(int(bits[9])),
                        'state_freq': bool(int(bits[11])),
