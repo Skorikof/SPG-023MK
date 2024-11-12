@@ -24,7 +24,6 @@ class PrgSettings:
 
             self.state = {'operator': {'name': '', 'rank': ''},
                           'amort': None,
-                          'contact': False,
                           'query_write': False,
                           'list_write': [],
                           'repeat_command': False,
@@ -56,6 +55,8 @@ class PrgSettings:
                           'max_comp': 0,
                           'max_recoil': 0,
                           'temperature': 0,
+                          'temper_first': 0,
+                          'temper_second': 0,
                           'temp_list': [],
                           'max_temperature': 0,
                           'traverse_referent': False,

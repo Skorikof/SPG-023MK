@@ -701,11 +701,11 @@ class AppWindow(QMainWindow):
     def change_temper_sensor_slot(self):
         try:
             btn = self.ui.select_temp_sensor_btn.text()
-            if 'Первый' in btn:
-                self.ui.select_temp_sensor_btn.setText('Второй датчик температуры')
+            if 'Бесконтактный' in btn:
+                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
-            elif 'Второй' in btn:
-                self.ui.select_temp_sensor_btn.setText('Первый датчик температуры')
+            else:
+                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_temper_sensor_slot - {e}')
@@ -713,10 +713,10 @@ class AppWindow(QMainWindow):
     def select_temper_sensor(self):
         try:
             btn = self.ui.select_temp_sensor_btn.text()
-            if 'Первый' in btn:
+            if 'Бесконтактный' in btn:
                 self.model.write_bit_select_temper(0)
 
-            elif 'Второй' in btn:
+            else:
                 self.model.write_bit_select_temper(1)
 
         except Exception as e:

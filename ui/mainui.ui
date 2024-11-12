@@ -1959,7 +1959,7 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Первый датчик темературы</string>
+              <string>Бесконтактный датчик темературы</string>
              </property>
             </widget>
            </widget>

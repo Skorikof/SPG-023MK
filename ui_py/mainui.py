@@ -1430,7 +1430,7 @@ class Ui_MainWindow(object):
         self.specif_data_label8_2.setText(_translate("MainWindow", "Статическая выталкивающая сила, кгс:"))
         self.btn_add_speed.setText(_translate("MainWindow", "+"))
         self.btn_reduce_speed.setText(_translate("MainWindow", "-"))
-        self.select_temp_sensor_btn.setText(_translate("MainWindow", "Первый датчик темературы"))
+        self.select_temp_sensor_btn.setText(_translate("MainWindow", "Бесконтактный датчик темературы"))
         self.specif_continue_btn.setText(_translate("MainWindow", "НАЧАТЬ ИСПЫТАНИЕ"))
         self.lbl_14.setText(_translate("MainWindow", "Наименование:"))
         self.lbl_23.setText(_translate("MainWindow", "Серийный номер:"))
