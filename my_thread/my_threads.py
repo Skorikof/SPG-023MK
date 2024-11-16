@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import time
-# import os
 from struct import pack, unpack
 from datetime import datetime
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
 
 
-# base_dir = os.path.dirname(__file__)
 base_dir = 'c:/System'
 
 
@@ -103,8 +101,6 @@ class Writer(QRunnable):
                     else:
                         self.number_attempts += 1
                         if self.number_attempts >= self.max_attempts:
-                            # self.signals.thread_err.emit(f'ERROR write - {rw}')
-                            # self.signals.write_finish.emit(False)
                             print('ERROR WRITE!!!')
                             self.flag_next = False
                             self.cond = False
@@ -125,8 +121,6 @@ class Writer(QRunnable):
                         except Exception as e:
                             self.number_attempts += 1
                             if self.number_attempts >= self.max_attempts:
-                                # self.signals.thread_err.emit(f'ERROR write - {rq}')
-                                # self.signals.write_finish.emit(False)
                                 print('ERROR WRITE')
 
                 if self.flag_next:  # Проверяем бит занятости ПЧ

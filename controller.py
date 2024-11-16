@@ -171,7 +171,6 @@ class Controller:
                                        }
                             self.model.update_main_dict(command)
 
-                            # self.model.write_bit_force_cycle(0)
                             self.model.reader_stop_test()
                             time.sleep(0.1)
 

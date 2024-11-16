@@ -66,3 +66,27 @@ class PrgSettings:
 
         except Exception as e:
             print(str(e))
+
+
+class SpeedLimit:
+    def calculate_speed_limit(self, hod):
+        if 40 <= hod < 50:
+            return 0.34
+        elif 50 <= hod < 60:
+            return 0.42
+        elif 60 <= hod < 70:
+            return 0.51
+        elif 70 <= hod < 80:
+            return 0.59
+        elif 80 <= hod < 90:
+            return 0.68
+        elif 90 <= hod < 100:
+            return 0.77
+        elif 100 <= hod < 110:
+            return 0.85
+        elif 110 <= hod < 120:
+            return 0.94
+        elif hod == 120:
+            return 1.02
+        else:
+            return 0.34

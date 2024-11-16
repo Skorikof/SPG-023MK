@@ -12,17 +12,6 @@ from my_obj.click_lineedit import MyLineEdit
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-# class MyLineEdit(QtWidgets.QLineEdit):
-#     clicked = QtCore.pyqtSignal()
-#
-#     def __init__(self, *args):
-#         QtWidgets.QLineEdit.__init__(self, *args)
-#
-#     def mousePressEvent(self, QMouseEvent):
-#         self.clicked.emit()
-#         QtWidgets.QLineEdit.mousePressEvent(self, QMouseEvent)
-
-
 class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         SettingsWindow.setObjectName("SettingsWindow")
