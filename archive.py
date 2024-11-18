@@ -54,6 +54,11 @@ class ReadArchive:
 
     def init_arch(self):
         try:
+            self.files_arr = []
+            self.files_name_arr = []
+            self.files_name_sort = []
+            self.count_files = 0
+
             source_dir = Path('archive/')
             self.files_dir = source_dir.glob('*.csv')
 

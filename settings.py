@@ -71,22 +71,22 @@ class PrgSettings:
 class SpeedLimit:
     def calculate_speed_limit(self, hod):
         if 40 <= hod < 50:
-            return 0.34
+            return 0.41
         elif 50 <= hod < 60:
-            return 0.42
-        elif 60 <= hod < 70:
             return 0.51
+        elif 60 <= hod < 70:
+            return 0.62
         elif 70 <= hod < 80:
-            return 0.59
+            return 0.72
         elif 80 <= hod < 90:
-            return 0.68
+            return 0.82
         elif 90 <= hod < 100:
-            return 0.77
+            return 0.92
         elif 100 <= hod < 110:
-            return 0.85
+            return 1.03
         elif 110 <= hod < 120:
-            return 0.94
+            return 1.13
         elif hod == 120:
-            return 1.02
+            return 1.23
         else:
-            return 0.34
+            return 0.41

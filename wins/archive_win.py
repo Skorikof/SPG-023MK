@@ -70,6 +70,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def read_path_archive(self):
         try:
+            self.compare_data = []
+            self.type_graph = 'move'
+            self.ind_type_test = 0
+            self.index_date = ''
+            self.index_test = 0
+            self.index_test_cascade = 0
+            self.index_test_temper = 0
+
             self.combo_dates.clear()
             self.combo_test.clear()
             self.archive.init_arch()
@@ -89,7 +97,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _archive_update(self):
         try:
             self._archive_selected()
-            self._archive_graph()
+            # self._archive_graph()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_update - {e}')
