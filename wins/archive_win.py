@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QDialog
+from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QPageLayout, QPixmap, QPainter, QIcon
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QAbstractPrintDialog
@@ -714,7 +714,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
 
-    # FIXME
+    # FIXME temper graph
     def _fill_temper_graph(self):
         try:
             pass
@@ -800,15 +800,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
 
+    # FIXME temper graph
     def _add_compare_data(self):
         try:
             len_data = len(self.compare_data)
             if self.type_graph == 'speed':
                 index = self.index_test_cascade
-                if not self.archive.struct_cascade.cascade[index] in self.compare_data:
-                    self.compare_data.append(self.archive.struct_cascade.cascade[index])
+                if not self.archive.struct_cascade.cascade[index + 1] in self.compare_data:
+                    self.compare_data.append(self.archive.struct_cascade.cascade[index + 1])
+
             elif self.type_graph == 'temper':
                 index = self.index_test_temper
+
             else:
                 index = self.index_test
                 if not self.archive.struct.tests[index] in self.compare_data:
@@ -826,18 +829,28 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
 
+    # FIXME speed and temper graph
     def _show_graph(self, obj):
         try:
             self.graphwidget.plot(clear=True)
             if self.type_graph == 'move':
-                for graph in obj:
-                    x_list = graph.move_list
-                    y_list = graph.force_list
-                    speed = graph.speed
-                    pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-                    self.graphwidget.plot(x_list, y_list, pen=pen, name=f'Скорость {speed} м/с')
+                if len(obj) < 13:
+                    for graph in obj:
+                        x_list = graph.move_list
+                        y_list = graph.force_list
+                        speed = graph.speed
+                        pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
+                        self.graphwidget.plot(x_list, y_list, pen=pen, name=f'Скорость {speed} м/с')
 
-            self.graphwidget.addLegend()
+                    self.graphwidget.addLegend()
+
+                else:
+                    msg = QMessageBox.information(self,
+                                                  'Внимание',
+                                                  f'<b style="color: #f00;">'
+                                                  f'Число выбранных графиков для сравнения превышает допустимое число'
+                                                  f'Выбрано - {len(obj)}, допустимо - 12</b>'
+                                                  )
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_graph - {e}')
