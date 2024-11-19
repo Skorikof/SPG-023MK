@@ -703,48 +703,52 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            name = self.response.get('operator')['name']
-            rank = self.response.get('operator')['rank']
-
-            if name != '' and rank != '':
-                self.flag_push_force_set()
-
-                type_test = self.response.get('type_test')
-
-                if type_test == 'conv':
-                    self.begin_test()
-
-                else:
-                    self.ui.test_change_speed_btn.setVisible(False)
-                    self.ui.lab_speed_le.setReadOnly(True)
-                    flag = self.serial_editing_finished()
-                    if flag:
-                        serial_number = self.ui.specif_serial_lineEdit.text()
-                        if serial_number != '':
-                            self.model.set_regs['serial_number'] = serial_number
-                            flag = self.static_push_force_editing()
-                            if flag:
-                                if type_test == 'lab_cascade':
-                                    flag = self.specif_read_lab_cascade_table()
-                                    if flag:
-                                        self.select_temper_sensor()
-                                        self.begin_test()
-                                    else:
-                                        self.specif_msg_none_cascade_speed()
-
-                                elif type_test == 'lab_hand':
-                                    speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                    if speed:
-                                        self.model.set_regs['speed'] = speed
-                                        self.select_temper_sensor()
-                                        self.begin_test()
-
-                                else:
-                                    self.select_temper_sensor()
-                                    self.begin_test()
+            if self.response.get('repeat_test', False):
+                self.begin_test()
 
             else:
-                self.open_win_operator()
+                name = self.response.get('operator')['name']
+                rank = self.response.get('operator')['rank']
+
+                if name != '' and rank != '':
+                    self.flag_push_force_set()
+
+                    type_test = self.response.get('type_test')
+
+                    if type_test == 'conv':
+                        self.begin_test()
+
+                    else:
+                        self.ui.test_change_speed_btn.setVisible(False)
+                        self.ui.lab_speed_le.setReadOnly(True)
+                        flag = self.serial_editing_finished()
+                        if flag:
+                            serial_number = self.ui.specif_serial_lineEdit.text()
+                            if serial_number != '':
+                                self.model.set_regs['serial_number'] = serial_number
+                                flag = self.static_push_force_editing()
+                                if flag:
+                                    if type_test == 'lab_cascade':
+                                        flag = self.specif_read_lab_cascade_table()
+                                        if flag:
+                                            self.select_temper_sensor()
+                                            self.begin_test()
+                                        else:
+                                            self.specif_msg_none_cascade_speed()
+
+                                    elif type_test == 'lab_hand':
+                                        speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                        if speed:
+                                            self.model.set_regs['speed'] = speed
+                                            self.select_temper_sensor()
+                                            self.begin_test()
+
+                                    else:
+                                        self.select_temper_sensor()
+                                        self.begin_test()
+
+                else:
+                    self.open_win_operator()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_continue_btn_click - {e}')
@@ -903,15 +907,22 @@ class AppWindow(QMainWindow):
 
     def change_speed_test(self):
         try:
-            value = self.ui.lab_speed_le.text()
-            value = float(value.replace(',', '.'))
+            speed = self.ui.lab_speed_le.text()
+            speed = float(speed.replace(',', '.'))
 
-            speed = self.model.calculate_freq(value)
-            self.model.write_frequency(1, speed)
+            hod = int(self.response.get('hod', 40))
+            max_speed = SpeedLimit().calculate_speed_limit(hod)
 
-            txt_log = f'Change speed in lab test on --> {value} m/s'
+            if 0.02 <= speed <= max_speed:
+                freq = self.model.calculate_freq(speed)
+                self.model.write_frequency(1, freq)
 
-            self.log_msg_info_slot(txt_log)
+                txt_log = f'Change speed in lab test on --> {speed} m/s'
+
+                self.log_msg_info_slot(txt_log)
+
+            else:
+                pass
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_test - {e}')

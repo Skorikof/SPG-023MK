@@ -30,7 +30,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_test = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
-            self.pen = ['black', 'blue', 'red', 'green', 'yellow']
+            self.color_pen = ['black',
+                              'blue',
+                              'red',
+                              'green',
+                              'yellow',
+                              'orange',
+                              'purple',
+                              'brown',
+                              'pink',
+                              'grey',
+                              'olive',
+                              'cyan']
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -181,7 +192,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
 
-    # FIXME
     def _archive_selected(self):
         try:
             date = self.index_date
@@ -485,18 +495,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             speed_list = [0]
             comp_list = [0]
             recoil_list = [0]
+            push_force = 0
             data = self.archive.struct_cascade.cascade.get(index + 1)
 
             for obj in data:
                 speed_list.append(float(obj.speed))
                 flag_push_force = obj.flag_push_force
                 if flag_push_force == '1':
-                    recoil_list.append(round(max(obj.force_list) + float(obj.dynamic_push_force), 2))
-                    comp_list.append(round(min(obj.force_list) + float(obj.dynamic_push_force), 2))
+                    push_force = float(obj.dynamic_push_force)
 
                 elif flag_push_force == '0':
-                    recoil_list.append(round(max(obj.force_list) + float(obj.static_push_force), 2))
-                    comp_list.append(round(min(obj.force_list) + float(obj.static_push_force), 2))
+                    push_force = float(obj.static_push_force)
+
+                recoil_list.append(round(max(obj.force_list) + push_force, 2))
+                comp_list.append(round(min(obj.force_list) + push_force, 2))
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
@@ -781,7 +793,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _clear_compare_data(self):
         try:
-            self.compare_data.clear()
+            if len(self.compare_data) > 0:
+                self.compare_data.clear()
+                self.read_path_archive()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
@@ -804,18 +818,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_add_compare_data - {e}')
 
-    # FIXME
     def _show_compare_data(self):
         try:
-            if self.compare_data is False:
-                pass
-            else:
+            if len(self.compare_data) > 0:
                 self._show_graph(self.compare_data)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
 
-    # FIXME
     def _show_graph(self, obj):
         try:
             self.graphwidget.plot(clear=True)
@@ -823,8 +833,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 for graph in obj:
                     x_list = graph.move_list
                     y_list = graph.force_list
-                    pen = pg.mkPen(color=self.pen[obj.index(graph)], width=3)
-                    self.graphwidget.plot(x_list, y_list, pen=pen)
+                    speed = graph.speed
+                    pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
+                    self.graphwidget.plot(x_list, y_list, pen=pen, name=f'Скорость {speed} м/с')
 
             self.graphwidget.addLegend()
 
