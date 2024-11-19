@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os.path
-import random
 from pathlib import Path
 from datetime import datetime
 from amorts import DataAmort
@@ -99,42 +98,41 @@ class ReadArchive:
         except Exception as e:
             print(f'Exception in archive/select_file - {e}')
 
-    # FIXME
     def _pars_str_archive(self, archive_list):
         try:
-            if not archive_list[0] == '*' and not archive_list[0] == 'end_test':
-                if archive_list[3] == 'temper':
-                    self.ind_temp += 1
-                    self.struct_temper.tests.append()
-
-                else:
-                    self.ind_test += 1
-                    self.struct.tests.append(TestArchive())
-
-                    self._fill_obj_archive_data(self.struct.tests[self.ind_test], archive_list)
-
-                    temp_list = self._add_data_on_list_graph(archive_list[24:-1])
-
-                    self.struct.tests[self.ind_test].move_list = temp_list[:]
-
-            elif archive_list[0] == '*':
-                temp_list = self._add_data_on_list_graph(archive_list[24:-1])
-
-                self.struct.tests[self.ind_test].force_list = temp_list[:]
-
-            if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
-                self.cascade_list.append(self.struct.tests[self.ind_test])
-
             if archive_list[0] == 'end_test':
                 if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
                     self.struct_cascade.cascade[self.ind_casc] = self.cascade_list[:]
                     self.ind_casc += 1
                     self.cascade_list = []
 
+            else:
+                if not archive_list[0] == '*':
+                    if archive_list[3] == 'temper':
+                        self.ind_temp += 1
+                        self.struct_temper.tests.append()
+
+                    else:
+                        self.ind_test += 1
+                        self.struct.tests.append(TestArchive())
+
+                        self._fill_obj_archive_data(self.struct.tests[self.ind_test], archive_list)
+
+                        temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+
+                        self.struct.tests[self.ind_test].move_list = temp_list[:]
+
+                elif archive_list[0] == '*':
+                    temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+
+                    self.struct.tests[self.ind_test].force_list = temp_list[:]
+
+                    if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
+                        self.cascade_list.append(self.struct.tests[self.ind_test])
+
         except Exception as e:
             print(f'Exception in archive/_pars_str_archihve - {e}')
 
-    # FIXME
     def _fill_obj_archive_data(self, obj, data):
         try:
             obj.time_test = data[0]
