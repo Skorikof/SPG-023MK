@@ -554,12 +554,6 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                     pass
                 else:
                     flag = False
-                    # msg = QMessageBox.information(self,
-                    #                               'Внимание',
-                    #                               f'Проверьте введённые параметры\n'
-                    #                               f'Какой-то введён некорректно'
-                    #                               )
-                    # self.lineEdit_name.setFocus(True)
                     break
 
             if flag:

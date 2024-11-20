@@ -905,28 +905,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/lab_test_win - {e}')
 
-    def change_speed_test(self):
-        try:
-            speed = self.ui.lab_speed_le.text()
-            speed = float(speed.replace(',', '.'))
-
-            hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimit().calculate_speed_limit(hod)
-
-            if 0.02 <= speed <= max_speed:
-                freq = self.model.calculate_freq(speed)
-                self.model.write_frequency(1, freq)
-
-                txt_log = f'Change speed in lab test on --> {speed} m/s'
-
-                self.log_msg_info_slot(txt_log)
-
-            else:
-                pass
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/change_speed_test - {e}')
-
     def _conv_win_clear(self):
         try:
             self.ui.conv_comp_le.clear()
