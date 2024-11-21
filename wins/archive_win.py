@@ -32,7 +32,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_test_temper = 0
             self.color_pen = ['black',
                               'blue',
-                              'red',
                               'green',
                               'yellow',
                               'orange',
@@ -41,7 +40,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                               'pink',
                               'grey',
                               'olive',
-                              'cyan']
+                              'cyan',
+                              'red']
             self.archive = ReadArchive()
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/archive.png'))
@@ -242,15 +242,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_power_freq_visible - {e}')
 
-    # FIXME
-    def _gui_graph(self, *args, **kwargs):
-        try:
-            self.graphwidget.plot(clear=kwargs.get('clear', True))
-            self.graphwidget.setLabel('left', kwargs)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_graph - {e}')
-
     def _gui_move_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -438,6 +429,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         self.lbl_push_force.setText(txt)
 
+    def _visible_compare_btn(self, state):
+        try:
+            self.btn_compare.setVisible(state)
+            self.btn_clier.setVisible(state)
+            self.btn_show.setVisible(state)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_visible_compare_btn - {e}')
+
+    # FIXME temper compare btn set visible
     def _archive_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -445,26 +446,31 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._gui_power_freq_visible(True)
                 self._gui_move_graph()
                 self._fill_lab_graph()
+                self._visible_compare_btn(True)
 
             elif self.type_graph == 'speed':
                 self._gui_power_freq_visible(False)
                 self._gui_speed_graph()
                 self._fill_lab_cascade_graph()
+                self._visible_compare_btn(True)
 
             elif self.type_graph == 'triple':
                 self._gui_power_freq_visible(False)
                 self._gui_triple_graph()
                 self._fill_triple_graph()
+                self._visible_compare_btn(False)
 
             elif self.type_graph == 'boost':
                 self._gui_power_freq_visible(False)
                 self._gui_boost_graph()
                 self._fill_boost_graph()
+                self._visible_compare_btn(False)
 
             elif self.type_graph == 'temper':
                 self._gui_power_freq_visible(False)
                 self._gui_temper_graph()
                 self._fill_temper_graph()
+                self._visible_compare_btn(False)
 
             self.graphwidget.addLegend()
 
@@ -498,7 +504,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
 
-    # FIXME
     def _fill_lab_cascade_graph(self):
         try:
             index = self.index_test_cascade
@@ -813,7 +818,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     # FIXME temper graph
     def _add_compare_data(self):
         try:
-            len_data = len(self.compare_data)
             if self.type_graph == 'speed':
                 index = self.index_test_cascade
                 if not self.archive.struct_cascade.cascade[index + 1] in self.compare_data:
@@ -850,7 +854,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
 
-    # FIXME speed and temper graph
+    # FIXME temper graph
     def _show_graph(self, obj):
         try:
             self.graphwidget.plot(clear=True)
@@ -865,7 +869,38 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.graphwidget.addLegend()
 
             if self.type_graph == 'speed':
-                print(f'{obj=}')
+                for arch_obj in obj:
+                    speed_list = [0]
+                    comp_list = [0]
+                    recoil_list = [0]
+                    push_force = 0
+                    for graph in arch_obj:
+                        speed_list.append(float(graph.speed))
+                        flag_push_force = graph.flag_push_force
+                        if flag_push_force == '1':
+                            push_force = float(graph.dynamic_push_force)
+
+                        elif flag_push_force == '0':
+                            push_force = float(graph.static_push_force)
+
+                        recoil_list.append(round(max(graph.force_list) + push_force, 2))
+                        comp_list.append(round(min(graph.force_list) + push_force, 2))
+
+                    x_list = [*speed_list[::-1], *speed_list]
+                    y_list = [*comp_list[::-1], *recoil_list]
+
+                    pen = pg.mkPen(color=self.color_pen[obj.index(arch_obj)], width=3)
+
+                    name = (f'{arch_obj[0].time_test} - '
+                            f'{arch_obj[0].amort.name} - '
+                            f'{arch_obj[0].serial_number} - '
+                            f'{arch_obj[0].speed}~{arch_obj[-1].speed}')
+
+                    self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
+
+                self._fill_limit_lab_cascade_graph(obj[0][0])
+
+                self.graphwidget.addLegend()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_graph - {e}')
