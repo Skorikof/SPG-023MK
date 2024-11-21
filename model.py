@@ -166,21 +166,23 @@ class Model:
 
     def save_koef_force(self):
         try:
-            self.set_regs['force_koef'] = self.set_regs.get('force_real', 0)
+            self.set_regs['force_refresh'] = self.set_regs.get('force_real', 0)
 
         except Exception as e:
             self.log_error(f'ERROR in model/save_koef_force - {e}')
 
     def cancel_koef_force(self):
         try:
-            self.set_regs['force_koef'] = 0
+            self.set_regs['force_refresh'] = 0
 
         except Exception as e:
             self.log_error(f'ERROR in model/cancel_koef_force - {e}')
 
     def correct_force(self, force):
         try:
-            return round(force - self.set_regs.get('force_koef', 0), 1)
+            refresh = self.set_regs.get('force_refresh', 0)
+            koef = self.set_regs.get('force_koef', 1)
+            return round((force - refresh) * koef, 1)
 
         except Exception as e:
             self.log_error(f'ERROR in model/correct_force - {e}')

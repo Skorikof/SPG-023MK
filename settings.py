@@ -19,6 +19,8 @@ class PrgSettings:
                        'stopbits': int(temp_val[3]),
                        }
 
+            force_koef = self._force_koef(config['Settings']['ForceKoef'].replace(',', '.'))
+
             self.settings = {'con_set': con_set,
                              }
 
@@ -43,7 +45,8 @@ class PrgSettings:
                           'min_point': 0,
                           'max_pos': False,
                           'max_point': 0,
-                          'force_koef': 0,
+                          'force_refresh': 0,
+                          'force_koef': force_koef,
                           'force': 0,
                           'force_list': [],
                           'force_accum_list': [],
@@ -66,6 +69,13 @@ class PrgSettings:
 
         except Exception as e:
             print(str(e))
+
+    def _force_koef(self, value):
+        try:
+            return float(value)
+
+        except ValueError:
+            return 1
 
 
 class SpeedLimit:
