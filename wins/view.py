@@ -17,6 +17,7 @@ class AppWindow(QMainWindow):
         super(AppWindow, self).__init__()
 
         self.response = {}
+        self.list_lab = []
         self.dict_lab_cascade = {}
 
         self.index_amort = 0
@@ -633,14 +634,21 @@ class AppWindow(QMainWindow):
 
     def specif_add_lab_cascade_table(self):
         try:
-            self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
-            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-            if speed:
-                count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+            count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+            if count_rows < 12:
+                self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
+                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                if speed:
+                    self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
 
-                self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
+                    self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
 
-                self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
+            else:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              f'<b style="color: #f00;">Введено максимальное количество скоростей '
+                                              f'для испытания</b>'
+                                              )
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_add_lab_cascade_table - {e}')
@@ -875,6 +883,7 @@ class AppWindow(QMainWindow):
                 self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
             else:
+                self.list_lab = []
                 self._lab_win_clear()
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
@@ -1059,13 +1068,32 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_lab_test - {e}')
 
+    # FIXME test it
+    def show_compare_graph(self):
+        try:
+            for graph in self.list_lab:
+                name = f'{graph["speed"]} м/с'
+                pen = pg.mkPen(color=self.win_archive.color_pen[graph.index()], width=3)
+
+                self.ui.lab_GraphWidget.plot(graph['move'], graph['force'], pen=pen, name=name)
+
+            self.ui.lab_GraphWidget.addLegend()
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/show_compare_graph - {e}')
+
     def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 
-        if self.response.get('type_test') == 'lab_hand':
+        type_test = self.response.get('type_test')
+
+        if type_test == 'lab_hand':
             self.ui.lab_speed_le.setReadOnly(False)
             self.ui.test_change_speed_btn.setVisible(True)
+
+        elif type_test == 'lab' or type_test == 'lab_cascade':
+            self.show_compare_graph()
 
     def cancel_test_conv_clicked(self):
         try:
@@ -1105,11 +1133,20 @@ class AppWindow(QMainWindow):
 
     def slot_save_lab_result(self):
         try:
+            type_test = self.response.get('type_test')
+            if type_test == 'lab' or type_test == 'lab_cascade':
+                data_dict = {'speed': self.response.get('speed'),
+                             'move': self.response.get('move_graph')[:],
+                             'force': self.response.get('force_graph')[:]}
+
+                self.list_lab.append(data_dict)
+
             self.save_data_in_archive()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
+    # FIXME add save temper graph
     def save_data_in_archive(self):
         try:
             data_dict = {'move_graph': self.response.get('move_graph')[:],
