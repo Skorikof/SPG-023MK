@@ -60,7 +60,8 @@ class Model:
             self._init_reader()
             time.sleep(0.2)
             self.reader_start()
-            self.write_bit_force_cycle(1)
+
+            # self.write_bit_force_cycle(1)
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -218,7 +219,7 @@ class Model:
             # print(f'Force --> {response.get("force")}')
             # print(f'Move --> {response.get("move")}')
             # print(f'State --> {response.get("state")}')
-            # print(f'Temper --> {response.get("temper")}')
+            print(f'Temper --> {response.get("temper")}')
 
             force_list = []
             move_list = []
@@ -265,35 +266,35 @@ class Model:
                 pass
 
             else:
-                temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                force = self._magnitude_effort(response.get('regs', temp_list)[0], response.get('regs', temp_list)[1])
-                if force != -100000:
-                    command = {
-                        'force_real': force,
-                        'force': self.correct_force(force),
-                        'move': self._movement_amount(response.get('regs', temp_list)[2]),
-                        'count': self._counter_time(response.get('regs', temp_list)[4]),
-                        'traverse_move': round(0.5 * self._movement_amount(response.get('regs', temp_list)[6]), 1),
-                        'temper_first': self._temperature_value(response.get('regs', temp_list)[7],
-                                                                response.get('regs', temp_list)[8]),
-                        'force_alarm': self._emergency_force(response.get('regs', temp_list)[10],
-                                                             response.get('regs', temp_list)[11]),
-                        'temper_second': self._temperature_value(response.get('regs', temp_list)[12],
-                                                                 response.get('regs', temp_list)[13]),
-                    }
+                # temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                force = self._magnitude_effort(response.get('regs')[0], response.get('regs')[1])
+                # if force != -100000:
+                command = {
+                    'force_real': force,
+                    'force': self.correct_force(force),
+                    'move': self._movement_amount(response.get('regs')[2]),
+                    'count': self._counter_time(response.get('regs')[4]),
+                    'traverse_move': round(0.5 * self._movement_amount(response.get('regs')[6]), 1),
+                    'temper_first': self._temperature_value(response.get('regs')[7],
+                                                            response.get('regs')[8]),
+                    'force_alarm': self._emergency_force(response.get('regs')[10],
+                                                         response.get('regs')[11]),
+                    'temper_second': self._temperature_value(response.get('regs')[12],
+                                                             response.get('regs')[13]),
+                }
 
-                    self.update_main_dict(command)
+                self.update_main_dict(command)
 
-                    self._register_state(response.get('regs', temp_list)[3])
-                    self._switch_state(response.get('regs', temp_list)[5])
+                self._register_state(response.get('regs')[3])
+                self._switch_state(response.get('regs')[5])
 
-                    self.count_msg += 1
-                    self._status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
+                self.count_msg += 1
+                self._status_bar_msg(f'Получен ответ контроллера - {self.count_msg}')
 
-                    self.signals.read_finish.emit(self.set_regs)
+                self.signals.read_finish.emit(self.set_regs)
 
-                else:
-                    pass
+                # else:
+                #     pass
 
         except Exception as e:
             self.log_error(f'ERROR in model/_pars_regs_result - {e}')
@@ -593,8 +594,8 @@ class Model:
 
     def _write_reg_state(self, bit, value):
         try:
-            temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            com_list = self.set_regs.get('list_state', temp_list)[:]
+            # temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            com_list = self.set_regs.get('list_state')[:]
             com_list[bit] = value
 
             res = 0
@@ -649,9 +650,7 @@ class Model:
 
     def write_bit_select_temper(self, value):
         try:
-            ind = self.set_regs.get('select_temper', 0)
-            if ind != value:
-                self._write_reg_state(6, value)
+            self._write_reg_state(6, value)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_select_temper - {e}')
@@ -795,6 +794,7 @@ class Model:
                        'yellow_btn': bool(int(bits[13]))}
 
             self.update_main_dict(command)
+            print(f'bit temper --> {int(bits[6])}')
 
         except Exception as e:
             self.log_error(f'ERROR in model/_register_state - {e}')

@@ -121,7 +121,7 @@ class Controller:
             stage = self.response.get('stage')
             test_flag = self.response.get('test_flag')
 
-            self._control_alarm_traverse_position()
+            # self._control_alarm_traverse_position()
 
             if test_flag is True:
                 self._control_alarm_state()
