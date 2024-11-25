@@ -988,11 +988,11 @@ class Ui_SettingsWindow(object):
         self.lbl_txt1_4.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.lbl_txt1_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt1_4.setObjectName("lbl_txt1_4")
-        self.btn_select_temper = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_select_temper.setGeometry(QtCore.QRect(200, 560, 30, 30))
-        self.btn_select_temper.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_select_temper.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_select_temper.setStyleSheet("QPushButton \n"
+        self.btn_temper_1 = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_temper_1.setGeometry(QtCore.QRect(200, 565, 30, 30))
+        self.btn_temper_1.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_temper_1.setMaximumSize(QtCore.QSize(30, 30))
+        self.btn_temper_1.setStyleSheet("QPushButton \n"
 "{\n"
 "    color: rgb(0, 0, 0);\n"
 "    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
@@ -1017,10 +1017,43 @@ class Ui_SettingsWindow(object):
 "    background-color: rgb(0, 255, 0)\n"
 "    \n"
 "}")
-        self.btn_select_temper.setText("")
-        self.btn_select_temper.setCheckable(False)
-        self.btn_select_temper.setChecked(False)
-        self.btn_select_temper.setObjectName("btn_select_temper")
+        self.btn_temper_1.setText("")
+        self.btn_temper_1.setCheckable(False)
+        self.btn_temper_1.setChecked(False)
+        self.btn_temper_1.setObjectName("btn_temper_1")
+        self.btn_temper_2 = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_temper_2.setGeometry(QtCore.QRect(250, 565, 30, 30))
+        self.btn_temper_2.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_temper_2.setMaximumSize(QtCore.QSize(30, 30))
+        self.btn_temper_2.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    background-color: rgb(0, 255, 0)\n"
+"    \n"
+"}")
+        self.btn_temper_2.setText("")
+        self.btn_temper_2.setCheckable(False)
+        self.btn_temper_2.setChecked(False)
+        self.btn_temper_2.setObjectName("btn_temper_2")
         SettingsWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(SettingsWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 610, 21))

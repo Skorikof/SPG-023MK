@@ -23,6 +23,8 @@ class AppWindow(QMainWindow):
         self.index_amort = 0
         self.index_type_test = 0
 
+        self.bit_temper = None
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -37,7 +39,6 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
-        self.model.write_bit_force_cycle(0)
         self.controller.timer_process.stop()
         self.model.reader_exit()
         self.model.threadpool.waitForDone()
@@ -132,6 +133,8 @@ class AppWindow(QMainWindow):
 
             if self.response.get('type_test') == 'hand':
                 self.win_set.update_data_win_set(self.response)
+
+            self.change_temper_sensor_btn()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/update_data_view - {e}')
@@ -684,6 +687,19 @@ class AppWindow(QMainWindow):
                                       'Внимание',
                                       f'<b style="color: #f00;">Не введено ни одной скорости для испытания</b>'
                                       )
+
+    def change_temper_sensor_btn(self):
+        try:
+            bit = self.response.get('list_state')[6]
+            if self.bit_temper != self.response.get('list_state')[6]:
+                self.bit_temper = self.response.get('list_state')[6]
+                if bit == 0:
+                    self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
+                else:
+                    self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/change_temper_sensor_btn - {e}')
 
     def change_temper_sensor_slot(self):
         try:

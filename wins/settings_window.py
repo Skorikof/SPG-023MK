@@ -75,7 +75,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.btn_max_F.clicked.connect(self._btn_set_doclick)
         self.btn_green_light.clicked.connect(self._btn_set_doclick)
         self.btn_red_light.clicked.connect(self._btn_set_doclick)
-        self.btn_select_temper.clicked.connect(self._btn_set_doclick)
+        self.btn_temper_1.clicked.connect(self._btn_select_temper_one)
+        self.btn_temper_2.clicked.connect(self._btn_select_temper_two)
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
 
@@ -83,13 +84,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         self.btn_connect.setVisible(False)
         self.btn_read.setVisible(False)
-
-    def temper_chb_slot(self):
-        if self.chb_temper.isChecked():
-            self.model.write_bit_select_temper(1)
-
-        else:
-            self.model.write_bit_select_temper(0)
 
     def update_data_win_set(self, response):
         try:
@@ -161,10 +155,15 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
 
+    def _btn_select_temper_one(self):
+        self.model.write_bit_select_temper(0)
+
+    def _btn_select_temper_two(self):
+        self.model.write_bit_select_temper(1)
+
     def _btn_set_doclick(self):
         try:
             btn = self.sender().objectName()
-            # com_list = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             temp_list = [x for x in self.response.get('list_state')]
 
             if btn == 'btn_cycle_F':
@@ -187,14 +186,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                 else:
                     value = 0
                 self.model.write_bit_green_light(value)
-
-            elif btn == 'btn_select_temper':
-                if temp_list[6] == 0:
-                    value = 1
-                else:
-                    value = 0
-                print(f'value temper --> {value}')
-                self.model.write_bit_select_temper(value)
 
             elif btn == 'btn_no_control':
                 self.model.write_bit_unblock_control()
@@ -270,12 +261,11 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
             self.model.update_main_dict(command)
 
-            self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()
+
             # self.graph_ui.show()
 
         else:
-            self.model.write_bit_force_cycle(0)
             self.model.reader_stop_test()
 
     def update_graph_hand_set(self):
