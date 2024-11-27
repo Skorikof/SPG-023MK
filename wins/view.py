@@ -495,6 +495,10 @@ class AppWindow(QMainWindow):
                 self.specif_lab_cascade_gui()
 
             elif ind == 3:
+                self.model.set_regs['type_test'] = 'temper'
+                self.specif_lab_hand_gui()
+
+            elif ind == 4:
                 self.model.set_regs['type_test'] = 'conv'
                 self.specif_lab_gui()
 
@@ -828,7 +832,7 @@ class AppWindow(QMainWindow):
         try:
             amort = self.response.get('amort')
             type_test = self.response.get('type_test')
-            if type_test == 'lab_hand':
+            if type_test == 'lab_hand' or type_test == 'temper':
                 speed = self.response.get('speed')
             elif type_test == 'lab_cascade':
                 speed = self.model.set_regs.get('speed_cascade')
@@ -1084,7 +1088,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_lab_test - {e}')
 
-    # FIXME test it
     def show_compare_graph(self):
         try:
             for graph in self.list_lab:
@@ -1162,11 +1165,11 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
 
-    # FIXME add save temper graph
     def save_data_in_archive(self):
         try:
             data_dict = {'move_graph': self.response.get('move_graph')[:],
                          'force_graph': self.response.get('force_graph')[:],
+                         'temper_graph': self.response.get('temper_graph')[:],
                          'type_test': self.response.get('type_test'),
                          'speed': self.response.get('speed'),
                          'operator': self.response.get('operator').copy(),

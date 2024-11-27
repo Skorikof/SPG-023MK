@@ -66,7 +66,6 @@ class Controller:
 
     def _init_signals(self):
         try:
-            self.model.signals.write_bit_force.connect(self.change_state_read_buffer)
             self.model.signals.full_cycle_count.connect(self._update_full_cycle)
             self.model.signals.test_launch.connect(self._yellow_btn_push)
 
@@ -86,26 +85,6 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_update_full_cycle - {e}')
-
-    def _check_state_bit_force(self, state):
-        try:
-            if not self.response.get('cycle_force') == state:
-                pass
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/_check_state_bit_force - {e}')
-
-    def change_state_read_buffer(self, flag):
-        try:
-            if flag:
-                self.model.reader_start_test()
-
-            else:
-                self.model.reader_stop_test()
-            time.sleep(0.2)
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/change_state_read_buffer_ctrl - {e}')
 
     def _init_timer_test(self):
         try:
@@ -172,7 +151,8 @@ class Controller:
                             self.model.update_main_dict(command)
 
                             self.model.reader_stop_test()
-                            time.sleep(0.1)
+                            time.sleep(0.2)
+                            self.model.write_bit_force_cycle(0)
 
                             self.signals.reset_ui.emit()
 
@@ -215,6 +195,8 @@ class Controller:
                     type_test = self.response.get('type_test')
                     if type_test == 'lab_hand':
                         self._test_lab_hand_speed()
+                    elif type_test == 'temper':
+                        self._test_temper()
                     elif type_test == 'lab_cascade':
                         self._test_lab_cascade()
                     else:
@@ -259,6 +241,10 @@ class Controller:
                     self.signals.lab_save_result.emit()
                     self.signals.end_test.emit()
                     self._stop_gear_end_test()
+
+            # FIXME
+            elif stage == 'test_temper':
+                pass
 
             elif stage == 'test_lab_cascade':
                 if self.count_cycle >= 4:
@@ -421,10 +407,10 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        # self.model.write_bit_force_cycle(0)
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
+        self.model.write_bit_force_cycle(0)
 
         self.model.log_error(f'lost control')
         self.signals.control_msg.emit('lost_control')
@@ -465,10 +451,10 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        # self.model.write_bit_force_cycle(0)
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
+        self.model.write_bit_force_cycle(0)
 
         self.model.log_error(f'excess force')
         self.signals.control_msg.emit('excess_force')
@@ -526,11 +512,12 @@ class Controller:
         self.model.motor_stop(2)
         self.model.write_bit_red_light(1)
 
-        # self.model.write_bit_force_cycle(0)
         self.model.reader_stop_test()
 
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
+
+        self.model.write_bit_force_cycle(0)
 
         # if self.flag_safety_fence is False:
         #     self.time_safety_fence = time.monotonic()
@@ -562,9 +549,9 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        # self.model.write_bit_force_cycle(0)
         self.model.reader_stop_test()
         time.sleep(0.2)
+        self.model.write_bit_force_cycle(0)
 
         if self.flag_alarm_traverse:
             self.model.log_error(f'alarm traverse {pos}')
@@ -594,8 +581,9 @@ class Controller:
         if self.model.client:
             self.model.motor_stop(1)
             self.model.motor_stop(2)
-            # self.model.write_bit_force_cycle(0)
             self.model.reader_stop_test()
+            time.sleep(0.2)
+            self.model.write_bit_force_cycle(0)
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
@@ -665,6 +653,7 @@ class Controller:
                 self.model.write_bit_unblock_control()
 
             self.lamp_all_switch_off()
+            self.model.write_bit_force_cycle(1)
 
             command = {'test_launch': True,
                        'test_flag': False,
@@ -689,10 +678,12 @@ class Controller:
             if self.model.set_regs.get('repeat_test', False):
                 self.model.set_regs['repeat_test'] = False
                 type_test = self.model.set_regs.get('type_test')
-                # self.model.write_bit_force_cycle(1)
                 self.model.reader_start_test()
                 if type_test == 'lab_hand':
                     self._test_lab_hand_speed()
+
+                elif type_test == 'temper':
+                    self._test_temper()
 
                 elif type_test == 'lab_cascade':
                     self._test_lab_cascade()
@@ -742,6 +733,7 @@ class Controller:
 
     def search_hod_gear(self):
         try:
+            self.model.write_bit_force_cycle(1)
             hod = self.response.get('hod', 120)
             if hod > 100:
                 speed = 0.03
@@ -770,7 +762,6 @@ class Controller:
 
             self.count_cycle = 0
 
-            # self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()
 
             self.model.set_regs['stage'] = 'search_hod'
@@ -782,6 +773,7 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
+            self.model.write_bit_force_cycle(1)
             hod = self.response.get('hod', 120)
             if hod > 100:
                 speed = 0.03
@@ -809,7 +801,6 @@ class Controller:
 
             self.count_cycle = 0
 
-            # self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()
 
             self.model.set_regs['stage'] = 'pos_set_gear'
@@ -893,6 +884,7 @@ class Controller:
     def _test_move_cycle(self):
         """Проверочный ход"""
         try:
+            self.model.write_bit_force_cycle(1)
             self._move_detection()
             hod = self.response.get('hod', 120)
             if hod > 100:
@@ -908,7 +900,6 @@ class Controller:
 
             self.count_cycle = 0
 
-            # self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()
 
             self.model.motor_up(1)
@@ -1007,6 +998,25 @@ class Controller:
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
+    def _test_temper(self):
+        try:
+            self.signals.lab_win_test.emit()
+            speed = self.response.get('speed')
+            self._write_speed_motor(1, speed=speed)
+            command = {'stage': 'test_temper',
+                       'force_accum_list': [],
+                       'move_accum_list': [],
+                       'fill_graph': True,
+                       }
+            self.model.update_main_dict(command)
+
+            self.model.motor_up(1)
+
+            self.count_cycle = 0
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/_test_temper - {e}')
+
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
         try:
@@ -1066,9 +1076,9 @@ class Controller:
     def _stop_gear_min_pos(self):
         """Снижение скорости и остановка привода в нижней точке"""
         try:
-            # self.model.write_bit_force_cycle(0)
             self.model.reader_stop_test()
             time.sleep(0.2)
+            self.model.write_bit_force_cycle(0)
 
             hod = self.response.get('hod', 120)
             if hod > 100:

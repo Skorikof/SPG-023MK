@@ -20,7 +20,6 @@ class WinSignals(QObject):
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
     read_finish = pyqtSignal(dict)
-    write_bit_force = pyqtSignal(bool)
     full_cycle_count = pyqtSignal()
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
@@ -207,7 +206,8 @@ class Model:
             # print(f'Force --> {response.get("force")}')
             # print(f'Move --> {response.get("move")}')
             # print(f'State --> {response.get("state")}')
-            print(f'Temper --> {response.get("temper")}')
+            # print(f'Temper --> {response.get("temper")}')
+            # print(f'{"=" * 100}')
 
             force_list = []
             move_list = []
@@ -257,12 +257,9 @@ class Model:
                     'move': self._movement_amount(res[2]),
                     'count': self._counter_time(res[4]),
                     'traverse_move': round(0.5 * self._movement_amount(res[6]), 1),
-                    'temper_first': self._temperature_value(res[7],
-                                                            res[8]),
-                    'force_alarm': self._emergency_force(res[10],
-                                                         res[11]),
-                    'temper_second': self._temperature_value(res[12],
-                                                             res[13]),
+                    'temper_first': self._temperature_value(res[7], res[8]),
+                    'force_alarm': self._emergency_force(res[10], res[11]),
+                    'temper_second': self._temperature_value(res[12], res[13]),
                 }
 
                 self.update_main_dict(command)
@@ -522,12 +519,10 @@ class Model:
         try:
             if flag:
                 if not self.set_regs.get('flag_bit_force', False):
-                    # self.signals.write_bit_force.emit(flag)
                     self.set_regs['flag_bit_force'] = True
 
             else:
                 if self.set_regs.get('flag_bit_force', True):
-                    # self.signals.write_bit_force.emit(flag)
                     self.set_regs['flag_bit_force'] = False
 
         except Exception as e:
