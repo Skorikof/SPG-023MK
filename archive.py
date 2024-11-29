@@ -24,6 +24,7 @@ class TestArchive:
         self.move_list = []
         self.force_list = []
         self.temper_list = []
+        self.temper_force_list = []
 
         self.amort = DataAmort()
 
@@ -110,7 +111,12 @@ class ReadArchive:
                 if not archive_list[0] == '*':
                     if archive_list[3] == 'temper':
                         self.ind_temp += 1
-                        self.struct_temper.tests.append()
+                        self.struct_temper.tests.append(TestArchive())
+
+                        self._fill_obj_archive_data(self.struct_temper.tests[self.ind_temp], archive_list)
+
+                        temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+                        self.struct_temper.tests[self.ind_temp].temper_graph = temp_list[:]
 
                     else:
                         self.ind_test += 1
@@ -123,12 +129,15 @@ class ReadArchive:
                         self.struct.tests[self.ind_test].move_list = temp_list[:]
 
                 elif archive_list[0] == '*':
-                    temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+                    if self.struct.tests[self.ind_test].type_test == 'temper':
+                        self.struct_temper.tests[self.ind_temp].temper_force_graph = archive_list[24:-1]
+                    else:
+                        temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 
-                    self.struct.tests[self.ind_test].force_list = temp_list[:]
+                        self.struct.tests[self.ind_test].force_list = temp_list[:]
 
-                    if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
-                        self.cascade_list.append(self.struct.tests[self.ind_test])
+                        if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
+                            self.cascade_list.append(self.struct.tests[self.ind_test])
 
         except Exception as e:
             print(f'Exception in archive/_pars_str_archihve - {e}')
@@ -238,15 +247,15 @@ class ReadArchive:
                 speed = str(obj['speed']).replace('.', ',')
 
                 if obj['type_test'] == 'temper':
-                    data = self._change_data_for_save(obj['temper_graph'])
+                    data_first = self._change_data_for_save(obj['temper_graph'])
+                    data_second = self._change_data_for_save(obj['temper_force_graph'])
 
                 else:
-                    data = self._change_data_for_save(obj['move_graph'])
+                    data_first = self._change_data_for_save(obj['move_graph'])
+                    data_second = self._change_data_for_save(obj['force_graph'])
 
-                force = self._change_data_for_save(obj['force_graph'])
-
-                write_data = (f'{speed};{data};\n'
-                              f'*;;;;;;;;;;;;;;;;;;;;;;;;{force};\n')
+                write_data = (f'{speed};{data_first};\n'
+                              f'*;;;;;;;;;;;;;;;;;;;;;;;;{data_second};\n')
 
                 file_arch.write(write_name + write_str + write_data)
 

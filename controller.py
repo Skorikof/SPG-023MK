@@ -242,9 +242,23 @@ class Controller:
                     self.signals.end_test.emit()
                     self._stop_gear_end_test()
 
-            # FIXME
             elif stage == 'test_temper':
-                pass
+                if self.count_cycle >= 1:
+                    max_temper = self.response.get('max_temperature')
+                    if max_temper < self.response.get('finish_temper', 80):
+                        max_comp = self.response.get('max_comp')
+                        max_recoil = self.response.get('max_recoil')
+                        force = f'{max_recoil}|{max_comp}'
+                        self._fill_temper_graph(max_temper, force)
+                        self.count_cycle = 0
+
+                    else:
+                        command = {'stage': 'wait',
+                                   'fill_graph': False}
+                        self.model.update_main_dict(command)
+                        self.signals.lab_save_result.emit()
+                        self.signals.end_test.emit()
+                        self._stop_gear_end_test()
 
             elif stage == 'test_lab_cascade':
                 if self.count_cycle >= 4:
@@ -1006,6 +1020,8 @@ class Controller:
             command = {'stage': 'test_temper',
                        'force_accum_list': [],
                        'move_accum_list': [],
+                       'temper_graph': [],
+                       'temper_force_graph': [],
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
@@ -1016,6 +1032,19 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_test_temper - {e}')
+
+    def _fill_temper_graph(self, temper, force):
+        try:
+            if self.response.get('temper_graph', []):
+                self.model.set_regs['temper_graph'].append(temper)
+                self.model.set_regs['temper_force_graph'].append(force)
+
+            else:
+                self.model.set_regs['temper_graph'] = [temper]
+                self.model.set_regs['temper_force_graph'] = [force]
+
+        except Exception as e:
+            self.model.log_error(f'ERROR in controller/_fill_temper_graph - {e}')
 
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
