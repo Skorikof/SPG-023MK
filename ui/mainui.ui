@@ -864,7 +864,12 @@
                </item>
                <item>
                 <property name="text">
-                 <string>Лабораторное  с каскадом скоростей</string>
+                 <string>Лабораторное с каскадом скоростей</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Температурное</string>
                 </property>
                </item>
                <item>

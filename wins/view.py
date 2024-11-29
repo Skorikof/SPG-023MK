@@ -473,6 +473,9 @@ class AppWindow(QMainWindow):
             elif temp == 'hand':
                 self.win_set.update_graph_hand_set()
 
+            elif temp == 'temper':
+                self._update_temper_graph()
+
             else:
                 self._update_lab_graph()
 
@@ -994,6 +997,25 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_graph - {e}')
 
+    def _update_temper_graph(self):
+        try:
+            recoil_list = []
+            comp_list = []
+            self.ui.lab_GraphWidget.clear()
+            pen_recoil = pg.mkPen(color='black', width=3)
+            pen_comp = pg.mkPen(color='blue', width=3)
+            x_list = [float(x) for x in self.response.get('temper_graph')]
+            for value in self.response.get('temper_force_graph'):
+                recoil, comp = value.split('|')
+                recoil_list.append(float(recoil))
+                comp_list.append(float(comp))
+
+            self.ui.lab_GraphWidget.plot(x_list, recoil_list, pen=pen_recoil)
+            self.ui.lab_GraphWidget.plot(x_list, comp_list, pen=pen_comp)
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_update_temper_graph - {e}')
+
     def _update_lab_data(self):
         try:
             self.ui.lab_comp_le.setText(f'{self.response.get("max_comp", 0)}')
@@ -1170,6 +1192,7 @@ class AppWindow(QMainWindow):
             data_dict = {'move_graph': self.response.get('move_graph')[:],
                          'force_graph': self.response.get('force_graph')[:],
                          'temper_graph': self.response.get('temper_graph')[:],
+                         'temper_force_graph': self.response.get('temper_force_graph')[:],
                          'type_test': self.response.get('type_test'),
                          'speed': self.response.get('speed'),
                          'operator': self.response.get('operator').copy(),
