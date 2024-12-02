@@ -20,6 +20,7 @@ class PrgSettings:
                        }
 
             force_koef = self._force_koef(config['Settings']['ForceKoef'].replace(',', '.'))
+            finish_temper = float(config['Settings']['FinishTemper'].replace(',', '.'))
 
             self.settings = {'con_set': con_set,
                              }
@@ -62,6 +63,7 @@ class PrgSettings:
                           'temper_second': 0,
                           'temp_list': [],
                           'max_temperature': 0,
+                          'finish_temper': finish_temper,
                           'traverse_referent': False,
                           'gear_referent': False,
                           'traverse_freq': 10,

@@ -60,7 +60,7 @@ class AppWindow(QMainWindow):
         self._init_buttons()
         self._init_signals()
 
-        self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
+        self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
 
         self._init_lab_graph()
         self._init_conv_graph()
