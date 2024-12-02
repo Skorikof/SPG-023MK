@@ -211,7 +211,15 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     index += 1
 
             elif self.type_graph == 'temper':
-                pass
+                for i in range(len(self.archive.struct_temper.tests)):
+                    begin_temp = self.archive.struct_temper.tests[i].temper_graph[0]
+                    finish_temp = self.archive.struct_temper.tests[i].temper_graph[-1]
+                    temp = (f'{i + 1}) '
+                            f'{self.archive.struct_temper.tests[i].time_test} - '
+                            f'{self.archive.struct_temper.tests[i].amort.name} - '
+                            f'{self.archive.struct_temper.tests[i].serial_number} - '
+                            f'{begin_temp}~{finish_temp} °С')
+                    temp_arr.append(temp)
 
             else:
                 for i in range(len(self.archive.struct.tests)):
@@ -317,7 +325,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._pars_triple_data()
 
             elif self.type_graph == 'temper':
-                pass
+                self._pars_temper_data()
 
             else:
                 self._pars_lab_data()
@@ -337,9 +345,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                 self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
 
-            else:
-                pass
-
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_data - {e}')
 
@@ -358,9 +363,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                 self.speed_le.setText(f'{speed_list[0]} - {speed_list[-1]}')
 
-            else:
-                pass
-
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
 
@@ -375,11 +377,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                 self._fill_flag_push_force('2')
 
-            else:
-                pass
-
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_triple_data - {e}')
+
+    def _pars_temper_data(self):
+        try:
+            index = self.index_test_temper
+            if self.archive.struct_temper.tests[index]:
+                self._fill_archive_data_gui(self.archive.struct_temper.tests[index])
+
+                self.speed_le.setText(f'{self.archive.struct_temper.tests[index].speed}')
+                self._fill_flag_push_force(self.archive.struct_temper.tests[index].flag_push_force)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_pars_temper_data - {e}')
 
     def _fill_archive_data_gui(self, obj):
         try:
@@ -438,7 +449,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_visible_compare_btn - {e}')
 
-    # FIXME temper compare btn set visible
     def _archive_graph(self):
         try:
             self.graphwidget.plot(clear=True)
@@ -729,10 +739,31 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
 
-    # FIXME temper graph
     def _fill_temper_graph(self):
         try:
-            pass
+            recoil_list = []
+            comp_list = []
+            index = self.index_test_temper
+            temper_list = self.archive.struct_temper.tests[index].temper_list
+
+            for value in self.archive.struct_temper.tests[index].temper_force_list:
+                value = value.replace(',', '.')
+                value = value.split('|')
+                recoil, comp = float(value[0]), float(value[1])
+                recoil_list.append(recoil)
+                comp_list.append(comp)
+
+            push_force = self._select_push_force(self.archive.struct_temper.tests[index])
+            self.push_force_le.setText(f'{push_force}')
+
+            self.comp_le.setText(f'{comp_list[-1]}')
+            self.recoil_le.setText(f'{recoil_list[-1]}')
+
+            pen_recoil = pg.mkPen(color=self.color_pen[0], width=3)
+            pen_comp = pg.mkPen(color=self.color_pen[1], width=3)
+
+            self.graphwidget.plot(temper_list, recoil_list, pen=pen_recoil, name='Отбой')
+            self.graphwidget.plot(temper_list, comp_list, pen=pen_comp, name='Сжатие')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
@@ -815,7 +846,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
 
-    # FIXME temper graph
     def _add_compare_data(self):
         try:
             if self.type_graph == 'speed':
@@ -854,7 +884,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
 
-    # FIXME temper graph
     def _show_graph(self, obj):
         try:
             self.graphwidget.plot(clear=True)
@@ -868,7 +897,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                 self.graphwidget.addLegend()
 
-            if self.type_graph == 'speed':
+            elif self.type_graph == 'speed':
                 for arch_obj in obj:
                     speed_list = [0]
                     comp_list = [0]

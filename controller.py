@@ -401,14 +401,16 @@ class Controller:
 
     def _control_alarm_state(self):
         try:
+            if not self.response.get('type_test') == 'temper':
+                if self.response.get('max_temperature', 0) >= self.response.get('amort').max_temper:
+                    self._excess_temperature()
+
             if self.response.get('lost_control', False) is True:
                 self._lost_control()
             if self.response.get('excess_force', False) is True:
                 self._excess_force()
             if self.response.get('safety_fence', False) is True:
                 self._safety_fence()
-            if self.response.get('max_temperature', 0) >= self.response.get('amort').max_temper:
-                self._excess_temperature()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_control_alarm_state - {e}')
