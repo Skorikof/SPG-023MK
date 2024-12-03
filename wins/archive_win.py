@@ -7,6 +7,7 @@ from PIL import ImageGrab
 import pyqtgraph as pg
 import numpy as np
 from functools import reduce
+import os
 
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
@@ -71,8 +72,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
-        self.btn_print.clicked.connect(self._archive_save_form)
-        # self.btn_save.clicked.connect()
+        self.btn_print.setVisible(False)
+        # self.btn_print.clicked.connect(self._archive_save_form)
+        self.btn_save.clicked.connect(self._archive_save_form)
         self.btn_compare.clicked.connect(self._add_compare_data)
         self.btn_clier.clicked.connect(self._clear_compare_data)
         self.btn_show.clicked.connect(self._show_compare_data)
@@ -797,29 +799,90 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             width = 1024
 
             image = ImageGrab.grab((x, y, x + width, y + height))
-            image.save("screen.bmp", "BMP")
+            main_dir = ''
+            date_dir = self.index_date
+            name = '1'
+            if self.type_graph == 'move':
+                index = self.index_test
+                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                main_dir = '1_Усилие_Перемещение'
 
-            self.printer = QPrinter(QPrinter.HighResolution)
-            self.printer.setPageOrientation(QPageLayout.Landscape)
+            elif self.type_graph == 'speed':
+                index = self.index_test_cascade
+                name = self._name_screen_for_save_speed(self.archive.struct_cascade.cascade[index + 1])
+                main_dir = '2_Усилие_Скорость'
 
-            pd = QPrintDialog(self.printer, parent=self)
-            pd.setOptions(QAbstractPrintDialog.PrintToFile | QAbstractPrintDialog.PrintSelection)
-            if pd.exec() == QDialog.Accepted:
-                self._print_image(self.printer)
+            elif self.type_graph == 'triple':
+                index = self.index_test
+                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                main_dir = '3_Ход_Скорость_Сопротивление'
+
+            elif self.type_graph == 'boost':
+                index = self.index_test
+                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                main_dir = '4_Скорость_Сопротивление'
+
+            elif self.type_graph == 'temper':
+                index = self.index_test_temper
+                name = self._name_screen_for_save_temper(self.archive.struct_temper.tests[index])
+                main_dir = '5_Температура_Сопротвление'
+
+            self._create_dir_for_save(main_dir)
+            file_dir = f"D:/Stands/SPG-023MK/screens/{main_dir}/{date_dir}/{name}.bmp"
+            image.save(file_dir, "BMP")
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_save_form - {e}')
 
-    def _print_image(self, printer):
+    def _create_dir_for_save(self, main_dir):
         try:
-            painter = QPainter()
-            painter.begin(printer)
-            pixmap = QPixmap("screen.bmp")
-            pixmap = pixmap.scaled(printer.width(), printer.height(), aspectRatioMode=Qt.KeepAspectRatio)
-            painter.drawPixmap(0, 0, pixmap)
+            date_dir = self.index_date
+            directory = f'screens/{main_dir}/{date_dir}'
+            os.makedirs(directory, exist_ok=True)
 
         except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_printImage - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_create_dir_for_save - {e}')
+
+    def _name_screen_for_save(self, obj):
+        try:
+            time = obj.time_test.replace(':', '.')
+            name = (f'{time}_'
+                    f'{obj.amort.name}_'
+                    f'{obj.serial_number}_'
+                    f'{obj.speed}')
+
+            return name
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save - {e}')
+
+    def _name_screen_for_save_speed(self, obj):
+        try:
+            time = obj[0].time_test.replace(':', '.')
+            name = (f'{time}_'
+                    f'{obj[0].amort.name}_'
+                    f'{obj[0].serial_number}_'
+                    f'{obj[0].speed}~{obj[-1].speed}')
+
+            return name
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_speed - {e}')
+
+    def _name_screen_for_save_temper(self, obj):
+        try:
+            time = obj.time_test.replace(':', '.')
+            begin_temp = obj.temper_graph[0]
+            finish_temp = obj.temper_graph[-1]
+            name = (f'{time}_'
+                    f'{obj.amort.name}_'
+                    f'{obj.serial_number}_'
+                    f'{begin_temp}~{finish_temp} °С')
+
+            return name
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_temper - {e}')
 
     def _clear_compare_data(self):
         try:

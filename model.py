@@ -591,7 +591,7 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
-            bit = self.set_regs.get('cycle_force')
+            bit = self.set_regs.get('cycle_force', 0)
             if int(bit) != value:
                 self._write_reg_state(0, value)
 
@@ -600,7 +600,7 @@ class Model:
 
     def write_bit_red_light(self, value):
         try:
-            bit = self.set_regs.get('red_light')
+            bit = self.set_regs.get('red_light', 0)
             if int(bit) != value:
                 self._write_reg_state(1, value)
         except Exception as e:
@@ -608,7 +608,7 @@ class Model:
 
     def write_bit_green_light(self, value):
         try:
-            bit = self.set_regs.get('green_light')
+            bit = self.set_regs.get('green_light', 0)
             if int(bit) != value:
                 self._write_reg_state(2, value)
 
@@ -631,7 +631,7 @@ class Model:
 
     def write_bit_select_temper(self, value):
         try:
-            bit = self.set_regs.get('select_temper')
+            bit = self.set_regs.get('select_temper', 0)
             if int(bit) != value:
                 self._write_reg_state(6, value)
 
