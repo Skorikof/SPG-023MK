@@ -59,6 +59,7 @@ class Model:
         if self.client:
             self._init_timer_writer()
             self._init_reader()
+            self.write_bit_force_cycle(1)
 
         else:
             self.log_error(f'Нет подключения к контроллеру')
@@ -412,12 +413,16 @@ class Model:
             if self.set_regs.get('fill_graph', False):
                 self._calc_dynamic_push_force()
                 push_force = self._choice_push_force()
+                speed = self.set_regs.get('speed')
+                hod = self.set_regs.get('amort').hod
+                move_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
+                force_list = list(map(lambda x: round(x + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
                 command = {'max_comp': round(max(self.set_regs.get('force_accum_list')) - push_force, 2),
                            'max_recoil': round(abs(min(self.set_regs.get('force_accum_list'))) + push_force, 2),
-                           'force_graph': list(map(lambda x: round(x * (-1), 1),
-                                                   self.set_regs.get('force_accum_list'))),
-                           'move_graph': list(map(lambda x: round(x + self.adjust_x, 1),
-                                                  self.set_regs.get('move_accum_list'))),
+                           'force_graph': move_list,
+                           'move_graph': force_list,
+                           'power': self._calc_power(move_list, force_list),
+                           'freq_piston': self._calc_freq_piston(speed, hod),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }
@@ -565,7 +570,8 @@ class Model:
 
     def _write_reg_state(self, bit, value):
         try:
-            com_list = self.set_regs.get('list_state')[:]
+            temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            com_list = self.set_regs.get('list_state', temp_list)[:]
             com_list[bit] = value
 
             res = 0
@@ -651,6 +657,17 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/_motor_command - {e}')
+
+    def write_max_frequency(self, adr_freq, freq):
+        try:
+            freq = freq * 100
+            freq_hex = hex(freq)[2:].zfill(4)
+            freq_hex = f'0{adr_freq}06010B{freq_hex}'
+            self._motor_command(freq_hex)
+            print('max freq rewrite')
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/write_frequency - {e}')
 
     def write_frequency(self, adr_freq, freq):
         try:
@@ -843,3 +860,23 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/calculate_freq - {e}')
+
+    def _calc_power(self, move: list, force: list):
+        try:
+            temp = 0
+            for i in range(1, len(move)):
+                temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
+
+            temp = round((temp * 0.009807) / 1000, 1)
+
+            return temp
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_calc_power - {e}')
+
+    def _calc_freq_piston(self, speed, hod):
+        try:
+            return round(speed / (hod * 0.002 * 3.14), 3)
+
+        except Exception as e:
+            self.log_error(f'ERROR in model/_calc_freq_piston - {e}')

@@ -39,7 +39,7 @@ class PrgSettings:
                           'fill_graph': False,
                           'alarm_flag': False,
                           'alarm_tag': '',
-                          'traverse_stock': 760,
+                          'traverse_stock': 756,
                           'start_direction': False,
                           'current_direction': None,
                           'min_pos': False,

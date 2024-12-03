@@ -60,7 +60,7 @@ class AppWindow(QMainWindow):
         self._init_buttons()
         self._init_signals()
 
-        self.ui.main_hand_debug_btn.setVisible(False)  # Окно ручной отладки
+        self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
 
         self._init_lab_graph()
         self._init_conv_graph()
@@ -822,11 +822,11 @@ class AppWindow(QMainWindow):
         try:
             if self.ui.push_force_chb.isChecked():
                 self.model.set_regs['flag_push_force'] = True
-                self.model.set_regs['lbl_push_force'] = f'Динамическая\nвыталкивающая\nсила'
+                self.model.set_regs['lbl_push_force'] = f'Динамическая выталкивающая сила'
 
             else:
                 self.model.set_regs['flag_push_force'] = False
-                self.model.set_regs['lbl_push_force'] = f'Статическая\nвыталкивающая\nсила'
+                self.model.set_regs['lbl_push_force'] = f'Статическая выталкивающая сила'
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
@@ -1013,6 +1013,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.plot(x_list, recoil_list, pen=pen_recoil)
             self.ui.lab_GraphWidget.plot(x_list, comp_list, pen=pen_comp)
 
+            self._update_lab_data()
+
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_temper_graph - {e}')
 
@@ -1024,9 +1026,25 @@ class AppWindow(QMainWindow):
             self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
             self.ui.lab_speed_le.setText(f'{self.response.get("speed", 0)}')
             self.ui.lab_serial_le.setText(f'{self.response.get("serial_number", 0)}')
+            self.ui.lab_power_le.setText(f'{self.response.get("power", 0)}')
+            self.ui.lab_freq_le.setText(f'{self.response.get("freq_piston", 0)}')
+            self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
+
+    def _fill_push_force(self):
+        try:
+            if self.response.get('flag_push_force', True):
+                push_force = self.response.get('dynamic_push_force', 0)
+
+            else:
+                push_force = self.response.get('static_push_force', 0)
+
+            return push_force
+
+        except Exception as e:
+            self.log_msg_err_slot(f'ERROR in view/_fill_push_force - {e}')
 
     def _update_lab_cascade_graph(self):
         try:
@@ -1114,7 +1132,7 @@ class AppWindow(QMainWindow):
         try:
             for graph in self.list_lab:
                 name = f'{graph["speed"]} м/с'
-                pen = pg.mkPen(color=self.win_archive.color_pen[graph.index()], width=3)
+                pen = pg.mkPen(color=self.win_archive.color_pen[self.list_lab.index(graph)], width=3)
 
                 self.ui.lab_GraphWidget.plot(graph['move'], graph['force'], pen=pen, name=name)
 
@@ -1191,8 +1209,8 @@ class AppWindow(QMainWindow):
         try:
             data_dict = {'move_graph': self.response.get('move_graph')[:],
                          'force_graph': self.response.get('force_graph')[:],
-                         'temper_graph': self.response.get('temper_graph')[:],
-                         'temper_force_graph': self.response.get('temper_force_graph')[:],
+                         'temper_graph': self.response.get('temper_graph', [0])[:],
+                         'temper_force_graph': self.response.get('temper_force_graph', [0])[:],
                          'type_test': self.response.get('type_test'),
                          'speed': self.response.get('speed'),
                          'operator': self.response.get('operator').copy(),

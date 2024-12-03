@@ -33,14 +33,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.color_pen = ['black',
                               'blue',
                               'green',
-                              'yellow',
                               'orange',
                               'purple',
                               'brown',
-                              'pink',
-                              'grey',
                               'olive',
                               'cyan',
+                              'yellow',
+                              'pink',
+                              'grey',
                               'red']
             self.archive = ReadArchive()
             self.setupUi(self)
@@ -551,32 +551,34 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_limit_lab_cascade_graph(self, obj):
         try:
-            lim_speed = []
-            lim_recoil = []
-            lim_comp = []
+            lim_speed_1 = []
+            lim_speed_2 = []
+            lim_recoil_1 = []
+            lim_recoil_2 = []
+            lim_comp_1 = []
+            lim_comp_2 = []
 
-            lim_speed.append(float(obj.amort.speed_one))
-            lim_speed.append(float(obj.amort.speed_one))
-            lim_speed.append(float(obj.amort.speed_two))
-            lim_speed.append(float(obj.amort.speed_two))
-            lim_speed.append(float(obj.amort.speed_one))
+            lim_speed_1.append(float(obj.amort.speed_one))
+            lim_speed_1.append(float(obj.amort.speed_one))
+            lim_speed_2.append(float(obj.amort.speed_two))
+            lim_speed_2.append(float(obj.amort.speed_two))
 
-            lim_recoil.append(float(obj.amort.min_recoil))
-            lim_recoil.append(float(obj.amort.max_recoil))
-            lim_recoil.append(float(obj.amort.max_recoil_2))
-            lim_recoil.append(float(obj.amort.min_recoil_2))
-            lim_recoil.append(float(obj.amort.min_recoil))
+            lim_recoil_1.append(float(obj.amort.min_recoil))
+            lim_recoil_1.append(float(obj.amort.max_recoil))
+            lim_recoil_2.append(float(obj.amort.max_recoil_2))
+            lim_recoil_2.append(float(obj.amort.min_recoil_2))
 
-            lim_comp.append(float(obj.amort.min_comp) * -1)
-            lim_comp.append(float(obj.amort.max_comp) * -1)
-            lim_comp.append(float(obj.amort.max_comp_2) * -1)
-            lim_comp.append(float(obj.amort.min_comp_2) * -1)
-            lim_comp.append(float(obj.amort.min_comp) * -1)
+            lim_comp_1.append(float(obj.amort.min_comp) * -1)
+            lim_comp_1.append(float(obj.amort.max_comp) * -1)
+            lim_comp_2.append(float(obj.amort.max_comp_2) * -1)
+            lim_comp_2.append(float(obj.amort.min_comp_2) * -1)
 
             pen = pg.mkPen(color='red', width=2)
 
-            self.graphwidget.plot(lim_speed, lim_recoil, pen=pen)
-            self.graphwidget.plot(lim_speed, lim_comp, pen=pen)
+            self.graphwidget.plot(lim_speed_1, lim_recoil_1, pen=pen)
+            self.graphwidget.plot(lim_speed_2, lim_recoil_2, pen=pen)
+            self.graphwidget.plot(lim_speed_1, lim_comp_1, pen=pen)
+            self.graphwidget.plot(lim_speed_2, lim_comp_2, pen=pen)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
@@ -798,7 +800,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _calc_freq_piston(self, speed, hod):
         try:
-            return round(speed / (hod * 0.002), 2)
+            return round(speed / (hod * 0.002 * 3.14), 3)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_freq_piston - {e}')

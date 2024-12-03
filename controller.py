@@ -151,8 +151,8 @@ class Controller:
                             self.model.update_main_dict(command)
 
                             self.model.reader_stop_test()
-                            time.sleep(0.2)
-                            self.model.write_bit_force_cycle(0)
+                            # time.sleep(0.2)
+                            # self.model.write_bit_force_cycle(0)
 
                             self.signals.reset_ui.emit()
 
@@ -349,12 +349,12 @@ class Controller:
         try:
             if 5 < abs(self.set_trav_point - self.response.get('traverse_move')) <= 10:
                 if not self.flag_freq_1_step:
-                    self._write_speed_motor(2, freq=10)
+                    self._write_speed_motor(2, freq=15)
                     self.flag_freq_1_step = True
 
             if 1 < abs(self.set_trav_point - float(self.response.get('traverse_move'))) <= 5:
                 if not self.flag_freq_2_step:
-                    self._write_speed_motor(2, freq=8)
+                    self._write_speed_motor(2, freq=10)
                     self.flag_freq_2_step = True
 
             if abs(self.set_trav_point - self.response.get('traverse_move')) <= 1:
@@ -426,7 +426,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
 
         self.model.log_error(f'lost control')
         self.signals.control_msg.emit('lost_control')
@@ -470,7 +470,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
 
         self.model.log_error(f'excess force')
         self.signals.control_msg.emit('excess_force')
@@ -533,7 +533,7 @@ class Controller:
         self.model.log_error(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
 
-        self.model.write_bit_force_cycle(0)
+        # self.model.write_bit_force_cycle(0)
 
         # if self.flag_safety_fence is False:
         #     self.time_safety_fence = time.monotonic()
@@ -566,8 +566,8 @@ class Controller:
         self.model.update_main_dict(command)
 
         self.model.reader_stop_test()
-        time.sleep(0.2)
-        self.model.write_bit_force_cycle(0)
+        # time.sleep(0.2)
+        # self.model.write_bit_force_cycle(0)
 
         if self.flag_alarm_traverse:
             self.model.log_error(f'alarm traverse {pos}')
@@ -598,8 +598,8 @@ class Controller:
             self.model.motor_stop(1)
             self.model.motor_stop(2)
             self.model.reader_stop_test()
-            time.sleep(0.2)
-            self.model.write_bit_force_cycle(0)
+            # time.sleep(0.2)
+            # self.model.write_bit_force_cycle(0)
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
@@ -669,7 +669,7 @@ class Controller:
                 self.model.write_bit_unblock_control()
 
             self.lamp_all_switch_off()
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
 
             command = {'test_launch': True,
                        'test_flag': False,
@@ -749,7 +749,7 @@ class Controller:
 
     def search_hod_gear(self):
         try:
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
             hod = self.response.get('hod', 120)
             if hod > 100:
                 speed = 0.03
@@ -789,7 +789,7 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
             hod = self.response.get('hod', 120)
             if hod > 100:
                 speed = 0.03
@@ -900,7 +900,7 @@ class Controller:
     def _test_move_cycle(self):
         """Проверочный ход"""
         try:
-            self.model.write_bit_force_cycle(1)
+            # self.model.write_bit_force_cycle(1)
             self._move_detection()
             hod = self.response.get('hod', 120)
             if hod > 100:
@@ -1108,8 +1108,8 @@ class Controller:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
-            time.sleep(0.2)
-            self.model.write_bit_force_cycle(0)
+            # time.sleep(0.2)
+            # self.model.write_bit_force_cycle(0)
 
             hod = self.response.get('hod', 120)
             if hod > 100:
