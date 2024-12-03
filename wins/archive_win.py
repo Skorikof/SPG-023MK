@@ -828,7 +828,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 main_dir = '5_Температура_Сопротвление'
 
             self._create_dir_for_save(main_dir)
-            file_dir = f"D:/Stands/SPG-023MK/screens/{main_dir}/{date_dir}/{name}.bmp"
+            file_dir = f"screens/{main_dir}/{date_dir}/{name}.bmp"
             image.save(file_dir, "BMP")
 
         except Exception as e:
