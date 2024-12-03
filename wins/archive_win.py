@@ -3,12 +3,14 @@ from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtGui import QPageLayout, QPixmap, QPainter, QIcon
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QAbstractPrintDialog
-from ui_py.archive_ui import Ui_WindowArch
-from archive import ReadArchive
 from PIL import ImageGrab
 import pyqtgraph as pg
 import numpy as np
 from functools import reduce
+
+from ui_py.archive_ui import Ui_WindowArch
+from archive import ReadArchive
+from my_obj.data_calculation import CalcData
 
 
 class WinSignals(QObject):
@@ -496,10 +498,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             push_force = self._select_push_force(obj)
             max_recoil = round(max(force_list) + push_force, 2)
             max_comp = round(abs(min(force_list)) - push_force, 2)
-            power = self._calc_power(move_list, force_list)
+            power = CalcData().calc_power(move_list, force_list)
             speed = float(obj.speed)
             hod = float(obj.amort.hod)
-            freq = self._calc_freq_piston(speed, hod)
+            freq = CalcData().calc_freq_piston(speed, hod)
 
             self.push_force_le.setText(f'{push_force}')
             self.power_le.setText(f'{power}')
@@ -784,26 +786,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_select_push_force - {e}')
-
-    def _calc_power(self, move: list, force: list):
-        try:
-            temp = 0
-            for i in range(1, len(move)):
-                temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
-
-            temp = round((temp * 0.009807) / 1000, 1)
-
-            return temp
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_power - {e}')
-
-    def _calc_freq_piston(self, speed, hod):
-        try:
-            return round(speed / (hod * 0.002 * 3.14), 3)
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_freq_piston - {e}')
 
     def _archive_save_form(self):
         try:

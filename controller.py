@@ -7,7 +7,6 @@ from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 class ControlSignals(QObject):
     control_msg = pyqtSignal(str)
     traverse_referent = pyqtSignal()
-    traverse_position = pyqtSignal()
     wait_yellow_btn = pyqtSignal()
     test_move_cycle = pyqtSignal()
     conv_win_test = pyqtSignal()
@@ -297,7 +296,7 @@ class Controller:
 
                 if self.count_wait_point > 3:
                     self.count_wait_point = 0
-                    self.model.set_regs['stage'] = 'wait'
+                    self.model.update_main_dict({'stage': 'wait'})
                     self._stop_gear_min_pos()
 
             elif stage == 'stop_gear_min_pos':
@@ -316,7 +315,7 @@ class Controller:
                     self.model.update_main_dict(command)
 
                     if self.response.get('search_hod', False):
-                        self.model.set_regs['search_hod'] = False
+                        self.model.update_main_dict({'search_hod': False})
                         self.signals.search_hod.emit()
 
                     if self.response.get('type_test') == 'conv':
@@ -389,7 +388,6 @@ class Controller:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
             self._write_speed_motor(2, freq=10)
-            # self.model.set_regs['stage'] = 'alarm_traverse'
             if pos == 'up':
                 self.model.motor_down(2)
 
@@ -633,7 +631,7 @@ class Controller:
                     self.traverse_install_point('start_test')
 
                 else:
-                    self.model.set_regs['test_flag'] = False
+                    self.model.update_main_dict({'test_flag': False})
                     self.stop_test_clicked()
 
         except Exception as e:
@@ -691,9 +689,9 @@ class Controller:
             force = self._calc_excess_force()
             self.model.write_emergency_force(force)
 
-            if self.model.set_regs.get('repeat_test', False):
-                self.model.set_regs['repeat_test'] = False
-                type_test = self.model.set_regs.get('type_test')
+            if self.response.get('repeat_test', False):
+                self.model.update_main_dict({'repeat_test': False})
+                type_test = self.response.get('type_test')
                 self.model.reader_start_test()
                 if type_test == 'lab_hand':
                     self._test_lab_hand_speed()
@@ -780,7 +778,7 @@ class Controller:
 
             self.model.reader_start_test()
 
-            self.model.set_regs['stage'] = 'search_hod'
+            self.model.update_main_dict({'stage': 'search_hod'})
 
             self.model.motor_up(1)
 
@@ -819,7 +817,7 @@ class Controller:
 
             self.model.reader_start_test()
 
-            self.model.set_regs['stage'] = 'pos_set_gear'
+            self.model.update_main_dict({'stage': 'pos_set_gear'})
 
             self.model.motor_up(1)
 
@@ -832,7 +830,7 @@ class Controller:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
             self._write_speed_motor(2, freq=20)
-            self.model.set_regs['traverse_freq'] = 20
+            self.model.update_main_dict({'traverse_freq': 20})
             self.set_trav_point = float(set_point)
             pos_trav = self.response.get('traverse_move')
 
@@ -876,13 +874,13 @@ class Controller:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
-                    self.model.set_regs['stage'] = 'install_amort'
+                    self.model.update_main_dict({'stage': 'install_mort'})
                     self._traverse_move_position(install_point)
 
             elif tag == 'start_test':
                 start_point = int(stock_point - len_max - adapter + mid_point)
                 self._position_traverse()
-                self.model.set_regs['stage'] = 'start_point_amort'
+                self.model.update_main_dict({'stage': 'start_point_amort'})
                 self._traverse_move_position(start_point)
 
             elif tag == 'stop_test':
@@ -891,7 +889,7 @@ class Controller:
 
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
 
-                self.model.set_regs['stage'] = 'stop_test'
+                self.model.update_main_dict({'stage': 'stop_test'})
                 self._traverse_move_position(end_point)
 
         except Exception as e:
@@ -912,7 +910,7 @@ class Controller:
 
             self._write_speed_motor(1, speed=speed)
 
-            self.model.set_regs['stage'] = 'test_move_cycle'
+            self.model.update_main_dict({'stage': 'test_move_cycle'})
 
             self.count_cycle = 0
 
@@ -951,7 +949,7 @@ class Controller:
             
             self._write_speed_motor(1, speed=speed)
 
-            self.model.set_regs['stage'] = 'pumping'
+            self.model.update_main_dict({'stage': 'pumping'})
 
             self.count_cycle = 0
             self.model.motor_up(1)
@@ -1037,13 +1035,14 @@ class Controller:
 
     def _fill_temper_graph(self, temper, force):
         try:
-            if self.response.get('temper_graph', []):
-                self.model.set_regs['temper_graph'].append(temper)
-                self.model.set_regs['temper_force_graph'].append(force)
+            temper_graph = self.response.get('temper_graph', [])
+            temper_graph.append(temper)
 
-            else:
-                self.model.set_regs['temper_graph'] = [temper]
-                self.model.set_regs['temper_force_graph'] = [force]
+            force_graph = self.response.get('temper_force_graph', [])
+            force_graph.append(force)
+
+            self.model.update_main_dict({'temper_graph': temper})
+            self.model.update_main_dict({'temper_force_graph': force})
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_fill_temper_graph - {e}')
@@ -1099,7 +1098,7 @@ class Controller:
         try:
             self.model.motor_stop(1)
 
-            self.model.set_regs['stage'] = 'stop_gear_end_test'
+            self.model.update_main_dict({'stage': 'stop_gear_end_test'})
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_stop_gear_end_test - {e}')
@@ -1123,7 +1122,7 @@ class Controller:
 
             self.model.motor_up(1)
 
-            self.model.set_regs['stage'] = 'stop_gear_min_pos'
+            self.model.update_main_dict({'stage': 'stop_gear_min_pos'})
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_stop_gear_min_pos - {e}')

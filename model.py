@@ -6,9 +6,11 @@ import serial
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
 from struct import pack, unpack
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
+
 from my_thread.my_threads import LogWriter, Writer, Reader
 from settings import PrgSettings
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
+from my_obj.data_calculation import CalcData
 
 
 class WinSignals(QObject):
@@ -149,9 +151,9 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def update_main_dict(self, request):
+    def update_main_dict(self, data):
         try:
-            self.set_regs = {**self.set_regs, **request}
+            self.set_regs = {**self.set_regs, **data}
 
         except Exception as e:
             self.log_error(f'ERROR in model/update_main_dict - {e}')
@@ -421,8 +423,8 @@ class Model:
                            'max_recoil': round(abs(min(self.set_regs.get('force_accum_list'))) + push_force, 2),
                            'force_graph': move_list,
                            'move_graph': force_list,
-                           'power': self._calc_power(move_list, force_list),
-                           'freq_piston': self._calc_freq_piston(speed, hod),
+                           'power': CalcData().calc_power(move_list, force_list),
+                           'freq_piston': CalcData().calc_freq_piston(speed, hod),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }
@@ -589,20 +591,26 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
-            self._write_reg_state(0, value)
+            bit = self.set_regs.get('cycle_force')
+            if int(bit) != value:
+                self._write_reg_state(0, value)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_force_cycle - {e}')
 
     def write_bit_red_light(self, value):
         try:
-            self._write_reg_state(1, value)
+            bit = self.set_regs.get('red_light')
+            if int(bit) != value:
+                self._write_reg_state(1, value)
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_red_light - {e}')
 
     def write_bit_green_light(self, value):
         try:
-            self._write_reg_state(2, value)
+            bit = self.set_regs.get('green_light')
+            if int(bit) != value:
+                self._write_reg_state(2, value)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_green_light - {e}')
@@ -623,7 +631,9 @@ class Model:
 
     def write_bit_select_temper(self, value):
         try:
-            self._write_reg_state(6, value)
+            bit = self.set_regs.get('select_temper')
+            if int(bit) != value:
+                self._write_reg_state(6, value)
 
         except Exception as e:
             self.log_error(f'ERROR in model/write_bit_select_temper - {e}')
@@ -860,23 +870,3 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/calculate_freq - {e}')
-
-    def _calc_power(self, move: list, force: list):
-        try:
-            temp = 0
-            for i in range(1, len(move)):
-                temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
-
-            temp = round((temp * 0.009807) / 1000, 1)
-
-            return temp
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/_calc_power - {e}')
-
-    def _calc_freq_piston(self, speed, hod):
-        try:
-            return round(speed / (hod * 0.002 * 3.14), 3)
-
-        except Exception as e:
-            self.log_error(f'ERROR in model/_calc_freq_piston - {e}')

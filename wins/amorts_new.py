@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QObject, pyqtSignal
 from ui_py.new_amort import Ui_MainWindow
-from settings import SpeedLimit
+from my_obj.data_calculation import SpeedLimitForHod
 
 
 class AmortSignals(QObject):
@@ -162,7 +162,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimit().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_one'] = str(temp)
@@ -198,7 +198,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimit().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_two'] = str(temp)

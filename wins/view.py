@@ -9,7 +9,7 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 import glob_var
 from archive import ReadArchive
-from settings import SpeedLimit
+from my_obj.data_calculation import SpeedLimitForHod
 
 
 class AppWindow(QMainWindow):
@@ -74,7 +74,6 @@ class AppWindow(QMainWindow):
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
-        self.controller.signals.traverse_position.connect(self.msg_traverse_position)
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
@@ -208,14 +207,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/msg_traverse_referent - {e}')
 
-    def msg_traverse_position(self):
-        try:
-            txt = 'ПОЗИЦИОНИРОВАНИЕ\nТРАВЕРСЫ\nДЛЯ УСТАНОВКИ\nАМОРТИЗАТОРА'
-            self.main_ui_msg(txt, 'attention')
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/msg_traverse_position - {e}')
-
     def msg_yellow_btn(self):
         try:
             self.ui.ok_message_btn.setText('ЗАПУСК')
@@ -224,14 +215,6 @@ class AppWindow(QMainWindow):
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/msg_yellow_btn - {e}')
-
-    def msg_test_move_cycle(self):
-        try:
-            txt = 'ПРОВЕРОЧНЫЙ\nХОД'
-            self.main_ui_msg(txt, 'attention')
-
-        except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/msg_test_move_cycle - {e}')
 
     def main_ui_msg(self, txt, tag):
         try:
@@ -486,66 +469,40 @@ class AppWindow(QMainWindow):
         try:
             ind = self.index_type_test
             if ind == 0:
-                self.model.set_regs['type_test'] = 'lab'
-                self.specif_lab_gui()
+                self.model.update_main_dict({'type_test': 'lab'})
+                self.specif_enable_gui(True, True, False)
 
             elif ind == 1:
-                self.model.set_regs['type_test'] = 'lab_hand'
-                self.specif_lab_hand_gui()
+                self.model.update_main_dict({'type_test': 'lab_hand'})
+                self.specif_enable_gui(False, False, False)
 
             elif ind == 2:
-                self.model.set_regs['type_test'] = 'lab_cascade'
-                self.specif_lab_cascade_gui()
+                self.model.update_main_dict({'type_test': 'lab_cascade'})
+                self.specif_enable_gui(False, False, True)
 
             elif ind == 3:
-                self.model.set_regs['type_test'] = 'temper'
-                self.specif_lab_hand_gui()
+                self.model.update_main_dict({'type_test': 'temper'})
+                self.specif_enable_gui(False, False, False)
 
             elif ind == 4:
-                self.model.set_regs['type_test'] = 'conv'
-                self.specif_lab_gui()
+                self.model.update_main_dict({'type_test': 'conv'})
+                self.specif_enable_gui(True, True, False)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_type_test - {e}')
 
-    def specif_lab_gui(self):
-        self.ui.specif_speed_one_lineEdit.setReadOnly(True)
+    def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade):
+        self.ui.specif_speed_one_lineEdit.setReadOnly(flag_change_speed)
 
-        self.ui.specif_speed_two_lineEdit.setVisible(True)
-        self.ui.specif_min_recoil_lineEdit_2.setVisible(True)
-        self.ui.specif_max_recoil_lineEdit_2.setVisible(True)
-        self.ui.specif_min_comp_lineEdit_2.setVisible(True)
-        self.ui.specif_max_comp_lineEdit_2.setVisible(True)
+        self.ui.specif_speed_two_lineEdit.setVisible(flag_enable_two_test)
+        self.ui.specif_min_recoil_lineEdit_2.setVisible(flag_enable_two_test)
+        self.ui.specif_max_recoil_lineEdit_2.setVisible(flag_enable_two_test)
+        self.ui.specif_min_comp_lineEdit_2.setVisible(flag_enable_two_test)
+        self.ui.specif_max_comp_lineEdit_2.setVisible(flag_enable_two_test)
 
-        self.ui.btn_add_speed.setVisible(False)
-        self.ui.btn_reduce_speed.setVisible(False)
-        self.ui.specif_lab_cascade_speed_table.setVisible(False)
-
-    def specif_lab_hand_gui(self):
-        self.ui.specif_speed_one_lineEdit.setReadOnly(False)
-
-        self.ui.specif_speed_two_lineEdit.setVisible(False)
-        self.ui.specif_min_recoil_lineEdit_2.setVisible(False)
-        self.ui.specif_max_recoil_lineEdit_2.setVisible(False)
-        self.ui.specif_min_comp_lineEdit_2.setVisible(False)
-        self.ui.specif_max_comp_lineEdit_2.setVisible(False)
-
-        self.ui.btn_add_speed.setVisible(False)
-        self.ui.btn_reduce_speed.setVisible(False)
-        self.ui.specif_lab_cascade_speed_table.setVisible(False)
-
-    def specif_lab_cascade_gui(self):
-        self.ui.specif_speed_one_lineEdit.setReadOnly(False)
-
-        self.ui.specif_speed_two_lineEdit.setVisible(False)
-        self.ui.specif_min_recoil_lineEdit_2.setVisible(False)
-        self.ui.specif_max_recoil_lineEdit_2.setVisible(False)
-        self.ui.specif_min_comp_lineEdit_2.setVisible(False)
-        self.ui.specif_max_comp_lineEdit_2.setVisible(False)
-
-        self.ui.btn_add_speed.setVisible(True)
-        self.ui.btn_reduce_speed.setVisible(True)
-        self.ui.specif_lab_cascade_speed_table.setVisible(True)
+        self.ui.btn_add_speed.setVisible(flag_cascade)
+        self.ui.btn_reduce_speed.setVisible(flag_cascade)
+        self.ui.specif_lab_cascade_speed_table.setVisible(flag_cascade)
 
     def select_amort(self):
         try:
@@ -621,7 +578,7 @@ class AppWindow(QMainWindow):
 
             speed = float(text.replace(',', '.'))
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimit().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
             if 0.02 <= speed <= max_speed:
                 return speed
 
@@ -683,7 +640,7 @@ class AppWindow(QMainWindow):
                 for i in range(count_rows):
                     list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
 
-                self.model.set_regs['speed_cascade'] = list_speed[:]
+                self.model.update_main_dict({'speed_cascade': list_speed})
                 return True
 
         except Exception as e:
@@ -756,7 +713,7 @@ class AppWindow(QMainWindow):
                         if flag:
                             serial_number = self.ui.specif_serial_lineEdit.text()
                             if serial_number != '':
-                                self.model.set_regs['serial_number'] = serial_number
+                                self.model.update_main_dict({'serial_number': serial_number})
                                 flag = self.static_push_force_editing()
                                 if flag:
                                     if type_test == 'lab_cascade':
@@ -770,7 +727,7 @@ class AppWindow(QMainWindow):
                                     elif type_test == 'lab_hand':
                                         speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                         if speed:
-                                            self.model.set_regs['speed'] = speed
+                                            self.model.update_main_dict({'speed': speed})
                                             self.select_temper_sensor()
                                             self.begin_test()
 
@@ -807,7 +764,7 @@ class AppWindow(QMainWindow):
                 return False
 
             push_force = float(text.replace(',', '.'))
-            self.model.set_regs['static_push_force'] = push_force
+            self.model.update_main_dict({'static_push_force': push_force})
 
             return True
 
@@ -821,12 +778,16 @@ class AppWindow(QMainWindow):
     def flag_push_force_set(self):
         try:
             if self.ui.push_force_chb.isChecked():
-                self.model.set_regs['flag_push_force'] = True
-                self.model.set_regs['lbl_push_force'] = f'Динамическая выталкивающая сила'
+                command = {'flag_push_force': True,
+                           'lbl_push_force': 'Динамическая выталкивающая сила',
+                           }
+                self.model.update_main_dict(command)
 
             else:
-                self.model.set_regs['flag_push_force'] = False
-                self.model.set_regs['lbl_push_force'] = f'Статическая выталкивающая сила'
+                command = {'flag_push_force': False,
+                           'lbl_push_force': 'Статическая выталкивающая сила',
+                           }
+                self.model.update_main_dict(command)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
@@ -838,7 +799,7 @@ class AppWindow(QMainWindow):
             if type_test == 'lab_hand' or type_test == 'temper':
                 speed = self.response.get('speed')
             elif type_test == 'lab_cascade':
-                speed = self.model.set_regs.get('speed_cascade')
+                speed = self.response.get('speed_cascade')
             else:
                 speed = amort.speed_one
 
@@ -861,7 +822,7 @@ class AppWindow(QMainWindow):
 
             self.log_msg_info_slot(txt_log)
 
-            self.model.set_regs['hod'] = amort.hod
+            self.model.update_main_dict({'hod': amort.hod})
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/save_log_begin_test - {e}')
@@ -887,7 +848,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
             self.ui.lab_hod_le.setText(hod)
 
-            self.ui.lbl_push_force_lab.setText(self.model.set_regs.get('lbl_push_force', ''))
+            self.ui.lbl_push_force_lab.setText(self.response.get('lbl_push_force', ''))
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/fill_gui_lab_test - {e}')
@@ -903,7 +864,7 @@ class AppWindow(QMainWindow):
 
             if type_test == 'conv':
                 self._conv_win_clear()
-                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
+                self.ui.lbl_push_force_conv.setText(self.response.get('lbl_push_force', ''))
 
             else:
                 self.list_lab = []
@@ -1079,7 +1040,7 @@ class AppWindow(QMainWindow):
             
     def _update_conv_data(self):
         try:
-            amort = self.model.set_regs.get('amort')
+            amort = self.response.get('amort')
             self.ui.conv_comp_le.setText(f'{self.response.get("max_comp", 0)}')
             self.ui.conv_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
             self.ui.conv_temperture_le.setText(f'{self.response.get("temperature", 0)}')
@@ -1101,7 +1062,7 @@ class AppWindow(QMainWindow):
             self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
 
     def repeat_test_clicked(self):
-        self.model.set_regs['repeat_test'] = True
+        self.model.update_main_dict({'repeat_test': True})
         self.specif_continue_btn_click()
 
     def cancel_test_clicked(self):
@@ -1112,7 +1073,7 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
-                self.model.set_regs['test_launch'] = False
+                self.model.update_main_dict({'test_launch': False})
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1123,7 +1084,7 @@ class AppWindow(QMainWindow):
         try:
             speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
             if speed:
-                self.model.set_regs['speed'] = speed
+                self.model.update_main_dict({'speed': speed})
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/change_speed_lab_test - {e}')
@@ -1181,12 +1142,12 @@ class AppWindow(QMainWindow):
 
     def open_win_settings(self):
         self.main_ui_state(False)
-        self.model.set_regs['type_test'] = 'hand'
+        self.model.update_main_dict({'type_test': 'hand'})
         self.win_set.show()
         self.win_set.start_param_win_set()
 
     def close_win_settings(self):
-        self.model.set_regs['type_test'] = None
+        self.model.update_main_dict({'type_test': None})
         self.main_ui_state(True)
         self.win_set.hide()
 

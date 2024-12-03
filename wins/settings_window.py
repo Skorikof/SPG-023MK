@@ -99,7 +99,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             if not temp:
                 pass
             else:
-                self.model.set_regs['hod'] = temp
+                self.model.update_main_dict({'hod': temp})
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_write_hod - {e}')
