@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import time
+import pyqtgraph as pg
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+import glob_var
 
+from archive import ReadArchive
+from my_obj.data_calculation import SpeedLimitForHod
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
-import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
-import glob_var
-from archive import ReadArchive
-from my_obj.data_calculation import SpeedLimitForHod
 
 
 class AppWindow(QMainWindow):
@@ -1053,7 +1053,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
 
-    # FIXME
     def repeat_test_clicked(self):
         self.controller.change_flag_repeat(True)
         self.begin_test()

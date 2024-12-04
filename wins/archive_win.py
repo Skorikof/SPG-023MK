@@ -689,7 +689,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_triple_speed_graph(self, move: list, x_coord: list, index):
         try:
-            speed_y = self._calc_triple_speed_coord(move, index)
+            speed_list = self._calc_triple_speed_coord(move, index)
+
+            w = np.hanning(200)
+            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
+
+            speed_y = list(map(lambda x: round(x * 100, 1), y_approxy))
+
             pen = pg.mkPen(color='red', width=3)
             self.graphwidget.plot(x_coord, speed_y,
                                   pen=pen,
@@ -718,10 +724,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 y_coord.append(temp)
                 speed_list = []
 
-            w = np.hanning(200)
-            y_approxy = np.convolve(w / w.sum(), y_coord, mode='same')
+            # w = np.hanning(200)
+            # y_approxy = np.convolve(w / w.sum(), y_coord, mode='same')
+            #
+            # return list(map(lambda x: round(x, 1), y_approxy))
 
-            return list(map(lambda x: round(x * 100, 1), y_approxy))
+            return y_coord
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
@@ -737,9 +745,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.comp_le.setText(f'{abs(min(force_list))}')
             self.recoil_le.setText(f'{max(force_list)}')
 
-            x_coord = self._calc_triple_speed_coord(move_list, 0)
+            speed_list = self._calc_triple_speed_coord(move_list, 0)
 
-            pen = pg.mkPen(color='blue', width=3)
+            w = np.hanning(200)
+            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
+
+            x_coord = list(map(lambda x: round(x, 1), y_approxy))
+
+            min_x = x_coord[0]
+            max_x = x_coord[-1]
+            if min_x < max_x:
+                koef = min_x
+            else:
+                koef = max_x
+            x_coord = [x - koef for x in x_coord]
+            pen = pg.mkPen(color='blue', width=5)
             self.graphwidget.plot(x_coord, force_list, pen=pen, name='Скорость')
 
         except Exception as e:

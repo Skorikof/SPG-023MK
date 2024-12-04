@@ -25,19 +25,6 @@ class Controller:
         try:
             self.signals = ControlSignals()
             self.model = model
-            self._init_signals()
-            self._init_timer_test()
-            self.timer_process.start()
-
-            # self.time_start_wait = None
-            # self.time_all_wait = None
-            # self.time_tag_wait = None
-            # self.time_lost_control = time.monotonic()
-            # self.flag_lost_control = False
-            # self.time_excess_force = time.monotonic()
-            # self.flag_excess_force = False
-            # self.time_safety_fence = time.monotonic()
-            # self.flag_safety_fence = False
 
             self.response = {}
             self.timer_process = None
@@ -51,6 +38,19 @@ class Controller:
             self.cascade = 1
             self.max_cascade = 0
             self.flag_repeat = False
+
+            self._init_signals()
+            self._init_timer_test()
+
+            # self.time_start_wait = None
+            # self.time_all_wait = None
+            # self.time_tag_wait = None
+            # self.time_lost_control = time.monotonic()
+            # self.flag_lost_control = False
+            # self.time_excess_force = time.monotonic()
+            # self.flag_excess_force = False
+            # self.time_safety_fence = time.monotonic()
+            # self.flag_safety_fence = False
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/__init__ - {e}')
@@ -85,6 +85,7 @@ class Controller:
             self.timer_process = QTimer()
             self.timer_process.setInterval(100)
             self.timer_process.timeout.connect(self._update_stage_on_timer)
+            self.timer_process.start()
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/init_timer - {e}')
