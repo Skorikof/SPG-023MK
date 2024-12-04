@@ -1393,7 +1393,7 @@ class Ui_MainWindow(object):
         self.main_title_label.setText(_translate("MainWindow", "СТЕНД ПРОВЕРКИ АМОРТИЗАТОРОВ"))
         self.main_operator_btn.setText(_translate("MainWindow", "ОПЕРАТОР"))
         self.main_test_btn.setText(_translate("MainWindow", "ИСПЫТАНИЕ"))
-        self.main_hand_debug_btn.setText(_translate("MainWindow", "РУЧНОЙ РЕЖИМ"))
+        self.main_hand_debug_btn.setText(_translate("MainWindow", "НАСТРОЙКА"))
         self.main_archive_btn.setText(_translate("MainWindow", "АРХИВ"))
         self.main_amorts_btn.setText(_translate("MainWindow", "АМОРТИЗАТОРЫ"))
         self.lbl.setText(_translate("MainWindow", "Оператор"))

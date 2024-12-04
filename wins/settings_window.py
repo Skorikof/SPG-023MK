@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import QObject, pyqtSignal, QSignalMapper, pyqtSlot
+import time
+
 from ui_py.settings_ui import Ui_SettingsWindow
 from wins.graph_win import GraphUi
-import time
 
 
 class WinSignals(QObject):
@@ -46,6 +47,17 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self._create_statusbar_set()
         self._init_buttons()
         self._smap_line_edit()
+        self._fill_lbl_temp_sens()
+        self.freq_frame.setVisible(True)
+
+    def _fill_lbl_temp_sens(self):
+        channel = self.response.get('select_temper', 0)
+        txt = ''
+        if channel == 0:
+            txt = 'Бесконтактный датчик температуры'
+        elif channel == 1:
+            txt = 'Контактный датчик темературы'
+        self.lbl_temp_sens.setText(txt)
 
     def _create_statusbar_set(self):
         self.statusbar = self.statusBar()
@@ -75,8 +87,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.btn_max_F.clicked.connect(self._btn_set_doclick)
         self.btn_green_light.clicked.connect(self._btn_set_doclick)
         self.btn_red_light.clicked.connect(self._btn_set_doclick)
-        self.btn_temper_1.clicked.connect(self._btn_select_temper_one)
-        self.btn_temper_2.clicked.connect(self._btn_select_temper_two)
+        self.btn_temper_channel.clicked.connect(self._btn_set_doclick)
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
 
@@ -155,12 +166,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
 
-    def _btn_select_temper_one(self):
-        self.model.write_bit_select_temper(0)
-
-    def _btn_select_temper_two(self):
-        self.model.write_bit_select_temper(1)
-
     def _btn_set_doclick(self):
         try:
             btn = self.sender().objectName()
@@ -187,6 +192,14 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                     value = 0
                 self.model.write_bit_green_light(value)
 
+            elif btn == 'btn_temper_channel':
+                if temp_list[6] == 0:
+                    value = 1
+                else:
+                    value = 0
+                self._change_lbl_temper_channel(value)
+                self.model.write_bit_select_temper(value)
+
             elif btn == 'btn_no_control':
                 self.model.write_bit_unblock_control()
 
@@ -198,6 +211,14 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in settings_window/_btn_set_doclick - {e}')
+
+    def _change_lbl_temper_channel(self, value):
+        if value == 1:
+            txt = 'Контактный датчик температуры'
+        else:
+            txt = 'Бесконтактный датчик температуры'
+
+        self.lbl_temp_sens.setText(txt)
 
     def _update_win(self):
         self.lcdTime.display(self.response.get('count'))

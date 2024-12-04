@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'SettingsUi.ui'
+# Form implementation generated from reading ui file 'SettingsUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from my_obj.click_lineedit import MyLineEdit
 
 
@@ -38,9 +39,9 @@ class Ui_SettingsWindow(object):
         self.lbl_txt2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt2.setObjectName("lbl_txt2")
         self.btn_exit = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_exit.setGeometry(QtCore.QRect(480, 600, 100, 50))
-        self.btn_exit.setMinimumSize(QtCore.QSize(100, 50))
-        self.btn_exit.setMaximumSize(QtCore.QSize(100, 50))
+        self.btn_exit.setGeometry(QtCore.QRect(480, 620, 80, 40))
+        self.btn_exit.setMinimumSize(QtCore.QSize(80, 40))
+        self.btn_exit.setMaximumSize(QtCore.QSize(80, 40))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(14)
@@ -83,7 +84,7 @@ class Ui_SettingsWindow(object):
         self.lcdTime.setProperty("intValue", 0)
         self.lcdTime.setObjectName("lcdTime")
         self.fram_cycle_F = QtWidgets.QLabel(self.centralwidget)
-        self.fram_cycle_F.setGeometry(QtCore.QRect(320, 16, 25, 25))
+        self.fram_cycle_F.setGeometry(QtCore.QRect(320, 12, 25, 25))
         self.fram_cycle_F.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_cycle_F.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_cycle_F.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -92,7 +93,7 @@ class Ui_SettingsWindow(object):
         self.fram_cycle_F.setText("")
         self.fram_cycle_F.setObjectName("fram_cycle_F")
         self.btn_cycle_F = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_cycle_F.setGeometry(QtCore.QRect(280, 12, 30, 30))
+        self.btn_cycle_F.setGeometry(QtCore.QRect(280, 10, 30, 30))
         self.btn_cycle_F.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_cycle_F.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_cycle_F.setStyleSheet("QPushButton \n"
@@ -125,7 +126,7 @@ class Ui_SettingsWindow(object):
         self.btn_cycle_F.setChecked(False)
         self.btn_cycle_F.setObjectName("btn_cycle_F")
         self.lbl_txt3 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt3.setGeometry(QtCore.QRect(350, 16, 243, 23))
+        self.lbl_txt3.setGeometry(QtCore.QRect(350, 12, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -134,7 +135,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt3.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt3.setObjectName("lbl_txt3")
         self.lbl_txt5 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt5.setGeometry(QtCore.QRect(350, 50, 243, 23))
+        self.lbl_txt5.setGeometry(QtCore.QRect(350, 47, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -143,7 +144,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt5.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt5.setObjectName("lbl_txt5")
         self.fram_no_control = QtWidgets.QLabel(self.centralwidget)
-        self.fram_no_control.setGeometry(QtCore.QRect(320, 52, 25, 25))
+        self.fram_no_control.setGeometry(QtCore.QRect(320, 47, 25, 25))
         self.fram_no_control.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_no_control.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_no_control.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -152,7 +153,7 @@ class Ui_SettingsWindow(object):
         self.fram_no_control.setText("")
         self.fram_no_control.setObjectName("fram_no_control")
         self.btn_no_control = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_no_control.setGeometry(QtCore.QRect(280, 50, 30, 30))
+        self.btn_no_control.setGeometry(QtCore.QRect(280, 45, 30, 30))
         self.btn_no_control.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_no_control.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_no_control.setStyleSheet("QPushButton \n"
@@ -185,7 +186,7 @@ class Ui_SettingsWindow(object):
         self.btn_no_control.setChecked(False)
         self.btn_no_control.setObjectName("btn_no_control")
         self.btn_max_F = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_max_F.setGeometry(QtCore.QRect(280, 90, 30, 30))
+        self.btn_max_F.setGeometry(QtCore.QRect(280, 80, 30, 30))
         self.btn_max_F.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_max_F.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_max_F.setStyleSheet("QPushButton \n"
@@ -218,7 +219,7 @@ class Ui_SettingsWindow(object):
         self.btn_max_F.setChecked(False)
         self.btn_max_F.setObjectName("btn_max_F")
         self.fram_max_F = QtWidgets.QLabel(self.centralwidget)
-        self.fram_max_F.setGeometry(QtCore.QRect(320, 92, 25, 25))
+        self.fram_max_F.setGeometry(QtCore.QRect(320, 82, 25, 25))
         self.fram_max_F.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_max_F.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_max_F.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -227,7 +228,7 @@ class Ui_SettingsWindow(object):
         self.fram_max_F.setText("")
         self.fram_max_F.setObjectName("fram_max_F")
         self.lbl_txt6 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt6.setGeometry(QtCore.QRect(350, 90, 243, 23))
+        self.lbl_txt6.setGeometry(QtCore.QRect(350, 82, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -236,7 +237,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt6.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt6.setObjectName("lbl_txt6")
         self.lbl_txt8 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt8.setGeometry(QtCore.QRect(350, 222, 243, 23))
+        self.lbl_txt8.setGeometry(QtCore.QRect(350, 327, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -245,7 +246,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt8.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt8.setObjectName("lbl_txt8")
         self.fram_down_point = QtWidgets.QLabel(self.centralwidget)
-        self.fram_down_point.setGeometry(QtCore.QRect(320, 222, 25, 25))
+        self.fram_down_point.setGeometry(QtCore.QRect(320, 327, 25, 25))
         self.fram_down_point.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_down_point.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_down_point.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -254,7 +255,7 @@ class Ui_SettingsWindow(object):
         self.fram_down_point.setText("")
         self.fram_down_point.setObjectName("fram_down_point")
         self.fram_up_point = QtWidgets.QLabel(self.centralwidget)
-        self.fram_up_point.setGeometry(QtCore.QRect(320, 258, 25, 25))
+        self.fram_up_point.setGeometry(QtCore.QRect(320, 362, 25, 25))
         self.fram_up_point.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_up_point.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_up_point.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -263,7 +264,7 @@ class Ui_SettingsWindow(object):
         self.fram_up_point.setText("")
         self.fram_up_point.setObjectName("fram_up_point")
         self.lbl_txt9 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt9.setGeometry(QtCore.QRect(350, 258, 243, 23))
+        self.lbl_txt9.setGeometry(QtCore.QRect(350, 362, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -272,7 +273,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt9.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt9.setObjectName("lbl_txt9")
         self.lbl_txt10 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt10.setGeometry(QtCore.QRect(350, 125, 243, 23))
+        self.lbl_txt10.setGeometry(QtCore.QRect(350, 222, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -281,7 +282,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt10.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt10.setObjectName("lbl_txt10")
         self.fram_safety_fence = QtWidgets.QLabel(self.centralwidget)
-        self.fram_safety_fence.setGeometry(QtCore.QRect(320, 125, 25, 25))
+        self.fram_safety_fence.setGeometry(QtCore.QRect(320, 222, 25, 25))
         self.fram_safety_fence.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_safety_fence.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_safety_fence.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -290,7 +291,7 @@ class Ui_SettingsWindow(object):
         self.fram_safety_fence.setText("")
         self.fram_safety_fence.setObjectName("fram_safety_fence")
         self.fram_condition_FC = QtWidgets.QLabel(self.centralwidget)
-        self.fram_condition_FC.setGeometry(QtCore.QRect(320, 160, 25, 25))
+        self.fram_condition_FC.setGeometry(QtCore.QRect(320, 257, 25, 25))
         self.fram_condition_FC.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_condition_FC.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_condition_FC.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -299,7 +300,7 @@ class Ui_SettingsWindow(object):
         self.fram_condition_FC.setText("")
         self.fram_condition_FC.setObjectName("fram_condition_FC")
         self.lbl_txt11 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt11.setGeometry(QtCore.QRect(350, 160, 243, 23))
+        self.lbl_txt11.setGeometry(QtCore.QRect(350, 257, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -308,7 +309,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt11.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt11.setObjectName("lbl_txt11")
         self.lbl_txt12 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt12.setGeometry(QtCore.QRect(350, 190, 243, 23))
+        self.lbl_txt12.setGeometry(QtCore.QRect(350, 292, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -317,7 +318,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt12.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt12.setObjectName("lbl_txt12")
         self.fram_sensor_F = QtWidgets.QLabel(self.centralwidget)
-        self.fram_sensor_F.setGeometry(QtCore.QRect(320, 190, 25, 25))
+        self.fram_sensor_F.setGeometry(QtCore.QRect(320, 292, 25, 25))
         self.fram_sensor_F.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_sensor_F.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_sensor_F.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -341,107 +342,6 @@ class Ui_SettingsWindow(object):
         self.lcdH.setProperty("value", 0.0)
         self.lcdH.setProperty("intValue", 0)
         self.lcdH.setObjectName("lcdH")
-        self.lineEdit_speed_main = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_speed_main.setGeometry(QtCore.QRect(115, 390, 50, 31))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(12)
-        font.setBold(False)
-        font.setWeight(50)
-        self.lineEdit_speed_main.setFont(font)
-        self.lineEdit_speed_main.setText("")
-        self.lineEdit_speed_main.setAlignment(QtCore.Qt.AlignCenter)
-        self.lineEdit_speed_main.setObjectName("lineEdit_speed_main")
-        self.lbl_txt19 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt19.setGeometry(QtCore.QRect(18, 340, 90, 31))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(12)
-        self.lbl_txt19.setFont(font)
-        self.lbl_txt19.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.lbl_txt19.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.lbl_txt19.setObjectName("lbl_txt19")
-        self.btn_motor_down = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_motor_down.setGeometry(QtCore.QRect(200, 490, 60, 30))
-        self.btn_motor_down.setMinimumSize(QtCore.QSize(50, 30))
-        self.btn_motor_down.setMaximumSize(QtCore.QSize(150, 50))
-        self.btn_motor_down.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"")
-        self.btn_motor_down.setCheckable(False)
-        self.btn_motor_down.setChecked(False)
-        self.btn_motor_down.setObjectName("btn_motor_down")
-        self.btn_motor_traverse_stop = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_motor_traverse_stop.setGeometry(QtCore.QRect(160, 530, 100, 30))
-        self.btn_motor_traverse_stop.setMinimumSize(QtCore.QSize(100, 30))
-        self.btn_motor_traverse_stop.setMaximumSize(QtCore.QSize(150, 50))
-        self.btn_motor_traverse_stop.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"")
-        self.btn_motor_traverse_stop.setCheckable(False)
-        self.btn_motor_traverse_stop.setChecked(False)
-        self.btn_motor_traverse_stop.setObjectName("btn_motor_traverse_stop")
-        self.btn_motor_up = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_motor_up.setGeometry(QtCore.QRect(200, 450, 60, 30))
-        self.btn_motor_up.setMinimumSize(QtCore.QSize(50, 30))
-        self.btn_motor_up.setMaximumSize(QtCore.QSize(150, 50))
-        self.btn_motor_up.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"")
-        self.btn_motor_up.setCheckable(False)
-        self.btn_motor_up.setChecked(False)
-        self.btn_motor_up.setObjectName("btn_motor_up")
         self.lbl_txt15_2 = QtWidgets.QLabel(self.centralwidget)
         self.lbl_txt15_2.setGeometry(QtCore.QRect(10, 200, 143, 31))
         font = QtGui.QFont()
@@ -459,7 +359,7 @@ class Ui_SettingsWindow(object):
         self.lcdTemp.setProperty("intValue", 0)
         self.lcdTemp.setObjectName("lcdTemp")
         self.fram_block_traverse_1 = QtWidgets.QLabel(self.centralwidget)
-        self.fram_block_traverse_1.setGeometry(QtCore.QRect(320, 310, 25, 25))
+        self.fram_block_traverse_1.setGeometry(QtCore.QRect(320, 397, 25, 25))
         self.fram_block_traverse_1.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_block_traverse_1.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_block_traverse_1.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -468,7 +368,7 @@ class Ui_SettingsWindow(object):
         self.fram_block_traverse_1.setText("")
         self.fram_block_traverse_1.setObjectName("fram_block_traverse_1")
         self.lbl_txt8_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt8_2.setGeometry(QtCore.QRect(350, 310, 243, 23))
+        self.lbl_txt8_2.setGeometry(QtCore.QRect(350, 397, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -477,7 +377,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt8_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt8_2.setObjectName("lbl_txt8_2")
         self.fram_block_traverse_2 = QtWidgets.QLabel(self.centralwidget)
-        self.fram_block_traverse_2.setGeometry(QtCore.QRect(320, 346, 25, 25))
+        self.fram_block_traverse_2.setGeometry(QtCore.QRect(320, 432, 25, 25))
         self.fram_block_traverse_2.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_block_traverse_2.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_block_traverse_2.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -486,7 +386,7 @@ class Ui_SettingsWindow(object):
         self.fram_block_traverse_2.setText("")
         self.fram_block_traverse_2.setObjectName("fram_block_traverse_2")
         self.lbl_txt9_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt9_2.setGeometry(QtCore.QRect(350, 346, 243, 23))
+        self.lbl_txt9_2.setGeometry(QtCore.QRect(350, 432, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -495,7 +395,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt9_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt9_2.setObjectName("lbl_txt9_2")
         self.fram_down__alarm_point = QtWidgets.QLabel(self.centralwidget)
-        self.fram_down__alarm_point.setGeometry(QtCore.QRect(320, 390, 25, 25))
+        self.fram_down__alarm_point.setGeometry(QtCore.QRect(320, 467, 25, 25))
         self.fram_down__alarm_point.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_down__alarm_point.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_down__alarm_point.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -504,7 +404,7 @@ class Ui_SettingsWindow(object):
         self.fram_down__alarm_point.setText("")
         self.fram_down__alarm_point.setObjectName("fram_down__alarm_point")
         self.lbl_txt8_3 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt8_3.setGeometry(QtCore.QRect(350, 382, 243, 31))
+        self.lbl_txt8_3.setGeometry(QtCore.QRect(350, 463, 243, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -513,7 +413,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt8_3.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt8_3.setObjectName("lbl_txt8_3")
         self.fram_up_alarm_point = QtWidgets.QLabel(self.centralwidget)
-        self.fram_up_alarm_point.setGeometry(QtCore.QRect(320, 426, 25, 25))
+        self.fram_up_alarm_point.setGeometry(QtCore.QRect(320, 502, 25, 25))
         self.fram_up_alarm_point.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_up_alarm_point.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_up_alarm_point.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -522,7 +422,7 @@ class Ui_SettingsWindow(object):
         self.fram_up_alarm_point.setText("")
         self.fram_up_alarm_point.setObjectName("fram_up_alarm_point")
         self.lbl_txt9_3 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt9_3.setGeometry(QtCore.QRect(350, 426, 243, 31))
+        self.lbl_txt9_3.setGeometry(QtCore.QRect(350, 500, 243, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -546,62 +446,8 @@ class Ui_SettingsWindow(object):
         self.lbl_txt15_3.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.lbl_txt15_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt15_3.setObjectName("lbl_txt15_3")
-        self.btn_motor_main_start = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_motor_main_start.setGeometry(QtCore.QRect(30, 450, 100, 60))
-        self.btn_motor_main_start.setMinimumSize(QtCore.QSize(100, 60))
-        self.btn_motor_main_start.setMaximumSize(QtCore.QSize(100, 60))
-        self.btn_motor_main_start.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"")
-        self.btn_motor_main_start.setCheckable(False)
-        self.btn_motor_main_start.setChecked(False)
-        self.btn_motor_main_start.setObjectName("btn_motor_main_start")
-        self.btn_motor_main_stop = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_motor_main_stop.setGeometry(QtCore.QRect(30, 520, 100, 60))
-        self.btn_motor_main_stop.setMinimumSize(QtCore.QSize(100, 60))
-        self.btn_motor_main_stop.setMaximumSize(QtCore.QSize(100, 60))
-        self.btn_motor_main_stop.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"")
-        self.btn_motor_main_stop.setCheckable(False)
-        self.btn_motor_main_stop.setChecked(False)
-        self.btn_motor_main_stop.setObjectName("btn_motor_main_stop")
         self.lbl_txt5_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt5_2.setGeometry(QtCore.QRect(350, 470, 243, 23))
+        self.lbl_txt5_2.setGeometry(QtCore.QRect(350, 117, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -610,7 +456,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt5_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt5_2.setObjectName("lbl_txt5_2")
         self.fram_green_light = QtWidgets.QLabel(self.centralwidget)
-        self.fram_green_light.setGeometry(QtCore.QRect(320, 472, 25, 25))
+        self.fram_green_light.setGeometry(QtCore.QRect(320, 117, 25, 25))
         self.fram_green_light.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_green_light.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_green_light.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -619,7 +465,7 @@ class Ui_SettingsWindow(object):
         self.fram_green_light.setText("")
         self.fram_green_light.setObjectName("fram_green_light")
         self.lbl_txt6_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt6_2.setGeometry(QtCore.QRect(350, 510, 243, 23))
+        self.lbl_txt6_2.setGeometry(QtCore.QRect(350, 152, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -628,7 +474,7 @@ class Ui_SettingsWindow(object):
         self.lbl_txt6_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lbl_txt6_2.setObjectName("lbl_txt6_2")
         self.fram_red_light = QtWidgets.QLabel(self.centralwidget)
-        self.fram_red_light.setGeometry(QtCore.QRect(320, 512, 25, 25))
+        self.fram_red_light.setGeometry(QtCore.QRect(320, 152, 25, 25))
         self.fram_red_light.setMinimumSize(QtCore.QSize(20, 20))
         self.fram_red_light.setMaximumSize(QtCore.QSize(25, 25))
         self.fram_red_light.setStyleSheet("background-color: rgb(255, 255, 255);\n"
@@ -637,7 +483,7 @@ class Ui_SettingsWindow(object):
         self.fram_red_light.setText("")
         self.fram_red_light.setObjectName("fram_red_light")
         self.btn_green_light = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_green_light.setGeometry(QtCore.QRect(280, 470, 30, 30))
+        self.btn_green_light.setGeometry(QtCore.QRect(280, 115, 30, 30))
         self.btn_green_light.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_green_light.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_green_light.setStyleSheet("QPushButton \n"
@@ -670,7 +516,7 @@ class Ui_SettingsWindow(object):
         self.btn_green_light.setChecked(False)
         self.btn_green_light.setObjectName("btn_green_light")
         self.btn_red_light = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_red_light.setGeometry(QtCore.QRect(280, 510, 30, 30))
+        self.btn_red_light.setGeometry(QtCore.QRect(280, 150, 30, 30))
         self.btn_red_light.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_red_light.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_red_light.setStyleSheet("QPushButton \n"
@@ -722,70 +568,29 @@ class Ui_SettingsWindow(object):
         self.lineEdit_F_alarm.setText("")
         self.lineEdit_F_alarm.setAlignment(QtCore.Qt.AlignCenter)
         self.lineEdit_F_alarm.setObjectName("lineEdit_F_alarm")
-        self.btn_connect = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_connect.setGeometry(QtCore.QRect(20, 600, 170, 50))
-        self.btn_connect.setMinimumSize(QtCore.QSize(100, 50))
-        self.btn_connect.setMaximumSize(QtCore.QSize(170, 50))
+        self.fram_yellow_btn = QtWidgets.QLabel(self.centralwidget)
+        self.fram_yellow_btn.setGeometry(QtCore.QRect(320, 540, 25, 25))
+        self.fram_yellow_btn.setMinimumSize(QtCore.QSize(20, 20))
+        self.fram_yellow_btn.setMaximumSize(QtCore.QSize(25, 25))
+        self.fram_yellow_btn.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+"border-color: rgb(0, 0, 0);")
+        self.fram_yellow_btn.setFrameShape(QtWidgets.QFrame.WinPanel)
+        self.fram_yellow_btn.setText("")
+        self.fram_yellow_btn.setObjectName("fram_yellow_btn")
+        self.lbl_txt6_3 = QtWidgets.QLabel(self.centralwidget)
+        self.lbl_txt6_3.setGeometry(QtCore.QRect(350, 540, 243, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_connect.setFont(font)
-        self.btn_connect.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}")
-        self.btn_connect.setObjectName("btn_connect")
-        self.btn_read = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_read.setGeometry(QtCore.QRect(210, 600, 150, 50))
-        self.btn_read.setMinimumSize(QtCore.QSize(100, 50))
-        self.btn_read.setMaximumSize(QtCore.QSize(150, 50))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.btn_read.setFont(font)
-        self.btn_read.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"")
-        self.btn_read.setObjectName("btn_read")
-        self.btn_test = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_test.setGeometry(QtCore.QRect(400, 610, 30, 30))
-        self.btn_test.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_test.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_test.setStyleSheet("QPushButton \n"
+        font.setPointSize(12)
+        self.lbl_txt6_3.setFont(font)
+        self.lbl_txt6_3.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_txt6_3.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.lbl_txt6_3.setObjectName("lbl_txt6_3")
+        self.btn_temper_channel = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_temper_channel.setGeometry(QtCore.QRect(280, 185, 30, 30))
+        self.btn_temper_channel.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_temper_channel.setMaximumSize(QtCore.QSize(30, 30))
+        self.btn_temper_channel.setStyleSheet("QPushButton \n"
 "{\n"
 "    color: rgb(0, 0, 0);\n"
 "    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
@@ -810,12 +615,44 @@ class Ui_SettingsWindow(object):
 "    background-color: rgb(0, 255, 0)\n"
 "    \n"
 "}")
-        self.btn_test.setText("")
-        self.btn_test.setCheckable(True)
-        self.btn_test.setChecked(False)
-        self.btn_test.setObjectName("btn_test")
-        self.lbl_txt19_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt19_2.setGeometry(QtCore.QRect(18, 390, 90, 31))
+        self.btn_temper_channel.setText("")
+        self.btn_temper_channel.setCheckable(False)
+        self.btn_temper_channel.setChecked(False)
+        self.btn_temper_channel.setObjectName("btn_temper_channel")
+        self.lbl_temp_sens = QtWidgets.QLabel(self.centralwidget)
+        self.lbl_temp_sens.setGeometry(QtCore.QRect(320, 187, 281, 23))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(12)
+        self.lbl_temp_sens.setFont(font)
+        self.lbl_temp_sens.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_temp_sens.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.lbl_temp_sens.setObjectName("lbl_temp_sens")
+        self.freq_frame = QtWidgets.QFrame(self.centralwidget)
+        self.freq_frame.setGeometry(QtCore.QRect(10, 300, 301, 271))
+        self.freq_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.freq_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.freq_frame.setObjectName("freq_frame")
+        self.lbl_txt1_3 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt1_3.setGeometry(QtCore.QRect(210, 0, 70, 23))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(12)
+        self.lbl_txt1_3.setFont(font)
+        self.lbl_txt1_3.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_txt1_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lbl_txt1_3.setObjectName("lbl_txt1_3")
+        self.lbl_txt1_2 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt1_2.setGeometry(QtCore.QRect(107, 0, 50, 23))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(12)
+        self.lbl_txt1_2.setFont(font)
+        self.lbl_txt1_2.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_txt1_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lbl_txt1_2.setObjectName("lbl_txt1_2")
+        self.lbl_txt19_2 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt19_2.setGeometry(QtCore.QRect(13, 60, 90, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(10)
@@ -823,36 +660,17 @@ class Ui_SettingsWindow(object):
         self.lbl_txt19_2.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.lbl_txt19_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt19_2.setObjectName("lbl_txt19_2")
-        self.lineEdit_hod = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_hod.setGeometry(QtCore.QRect(115, 340, 50, 31))
+        self.lbl_txt19 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt19.setGeometry(QtCore.QRect(13, 25, 90, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
-        font.setBold(False)
-        font.setWeight(50)
-        self.lineEdit_hod.setFont(font)
-        self.lineEdit_hod.setAlignment(QtCore.Qt.AlignCenter)
-        self.lineEdit_hod.setObjectName("lineEdit_hod")
-        self.fram_yellow_btn = QtWidgets.QLabel(self.centralwidget)
-        self.fram_yellow_btn.setGeometry(QtCore.QRect(320, 550, 25, 25))
-        self.fram_yellow_btn.setMinimumSize(QtCore.QSize(20, 20))
-        self.fram_yellow_btn.setMaximumSize(QtCore.QSize(25, 25))
-        self.fram_yellow_btn.setStyleSheet("background-color: rgb(255, 255, 255);\n"
-"border-color: rgb(0, 0, 0);")
-        self.fram_yellow_btn.setFrameShape(QtWidgets.QFrame.WinPanel)
-        self.fram_yellow_btn.setText("")
-        self.fram_yellow_btn.setObjectName("fram_yellow_btn")
-        self.lbl_txt6_3 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt6_3.setGeometry(QtCore.QRect(350, 550, 243, 23))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(12)
-        self.lbl_txt6_3.setFont(font)
-        self.lbl_txt6_3.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.lbl_txt6_3.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
-        self.lbl_txt6_3.setObjectName("lbl_txt6_3")
-        self.btn_hod = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_hod.setGeometry(QtCore.QRect(170, 340, 30, 30))
+        self.lbl_txt19.setFont(font)
+        self.lbl_txt19.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_txt19.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.lbl_txt19.setObjectName("lbl_txt19")
+        self.btn_hod = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_hod.setGeometry(QtCore.QRect(165, 25, 30, 30))
         self.btn_hod.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_hod.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_hod.setStyleSheet("QPushButton \n"
@@ -884,41 +702,18 @@ class Ui_SettingsWindow(object):
         self.btn_hod.setCheckable(False)
         self.btn_hod.setChecked(False)
         self.btn_hod.setObjectName("btn_hod")
-        self.btn_speed_main = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_speed_main.setGeometry(QtCore.QRect(170, 390, 30, 30))
-        self.btn_speed_main.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_speed_main.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_speed_main.setStyleSheet("QPushButton \n"
-"{\n"
-"    color: rgb(0, 0, 0);\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
-"\n"
-"    border: 1px rgb(0, 0, 0);\n"
-"    border-radius: 5px;\n"
-"\n"
-"    border-style: outset;\n"
-"\n"
-"    padding: 5px;\n"
-"}\n"
-"\n"
-"QPushButton:hover\n"
-"{\n"
-"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
-"    \n"
-"}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    background-color: rgb(0, 255, 0)\n"
-"    \n"
-"}")
-        self.btn_speed_main.setText("")
-        self.btn_speed_main.setCheckable(False)
-        self.btn_speed_main.setChecked(False)
-        self.btn_speed_main.setObjectName("btn_speed_main")
-        self.btn_freq_trverse = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_freq_trverse.setGeometry(QtCore.QRect(265, 390, 30, 30))
+        self.lineEdit_hod = QtWidgets.QLineEdit(self.freq_frame)
+        self.lineEdit_hod.setGeometry(QtCore.QRect(110, 25, 50, 31))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(12)
+        font.setBold(False)
+        font.setWeight(50)
+        self.lineEdit_hod.setFont(font)
+        self.lineEdit_hod.setAlignment(QtCore.Qt.AlignCenter)
+        self.lineEdit_hod.setObjectName("lineEdit_hod")
+        self.btn_freq_trverse = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_freq_trverse.setGeometry(QtCore.QRect(265, 50, 30, 30))
         self.btn_freq_trverse.setMinimumSize(QtCore.QSize(30, 30))
         self.btn_freq_trverse.setMaximumSize(QtCore.QSize(30, 30))
         self.btn_freq_trverse.setStyleSheet("QPushButton \n"
@@ -950,8 +745,41 @@ class Ui_SettingsWindow(object):
         self.btn_freq_trverse.setCheckable(False)
         self.btn_freq_trverse.setChecked(False)
         self.btn_freq_trverse.setObjectName("btn_freq_trverse")
-        self.lineEdit_freq_traverse = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_freq_traverse.setGeometry(QtCore.QRect(210, 390, 50, 31))
+        self.btn_speed_main = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_speed_main.setGeometry(QtCore.QRect(165, 60, 30, 30))
+        self.btn_speed_main.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_speed_main.setMaximumSize(QtCore.QSize(30, 30))
+        self.btn_speed_main.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"\n"
+"QPushButton:checked\n"
+"{\n"
+"    background-color: rgb(0, 255, 0)\n"
+"    \n"
+"}")
+        self.btn_speed_main.setText("")
+        self.btn_speed_main.setCheckable(False)
+        self.btn_speed_main.setChecked(False)
+        self.btn_speed_main.setObjectName("btn_speed_main")
+        self.lineEdit_freq_traverse = QtWidgets.QLineEdit(self.freq_frame)
+        self.lineEdit_freq_traverse.setGeometry(QtCore.QRect(210, 50, 50, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -961,26 +789,19 @@ class Ui_SettingsWindow(object):
         self.lineEdit_freq_traverse.setText("")
         self.lineEdit_freq_traverse.setAlignment(QtCore.Qt.AlignCenter)
         self.lineEdit_freq_traverse.setObjectName("lineEdit_freq_traverse")
-        self.lbl_txt1_2 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt1_2.setGeometry(QtCore.QRect(115, 310, 50, 23))
+        self.lineEdit_speed_main = QtWidgets.QLineEdit(self.freq_frame)
+        self.lineEdit_speed_main.setGeometry(QtCore.QRect(110, 60, 50, 31))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
-        self.lbl_txt1_2.setFont(font)
-        self.lbl_txt1_2.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.lbl_txt1_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.lbl_txt1_2.setObjectName("lbl_txt1_2")
-        self.lbl_txt1_3 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt1_3.setGeometry(QtCore.QRect(215, 330, 70, 23))
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(12)
-        self.lbl_txt1_3.setFont(font)
-        self.lbl_txt1_3.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.lbl_txt1_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.lbl_txt1_3.setObjectName("lbl_txt1_3")
-        self.lbl_txt1_4 = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_txt1_4.setGeometry(QtCore.QRect(210, 360, 90, 23))
+        font.setBold(False)
+        font.setWeight(50)
+        self.lineEdit_speed_main.setFont(font)
+        self.lineEdit_speed_main.setText("")
+        self.lineEdit_speed_main.setAlignment(QtCore.Qt.AlignCenter)
+        self.lineEdit_speed_main.setObjectName("lineEdit_speed_main")
+        self.lbl_txt1_4 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt1_4.setGeometry(QtCore.QRect(205, 25, 90, 23))
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -988,11 +809,146 @@ class Ui_SettingsWindow(object):
         self.lbl_txt1_4.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.lbl_txt1_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.lbl_txt1_4.setObjectName("lbl_txt1_4")
-        self.btn_temper_1 = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_temper_1.setGeometry(QtCore.QRect(200, 565, 30, 30))
-        self.btn_temper_1.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_temper_1.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_temper_1.setStyleSheet("QPushButton \n"
+        self.btn_motor_up = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_motor_up.setGeometry(QtCore.QRect(220, 90, 60, 30))
+        self.btn_motor_up.setMinimumSize(QtCore.QSize(60, 30))
+        self.btn_motor_up.setMaximumSize(QtCore.QSize(60, 50))
+        self.btn_motor_up.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_motor_up.setCheckable(False)
+        self.btn_motor_up.setChecked(False)
+        self.btn_motor_up.setObjectName("btn_motor_up")
+        self.btn_motor_down = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_motor_down.setGeometry(QtCore.QRect(220, 130, 60, 30))
+        self.btn_motor_down.setMinimumSize(QtCore.QSize(60, 30))
+        self.btn_motor_down.setMaximumSize(QtCore.QSize(60, 50))
+        self.btn_motor_down.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_motor_down.setCheckable(False)
+        self.btn_motor_down.setChecked(False)
+        self.btn_motor_down.setObjectName("btn_motor_down")
+        self.btn_motor_traverse_stop = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_motor_traverse_stop.setGeometry(QtCore.QRect(220, 170, 60, 60))
+        self.btn_motor_traverse_stop.setMinimumSize(QtCore.QSize(60, 60))
+        self.btn_motor_traverse_stop.setMaximumSize(QtCore.QSize(60, 60))
+        self.btn_motor_traverse_stop.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_motor_traverse_stop.setCheckable(False)
+        self.btn_motor_traverse_stop.setChecked(False)
+        self.btn_motor_traverse_stop.setObjectName("btn_motor_traverse_stop")
+        self.btn_motor_main_start = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_motor_main_start.setGeometry(QtCore.QRect(80, 100, 80, 50))
+        self.btn_motor_main_start.setMinimumSize(QtCore.QSize(80, 50))
+        self.btn_motor_main_start.setMaximumSize(QtCore.QSize(80, 50))
+        self.btn_motor_main_start.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_motor_main_start.setCheckable(False)
+        self.btn_motor_main_start.setChecked(False)
+        self.btn_motor_main_start.setObjectName("btn_motor_main_start")
+        self.btn_motor_main_stop = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_motor_main_stop.setGeometry(QtCore.QRect(80, 160, 80, 50))
+        self.btn_motor_main_stop.setMinimumSize(QtCore.QSize(80, 50))
+        self.btn_motor_main_stop.setMaximumSize(QtCore.QSize(80, 50))
+        self.btn_motor_main_stop.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}\n"
+"    \n"
+"")
+        self.btn_motor_main_stop.setCheckable(False)
+        self.btn_motor_main_stop.setChecked(False)
+        self.btn_motor_main_stop.setObjectName("btn_motor_main_stop")
+        self.btn_test = QtWidgets.QPushButton(self.freq_frame)
+        self.btn_test.setGeometry(QtCore.QRect(20, 228, 30, 30))
+        self.btn_test.setMinimumSize(QtCore.QSize(30, 30))
+        self.btn_test.setMaximumSize(QtCore.QSize(30, 30))
+        self.btn_test.setStyleSheet("QPushButton \n"
 "{\n"
 "    color: rgb(0, 0, 0);\n"
 "    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
@@ -1017,15 +973,59 @@ class Ui_SettingsWindow(object):
 "    background-color: rgb(0, 255, 0)\n"
 "    \n"
 "}")
-        self.btn_temper_1.setText("")
-        self.btn_temper_1.setCheckable(False)
-        self.btn_temper_1.setChecked(False)
-        self.btn_temper_1.setObjectName("btn_temper_1")
-        self.btn_temper_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_temper_2.setGeometry(QtCore.QRect(250, 565, 30, 30))
-        self.btn_temper_2.setMinimumSize(QtCore.QSize(30, 30))
-        self.btn_temper_2.setMaximumSize(QtCore.QSize(30, 30))
-        self.btn_temper_2.setStyleSheet("QPushButton \n"
+        self.btn_test.setText("")
+        self.btn_test.setCheckable(True)
+        self.btn_test.setChecked(False)
+        self.btn_test.setObjectName("btn_test")
+        self.lbl_txt10_3 = QtWidgets.QLabel(self.freq_frame)
+        self.lbl_txt10_3.setGeometry(QtCore.QRect(60, 230, 121, 23))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(12)
+        self.lbl_txt10_3.setFont(font)
+        self.lbl_txt10_3.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.lbl_txt10_3.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.lbl_txt10_3.setObjectName("lbl_txt10_3")
+        self.btn_connect = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_connect.setGeometry(QtCore.QRect(40, 620, 170, 40))
+        self.btn_connect.setMinimumSize(QtCore.QSize(100, 40))
+        self.btn_connect.setMaximumSize(QtCore.QSize(170, 40))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.btn_connect.setFont(font)
+        self.btn_connect.setStyleSheet("QPushButton \n"
+"{\n"
+"    color: rgb(0, 0, 0);\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
+"\n"
+"    border: 1px rgb(0, 0, 0);\n"
+"    border-radius: 5px;\n"
+"\n"
+"    border-style: outset;\n"
+"\n"
+"    padding: 5px;\n"
+"}\n"
+"\n"
+"QPushButton:hover\n"
+"{\n"
+"    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
+"    \n"
+"}")
+        self.btn_connect.setObjectName("btn_connect")
+        self.btn_read = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_read.setGeometry(QtCore.QRect(270, 620, 150, 40))
+        self.btn_read.setMinimumSize(QtCore.QSize(100, 40))
+        self.btn_read.setMaximumSize(QtCore.QSize(150, 40))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.btn_read.setFont(font)
+        self.btn_read.setStyleSheet("QPushButton \n"
 "{\n"
 "    color: rgb(0, 0, 0);\n"
 "    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));\n"
@@ -1043,22 +1043,9 @@ class Ui_SettingsWindow(object):
 "    background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));\n"
 "    \n"
 "}\n"
-"    \n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"    background-color: rgb(0, 255, 0)\n"
-"    \n"
-"}")
-        self.btn_temper_2.setText("")
-        self.btn_temper_2.setCheckable(False)
-        self.btn_temper_2.setChecked(False)
-        self.btn_temper_2.setObjectName("btn_temper_2")
+"")
+        self.btn_read.setObjectName("btn_read")
         SettingsWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(SettingsWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 610, 21))
-        self.menubar.setObjectName("menubar")
-        SettingsWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(SettingsWindow)
         self.statusbar.setObjectName("statusbar")
         SettingsWindow.setStatusBar(self.statusbar)
@@ -1081,10 +1068,6 @@ class Ui_SettingsWindow(object):
         self.lbl_txt11.setText(_translate("SettingsWindow", "ПЧ занят для приема команд"))
         self.lbl_txt12.setText(_translate("SettingsWindow", "Датчик усилия занят"))
         self.lbl_txt15.setText(_translate("SettingsWindow", "Перемещение (мм):"))
-        self.lbl_txt19.setText(_translate("SettingsWindow", "Ход, (мм)"))
-        self.btn_motor_down.setText(_translate("SettingsWindow", "ВНИЗ"))
-        self.btn_motor_traverse_stop.setText(_translate("SettingsWindow", "СТОП"))
-        self.btn_motor_up.setText(_translate("SettingsWindow", "ВВЕРХ"))
         self.lbl_txt15_2.setText(_translate("SettingsWindow", "Температура (°С):"))
         self.lbl_txt8_2.setText(_translate("SettingsWindow", "Блокировка траверсы 1"))
         self.lbl_txt9_2.setText(_translate("SettingsWindow", "Блокировка траверсы 2"))
@@ -1094,19 +1077,25 @@ class Ui_SettingsWindow(object):
 "положение траверсы"))
         self.lbl_txt15_3.setText(_translate("SettingsWindow", "Перемещение\n"
 "траверсы (мм):"))
-        self.btn_motor_main_start.setText(_translate("SettingsWindow", "СТАРТ\n"
-"ПРИВОД"))
-        self.btn_motor_main_stop.setText(_translate("SettingsWindow", "СТОП\n"
-"ПРИВОД"))
         self.lbl_txt5_2.setText(_translate("SettingsWindow", "Зелёный индикатор"))
         self.lbl_txt6_2.setText(_translate("SettingsWindow", "Красный индикатор"))
         self.lbl_txt15_4.setText(_translate("SettingsWindow", "Аварийное\n"
 "усилие (кгс):"))
+        self.lbl_txt6_3.setText(_translate("SettingsWindow", "Жёлтая кнопка"))
+        self.lbl_temp_sens.setText(_translate("SettingsWindow", "Бесконтактный температурный датчик"))
+        self.lbl_txt1_3.setText(_translate("SettingsWindow", "Траверса"))
+        self.lbl_txt1_2.setText(_translate("SettingsWindow", "Шатун"))
+        self.lbl_txt19_2.setText(_translate("SettingsWindow", "Скорость, (м/с)"))
+        self.lbl_txt19.setText(_translate("SettingsWindow", "Ход, (мм)"))
+        self.lineEdit_hod.setText(_translate("SettingsWindow", "50"))
+        self.lbl_txt1_4.setText(_translate("SettingsWindow", "Частота, (Гц)"))
+        self.btn_motor_up.setText(_translate("SettingsWindow", "ВВЕРХ"))
+        self.btn_motor_down.setText(_translate("SettingsWindow", "ВНИЗ"))
+        self.btn_motor_traverse_stop.setText(_translate("SettingsWindow", "СТОП"))
+        self.btn_motor_main_start.setText(_translate("SettingsWindow", "СТАРТ\n"
+"ПРИВОД"))
+        self.btn_motor_main_stop.setText(_translate("SettingsWindow", "СТОП\n"
+"ПРИВОД"))
+        self.lbl_txt10_3.setText(_translate("SettingsWindow", "Чтение буфера"))
         self.btn_connect.setText(_translate("SettingsWindow", "ПОДКЛЮЧИТЬСЯ"))
         self.btn_read.setText(_translate("SettingsWindow", "ЧИТАТЬ"))
-        self.lbl_txt19_2.setText(_translate("SettingsWindow", "Скорость, (м/с)"))
-        self.lineEdit_hod.setText(_translate("SettingsWindow", "50"))
-        self.lbl_txt6_3.setText(_translate("SettingsWindow", "Жёлтая кнопка"))
-        self.lbl_txt1_2.setText(_translate("SettingsWindow", "Шатун"))
-        self.lbl_txt1_3.setText(_translate("SettingsWindow", "Траверса"))
-        self.lbl_txt1_4.setText(_translate("SettingsWindow", "Частота, (Гц)"))

@@ -24,18 +24,10 @@ class Controller:
     def __init__(self, model):
         try:
             self.signals = ControlSignals()
-            self.response = {}
-            self.timer_process = None
-            self.timer_unblock = None
-            self.flag_freq_1_step = False
-            self.flag_freq_2_step = False
-            self.count_wait_point = 0
-            self.flag_alarm_traverse = True
-            self.stop_point = 0
-            self.count_cycle = 0
-            self.set_trav_point = 0
-            self.cascade = 1
-            self.max_cascade = 0
+            self.model = model
+            self._init_signals()
+            self._init_timer_test()
+            self.timer_process.start()
 
             # self.time_start_wait = None
             # self.time_all_wait = None
@@ -47,21 +39,21 @@ class Controller:
             # self.time_safety_fence = time.monotonic()
             # self.flag_safety_fence = False
 
-            self.model = model
-
-            self._start_param_ctrl()
+            self.response = {}
+            self.timer_process = None
+            self.flag_freq_1_step = False
+            self.flag_freq_2_step = False
+            self.count_wait_point = 0
+            self.flag_alarm_traverse = True
+            self.stop_point = 0
+            self.count_cycle = 0
+            self.set_trav_point = 0
+            self.cascade = 1
+            self.max_cascade = 0
+            self.flag_repeat = False
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/__init__ - {e}')
-
-    def _start_param_ctrl(self):
-        try:
-            self._init_signals()
-            self._init_timer_test()
-            self.timer_process.start()
-
-        except Exception as e:
-            self.model.log_error(f'ERROR in controller/_start_param_ctrl - {e}')
 
     def _init_signals(self):
         try:
@@ -84,6 +76,9 @@ class Controller:
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_update_full_cycle - {e}')
+
+    def change_flag_repeat(self, flag):
+        self.flag_repeat = flag
 
     def _init_timer_test(self):
         try:
@@ -689,8 +684,8 @@ class Controller:
             force = self._calc_excess_force()
             self.model.write_emergency_force(force)
 
-            if self.response.get('repeat_test', False):
-                self.model.update_main_dict({'repeat_test': False})
+            if self.flag_repeat:
+                self.flag_repeat = False
                 type_test = self.response.get('type_test')
                 self.model.reader_start_test()
                 if type_test == 'lab_hand':
@@ -874,7 +869,7 @@ class Controller:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
-                    self.model.update_main_dict({'stage': 'install_mort'})
+                    self.model.update_main_dict({'stage': 'install_amort'})
                     self._traverse_move_position(install_point)
 
             elif tag == 'start_test':

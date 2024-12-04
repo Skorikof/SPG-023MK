@@ -59,9 +59,6 @@ class AppWindow(QMainWindow):
         self._create_statusbar_ui()
         self._init_buttons()
         self._init_signals()
-
-        self.ui.main_hand_debug_btn.setVisible(True)  # Окно ручной отладки
-
         self._init_lab_graph()
         self._init_conv_graph()
         self._start_page()
@@ -691,52 +688,48 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            if self.response.get('repeat_test', False):
-                self.begin_test()
+            name = self.response.get('operator')['name']
+            rank = self.response.get('operator')['rank']
 
-            else:
-                name = self.response.get('operator')['name']
-                rank = self.response.get('operator')['rank']
+            if name != '' and rank != '':
+                self.flag_push_force_set()
 
-                if name != '' and rank != '':
-                    self.flag_push_force_set()
+                type_test = self.response.get('type_test')
 
-                    type_test = self.response.get('type_test')
+                if type_test == 'conv':
+                    self.begin_test()
 
-                    if type_test == 'conv':
-                        self.begin_test()
-
-                    else:
-                        self.ui.test_change_speed_btn.setVisible(False)
-                        self.ui.lab_speed_le.setReadOnly(True)
-                        flag = self.serial_editing_finished()
-                        if flag:
-                            serial_number = self.ui.specif_serial_lineEdit.text()
-                            if serial_number != '':
-                                self.model.update_main_dict({'serial_number': serial_number})
-                                flag = self.static_push_force_editing()
-                                if flag:
-                                    if type_test == 'lab_cascade':
-                                        flag = self.specif_read_lab_cascade_table()
-                                        if flag:
-                                            self.select_temper_sensor()
-                                            self.begin_test()
-                                        else:
-                                            self.specif_msg_none_cascade_speed()
-
-                                    elif type_test == 'lab_hand':
-                                        speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                        if speed:
-                                            self.model.update_main_dict({'speed': speed})
-                                            self.select_temper_sensor()
-                                            self.begin_test()
-
+                else:
+                    self.ui.test_change_speed_btn.setVisible(False)
+                    self.ui.lab_speed_le.setReadOnly(True)
+                    flag = self.serial_editing_finished()
+                    if flag:
+                        serial_number = self.ui.specif_serial_lineEdit.text()
+                        if serial_number != '':
+                            self.model.update_main_dict({'serial_number': serial_number})
+                            flag = self.static_push_force_editing()
+                            if flag:
+                                if type_test == 'lab_cascade':
+                                    flag = self.specif_read_lab_cascade_table()
+                                    if flag:
+                                        self.select_temper_sensor()
+                                        self.begin_test()
                                     else:
+                                        self.specif_msg_none_cascade_speed()
+
+                                elif type_test == 'lab_hand':
+                                    speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                    if speed:
+                                        self.model.update_main_dict({'speed': speed})
                                         self.select_temper_sensor()
                                         self.begin_test()
 
-                else:
-                    self.open_win_operator()
+                                else:
+                                    self.select_temper_sensor()
+                                    self.begin_test()
+
+            else:
+                self.open_win_operator()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/specif_continue_btn_click - {e}')
@@ -797,7 +790,7 @@ class AppWindow(QMainWindow):
             amort = self.response.get('amort')
             type_test = self.response.get('type_test')
             if type_test == 'lab_hand' or type_test == 'temper':
-                speed = self.response.get('speed')
+                speed = self.response.get('speed', self.ui.specif_speed_one_lineEdit.text())
             elif type_test == 'lab_cascade':
                 speed = self.response.get('speed_cascade')
             else:
@@ -858,8 +851,6 @@ class AppWindow(QMainWindow):
             self.main_stop_state(True)
             self.main_btn_state(False)
 
-            self.save_log_begin_test()
-
             type_test = self.response.get('type_test')
 
             if type_test == 'conv':
@@ -873,6 +864,7 @@ class AppWindow(QMainWindow):
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
                 self.fill_gui_lab_test()
 
+            self.save_log_begin_test()
             self.controller.start_test_clicked()
 
         except Exception as e:
@@ -1061,9 +1053,10 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
 
+    # FIXME
     def repeat_test_clicked(self):
-        self.model.update_main_dict({'repeat_test': True})
-        self.specif_continue_btn_click()
+        self.controller.change_flag_repeat(True)
+        self.begin_test()
 
     def cancel_test_clicked(self):
         try:
@@ -1091,6 +1084,7 @@ class AppWindow(QMainWindow):
 
     def show_compare_graph(self):
         try:
+            self.ui.lab_GraphWidget.clear()
             for graph in self.list_lab:
                 name = f'{graph["speed"]} м/с'
                 pen = pg.mkPen(color=self.win_archive.color_pen[self.list_lab.index(graph)], width=3)
@@ -1147,6 +1141,9 @@ class AppWindow(QMainWindow):
         self.win_set.start_param_win_set()
 
     def close_win_settings(self):
+        bit = int(self.response.get('cycle_force', 0))
+        if bit == 0:
+            self.model.write_bit_force_cycle(1)
         self.model.update_main_dict({'type_test': None})
         self.main_ui_state(True)
         self.win_set.hide()

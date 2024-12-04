@@ -257,7 +257,7 @@
          </font>
         </property>
         <property name="text">
-         <string>РУЧНОЙ РЕЖИМ</string>
+         <string>НАСТРОЙКА</string>
         </property>
        </widget>
        <widget class="QPushButton" name="main_archive_btn">
