@@ -414,20 +414,24 @@ class Model:
                 self._calc_dynamic_push_force()
                 push_force = self._choice_push_force()
                 speed = self.set_regs.get('speed')
-                hod = self.set_regs.get('amort').hod
+                amort = self.set_regs.get('amort')
 
                 move_list = self.set_regs.get('move_accum_list')[:]
                 force_list = self.set_regs.get('force_accum_list')[:]
 
                 max_recoil, max_comp = CalcData().calc_middle_min_and_max_force(force_list)
 
+                offset_p = CalcData().calc_offset_move_by_hod(amort, self.min_point)
+                move_graph = list(map(lambda x: round(x + offset_p, 1), move_list))
+
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
                            'force_real_list': force_list,
                            'force_graph': list(map(lambda x: round(x * (-1), 1), force_list)),
                            'move_real_list': move_list[:],
+                           'move_graph': move_graph,
                            'power': CalcData().calc_power(move_list, force_list),
-                           'freq_piston': CalcData().calc_freq_piston(speed, hod),
+                           'freq_piston': CalcData().calc_freq_piston(speed, amort),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }

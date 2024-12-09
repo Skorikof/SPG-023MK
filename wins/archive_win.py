@@ -502,8 +502,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             max_comp = round(abs(min(force_list)) - push_force, 2)
             power = CalcData().calc_power(move_list, force_list)
             speed = float(obj.speed)
-            hod = float(obj.amort.hod)
-            freq = CalcData().calc_freq_piston(speed, hod)
+            freq = CalcData().calc_freq_piston(speed, int(obj.amort))
 
             self.push_force_le.setText(f'{push_force}')
             self.power_le.setText(f'{power}')

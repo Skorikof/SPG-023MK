@@ -58,9 +58,9 @@ class CalcData:
         except Exception as e:
             print(f'ERROR in data_calculation/calc_power - {e}')
 
-    def calc_freq_piston(self, speed, hod):
+    def calc_freq_piston(self, speed, amort):
         try:
-            return round(speed / (hod * 0.002 * 3.14), 3)
+            return round(speed / (amort.hod * 0.002 * 3.14), 3)
 
         except Exception as e:
             print(f'ERROR in data_calculation/calc_freq_piston - {e}')

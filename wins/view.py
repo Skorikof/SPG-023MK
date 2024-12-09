@@ -940,11 +940,8 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
-            min_p = self.response.get('min_point')
-            offset_p = CalcData().calc_offset_move_by_hod(self.response.get('amort'), min_p)
-            move_list = list(map(lambda x: round(x + offset_p, 1), self.response.get('move_real_list')))
             pen = pg.mkPen(color='black', width=3)
-            self.ui.lab_GraphWidget.plot(move_list, self.response.get('force_graph'), pen=pen)
+            self.ui.lab_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
 
             self._update_lab_data()
 
@@ -1024,11 +1021,8 @@ class AppWindow(QMainWindow):
     def _update_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.clear()
-            min_p = self.response.get('min_point')
-            offset_p = CalcData().calc_offset_move_by_hod(self.response.get('amort'), min_p)
-            move_list = list(map(lambda x: round(x + offset_p, 1), self.response.get('move_real_list')))
             pen = pg.mkPen(color='black', width=3)
-            self.ui.conv_GraphWidget.plot(move_list, self.response.get('force_graph'), pen=pen)
+            self.ui.conv_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
             
             self._update_conv_data()
 
