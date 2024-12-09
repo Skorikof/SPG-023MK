@@ -48,7 +48,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self._init_buttons()
         self._smap_line_edit()
         self._fill_lbl_temp_sens()
-        self.freq_frame.setVisible(True)
+
+        self.freq_frame.setVisible(False)
 
     def _fill_lbl_temp_sens(self):
         channel = self.response.get('select_temper', 0)

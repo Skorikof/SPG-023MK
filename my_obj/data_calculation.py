@@ -34,12 +34,26 @@ class CalcData:
             return temp
 
         except Exception as e:
-            print(f'ERROR in model/_calc_power - {e}')
+            print(f'ERROR in data_calculation/calc_power - {e}')
 
     def calc_freq_piston(self, speed, hod):
         try:
             return round(speed / (hod * 0.002 * 3.14), 3)
 
         except Exception as e:
-            print(f'ERROR in model/_calc_freq_piston - {e}')
+            print(f'ERROR in data_calculation/calc_freq_piston - {e}')
 
+    def calc_middle_min_and_max_force(self, data: list):
+        try:
+            comp_index = data.index(max(data))
+            comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
+            max_comp = sum(comp_list) / len(comp_list)
+
+            recoil_index = data.index(min(data))
+            recoil_list = [abs(x) for x in data[recoil_index - 10:recoil_index + 10]]
+            max_recoil = sum(recoil_list) / len(recoil_list)
+
+            return max_recoil, max_comp
+
+        except Exception as e:
+            print(f'ERROR in data_calculation/calc_middle_min_and_max_force - {e}')

@@ -717,7 +717,7 @@ class AppWindow(QMainWindow):
                                     else:
                                         self.specif_msg_none_cascade_speed()
 
-                                elif type_test == 'lab_hand':
+                                elif type_test == 'lab_hand' or type_test == 'temper':
                                     speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                     if speed:
                                         self.model.update_main_dict({'speed': speed})
@@ -959,7 +959,8 @@ class AppWindow(QMainWindow):
             pen_comp = pg.mkPen(color='blue', width=3)
             x_list = [float(x) for x in self.response.get('temper_graph')]
             for value in self.response.get('temper_force_graph'):
-                recoil, comp = value.split('|')
+                temp_list = value.split('|')
+                recoil, comp = temp_list[0], temp_list[1]
                 recoil_list.append(float(recoil))
                 comp_list.append(float(comp))
 
@@ -1147,7 +1148,7 @@ class AppWindow(QMainWindow):
         self.main_ui_state(True)
         self.win_set.hide()
 
-    def slot_save_lab_result(self):
+    def slot_save_lab_result(self, command):
         try:
             type_test = self.response.get('type_test')
             if type_test == 'lab' or type_test == 'lab_cascade':
@@ -1158,6 +1159,9 @@ class AppWindow(QMainWindow):
                 self.list_lab.append(data_dict)
 
             self.save_data_in_archive()
+
+            if command == 'end':
+                self.slot_write_end_test()
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')

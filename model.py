@@ -417,12 +417,16 @@ class Model:
                 push_force = self._choice_push_force()
                 speed = self.set_regs.get('speed')
                 hod = self.set_regs.get('amort').hod
-                move_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
-                force_list = list(map(lambda x: round(x + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
-                command = {'max_comp': round(max(self.set_regs.get('force_accum_list')) - push_force, 2),
-                           'max_recoil': round(abs(min(self.set_regs.get('force_accum_list'))) + push_force, 2),
-                           'force_graph': move_list,
-                           'move_graph': force_list,
+
+                move_list = list(map(lambda x: round(x + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
+                force_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
+
+                max_recoil, max_comp = CalcData().calc_middle_min_and_max_force(force_list)
+
+                command = {'max_comp': round(max_comp - push_force, 2),
+                           'max_recoil': round(max_recoil + push_force, 2),
+                           'force_graph': force_list,
+                           'move_graph': move_list,
                            'power': CalcData().calc_power(move_list, force_list),
                            'freq_piston': CalcData().calc_freq_piston(speed, hod),
                            'force_accum_list': [],

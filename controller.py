@@ -13,7 +13,7 @@ class ControlSignals(QObject):
     conv_lamp = pyqtSignal(str)
     lab_win_test = pyqtSignal()
     lab_test_stop = pyqtSignal()
-    lab_save_result = pyqtSignal()
+    lab_save_result = pyqtSignal(str)
     cancel_test = pyqtSignal()
     end_test = pyqtSignal()
     search_hod = pyqtSignal()
@@ -198,7 +198,7 @@ class Controller:
                         self._test_on_two_speed(1)
 
             elif stage == 'test_speed_one':
-                if self.count_cycle >= 4:
+                if self.count_cycle >= 5:
                     type_test = self.response.get('type_test')
                     if type_test == 'conv':
                         max_comp = self.response.get('max_comp')
@@ -206,13 +206,12 @@ class Controller:
                         self._result_conveyor_test('one', max_comp, max_recoil)
 
                     elif type_test == 'lab':
-                        self.signals.lab_save_result.emit()
-                        self.signals.end_test.emit()
+                        self.signals.lab_save_result.emit('end')
 
                     self._test_on_two_speed(2)
 
             elif stage == 'test_speed_two':
-                if self.count_cycle >= 4:
+                if self.count_cycle >= 5:
                     type_test = self.response.get('type_test')
                     if type_test == 'conv':
                         max_comp = self.response.get('max_comp')
@@ -220,8 +219,7 @@ class Controller:
                         self._result_conveyor_test('two', max_comp, max_recoil)
 
                     elif type_test == 'lab':
-                        self.signals.lab_save_result.emit()
-                        self.signals.end_test.emit()
+                        self.signals.lab_save_result.emit('end')
 
                     command = {'stage': 'wait',
                                'fill_graph': False}
@@ -229,12 +227,11 @@ class Controller:
                     self._stop_gear_end_test()
 
             elif stage == 'test_lab_hand_speed':
-                if self.count_cycle >= 4:
+                if self.count_cycle >= 5:
                     command = {'stage': 'wait',
                                'fill_graph': False}
                     self.model.update_main_dict(command)
-                    self.signals.lab_save_result.emit()
-                    self.signals.end_test.emit()
+                    self.signals.lab_save_result.emit('end')
                     self._stop_gear_end_test()
 
             elif stage == 'test_temper':
@@ -251,13 +248,12 @@ class Controller:
                         command = {'stage': 'wait',
                                    'fill_graph': False}
                         self.model.update_main_dict(command)
-                        self.signals.lab_save_result.emit()
-                        self.signals.end_test.emit()
+                        self.signals.lab_save_result.emit('end')
                         self._stop_gear_end_test()
 
             elif stage == 'test_lab_cascade':
-                if self.count_cycle >= 4:
-                    self.signals.lab_save_result.emit()
+                if self.count_cycle >= 5:
+                    self.signals.lab_save_result.emit('cont')
                     if self.cascade < self.max_cascade:
                         speed = self.response.get('speed_cascade')[self.cascade]
                         self._write_speed_motor(1, speed=speed)
@@ -1037,8 +1033,8 @@ class Controller:
             force_graph = self.response.get('temper_force_graph', [])
             force_graph.append(force)
 
-            self.model.update_main_dict({'temper_graph': temper})
-            self.model.update_main_dict({'temper_force_graph': force})
+            self.model.update_main_dict({'temper_graph': temper_graph})
+            self.model.update_main_dict({'temper_force_graph': force_graph})
 
         except Exception as e:
             self.model.log_error(f'ERROR in controller/_fill_temper_graph - {e}')

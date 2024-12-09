@@ -724,11 +724,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 y_coord.append(temp)
                 speed_list = []
 
-            # w = np.hanning(200)
-            # y_approxy = np.convolve(w / w.sum(), y_coord, mode='same')
-            #
-            # return list(map(lambda x: round(x, 1), y_approxy))
-
             return y_coord
 
         except Exception as e:
