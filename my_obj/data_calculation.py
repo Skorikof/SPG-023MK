@@ -23,6 +23,28 @@ class SpeedLimitForHod:
 
 
 class CalcData:
+    def calc_middle_min_and_max_force(self, data: list):
+        try:
+            comp_index = data.index(max(data))
+            comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
+            max_comp = sum(comp_list) / len(comp_list)
+
+            recoil_index = data.index(min(data))
+            recoil_list = [abs(x) for x in data[recoil_index - 10:recoil_index + 10]]
+            max_recoil = sum(recoil_list) / len(recoil_list)
+
+            return max_recoil, max_comp
+
+        except Exception as e:
+            print(f'ERROR in data_calculation/calc_middle_min_and_max_force - {e}')
+
+    def calc_offset_move_by_hod(self, obj, min_p):
+        try:
+            return round((obj.max_length - obj.min_length - obj.hod) / 2 + min_p, 2)
+
+        except Exception as e:
+            print(f'ERROR in data_calculation/calc_offset_move - {e}')
+
     def calc_power(self, move: list, force: list):
         try:
             temp = 0
@@ -42,18 +64,3 @@ class CalcData:
 
         except Exception as e:
             print(f'ERROR in data_calculation/calc_freq_piston - {e}')
-
-    def calc_middle_min_and_max_force(self, data: list):
-        try:
-            comp_index = data.index(max(data))
-            comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
-            max_comp = sum(comp_list) / len(comp_list)
-
-            recoil_index = data.index(min(data))
-            recoil_list = [abs(x) for x in data[recoil_index - 10:recoil_index + 10]]
-            max_recoil = sum(recoil_list) / len(recoil_list)
-
-            return max_recoil, max_comp
-
-        except Exception as e:
-            print(f'ERROR in data_calculation/calc_middle_min_and_max_force - {e}')

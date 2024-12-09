@@ -607,7 +607,7 @@ class Controller:
                                'force_accum_list': [],
                                'move_accum_list': [],
                                'force_graph': [],
-                               'move_graph': [],
+                               'move_real_list': [],
                                'min_pos': False,
                                'max_pos': False,
                                'start_direction': False}
@@ -669,7 +669,7 @@ class Controller:
                        'force_accum_list': [],
                        'move_accum_list': [],
                        'force_graph': [],
-                       'move_graph': [],
+                       'move_real_list': [],
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,

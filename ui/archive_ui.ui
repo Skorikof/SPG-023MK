@@ -174,7 +174,12 @@
          </item>
          <item>
           <property name="text">
-           <string>Скорость/Сопротивление</string>
+           <string>Скорость/Сопротивление №1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Скорость/Сопротивление №2</string>
           </property>
          </item>
          <item>

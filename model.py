@@ -43,7 +43,6 @@ class Model:
         self.timer_yellow = None
         self.time_push_yellow = None
         self.yellow_rattle = False
-        self.adjust_x = 0
         self.main_min_point = 100
         self.min_point = 0
         self.max_point = 0
@@ -221,8 +220,7 @@ class Model:
                     move_list.append(response.get('move')[count])
 
             if not force_list:
-                # print(f'Пришла пустая посылка')
-                pass
+                pass # Пришла пустая посылка
 
             else:
                 command = {'force_real': force_list[-1],
@@ -369,7 +367,7 @@ class Model:
                 command = {'force_accum_list': [],
                            'move_accum_list': [],
                            'force_graph': [],
-                           'move_graph': [],
+                           'move_real_list': [],
                            'start_direction': False,
                            'min_pos': False,
                            'max_pos': False,
@@ -387,10 +385,10 @@ class Model:
         try:
             static_push_force = self.set_regs.get('static_push_force', 0)
 
-            min_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('min_point'))
+            min_index = self.set_regs.get('move_accum_list').index(self.min_point)
             force_min = abs(self.set_regs.get('force_accum_list')[min_index])
 
-            max_index = self.set_regs.get('move_accum_list').index(self.set_regs.get('max_point'))
+            max_index = self.set_regs.get('move_accum_list').index(self.max_point)
             force_max = abs(self.set_regs.get('force_accum_list')[max_index])
 
             push_force_mid = round((force_min + force_max) / 2, 1)
@@ -418,15 +416,16 @@ class Model:
                 speed = self.set_regs.get('speed')
                 hod = self.set_regs.get('amort').hod
 
-                move_list = list(map(lambda x: round(x + self.adjust_x, 1), self.set_regs.get('move_accum_list')))
-                force_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
+                move_list = self.set_regs.get('move_accum_list')[:]
+                force_list = self.set_regs.get('force_accum_list')[:]
 
                 max_recoil, max_comp = CalcData().calc_middle_min_and_max_force(force_list)
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
-                           'force_graph': force_list,
-                           'move_graph': move_list,
+                           'force_real_list': force_list,
+                           'force_graph': list(map(lambda x: round(x * (-1), 1), force_list)),
+                           'move_real_list': move_list[:],
                            'power': CalcData().calc_power(move_list, force_list),
                            'freq_piston': CalcData().calc_freq_piston(speed, hod),
                            'force_accum_list': [],
@@ -447,9 +446,6 @@ class Model:
 
         except Exception as e:
             self.log_error(f'ERROR in model/_full_circle_done - {e}')
-
-    def change_adjust_x(self, value):
-        self.adjust_x = value
 
     def _pars_response_on_circle(self, force: list, move: list):
         try:
@@ -508,14 +504,15 @@ class Model:
                 self.set_regs['list_write'].pop(0)
 
                 if res == 'OK!':
-                    if tag == 'reg':
-                        self._pars_result_reg_write(addr, value[0])
-
-                    elif tag == 'FC':
-                        if not self.set_regs.get('repeat_command'):
-                            self.set_regs['fc_ready'] = True
-                        else:
-                            self.set_regs['repeat_command'] = False
+                    pass
+                    # if tag == 'reg':
+                    #     self._pars_result_reg_write(addr, value[0])
+                    #
+                    # elif tag == 'FC':
+                    #     if not self.set_regs.get('repeat_command'):
+                    #         self.set_regs['fc_ready'] = True
+                    #     else:
+                    #         self.set_regs['repeat_command'] = False
 
         except Exception as e:
             self.log_error(f'ERROR in model/_result_write - {e}')
@@ -546,13 +543,6 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/write_out - {e}')
 
-    # def _ok_write(self):
-    #     print('OK write!!')
-
-    # def _ok_write_reg(self, n_reg):
-    #     print(f'Ok write reg --> {n_reg}')
-    #     pass
-
     def _init_writer(self, tag, values=None, reg_write=None, freq_command=None):
         try:
             writer = Writer(client=self.client,
@@ -562,12 +552,9 @@ class Model:
                             reg_write=reg_write,
                             freq_command=freq_command)
 
-            # if not self.writer_flag_init:
             writer.signals.thread_log.connect(self.log_info)
             writer.signals.thread_err.connect(self.log_error)
             writer.signals.write_result.connect(self._result_write)
-            writer_flag_init = True
-            # self.threadpool.start(writer)
 
             return writer
 
@@ -649,7 +636,6 @@ class Model:
             for i in range(0, 4, 2):
                 arr.append(int((hex(val[i])[2:] + hex(val[i + 1])[2:]), 16))
 
-            # self._init_writer('reg', arr, 0x200a)
             self.write_out('reg', arr, 0x200a)
 
         except Exception as e:
@@ -666,7 +652,6 @@ class Model:
             command = command + self._calc_crc(command)
             values = self._calc_values_write(command)
 
-            # self._init_writer('FC', freq_command=values)
             self.write_out('FC', freq_command=values)
 
         except Exception as e:
@@ -850,25 +835,10 @@ class Model:
     def calculate_freq(self, speed):
         """Пересчёт скорости в частоту для записи в частотник"""
         try:
-            # koef = (3 * 7) / (2 * 3.1415 * 0.98)
-            # hod = self.set_regs.get('hod', 120) / 1000
-            # radius = hod / 2
-            # freq_2 = int(100 * (koef * speed) / radius)
-            # print(f'freq staraia --> {freq_2 / 100}')
-
-            # hod = self.set_regs.get('hod', 120)  # Ход штока
-            # way = hod * 2 / 1000  # Путь за один оборот
-            # count = speed / way  # Количество оборотов редуктора в секунду для введённой скорости
-            # count = count * 60  # Пересчёт на об/мин
-            # rotate = count * 17.99  # Количество оборотов двигателя
-            # freq1 = int((rotate / 30) * 100)  # Полученная частота для этих оборотов, 100 - для записи, 30 - постоянный коэффициент
-            # print(f'freq moia --> {freq1 / 100}')
-
             koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
             hod = self.set_regs.get('hod', 120) / 1000
             radius = hod / 2
             freq = int(100 * (koef * speed) / radius)
-            # print(f'freq tvoia --> {freq / 100}')
 
             return freq
 

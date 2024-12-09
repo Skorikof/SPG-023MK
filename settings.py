@@ -55,7 +55,6 @@ class PrgSettings:
                           'move': 0.0,
                           'move_list': [],
                           'move_accum_list': [],
-                          'move_graph': [],
                           'max_comp': 0,
                           'max_recoil': 0,
                           'temperature': 0,

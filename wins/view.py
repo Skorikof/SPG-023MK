@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 import glob_var
 
 from archive import ReadArchive
-from my_obj.data_calculation import SpeedLimitForHod
+from my_obj.data_calculation import SpeedLimitForHod, CalcData
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
@@ -451,7 +451,8 @@ class AppWindow(QMainWindow):
                 self._update_conv_graph()
 
             elif temp == 'hand':
-                self.win_set.update_graph_hand_set()
+                pass
+                # self.win_set.update_graph_hand_set()
 
             elif temp == 'temper':
                 self._update_temper_graph()
@@ -512,9 +513,6 @@ class AppWindow(QMainWindow):
             self.model.update_main_dict(command)
 
             self.specif_ui_fill(amort)
-
-            adjust_x = int((amort.max_length - amort.min_length - amort.adapter_len) / 2)
-            self.model.change_adjust_x(adjust_x)
 
         except Exception as e:
             self.log_msg_err_slot(f'ERROR in view/select_amort - {e}')
@@ -942,8 +940,11 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
+            min_p = self.response.get('min_point')
+            offset_p = CalcData().calc_offset_move_by_hod(self.response.get('amort'), min_p)
+            move_list = list(map(lambda x: round(x + offset_p, 1), self.response.get('move_real_list')))
             pen = pg.mkPen(color='black', width=3)
-            self.ui.lab_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
+            self.ui.lab_GraphWidget.plot(move_list, self.response.get('force_graph'), pen=pen)
 
             self._update_lab_data()
 
@@ -1023,8 +1024,11 @@ class AppWindow(QMainWindow):
     def _update_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.clear()
+            min_p = self.response.get('min_point')
+            offset_p = CalcData().calc_offset_move_by_hod(self.response.get('amort'), min_p)
+            move_list = list(map(lambda x: round(x + offset_p, 1), self.response.get('move_real_list')))
             pen = pg.mkPen(color='black', width=3)
-            self.ui.conv_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
+            self.ui.conv_GraphWidget.plot(move_list, self.response.get('force_graph'), pen=pen)
             
             self._update_conv_data()
 
@@ -1168,7 +1172,7 @@ class AppWindow(QMainWindow):
 
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.response.get('move_graph')[:],
+            data_dict = {'move_graph': self.response.get('move_real_list')[:],
                          'force_graph': self.response.get('force_graph')[:],
                          'temper_graph': self.response.get('temper_graph', [0])[:],
                          'temper_force_graph': self.response.get('temper_force_graph', [0])[:],

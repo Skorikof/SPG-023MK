@@ -223,7 +223,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _update_win(self):
         self.lcdTime.display(self.response.get('count'))
-        self.lcdF.display(self.response.get('force_real'))
+        self.lcdF.display(self.response.get('force'))
         self.lcdH.display(self.response.get('move'))
         self.lcdH_T.display(self.response.get('traverse_move'))
         self.lcdTemp.display(self.response.get('temper_first', 0))
@@ -290,9 +290,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         else:
             self.model.reader_stop_test()
 
-    def update_graph_hand_set(self):
-        try:
-            self.graph_ui.data_line_test.setData(self.response.get('move_graph'), self.response.get('force_graph'))
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in settings_window/update_graph_hand_set - {e}')
+    # def update_graph_hand_set(self):
+    #     try:
+    #         self.graph_ui.data_line_test.setData(self.response.get('move_graph'), self.response.get('force_graph'))
+    #
+    #     except Exception as e:
+    #         self._statusbar_set_ui(f'ERROR in settings_window/update_graph_hand_set - {e}')
