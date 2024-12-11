@@ -49,7 +49,19 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self._smap_line_edit()
         self._fill_lbl_temp_sens()
 
-        self.freq_frame.setVisible(False)
+        self._check_operator()
+
+    def _check_operator(self):
+        try:
+            name = self.model.set_regs.get('operator')['name']
+            if name == 'Скориков И.А.':
+                self.freq_frame.setVisible(True)
+
+            else:
+                self.freq_frame.setVisible(False)
+
+        except Exception as e:
+            self._statusbar_set_ui(f'ERROR in settings_window/_check_operator - {e}')
 
     def _fill_lbl_temp_sens(self):
         channel = self.response.get('select_temper', 0)
@@ -226,7 +238,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.lcdF.display(self.response.get('force'))
         self.lcdH.display(self.response.get('move'))
         self.lcdH_T.display(self.response.get('traverse_move'))
-        self.lcdTemp.display(self.response.get('temper_first', 0))
+        self.lcdTemp_1.display(self.response.get('temper_first', 0))
+        self.lcdTemp_2.display(self.response.get('temper_second', 0))
         self.lineEdit_F_alarm.setText(f'{self.response.get("force_alarm")}')
 
         self._update_color_switch()
