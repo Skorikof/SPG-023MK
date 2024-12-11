@@ -603,7 +603,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -912,7 +912,7 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>310</y>
+               <y>410</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -949,7 +949,7 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>410</y>
+               <y>310</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1185,7 +1185,7 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>360</y>
+               <y>260</y>
                <width>340</width>
                <height>35</height>
               </rect>
@@ -1207,7 +1207,7 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>260</y>
+               <y>360</y>
                <width>340</width>
                <height>35</height>
               </rect>
@@ -1266,7 +1266,7 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>260</y>
+               <y>360</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1303,7 +1303,7 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>310</y>
+               <y>410</y>
                <width>340</width>
                <height>35</height>
               </rect>
@@ -1325,7 +1325,7 @@
              <property name="geometry">
               <rect>
                <x>480</x>
-               <y>360</y>
+               <y>260</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1362,7 +1362,7 @@
              <property name="geometry">
               <rect>
                <x>100</x>
-               <y>410</y>
+               <y>310</y>
                <width>340</width>
                <height>35</height>
               </rect>
@@ -1539,7 +1539,7 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>260</y>
+               <y>360</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1576,7 +1576,7 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>310</y>
+               <y>410</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1613,7 +1613,7 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>360</y>
+               <y>260</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -1650,7 +1650,7 @@
              <property name="geometry">
               <rect>
                <x>680</x>
-               <y>410</y>
+               <y>310</y>
                <width>150</width>
                <height>35</height>
               </rect>
@@ -3177,16 +3177,7 @@ QPushButton:checked
              <enum>QFrame::Sunken</enum>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <property name="spacing">
-              <number>5</number>
-             </property>
-             <property name="leftMargin">
-              <number>5</number>
-             </property>
              <property name="topMargin">
-              <number>5</number>
-             </property>
-             <property name="rightMargin">
               <number>5</number>
              </property>
              <property name="bottomMargin">
@@ -3264,6 +3255,31 @@ QPushButton:checked
                </property>
                <property name="text">
                 <string>ИЗМЕНИТЬ СКОРОСТЬ</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="test_save_btn">
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Arial Black</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>СОХРАНИТЬ</string>
                </property>
               </widget>
              </item>

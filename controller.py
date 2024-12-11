@@ -236,7 +236,7 @@ class Controller:
 
             elif stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    max_temper = self.response.get('max_temperature')
+                    max_temper = self.response.get('temperature')
                     if max_temper < self.response.get('finish_temper', 80):
                         max_comp = self.response.get('max_comp')
                         max_recoil = self.response.get('max_recoil')
@@ -670,6 +670,7 @@ class Controller:
                        'move_accum_list': [],
                        'force_graph': [],
                        'move_real_list': [],
+                       'max_temperature': 0,
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,

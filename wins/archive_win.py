@@ -186,9 +186,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     self.type_graph = 'triple'
 
                 elif index == 3:
-                    self.type_graph = 'boost'
+                    self.type_graph = 'boost_1'
 
                 elif index == 4:
+                    self.type_graph = 'boost_2'
+
+                elif index == 5:
                     self.type_graph = 'temper'
 
                 self._archive_update()
@@ -205,7 +208,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             if self.type_graph == 'speed':
                 index = 1
-                for key, value in self.archive.struct_cascade.cascade.items():
+                for key, value in self.archive.struct.cascade.items():
                     temp = (f'{index}) '
                             f'{value[0].time_test} - '
                             f'{value[0].amort.name} - '
@@ -215,13 +218,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     index += 1
 
             elif self.type_graph == 'temper':
-                for i in range(len(self.archive.struct_temper.tests)):
-                    begin_temp = self.archive.struct_temper.tests[i].temper_graph[0]
-                    finish_temp = self.archive.struct_temper.tests[i].temper_graph[-1]
+                for i in range(len(self.archive.struct.temper)):
+                    begin_temp = self.archive.struct.temper[i].temper_graph[0]
+                    finish_temp = self.archive.struct.temper[i].temper_graph[-1]
                     temp = (f'{i + 1}) '
-                            f'{self.archive.struct_temper.tests[i].time_test} - '
-                            f'{self.archive.struct_temper.tests[i].amort.name} - '
-                            f'{self.archive.struct_temper.tests[i].serial_number} - '
+                            f'{self.archive.struct.temper[i].time_test} - '
+                            f'{self.archive.struct.temper[i].amort.name} - '
+                            f'{self.archive.struct.temper[i].serial_number} - '
                             f'{begin_temp}~{finish_temp} °С')
                     temp_arr.append(temp)
 
@@ -355,8 +358,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _pars_lab_cascade_data(self):
         try:
             index = self.index_test_cascade
-            if not self.archive.struct_cascade.cascade.get(index + 1) is None:
-                data = self.archive.struct_cascade.cascade.get(index + 1)
+            if not self.archive.struct.cascade.get(index + 1) is None:
+                data = self.archive.struct.cascade.get(index + 1)
                 self._fill_archive_data_gui(data[0])
 
                 self._fill_flag_push_force(data[0].flag_push_force)
@@ -387,11 +390,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _pars_temper_data(self):
         try:
             index = self.index_test_temper
-            if self.archive.struct_temper.tests[index]:
-                self._fill_archive_data_gui(self.archive.struct_temper.tests[index])
+            if self.archive.struct.temper[index]:
+                self._fill_archive_data_gui(self.archive.struct.temper[index])
 
-                self.speed_le.setText(f'{self.archive.struct_temper.tests[index].speed}')
-                self._fill_flag_push_force(self.archive.struct_temper.tests[index].flag_push_force)
+                self.speed_le.setText(f'{self.archive.struct.temper[index].speed}')
+                self._fill_flag_push_force(self.archive.struct.temper[index].flag_push_force)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_temper_data - {e}')
@@ -474,7 +477,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._fill_triple_graph()
                 self._visible_compare_btn(False)
 
-            elif self.type_graph == 'boost':
+            elif self.type_graph == 'boost_1' or self.type_graph == 'boost_2':
                 self._gui_power_freq_visible(False)
                 self._gui_boost_graph()
                 self._fill_boost_graph()
@@ -498,11 +501,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             move_list = obj.move_list
             force_list = obj.force_list
             push_force = self._select_push_force(obj)
-            max_recoil = round(max(force_list) + push_force, 2)
-            max_comp = round(abs(min(force_list)) - push_force, 2)
+            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+            max_recoil = round(recoil + push_force, 2)
+            max_comp = round(comp - push_force, 2)
             power = CalcData().calc_power(move_list, force_list)
             speed = float(obj.speed)
-            freq = CalcData().calc_freq_piston(speed, int(obj.amort))
+            freq = CalcData().calc_freq_piston(speed, obj.amort)
 
             self.push_force_le.setText(f'{push_force}')
             self.power_le.setText(f'{power}')
@@ -524,7 +528,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             comp_list = [0]
             recoil_list = [0]
             push_force = 0
-            data = self.archive.struct_cascade.cascade.get(index + 1)
+            data = self.archive.struct.cascade.get(index + 1)
 
             for obj in data:
                 speed_list.append(float(obj.speed))
@@ -535,8 +539,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 elif flag_push_force == '0':
                     push_force = float(obj.static_push_force)
 
-                recoil_list.append(round(max(obj.force_list) + push_force, 2))
-                comp_list.append(round(min(obj.force_list) + push_force, 2))
+                recoil, comp = CalcData().calc_middle_min_and_max_force(obj.force_list)
+
+                recoil_list.append(round(recoil + push_force, 2))
+                comp_list.append(round(comp * (-1) + push_force, 2))
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
@@ -595,8 +601,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             push_force = self._select_push_force(self.archive.struct.tests[index])
             self.push_force_le.setText(f'{push_force}')
 
-            self.comp_le.setText(f'{abs(min(force_list))}')
-            self.recoil_le.setText(f'{max(force_list)}')
+            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+
+            self.comp_le.setText(f'{recoil}')
+            self.recoil_le.setText(f'{comp}')
 
             self._fill_triple_hod_graph(hod)
 
@@ -647,7 +655,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             force_y = self._calc_triple_force_coord(force, index)
             pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(x_coord, force_y, pen=pen, name='Сила амортизатора')
+            self.graphwidget.plot(x_coord, force_y, pen=pen, name='Усилие')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
@@ -736,8 +744,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             push_force = self._select_push_force(self.archive.struct.tests[index])
             self.push_force_le.setText(f'{push_force}')
 
-            self.comp_le.setText(f'{abs(min(force_list))}')
-            self.recoil_le.setText(f'{max(force_list)}')
+            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+
+            self.comp_le.setText(f'{comp}')
+            self.recoil_le.setText(f'{recoil}')
+
+            if self.type_graph == 'boost_2':
+                offset_p = abs(move_list[0] + int(self.archive.struct.tests[index].amort.hod) / 2)
+                move_list = [round(x - offset_p) for x in move_list]
 
             speed_list = self._calc_triple_speed_coord(move_list, 0)
 
@@ -764,16 +778,17 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             recoil_list = []
             comp_list = []
             index = self.index_test_temper
-            temper_list = self.archive.struct_temper.tests[index].temper_list
+            temper_coord = self.archive.struct.temper[index].temper_graph
 
-            for value in self.archive.struct_temper.tests[index].temper_force_list:
+            for value in self.archive.struct.temper[index].temper_force_graph:
+                value = value.strip('\'\"')
                 value = value.replace(',', '.')
                 value = value.split('|')
                 recoil, comp = float(value[0]), float(value[1])
                 recoil_list.append(recoil)
                 comp_list.append(comp)
 
-            push_force = self._select_push_force(self.archive.struct_temper.tests[index])
+            push_force = self._select_push_force(self.archive.struct.temper[index])
             self.push_force_le.setText(f'{push_force}')
 
             self.comp_le.setText(f'{comp_list[-1]}')
@@ -782,8 +797,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             pen_recoil = pg.mkPen(color=self.color_pen[0], width=3)
             pen_comp = pg.mkPen(color=self.color_pen[1], width=3)
 
-            self.graphwidget.plot(temper_list, recoil_list, pen=pen_recoil, name='Отбой')
-            self.graphwidget.plot(temper_list, comp_list, pen=pen_comp, name='Сжатие')
+            self.graphwidget.plot(temper_coord, recoil_list, pen=pen_recoil, name='Отбой')
+            self.graphwidget.plot(temper_coord, comp_list, pen=pen_comp, name='Сжатие')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
@@ -823,7 +838,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             elif self.type_graph == 'speed':
                 index = self.index_test_cascade
-                name = self._name_screen_for_save_speed(self.archive.struct_cascade.cascade[index + 1])
+                name = self._name_screen_for_save_speed(self.archive.struct.cascade[index + 1])
                 main_dir = '2_Усилие_Скорость'
 
             elif self.type_graph == 'triple':
@@ -831,14 +846,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 name = self._name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '3_Ход_Скорость_Сопротивление'
 
-            elif self.type_graph == 'boost':
+            elif self.type_graph == 'boost_1' or self.type_graph == 'boost_2':
                 index = self.index_test
                 name = self._name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '4_Скорость_Сопротивление'
 
             elif self.type_graph == 'temper':
                 index = self.index_test_temper
-                name = self._name_screen_for_save_temper(self.archive.struct_temper.tests[index])
+                name = self._name_screen_for_save_temper(self.archive.struct.temper[index])
                 main_dir = '5_Температура_Сопротвление'
 
             self._create_dir_for_save(main_dir)
@@ -911,8 +926,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.type_graph == 'speed':
                 index = self.index_test_cascade
-                if not self.archive.struct_cascade.cascade[index + 1] in self.compare_data:
-                    self.compare_data.append(self.archive.struct_cascade.cascade[index + 1])
+                if not self.archive.struct.cascade[index + 1] in self.compare_data:
+                    self.compare_data.append(self.archive.struct.cascade[index + 1])
 
             elif self.type_graph == 'temper':
                 index = self.index_test_temper
@@ -952,9 +967,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 for graph in obj:
                     x_list = graph.move_list
                     y_list = graph.force_list
-                    speed = graph.speed
                     pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-                    self.graphwidget.plot(x_list, y_list, pen=pen, name=f'Скорость {speed} м/с')
+
+                    name = (f'{graph.time_test} - '
+                            f'{graph.amort.name} - '
+                            f'{graph.serial_number} - '
+                            f'{graph.speed}')
+
+                    self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
 
                 self.graphwidget.addLegend()
 
@@ -973,8 +993,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                         elif flag_push_force == '0':
                             push_force = float(graph.static_push_force)
 
-                        recoil_list.append(round(max(graph.force_list) + push_force, 2))
-                        comp_list.append(round(min(graph.force_list) + push_force, 2))
+                        recoil, comp = CalcData().calc_middle_min_and_max_force(graph.force_list)
+
+                        recoil_list.append(round(recoil + push_force, 2))
+                        comp_list.append(round(comp * (-1) + push_force, 2))
 
                     x_list = [*speed_list[::-1], *speed_list]
                     y_list = [*comp_list[::-1], *recoil_list]

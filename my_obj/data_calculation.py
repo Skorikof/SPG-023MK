@@ -25,11 +25,11 @@ class SpeedLimitForHod:
 class CalcData:
     def calc_middle_min_and_max_force(self, data: list):
         try:
-            comp_index = data.index(max(data))
+            comp_index = data.index(min(data))
             comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
             max_comp = sum(comp_list) / len(comp_list)
 
-            recoil_index = data.index(min(data))
+            recoil_index = data.index(max(data))
             recoil_list = [abs(x) for x in data[recoil_index - 10:recoil_index + 10]]
             max_recoil = sum(recoil_list) / len(recoil_list)
 
@@ -51,7 +51,7 @@ class CalcData:
             for i in range(1, len(move)):
                 temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
 
-            temp = round((temp * 0.009807) / 1000, 1)
+            temp = round((temp * 0.009807) / 1000, 3)
 
             return temp
 
@@ -60,7 +60,7 @@ class CalcData:
 
     def calc_freq_piston(self, speed, amort):
         try:
-            return round(speed / (amort.hod * 0.002 * 3.14), 3)
+            return round(speed / (int(amort.hod) * 0.002 * 3.14), 3)
 
         except Exception as e:
             print(f'ERROR in data_calculation/calc_freq_piston - {e}')

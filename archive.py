@@ -8,10 +8,13 @@ from amorts import DataAmort
 class FileArchive:
     def __init__(self):
         self.tests = []
+        self.cascade = {}
+        self.temper = []
 
 
 class TestArchive:
     def __init__(self):
+        self.index = -1
         self.time_test = ''
         self.operator_name = ''
         self.operator_rank = ''
@@ -44,8 +47,7 @@ class ReadArchive:
         self.cascade_list = []
 
         self.struct = None
-        self.struct_cascade = TestCascade()
-        self.struct_temper = None
+        self.type_graph = None
         self.ind_test = -1
         self.ind_casc = 0
         self.ind_temp = -1
@@ -81,7 +83,6 @@ class ReadArchive:
             self.ind_temp = -1
             self.cascade_list = []
             self.struct = FileArchive()
-            self.struct_temper = FileArchive()
 
             self.index_archive = self.files_name_arr.index(data)
 
@@ -102,21 +103,22 @@ class ReadArchive:
     def _pars_str_archive(self, archive_list):
         try:
             if archive_list[0] == 'end_test':
-                if self.struct.tests[self.ind_test].type_test == 'lab_cascade':
-                    self.struct_cascade.cascade[self.ind_casc] = self.cascade_list[:]
+                if self.type_graph == 'lab_cascade':
+                    self.struct.cascade[self.ind_casc] = self.cascade_list[:]
                     self.ind_casc += 1
                     self.cascade_list = []
 
             else:
                 if not archive_list[0] == '*':
-                    if archive_list[3] == 'temper':
-                        self.ind_temp += 1
-                        self.struct_temper.tests.append(TestArchive())
+                    self.type_graph = archive_list[3]
 
-                        self._fill_obj_archive_data(self.struct_temper.tests[self.ind_temp], archive_list)
+                    if self.type_graph == 'temper':
+                        self.ind_temp += 1
+                        self.struct.temper.append(TestArchive())
+                        self._fill_obj_archive_data(self.struct.temper[self.ind_temp], archive_list)
 
                         temp_list = self._add_data_on_list_graph(archive_list[24:-1])
-                        self.struct_temper.tests[self.ind_temp].temper_graph = temp_list[:]
+                        self.struct.temper[self.ind_temp].temper_graph = temp_list[:]
 
                     else:
                         self.ind_test += 1
@@ -129,8 +131,8 @@ class ReadArchive:
                         self.struct.tests[self.ind_test].move_list = temp_list[:]
 
                 elif archive_list[0] == '*':
-                    if self.struct.tests[self.ind_test].type_test == 'temper':
-                        self.struct_temper.tests[self.ind_temp].temper_force_graph = archive_list[24:-1]
+                    if self.type_graph == 'temper':
+                        self.struct.temper[self.ind_temp].temper_force_graph = archive_list[24:-1]
                     else:
                         temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 

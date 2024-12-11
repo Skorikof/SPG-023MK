@@ -422,14 +422,12 @@ class Model:
                 max_recoil, max_comp = CalcData().calc_middle_min_and_max_force(force_list)
 
                 offset_p = CalcData().calc_offset_move_by_hod(amort, self.min_point)
-                move_graph = list(map(lambda x: round(x + offset_p, 1), move_list))
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
-                           'force_real_list': force_list,
                            'force_graph': list(map(lambda x: round(x * (-1), 1), force_list)),
                            'move_real_list': move_list[:],
-                           'move_graph': move_graph,
+                           'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
                            'power': CalcData().calc_power(move_list, force_list),
                            'freq_piston': CalcData().calc_freq_piston(speed, amort),
                            'force_accum_list': [],
