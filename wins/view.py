@@ -98,7 +98,9 @@ class AppWindow(QMainWindow):
         self.win_archive.signals.log_msg.connect(self.log_msg_info_slot)
         self.win_archive.signals.log_err.connect(self.log_msg_err_slot)
 
+    # FIXME
     def _init_buttons(self):
+        self.ui.test_save_btn.setVisible(False)
         self.ui.main_STOP_btn.clicked.connect(self.btn_main_stop_clicked)
         self.ui.ok_message_btn.clicked.connect(self.btn_ok_message_clicked)
         self.ui.cancel_message_btn.clicked.connect(self.btn_cancel_message_clicked)

@@ -73,7 +73,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
         self.btn_print.setVisible(False)
-        # self.btn_print.clicked.connect(self._archive_save_form)
         self.btn_save.clicked.connect(self._archive_save_form)
         self.btn_compare.clicked.connect(self._add_compare_data)
         self.btn_clier.clicked.connect(self._clear_compare_data)
@@ -104,18 +103,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.combo_dates.addItems(self.archive.files_name_sort)
                 self.combo_dates.setCurrentIndex(0)
                 self.index_date = self.archive.files_name_sort[0]
-                self._archive_update()
+                self._archive_selected()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/read_path_archive - {e}')
-
-    def _archive_update(self):
-        try:
-            self._archive_selected()
-            # self._archive_graph()
-
-        except Exception as e:
-            self._statusbar_set_ui(f'ERROR in archive_win/_archive_update - {e}')
 
     def _archive_ui_clear(self):
         try:
@@ -136,6 +127,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.max_temp_le.setText('')
             self.hod_le.setText('')
             self.power_le.setText('')
+            self.push_force_le.setText('')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
@@ -144,7 +136,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.index_date != date:
                 self.index_date = date
-                self._archive_update()
+                self._archive_selected()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
@@ -194,7 +186,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 elif index == 5:
                     self.type_graph = 'temper'
 
-                self._archive_update()
+                self._archive_selected()
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
