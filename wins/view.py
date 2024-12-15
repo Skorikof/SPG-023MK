@@ -1168,7 +1168,7 @@ class AppWindow(QMainWindow):
 
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.response.get('move_real_list')[:],
+            data_dict = {'move_graph': self.response.get('move_graph')[:],
                          'force_graph': self.response.get('force_graph')[:],
                          'temper_graph': self.response.get('temper_graph', [0])[:],
                          'temper_force_graph': self.response.get('temper_force_graph', [0])[:],

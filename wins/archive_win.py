@@ -360,7 +360,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 for obj in data:
                     speed_list.append(obj.speed)
 
-                self.speed_le.setText(f'{speed_list[0]} - {speed_list[-1]}')
+                self.speed_le.setText(f'{speed_list[0]}~{speed_list[-1]}')
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
@@ -490,13 +490,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             index = self.index_test
             obj = self.archive.struct.tests[index]
+
             move_list = obj.move_list
+
             force_list = obj.force_list
             push_force = self._select_push_force(obj)
+
             recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
+
             power = CalcData().calc_power(move_list, force_list)
+
             speed = float(obj.speed)
             freq = CalcData().calc_freq_piston(speed, obj.amort)
 
@@ -508,7 +513,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             pen = pg.mkPen(color='black', width=3)
 
-            self.graphwidget.plot(move_list, force_list, pen=pen, name='Рабочая диаграмма')
+            self.graphwidget.plot(move_list, force_list, pen=pen)
 
         except Exception as e:
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
@@ -590,8 +595,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             hod = int(self.archive.struct.tests[index].amort.hod)
             move_list = self.archive.struct.tests[index].move_list
             force_list = self.archive.struct.tests[index].force_list
-            push_force = self._select_push_force(self.archive.struct.tests[index])
-            self.push_force_le.setText(f'{push_force}')
+            self.push_force_le.setText(f'{0}')
 
             recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
 
