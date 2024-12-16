@@ -25,6 +25,7 @@ class WinSignals(QObject):
     full_cycle_count = pyqtSignal()
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
+    save_koef_force = pyqtSignal()
 
 
 class Model:
@@ -40,6 +41,9 @@ class Model:
         self.writer_flag_init = False
         self.flag_write = False
         self.time_response = None
+        self.timer_add_koef = None
+        self.koef_force_list = []
+        self.timer_calc_koef = None
         self.timer_yellow = None
         self.time_push_yellow = None
         self.yellow_rattle = False
@@ -157,12 +161,25 @@ class Model:
         except Exception as e:
             self.log_error(f'ERROR in model/update_main_dict - {e}')
 
-    def save_koef_force(self):
-        try:
-            self.set_regs['force_refresh'] = self.set_regs.get('force_real', 0)
+    def init_timer_koef_force(self):
+        self.timer_add_koef = QTimer()
+        self.timer_add_koef.setInterval(50)
+        self.timer_add_koef.timeout.connect(self._add_koef_force_in_list)
+        self.timer_add_koef.start()
 
-        except Exception as e:
-            self.log_error(f'ERROR in model/save_koef_force - {e}')
+        self.timer_calc_koef = QTimer()
+        self.timer_calc_koef.setInterval(1000)
+        self.timer_calc_koef.timeout.connect(self._calc_and_save_force_koef)
+        self.timer_calc_koef.start()
+
+    def _add_koef_force_in_list(self):
+        self.koef_force_list.append(self.set_regs.get('force_real', 0))
+
+    def _calc_and_save_force_koef(self):
+        self.timer_add_koef.stop()
+        self.timer_calc_koef.stop()
+        self.set_regs['force_refresh'] = round(sum(self.koef_force_list) / len(self.koef_force_list), 1)
+        self.signals.save_koef_force.emit()
 
     def cancel_koef_force(self):
         try:

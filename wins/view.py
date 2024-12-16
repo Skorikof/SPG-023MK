@@ -68,6 +68,7 @@ class AppWindow(QMainWindow):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.read_finish.connect(self.update_data_view)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
+        self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
@@ -402,14 +403,16 @@ class AppWindow(QMainWindow):
 
     def btn_correct_force_clicked(self):
         try:
-            self.model.save_koef_force()
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
-                                          )
+            self.model.init_timer_koef_force()
 
         except Exception as e:
             self.log_msg_err_slot(f'btn_correct_force_clicked - {e}')
+
+    def btn_correct_force_slot(self):
+        msg = QMessageBox.information(self,
+                                      'Внимание',
+                                      f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
+                                      )
 
     def btn_cancel_correct_force_clicked(self):
         try:
