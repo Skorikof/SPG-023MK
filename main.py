@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 import sys
-from model import Model
-from controller import Controller
-from wins.view import AppWindow
-from wins.settings_window import SetWindow
 from tendo import singleton
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
+from logger import my_logger
+from model import Model
+from controller import Controller
+from wins.view import AppWindow
+from wins.settings_window import SetWindow
+
 
 def main():
     try:
+        log = my_logger.get_logger(__name__)
+        log.info('Starting program')
+
         me = singleton.SingleInstance()
         app = QApplication(sys.argv)
         m = Model()

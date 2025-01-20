@@ -3,6 +3,8 @@ import time
 from functools import reduce
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
+from logger import my_logger
+
 
 class ControlSignals(QObject):
     control_msg = pyqtSignal(str)
@@ -25,6 +27,8 @@ class Controller:
         try:
             self.signals = ControlSignals()
             self.model = model
+
+            self.logger = my_logger.get_logger(__name__)
 
             self.response = {}
             self.timer_process = None
@@ -53,7 +57,8 @@ class Controller:
             # self.flag_safety_fence = False
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/__init__ - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/__init__ - {e}')
 
     def _init_signals(self):
         try:
@@ -61,21 +66,24 @@ class Controller:
             self.model.signals.test_launch.connect(self._yellow_btn_push)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_init_signals - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_init_signals - {e}')
 
     def update_data_ctrl(self, response):
         try:
             self.response = {**self.response, **response}
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/update_data - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/update_data - {e}')
 
     def _update_full_cycle(self):
         try:
             self.count_cycle += 1
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_update_full_cycle - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_update_full_cycle - {e}')
 
     def change_flag_repeat(self, flag):
         self.flag_repeat = flag
@@ -88,7 +96,8 @@ class Controller:
             self.timer_process.start()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/init_timer - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/init_timer - {e}')
 
     def _update_stage_on_timer(self):
         try:
@@ -334,7 +343,8 @@ class Controller:
                 pass
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_update_stage_on_timer - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_update_stage_on_timer - {e}')
 
     def _control_traverse_move(self) -> bool:  # Функция отслеживания траверсы, при достижении точки останов
         try:
@@ -355,7 +365,8 @@ class Controller:
             return False
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_control_traverse_move - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_control_traverse_move - {e}')
 
     def _control_switch_traverse_position(self):
         try:
@@ -363,7 +374,8 @@ class Controller:
                 self.model.motor_stop(2)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_control_switch_traverse_position - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_control_switch_traverse_position - {e}')
 
     def _control_alarm_traverse_position(self):
         try:
@@ -373,7 +385,8 @@ class Controller:
                 self._alarm_traverse_position('down')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_control_alarm_traverse_position - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_control_alarm_traverse_position - {e}')
 
     def move_traverse_out_alarm(self, pos):
         try:
@@ -387,7 +400,8 @@ class Controller:
                 self.model.motor_up(2)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/move_traverse_out_alarm - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/move_traverse_out_alarm - {e}')
 
     def _control_alarm_state(self):
         try:
@@ -403,7 +417,8 @@ class Controller:
                 self._safety_fence()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_control_alarm_state - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_control_alarm_state - {e}')
 
     def _lost_control(self):
         command = {'stage': 'wait',
@@ -418,7 +433,8 @@ class Controller:
         self.model.write_bit_red_light(1)
         # self.model.write_bit_force_cycle(0)
 
-        self.model.log_error(f'lost control')
+        self.logger.warning(f'lost control')
+        self.model.status_bar_msg(f'lost control')
         self.signals.control_msg.emit('lost_control')
         # self.flag_lost_control = False
 
@@ -462,7 +478,8 @@ class Controller:
         self.model.write_bit_red_light(1)
         # self.model.write_bit_force_cycle(0)
 
-        self.model.log_error(f'excess force')
+        self.logger.warning(f'excess force')
+        self.model.status_bar_msg(f'excess force')
         self.signals.control_msg.emit('excess_force')
         # self.flag_excess_force = False
 
@@ -503,7 +520,8 @@ class Controller:
                    }
         self.model.update_main_dict(command)
 
-        self.model.log_error(f'excess temperature')
+        self.logger.warning(f'excess temperature')
+        self.model.status_bar_msg(f'excess temperature')
         self.signals.control_msg.emit('excess_temperature')
 
     def _safety_fence(self):
@@ -520,7 +538,8 @@ class Controller:
 
         self.model.reader_stop_test()
 
-        self.model.log_error(f'safety fence')
+        self.logger.warning(f'safety fence')
+        self.model.status_bar_msg(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
 
         # self.model.write_bit_force_cycle(0)
@@ -560,7 +579,8 @@ class Controller:
         # self.model.write_bit_force_cycle(0)
 
         if self.flag_alarm_traverse:
-            self.model.log_error(f'alarm traverse {pos}')
+            self.logger.warning(f'alarm traverse {pos}')
+            self.model.status_bar_msg(f'alarm traverse {pos}')
             self.signals.control_msg.emit(f'alarm_traverse_{pos}')
             self.flag_alarm_traverse = False
 
@@ -627,7 +647,8 @@ class Controller:
                     self.stop_test_clicked()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_yellow_btn_push - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_yellow_btn_push - {e}')
 
     def _write_speed_motor(self, adr: int, speed: float = None, freq: int = None):
         """
@@ -644,7 +665,8 @@ class Controller:
             self.model.write_frequency(adr, value)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_write_speed_motor - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_write_speed_motor - {e}')
 
     def start_test_clicked(self):
         """
@@ -706,7 +728,8 @@ class Controller:
                     self.traverse_install_point('install')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/start_test_clicked - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/start_test_clicked - {e}')
 
     def stop_test_clicked(self):
         """
@@ -736,7 +759,8 @@ class Controller:
                 self.signals.cancel_test.emit()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/stop_test_clicked - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/stop_test_clicked - {e}')
 
     def search_hod_gear(self):
         try:
@@ -776,7 +800,8 @@ class Controller:
             self.model.motor_up(1)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/search_hod_gear - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/search_hod_gear - {e}')
 
     def move_gear_set_pos(self):
         try:
@@ -815,7 +840,8 @@ class Controller:
             self.model.motor_up(1)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/move_gear_set_pos - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/move_gear_set_pos - {e}')
 
     def _traverse_move_position(self, set_point):
         """Непосредственно включение и перемещение траверсы"""
@@ -833,7 +859,8 @@ class Controller:
                 self.model.motor_down(2)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_traverse_move_position - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_traverse_move_position - {e}')
 
     def _traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
@@ -846,7 +873,8 @@ class Controller:
             self.model.motor_up(2)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_traverse_referent_point - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_traverse_referent_point - {e}')
 
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
@@ -886,7 +914,8 @@ class Controller:
                 self._traverse_move_position(end_point)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/traverse_install_point - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/traverse_install_point - {e}')
 
     def _test_move_cycle(self):
         """Проверочный ход"""
@@ -912,7 +941,8 @@ class Controller:
             self.model.motor_up(1)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_test_move_cycle - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_test_move_cycle - {e}')
 
     def _calc_excess_force(self):
         try:
@@ -926,7 +956,8 @@ class Controller:
                 return (force // 100) * 100 + 100
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_calc_excess_force - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_calc_excess_force - {e}')
 
     def _pumping_before_test(self):
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
@@ -948,7 +979,8 @@ class Controller:
             self.model.motor_up(1)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_pumping_before_test - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_pumping_before_test - {e}')
 
     def _test_on_two_speed(self, ind):
         try:
@@ -984,7 +1016,8 @@ class Controller:
             self.count_cycle = 0
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_test_on_two_speed - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_test_on_two_speed - {e}')
 
     def _test_lab_hand_speed(self):
         try:
@@ -1003,7 +1036,8 @@ class Controller:
             self.count_cycle = 0
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_test_lab_hand_speed - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _test_temper(self):
         try:
@@ -1024,7 +1058,8 @@ class Controller:
             self.count_cycle = 0
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_test_temper - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_test_temper - {e}')
 
     def _fill_temper_graph(self, temper, force):
         try:
@@ -1038,7 +1073,8 @@ class Controller:
             self.model.update_main_dict({'temper_force_graph': force_graph})
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_fill_temper_graph - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_fill_temper_graph - {e}')
 
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
@@ -1062,7 +1098,8 @@ class Controller:
                 self.lamp_red_switch_on()
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_result_conveyor_test - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_result_conveyor_test - {e}')
 
     def _test_lab_cascade(self):
         try:
@@ -1084,7 +1121,8 @@ class Controller:
             self.model.motor_up(1)
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_test_lab_cascade - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_test_lab_cascade - {e}')
 
     def _stop_gear_end_test(self):
         """Остановка двигателя после испытания и перед исходным положением"""
@@ -1094,7 +1132,8 @@ class Controller:
             self.model.update_main_dict({'stage': 'stop_gear_end_test'})
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_stop_gear_end_test - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_stop_gear_end_test - {e}')
 
     def _stop_gear_min_pos(self):
         """Снижение скорости и остановка привода в нижней точке"""
@@ -1118,7 +1157,8 @@ class Controller:
             self.model.update_main_dict({'stage': 'stop_gear_min_pos'})
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/_stop_gear_min_pos - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/_stop_gear_min_pos - {e}')
 
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
@@ -1130,7 +1170,8 @@ class Controller:
             self.signals.conv_lamp.emit('all_on')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/lamp_all_switch_on - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/lamp_all_switch_on - {e}')
 
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
@@ -1142,7 +1183,8 @@ class Controller:
             self.signals.conv_lamp.emit('all_off')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/lamp_all_switch_off - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/lamp_all_switch_off - {e}')
 
     def lamp_green_switch_on(self):
         """Выключение зелёного индикатора"""
@@ -1154,7 +1196,8 @@ class Controller:
             self.signals.conv_lamp.emit('green_on')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/lamp_green_switch_on - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/lamp_green_switch_on - {e}')
 
     def lamp_red_switch_on(self):
         """Выключение красного индикатора"""
@@ -1166,4 +1209,5 @@ class Controller:
             self.signals.conv_lamp.emit('red_on')
 
         except Exception as e:
-            self.model.log_error(f'ERROR in controller/lamp_red_switch_on - {e}')
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/lamp_red_switch_on - {e}')

@@ -4,8 +4,9 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 import glob_var
 
+from logger import my_logger
 from archive import ReadArchive
-from my_obj.data_calculation import SpeedLimitForHod, CalcData
+from my_obj.data_calculation import SpeedLimitForHod
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
@@ -15,6 +16,8 @@ from wins.archive_win import ArchiveWin
 class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
+
+        self.logger = my_logger.get_logger(__name__)
 
         self.response = {}
         self.list_lab = []
@@ -53,7 +56,7 @@ class AppWindow(QMainWindow):
             self.ui.statusbar.showMessage(txt_bar)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/status_bar_ui - {e}')
+            self.logger.error(e)
 
     def _start_param_view(self):
         self._create_statusbar_ui()
@@ -63,6 +66,7 @@ class AppWindow(QMainWindow):
         self._init_conv_graph()
         self._start_page()
 
+    # FIXME log_msg_err_slot
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
@@ -136,13 +140,16 @@ class AppWindow(QMainWindow):
             self.change_temper_sensor_btn()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_data_view - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/update_data_view - {e}')
 
     def log_msg_info_slot(self, txt_log):
         self.model.log_info(txt_log)
 
+    # FIXME
     def log_msg_err_slot(self, txt_log):
-        self.model.log_error(txt_log)
+        self.logger.error(txt_log)
+        self.status_bar_ui(txt_log)
 
     def controller_msg_slot(self, msg):
         try:
@@ -197,7 +204,8 @@ class AppWindow(QMainWindow):
             self.main_ui_msg(txt, tag)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_controller_msg - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/slot_controller_msg - {e}')
 
     def msg_traverse_referent(self):
         try:
@@ -205,7 +213,8 @@ class AppWindow(QMainWindow):
             self.main_ui_msg(txt, 'attention')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/msg_traverse_referent - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/msg_traverse_referent - {e}')
 
     def msg_yellow_btn(self):
         try:
@@ -214,7 +223,8 @@ class AppWindow(QMainWindow):
             self.main_ui_msg(txt, 'question')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/msg_yellow_btn - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/msg_yellow_btn - {e}')
 
     def main_ui_msg(self, txt, tag):
         try:
@@ -249,7 +259,8 @@ class AppWindow(QMainWindow):
             self.response['tag_msg'] = tag
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/main_ui_msg - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/main_ui_msg - {e}')
 
     def btn_main_stop_clicked(self):
         try:
@@ -260,7 +271,8 @@ class AppWindow(QMainWindow):
             self.log_msg_info_slot(f'PUSH BIG RED BUTTON')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/btn_main_stop_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/btn_main_stop_clicked - {e}')
 
     def btn_ok_message_clicked(self):
         try:
@@ -286,7 +298,8 @@ class AppWindow(QMainWindow):
                 self.model.signals.test_launch.emit(True)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/btn_ok_message_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/btn_ok_message_clicked - {e}')
 
     def btn_cancel_message_clicked(self):
         try:
@@ -300,7 +313,8 @@ class AppWindow(QMainWindow):
             self._start_page()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/btn_cancel_message_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/btn_cancel_message_clicked - {e}')
 
     def main_ui_state(self, state):
         self.ui.main_stackedWidget.setEnabled(state)
@@ -324,7 +338,8 @@ class AppWindow(QMainWindow):
             self._start_page()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_start_page - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/slot_start_page - {e}')
 
     def _start_page(self):
         try:
@@ -343,7 +358,8 @@ class AppWindow(QMainWindow):
                 self.main_ui_state(False)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_start_page - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_start_page - {e}')
 
     def open_win_operator(self):
         self.main_ui_state(False)
@@ -376,7 +392,8 @@ class AppWindow(QMainWindow):
             self.controller.search_hod_gear()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/btn_search_hod_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/btn_search_hod_clicked - {e}')
 
     def slot_search_hod(self):
         try:
@@ -390,7 +407,8 @@ class AppWindow(QMainWindow):
             self._start_page()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_search_hod - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/slot_search_hod - {e}')
 
     def btn_gear_set_pos(self):
         try:
@@ -399,14 +417,16 @@ class AppWindow(QMainWindow):
             self.controller.move_gear_set_pos()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/btn_gear_set_pos - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/btn_gear_set_pos - {e}')
 
     def btn_correct_force_clicked(self):
         try:
             self.model.init_timer_koef_force()
 
         except Exception as e:
-            self.log_msg_err_slot(f'btn_correct_force_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'btn_correct_force_clicked - {e}')
 
     def btn_correct_force_slot(self):
         msg = QMessageBox.information(self,
@@ -423,7 +443,8 @@ class AppWindow(QMainWindow):
                                           )
 
         except Exception as e:
-            self.log_msg_err_slot(f'btn_cancel_correct_force_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'btn_cancel_correct_force_clicked - {e}')
 
     def specif_page(self):
         self.specif_ui_clear()
@@ -466,7 +487,8 @@ class AppWindow(QMainWindow):
                 self._update_lab_graph()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/update_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/update_graph - {e}')
 
     def select_type_test(self):
         try:
@@ -492,7 +514,8 @@ class AppWindow(QMainWindow):
                 self.specif_enable_gui(True, True, False)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/select_type_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/select_type_test - {e}')
 
     def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade):
         self.ui.specif_speed_one_lineEdit.setReadOnly(flag_change_speed)
@@ -520,7 +543,8 @@ class AppWindow(QMainWindow):
             self.specif_ui_fill(amort)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/select_amort - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/select_amort - {e}')
 
     def specif_ui_fill(self, obj):
         try:
@@ -540,7 +564,8 @@ class AppWindow(QMainWindow):
             self.ui.specif_max_temp_lineEdit.setText(str(obj.max_temper))
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_ui_fill - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_ui_fill - {e}')
 
     def specif_ui_clear(self):
         try:
@@ -565,7 +590,8 @@ class AppWindow(QMainWindow):
             self.ui.specif_lab_cascade_speed_table.setRowCount(0)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_ui_clear - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_ui_clear - {e}')
 
     def specif_lab_input_speed(self, obj):
         try:
@@ -578,7 +604,7 @@ class AppWindow(QMainWindow):
 
             speed = float(text.replace(',', '.'))
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().speed_limit(hod)
             if 0.02 <= speed <= max_speed:
                 return speed
 
@@ -597,7 +623,8 @@ class AppWindow(QMainWindow):
                                           )
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_lab_input_speed - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_lab_input_speed - {e}')
 
     def specif_add_lab_cascade_table(self):
         try:
@@ -618,7 +645,8 @@ class AppWindow(QMainWindow):
                                               )
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_add_lab_cascade_table - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_add_lab_cascade_table - {e}')
 
     def specif_reduce_lab_cascade_table(self):
         try:
@@ -627,7 +655,8 @@ class AppWindow(QMainWindow):
                 self.ui.specif_lab_cascade_speed_table.removeRow(count_rows - 1)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_reduce_lab_cascade_table - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_reduce_lab_cascade_table - {e}')
 
     def specif_read_lab_cascade_table(self):
         try:
@@ -644,7 +673,8 @@ class AppWindow(QMainWindow):
                 return True
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_read_lab_cascade_table - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_read_lab_cascade_table - {e}')
 
     def specif_msg_none_cascade_speed(self):
         msg = QMessageBox.information(self,
@@ -663,7 +693,8 @@ class AppWindow(QMainWindow):
                     self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/change_temper_sensor_btn - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/change_temper_sensor_btn - {e}')
 
     def change_temper_sensor_slot(self):
         try:
@@ -675,7 +706,8 @@ class AppWindow(QMainWindow):
                 self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/change_temper_sensor_slot - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/change_temper_sensor_slot - {e}')
 
     def select_temper_sensor(self):
         try:
@@ -687,7 +719,8 @@ class AppWindow(QMainWindow):
                 self.model.write_bit_select_temper(1)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/select_temper_sensor - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/select_temper_sensor - {e}')
 
     def specif_continue_btn_click(self):
         try:
@@ -735,7 +768,8 @@ class AppWindow(QMainWindow):
                 self.open_win_operator()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/specif_continue_btn_click - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_continue_btn_click - {e}')
 
     def serial_editing_finished(self):
         text = self.ui.specif_serial_lineEdit.text()
@@ -786,7 +820,8 @@ class AppWindow(QMainWindow):
                 self.model.update_main_dict(command)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/flag_push_force_set - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/flag_push_force_set - {e}')
 
     def save_log_begin_test(self):
         try:
@@ -821,7 +856,8 @@ class AppWindow(QMainWindow):
             self.model.update_main_dict({'hod': amort.hod})
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/save_log_begin_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/save_log_begin_test - {e}')
 
     def fill_gui_lab_test(self):
         try:
@@ -847,7 +883,8 @@ class AppWindow(QMainWindow):
             self.ui.lbl_push_force_lab.setText(self.response.get('lbl_push_force', ''))
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/fill_gui_lab_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/fill_gui_lab_test - {e}')
 
     def begin_test(self):
         try:
@@ -871,7 +908,8 @@ class AppWindow(QMainWindow):
             self.controller.start_test_clicked()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/begin_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/begin_test - {e}')
 
     def _lab_win_clear(self):
         try:
@@ -884,14 +922,16 @@ class AppWindow(QMainWindow):
             self.ui.lab_serial_le.clear()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_lab_win_clear - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_lab_win_clear - {e}')
 
     def lab_test_win(self):
         try:
             self.ui.main_stackedWidget.setCurrentIndex(2)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/lab_test_win - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/lab_test_win - {e}')
 
     def _conv_win_clear(self):
         try:
@@ -903,14 +943,16 @@ class AppWindow(QMainWindow):
             self.ui.conv_temperture_le.clear()
             
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_conv_win_clear - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_conv_win_clear - {e}')
 
     def conv_test_win(self):
         try:
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/conv_test_win - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/conv_test_win - {e}')
 
     def conv_test_lamp(self, command):
         try:
@@ -932,7 +974,8 @@ class AppWindow(QMainWindow):
                 self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n" + border)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/conv_test_lamp - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/conv_test_lamp - {e}')
 
     def _init_lab_graph(self):
         try:
@@ -940,7 +983,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.setBackground('w')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_init_lab_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_init_lab_graph - {e}')
 
     def _update_lab_graph(self):
         try:
@@ -951,7 +995,8 @@ class AppWindow(QMainWindow):
             self._update_lab_data()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_lab_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_lab_graph - {e}')
 
     def _update_temper_graph(self):
         try:
@@ -973,7 +1018,8 @@ class AppWindow(QMainWindow):
             self._update_lab_data()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_temper_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_temper_graph - {e}')
 
     def _update_lab_data(self):
         try:
@@ -988,7 +1034,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_lab_data - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_lab_data - {e}')
 
     def _fill_push_force(self):
         try:
@@ -1001,7 +1048,8 @@ class AppWindow(QMainWindow):
             return push_force
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_fill_push_force - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_fill_push_force - {e}')
 
     def _update_lab_cascade_graph(self):
         try:
@@ -1013,7 +1061,8 @@ class AppWindow(QMainWindow):
                     self.ui.lab_GraphWidget.plot(value.move, value.force, pen=pen)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_lab_cascade_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_lab_cascade_graph - {e}')
 
     def _init_conv_graph(self):
         try:
@@ -1021,7 +1070,8 @@ class AppWindow(QMainWindow):
             self.ui.conv_GraphWidget.setBackground('w')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_init_conv_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_init_conv_graph - {e}')
 
     def _update_conv_graph(self):
         try:
@@ -1032,7 +1082,8 @@ class AppWindow(QMainWindow):
             self._update_conv_data()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_conv_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_conv_graph - {e}')
             
     def _update_conv_data(self):
         try:
@@ -1055,7 +1106,8 @@ class AppWindow(QMainWindow):
                 pass
             
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/_update_conv_data - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
 
     def repeat_test_clicked(self):
         self.controller.change_flag_repeat(True)
@@ -1074,7 +1126,8 @@ class AppWindow(QMainWindow):
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/cancel_test_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/cancel_test_clicked - {e}')
 
     def change_speed_lab_test(self):
         try:
@@ -1083,7 +1136,8 @@ class AppWindow(QMainWindow):
                 self.model.update_main_dict({'speed': speed})
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/change_speed_lab_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/change_speed_lab_test - {e}')
 
     def show_compare_graph(self):
         try:
@@ -1097,7 +1151,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.addLegend()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/show_compare_graph - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/show_compare_graph - {e}')
 
     def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setText('НАЗАД')
@@ -1117,7 +1172,8 @@ class AppWindow(QMainWindow):
             self.controller.stop_test_clicked()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/cancel_test_conv_clicked - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/cancel_test_conv_clicked - {e}')
 
     def cancel_test_slot(self):
         try:
@@ -1126,7 +1182,8 @@ class AppWindow(QMainWindow):
             self.specif_page()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/cancel_test_slot - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/cancel_test_slot - {e}')
 
     def open_win_archive(self):
         self.main_ui_state(False)
@@ -1167,7 +1224,8 @@ class AppWindow(QMainWindow):
                 self.slot_write_end_test()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_save_lab_result - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/slot_save_lab_result - {e}')
 
     def save_data_in_archive(self):
         try:
@@ -1188,11 +1246,13 @@ class AppWindow(QMainWindow):
             ReadArchive().save_test_in_archive(data_dict)
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/save_data_in_archive - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/save_data_in_archive - {e}')
 
     def slot_write_end_test(self):
         try:
             ReadArchive().write_end_test_in_archive()
 
         except Exception as e:
-            self.log_msg_err_slot(f'ERROR in view/slot_write_end_test - {e}')
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/slot_write_end_test - {e}')

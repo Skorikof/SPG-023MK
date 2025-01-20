@@ -496,14 +496,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             force_list = obj.force_list
             push_force = self._select_push_force(obj)
 
-            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+            recoil, comp = CalcData().middle_min_and_max_force(force_list)
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = CalcData().calc_power(move_list, force_list)
+            power = CalcData().power_amort(move_list, force_list)
 
             speed = float(obj.speed)
-            freq = CalcData().calc_freq_piston(speed, obj.amort)
+            freq = CalcData().freq_piston_amort(speed, obj.amort)
 
             self.push_force_le.setText(f'{push_force}')
             self.power_le.setText(f'{power}')
@@ -536,7 +536,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 elif flag_push_force == '0':
                     push_force = float(obj.static_push_force)
 
-                recoil, comp = CalcData().calc_middle_min_and_max_force(obj.force_list)
+                recoil, comp = CalcData().middle_min_and_max_force(obj.force_list)
 
                 recoil_list.append(round(recoil + push_force, 2))
                 comp_list.append(round(comp * (-1) + push_force, 2))
@@ -597,7 +597,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             force_list = self.archive.struct.tests[index].force_list
             self.push_force_le.setText(f'{0}')
 
-            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+            recoil, comp = CalcData().middle_min_and_max_force(force_list)
 
             self.comp_le.setText(f'{recoil}')
             self.recoil_le.setText(f'{comp}')
@@ -740,7 +740,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             push_force = self._select_push_force(self.archive.struct.tests[index])
             self.push_force_le.setText(f'{push_force}')
 
-            recoil, comp = CalcData().calc_middle_min_and_max_force(force_list)
+            recoil, comp = CalcData().middle_min_and_max_force(force_list)
 
             self.comp_le.setText(f'{comp}')
             self.recoil_le.setText(f'{recoil}')
@@ -989,7 +989,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                         elif flag_push_force == '0':
                             push_force = float(graph.static_push_force)
 
-                        recoil, comp = CalcData().calc_middle_min_and_max_force(graph.force_list)
+                        recoil, comp = CalcData().middle_min_and_max_force(graph.force_list)
 
                         recoil_list.append(round(recoil + push_force, 2))
                         comp_list.append(round(comp * (-1) + push_force, 2))

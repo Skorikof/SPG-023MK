@@ -1,5 +1,5 @@
 class SpeedLimitForHod:
-    def calculate_speed_limit(self, hod):
+    def speed_limit(self, hod):
         if 40 <= hod < 50:
             return 0.41
         elif 50 <= hod < 60:
@@ -23,7 +23,7 @@ class SpeedLimitForHod:
 
 
 class CalcData:
-    def calc_middle_min_and_max_force(self, data: list):
+    def middle_min_and_max_force(self, data: list):
         try:
             comp_index = data.index(min(data))
             comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
@@ -36,16 +36,16 @@ class CalcData:
             return max_recoil, max_comp
 
         except Exception as e:
-            print(f'ERROR in data_calculation/calc_middle_min_and_max_force - {e}')
+            print(f'ERROR in data_calculation/middle_min_and_max_force - {e}')
 
-    def calc_offset_move_by_hod(self, amort, min_p):
+    def offset_move_by_hod(self, amort, min_p):
         try:
             return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 2)
 
         except Exception as e:
-            print(f'ERROR in data_calculation/calc_offset_move - {e}')
+            print(f'ERROR in data_calculation/offset_move_by_hod - {e}')
 
-    def calc_power(self, move: list, force: list):
+    def power_amort(self, move: list, force: list):
         try:
             temp = 0
             for i in range(1, len(move)):
@@ -56,11 +56,11 @@ class CalcData:
             return temp
 
         except Exception as e:
-            print(f'ERROR in data_calculation/calc_power - {e}')
+            print(f'ERROR in data_calculation/power_amort - {e}')
 
-    def calc_freq_piston(self, speed, amort):
+    def freq_piston_amort(self, speed, amort):
         try:
             return round(speed / (int(amort.hod) * 0.002 * 3.14), 3)
 
         except Exception as e:
-            print(f'ERROR in data_calculation/calc_freq_piston - {e}')
+            print(f'ERROR in data_calculation/freq_piston_amort - {e}')

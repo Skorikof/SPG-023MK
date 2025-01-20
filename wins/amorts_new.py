@@ -162,7 +162,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().speed_limit(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_one'] = str(temp)
@@ -198,7 +198,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimitForHod().calculate_speed_limit(hod)
+            max_speed = SpeedLimitForHod().speed_limit(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_two'] = str(temp)
