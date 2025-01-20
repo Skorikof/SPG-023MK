@@ -2,6 +2,8 @@
 import os.path
 from pathlib import Path
 from datetime import datetime
+
+from logger import my_logger
 from amorts import DataAmort
 
 
@@ -39,6 +41,7 @@ class TestCascade:
 
 class ReadArchive:
     def __init__(self):
+        self.logger = my_logger.get_logger(__name__)
         self.files_dir = None
         self.files_arr = []
         self.files_name_arr = []
@@ -74,7 +77,7 @@ class ReadArchive:
             self.files_name_sort.sort(key=lambda date: datetime.strptime(date, "%d.%m.%Y"), reverse=True)
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def select_file(self, data):
         try:
@@ -98,7 +101,7 @@ class ReadArchive:
                         self._pars_str_archive(archive_list)
 
         except Exception as e:
-            print(f'Exception in archive/select_file - {e}')
+            self.logger.error(e)
 
     def _pars_str_archive(self, archive_list):
         try:
@@ -142,7 +145,7 @@ class ReadArchive:
                             self.cascade_list.append(self.struct.tests[self.ind_test])
 
         except Exception as e:
-            print(f'Exception in archive/_pars_str_archihve - {e}')
+            self.logger.error(e)
 
     def _fill_obj_archive_data(self, obj, data):
         try:
@@ -172,14 +175,14 @@ class ReadArchive:
             obj.speed = data[23].replace(',', '.')
 
         except Exception as e:
-            print(f'Exception in archive/_fill_obj_archihve_data - {e}')
+            self.logger.error(e)
 
     def _add_data_on_list_graph(self, data_list):
         try:
             return [float(x.replace(',', '.')) for x in data_list]
 
         except Exception as e:
-            print(f'Exception in archive/_add_data_on_list_graph - {e}')
+            self.logger.error(e)
 
     def save_test_in_archive(self, obj):
         try:
@@ -262,7 +265,7 @@ class ReadArchive:
                 file_arch.write(write_name + write_str + write_data)
 
         except Exception as e:
-            print(f'Exception in archive/save_test_in_archive - {e}')
+            self.logger.error(e)
 
     def _change_data_for_save(self, data: list):
         try:
@@ -275,7 +278,7 @@ class ReadArchive:
             return data
 
         except Exception as e:
-            print(f'Exception in archive/_change_data_for_save - {e}')
+            self.logger.error(e)
 
     def write_end_test_in_archive(self):
         try:
@@ -286,4 +289,4 @@ class ReadArchive:
                 file_arch.write(str_t)
 
         except Exception as e:
-            print(f'Exception in archive/_write_end_test_in_archive - {e}')
+            self.logger.error(e)

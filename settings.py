@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from configparser import ConfigParser
 
+from logger import my_logger
+
 
 class PrgSettings:
     def __init__(self):
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.settings = {}
             self.state = {}
             config = ConfigParser()
@@ -69,7 +72,7 @@ class PrgSettings:
                           }
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def _force_koef(self, value):
         try:

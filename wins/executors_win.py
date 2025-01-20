@@ -2,6 +2,8 @@
 from PyQt5.QtWidgets import QMainWindow, QDialog
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
+
+from logger import my_logger
 from ui_py.executors_ui import Ui_ExecutorWindow
 from operators import Operators
 from ui_py.my_dialog import OperatorDialog
@@ -9,8 +11,6 @@ from ui_py.my_dialog import OperatorDialog
 
 class WinSignals(QObject):
     closed = pyqtSignal()
-    log_msg = pyqtSignal(str)
-    log_err = pyqtSignal(str)
     operator_select = pyqtSignal(str, str)
 
 
@@ -20,6 +20,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
     def __init__(self):
         super(ExecWin, self).__init__()
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.action = ''
             self.new_operator = {}
             self.name = ''
@@ -34,7 +35,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._init_buttons()
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in executors_win/__init__ - {e}')
+            self.logger.error(e)
 
     def closeEvent(self, event):
         self.signals.closed.emit()
@@ -48,6 +49,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._operator_init()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_init_ui - {e}')
 
     def _create_statusbar_set(self):
@@ -57,10 +59,9 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
     def _statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
-            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in executors_win/_statusbar_set_ui - {e}')
+            self.logger.error(e)
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
@@ -77,6 +78,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._operator_update()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_operator_init - {e}')
 
     def _operator_update(self):
@@ -103,6 +105,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
                 self.btn_del.setEnabled(True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_operator_update - {e}')
 
     def _operator_select(self, ind):
@@ -115,6 +118,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self.lbl_rank.setText(self.rank)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_operator_select - {e}')
 
     def _btn_del_click(self):
@@ -127,6 +131,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._set_frame_question(True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_btn_del_click - {e}')
 
     def _operator_delete(self):
@@ -136,7 +141,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             name = self.operators.names[ind]
             rank = self.operators.ranks[ind]
             txt_log = 'Operator is delete - {}, {}'.format(rank, name)
-            self.signals.log_msg.emit(txt_log)
+            self.logger.info(txt_log)
 
             if name == self.name:
                 self.name = ''
@@ -148,7 +153,8 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._operator_update()
 
         except Exception as e:
-            self.status_bar_ui(f'ERROR in executors_win/_operator_delete - {e}')
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in executors_win/_operator_delete - {e}')
 
     def _operator_add(self):
         try:
@@ -165,7 +171,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
                     flag_add = self._check_concurrence_name()
                     if flag_add:
                         txt_log = 'Operator is added - {}, {}'.format(rank, name)
-                        self.signals.log_msg.emit(txt_log)
+                        self.logger.info(txt_log)
                         self.operators.add_operator(name, rank)
                         self._operator_update()
                     else:
@@ -177,6 +183,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
                 pass
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_operator_add - {e}')
 
     def _operator_ok(self):
@@ -187,11 +194,12 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self.signals.operator_select.emit(self.name, self.rank)
 
             txt_log = 'Operator is select - {}, {}'.format(self.rank, self.name)
-            self.signals.log_msg.emit(txt_log)
+            self.logger.info(txt_log)
 
             self.close()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_operator_ok - {e}')
 
     def _set_frame_question(self, bool_val):
@@ -212,6 +220,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
                 self._set_frame_question(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_ok_question - {e}')
 
     def _cancel_question(self):
@@ -219,6 +228,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self._set_frame_question(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_cancel_question - {e}')
 
     def _check_concurrence_name(self):
@@ -231,4 +241,5 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             return flag_add
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_check_concurrence_name - {e}')

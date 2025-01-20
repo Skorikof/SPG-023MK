@@ -2,6 +2,8 @@
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QObject, pyqtSignal
+
+from logger import my_logger
 from ui_py.new_amort import Ui_MainWindow
 from my_obj.data_calculation import SpeedLimitForHod
 
@@ -15,6 +17,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(AmortNew, self).__init__()
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/shock-absorber.png'))
             self.signals = AmortSignals()
@@ -22,7 +25,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             self.response = {}
             self.hide()
         except Exception as e:
-            print(f'ERROR in amorts_new/__init__ - {e}')
+            self.logger.error(e)
 
     def start_param_new_amort(self):
         self.response = {'name': '',
@@ -512,21 +515,25 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         self.signals.closed.emit()
 
     def _read_data_from_gui(self):
-        self.name_editing_finished()
-        self.len_min_editing_finished()
-        self.len_max_editing_finished()
-        self.hod_editing_finished()
-        self.one_speed_editing_finished()
-        self.two_speed_editing_finished()
-        self.comp_min_editing_finished()
-        self.two_comp_min_editing_finished()
-        self.comp_max_editing_finished()
-        self.two_comp_max_editing_finished()
-        self.recoil_min_editing_finished()
-        self.two_recoil_min_editing_finished()
-        self.recoil_max_editing_finished()
-        self.two_recoil_max_editing_finished()
-        self.temper_editing_finished()
+        try:
+            self.name_editing_finished()
+            self.len_min_editing_finished()
+            self.len_max_editing_finished()
+            self.hod_editing_finished()
+            self.one_speed_editing_finished()
+            self.two_speed_editing_finished()
+            self.comp_min_editing_finished()
+            self.two_comp_min_editing_finished()
+            self.comp_max_editing_finished()
+            self.two_comp_max_editing_finished()
+            self.recoil_min_editing_finished()
+            self.two_recoil_min_editing_finished()
+            self.recoil_max_editing_finished()
+            self.two_recoil_max_editing_finished()
+            self.temper_editing_finished()
+
+        except Exception as e:
+            self.logger.error(e)
 
     def _clear_data_on_gui(self):
         self.lineEdit_name.clear()
@@ -565,4 +572,4 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                 pass
 
         except Exception as e:
-            print(f'ERROR amorts_new/_save_amort - {e}')
+            self.logger.error(e)

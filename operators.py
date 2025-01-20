@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import csv
 import configparser
 
+from logger import my_logger
 
 class Operators:
     def __init__(self):
+        self.logger = my_logger.get_logger(__name__)
         self.names = []
         self.ranks = []
         self.config = configparser.ConfigParser()
@@ -24,10 +25,10 @@ class Operators:
                         if key == 'rank':
                             self.ranks.append(temp_val)
                 except Exception as e:
-                    print(str(e))
+                    self.logger.error(e)
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def delete_operator(self, index):
         try:
@@ -46,7 +47,7 @@ class Operators:
                 self.config.write(configfile)
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def add_operator(self, name, rank):
         try:
@@ -60,6 +61,6 @@ class Operators:
                 self.config.write(configfile)
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
 

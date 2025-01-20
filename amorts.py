@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import configparser
 
+from logger import my_logger
+
 
 class StructAmort(object):
     def __init__(self):
@@ -30,6 +32,7 @@ class DataAmort(object):
 
 class Amort:
     def __init__(self):
+        self.logger = my_logger.get_logger(__name__)
         self.names = []
         self.current_index = -1
         self.struct = StructAmort()
@@ -51,7 +54,7 @@ class Amort:
                 return 0
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def update_amort_list(self):
         try:
@@ -101,10 +104,10 @@ class Amort:
                             self.struct.amorts[ind].max_temper = float(temp_val)
 
                 except Exception as e:
-                    print(str(e))
+                    self.logger.error(e)
 
         except Exception as e:
-            print(str(e))
+            self.logger.error(e)
 
     def delete_amort(self, index_del):
         try:
@@ -138,7 +141,7 @@ class Amort:
                 self.config.write(configfile)
 
         except Exception as e:
-            print(f'Ошибка в файле amorts.ini {e}')
+            self.logger.error(e)
 
     def add_amort(self, obj):
         try:
@@ -169,4 +172,4 @@ class Amort:
                 self.config.write(configfile)
 
         except Exception as e:
-            print(f'Ошибка в файле amorts.ini {e}')
+            self.logger.error(e)

@@ -2,6 +2,8 @@
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
+
+from logger import my_logger
 from ui_py.amorts_ui import Ui_AmortsWindow
 from wins.amorts_new import AmortNew
 from amorts import Amort
@@ -9,8 +11,6 @@ from amorts import Amort
 
 class WinSignals(QObject):
     closed = pyqtSignal()
-    log_msg = pyqtSignal(str)
-    log_err = pyqtSignal(str)
 
 
 class AmortWin(QMainWindow, Ui_AmortsWindow):
@@ -19,6 +19,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
     def __init__(self):
         super(AmortWin, self).__init__()
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.action = ''
             self.amorts = None
             self.new_amort_win = AmortNew()
@@ -31,7 +32,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self._init_buttons()
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in amorts_win/__init__ - {e}')
+            self.logger.error(e)
 
     def _init_ui(self):
         try:
@@ -40,6 +41,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self._amort_init()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_init_ui - {e}')
 
     def _init_signals(self):
@@ -48,6 +50,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.new_amort_win.signals.save_amort.connect(self._amort_add)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_init_signals - {e}')
 
     def closeEvent(self, event):
@@ -60,10 +63,9 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
     def _statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
-            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in amorts_win/_statusbar_set_ui - {e}')
+            self.logger.error(e)
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
@@ -79,6 +81,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self._amorts_update()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amort_init - {e}')
 
     def _amorts_update(self):
@@ -98,6 +101,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 self.btn_del.setEnabled(True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amorts_update - {e}')
 
     def _amorts_ui_clear(self):
@@ -115,6 +119,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.lbl_temper.setText('')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amorts_ui_clear - {e}')
 
     def _amort_select(self, index):
@@ -138,6 +143,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.lbl_temper.setText(str(self.amorts.struct.amorts[index].max_temper))
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amort_select - {e}')
 
     def _btn_del_click(self):
@@ -149,6 +155,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self._set_frame_question(True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_btn_del_click - {e}')
 
     def _amort_delete(self):
@@ -174,13 +181,14 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                       f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
                       f'max_temper = {temper}'
 
-            self.signals.log_msg.emit(txt_log)
+            self.logger.info(txt_log)
 
             self.amorts.delete_amort(ind)
 
             self._amorts_update()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amort_delete - {e}')
 
     def _open_new_amort_win(self):
@@ -190,6 +198,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.new_amort_win.show()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_open_new_amort_win - {e}')
 
     def _close_new_amort_win(self):
@@ -198,6 +207,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.new_amort_win.hide()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/close_new_amort_win - {e}')
 
     def _amort_add(self, obj):
@@ -225,7 +235,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                           f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
                           f'max_temper = {temper}'
 
-                self.signals.log_msg.emit(txt_log[:-1])
+                self.logger.info(txt_log[:-1])
                 self.amorts.add_amort(obj)
                 self._amorts_update()
             else:
@@ -233,6 +243,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 self._set_frame_warning(True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amort_add - {e}')
 
     def _set_frame_question(self, bool_val):
@@ -255,6 +266,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 self._set_frame_question(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_ok_question - {e}')
 
     def _cancel_question(self):
@@ -262,6 +274,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self._set_frame_question(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_cancel_question - {e}')
 
     def _check_concurrence_name(self, new_name):
@@ -274,4 +287,5 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             return flag_add
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_check_concurrence_name - {e}')

@@ -88,20 +88,13 @@ class AppWindow(QMainWindow):
         self.controller.signals.reset_ui.connect(self.slot_start_page)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
-        self.win_exec.signals.log_msg.connect(self.log_msg_info_slot)
-        self.win_exec.signals.log_err.connect(self.log_msg_err_slot)
         self.win_exec.signals.operator_select.connect(self.operator_select)
 
         self.win_amort.signals.closed.connect(self.close_win_amort)
-        self.win_amort.signals.log_msg.connect(self.log_msg_info_slot)
-        self.win_amort.signals.log_err.connect(self.log_msg_err_slot)
 
         self.win_set.signals.closed.connect(self.close_win_settings)
-        self.win_set.signals.log_err.connect(self.log_msg_err_slot)
 
         self.win_archive.signals.closed.connect(self.close_win_archive)
-        self.win_archive.signals.log_msg.connect(self.log_msg_info_slot)
-        self.win_archive.signals.log_err.connect(self.log_msg_err_slot)
 
     # FIXME
     def _init_buttons(self):

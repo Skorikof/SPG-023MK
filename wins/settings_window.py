@@ -3,13 +3,13 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import QObject, pyqtSignal, QSignalMapper, pyqtSlot
 import time
 
+from logger import my_logger
 from ui_py.settings_ui import Ui_SettingsWindow
 from wins.graph_win import GraphUi
 
 
 class WinSignals(QObject):
     closed = pyqtSignal()
-    log_err = pyqtSignal(str)
 
 
 class SetWindow(QMainWindow, Ui_SettingsWindow):
@@ -18,6 +18,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
     def __init__(self, model):
         super(SetWindow, self).__init__()
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.response = {}
             self.model = model
             self.setupUi(self)
@@ -25,7 +26,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.graph_ui = GraphUi(self.model)
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in settings_window/__init__ - {e}')
+            self.logger.error(e)
 
     def _smap_line_edit(self):
         smap = QSignalMapper(self)
@@ -61,6 +62,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                 self.freq_frame.setVisible(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_check_operator - {e}')
 
     def _fill_lbl_temp_sens(self):
@@ -79,10 +81,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
     def _statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
-            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in settings_window/_statusbar_set_ui - {e}')
+            self.logger.error(e)
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
@@ -115,6 +116,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self._update_win()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/update_data - {e}')
 
     def _write_hod(self):
@@ -126,6 +128,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                 self.model.update_main_dict({'hod': temp})
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_write_hod - {e}')
 
     def _write_speed_set(self):
@@ -136,6 +139,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.write_frequency(1, speed)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_write_speed_set - {e}')
 
     def _write_frequency_set(self):
@@ -145,6 +149,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.write_frequency(2, value * 100)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_write_frequency_set - {e}')
 
     def _click_btn_motor_up(self):
@@ -177,6 +182,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.write_bit_unblock_control()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
 
     def _btn_set_doclick(self):
@@ -223,6 +229,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                 pass
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_btn_set_doclick - {e}')
 
     def _change_lbl_temper_channel(self, value):
@@ -267,6 +274,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.response.get('yellow_btn', True), True))
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
 
     def _set_color_fram(self, state, rev=False):
@@ -284,6 +292,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
                 return color_green + "border-color: rgb(0, 0, 0);"
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in settings_window/_set_color_fram - {e}')
 
     def _btn_test_clicked(self):

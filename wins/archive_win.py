@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QDialog, QMessageBox
-from PyQt5.QtCore import QObject, pyqtSignal, Qt
-from PyQt5.QtGui import QPageLayout, QPixmap, QPainter, QIcon
-from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QAbstractPrintDialog
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtGui import QIcon
 from PIL import ImageGrab
 import pyqtgraph as pg
 import numpy as np
 from functools import reduce
 import os
 
+from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from my_obj.data_calculation import CalcData
@@ -16,8 +16,6 @@ from my_obj.data_calculation import CalcData
 
 class WinSignals(QObject):
     closed = pyqtSignal()
-    log_msg = pyqtSignal(str)
-    log_err = pyqtSignal(str)
 
 
 class ArchiveWin(QMainWindow, Ui_WindowArch):
@@ -26,6 +24,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def __init__(self):
         super(ArchiveWin, self).__init__()
         try:
+            self.logger = my_logger.get_logger(__name__)
             self.compare_data = []
             self.type_graph = 'move'
             self.ind_type_test = 0
@@ -53,7 +52,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self._init_buttons()
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in archive_win/__init__ - {e}')
+            self.logger.error(e)
 
     def closeEvent(self, event):
         self.signals.closed.emit()
@@ -65,10 +64,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
-            self.signals.log_err.emit(txt_bar)
 
         except Exception as e:
-            self.signals.log_err.emit(f'ERROR in archive_win/_statusbar_set_ui - {e}')
+            self.logger.error(e)
 
     def _init_buttons(self):
         self.btn_exit.clicked.connect(self.close)
@@ -106,6 +104,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_selected()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/read_path_archive - {e}')
 
     def _archive_ui_clear(self):
@@ -130,6 +129,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.push_force_le.setText('')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
 
     def _change_index_date(self, date):
@@ -139,6 +139,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_selected()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
 
     def _change_index_test(self, index):
@@ -162,6 +163,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     self._archive_graph()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_test - {e}')
 
     def _change_type_graph(self, index):
@@ -189,6 +191,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_selected()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
 
     def _archive_selected(self):
@@ -237,6 +240,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._archive_ui_clear()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_selected - {e}')
 
     def _gui_power_freq_visible(self, state):
@@ -247,6 +251,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.freq_le.setVisible(state)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_power_freq_visible - {e}')
 
     def _gui_move_graph(self):
@@ -260,6 +265,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.setBackground('w')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_graph - {e}')
 
     def _gui_speed_graph(self):
@@ -273,6 +279,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.setBackground('w')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
 
     def _gui_triple_graph(self):
@@ -286,6 +293,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.setBackground('w')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_graph - {e}')
 
     def _gui_boost_graph(self):
@@ -299,6 +307,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.setBackground('w')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_graph - {e}')
 
     def _gui_temper_graph(self):
@@ -312,6 +321,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.setBackground('w')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_graph - {e}')
 
     def _archive_test_select(self):
@@ -330,6 +340,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._pars_lab_data()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
 
     def _pars_lab_data(self):
@@ -345,6 +356,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_data - {e}')
 
     def _pars_lab_cascade_data(self):
@@ -363,6 +375,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.speed_le.setText(f'{speed_list[0]}~{speed_list[-1]}')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
 
     def _pars_triple_data(self):
@@ -377,6 +390,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._fill_flag_push_force('2')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_triple_data - {e}')
 
     def _pars_temper_data(self):
@@ -389,6 +403,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._fill_flag_push_force(self.archive.struct.temper[index].flag_push_force)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_pars_temper_data - {e}')
 
     def _fill_archive_data_gui(self, obj):
@@ -422,6 +437,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.hod_le.setText(f'{obj.amort.hod}')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_archive_data_gui - {e}')
 
     def _fill_flag_push_force(self, index: str):
@@ -446,6 +462,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.btn_show.setVisible(state)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_visible_compare_btn - {e}')
 
     def _archive_graph(self):
@@ -484,6 +501,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.addLegend()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
 
     def _fill_lab_graph(self):
@@ -516,6 +534,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(move_list, force_list, pen=pen)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_graph - {e}')
 
     def _fill_lab_cascade_graph(self):
@@ -553,6 +572,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self._fill_limit_lab_cascade_graph(data[0])
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_cascade_graph - {e}')
 
     def _fill_limit_lab_cascade_graph(self, obj):
@@ -587,6 +607,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(lim_speed_2, lim_comp_2, pen=pen)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
 
     def _fill_triple_graph(self):
@@ -613,6 +634,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self._fill_triple_speed_graph(move_list, x_coord, index_mid_hod)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
 
     def _fill_triple_hod_graph(self, hod):
@@ -622,6 +644,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(hod_x, hod_y, pen=pen, name='Смещение')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
 
     def _calc_hod_triple_coord(self, hod):
@@ -635,6 +658,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return x, y
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
 
     def _calc_index_middle_hod_triple(self, x_coord: list, hod: int):
@@ -645,6 +669,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     return x_coord.index(point)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_start_point_triple - {e}')
 
     def _fill_triple_force_graph(self, x_coord: list, force: list, index):
@@ -654,6 +679,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(x_coord, force_y, pen=pen, name='Усилие')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
 
     def _calc_triple_force_coord(self, force: list, index):
@@ -661,6 +687,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return list(map(lambda x: round(x * (-1), 1), force[index:] + force[:index]))
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
 
     def _convert_triple_move_in_degrees_coord(self, move: list):
@@ -688,6 +715,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return list(map(lambda x: round(360 * x / max_way, 1), way))
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_x_coord - {e}')
 
     def _fill_triple_speed_graph(self, move: list, x_coord: list, index):
@@ -705,6 +733,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                                   name='Скорость')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_speed_graph - {e}')
 
     def _calc_triple_speed_coord(self, move: list, index):
@@ -730,6 +759,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return y_coord
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
 
     def _fill_boost_graph(self):
@@ -767,6 +797,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(x_coord, force_list, pen=pen, name='Скорость')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
 
     def _fill_temper_graph(self):
@@ -797,6 +828,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.graphwidget.plot(temper_coord, comp_list, pen=pen_comp, name='Сжатие')
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
 
     def _select_push_force(self, obj):
@@ -812,6 +844,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 return 0
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_select_push_force - {e}')
 
     def _archive_save_form(self):
@@ -857,6 +890,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             image.save(file_dir, "BMP")
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_save_form - {e}')
 
     def _create_dir_for_save(self, main_dir):
@@ -866,6 +900,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             os.makedirs(directory, exist_ok=True)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_create_dir_for_save - {e}')
 
     def _name_screen_for_save(self, obj):
@@ -879,6 +914,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return name
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save - {e}')
 
     def _name_screen_for_save_speed(self, obj):
@@ -892,6 +928,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return name
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_speed - {e}')
 
     def _name_screen_for_save_temper(self, obj):
@@ -907,6 +944,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             return name
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_temper - {e}')
 
     def _clear_compare_data(self):
@@ -916,6 +954,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.read_path_archive()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
 
     def _add_compare_data(self):
@@ -935,6 +974,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.btn_compare.setVisible(False)
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_add_compare_data - {e}')
 
     def _show_compare_data(self):
@@ -954,6 +994,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                                               )
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
 
     def _show_graph(self, obj):
@@ -1011,4 +1052,5 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.graphwidget.addLegend()
 
         except Exception as e:
+            self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_show_graph - {e}')
