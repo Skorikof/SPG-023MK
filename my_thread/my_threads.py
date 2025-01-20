@@ -15,39 +15,6 @@ class Signals(QObject):
     write_result = pyqtSignal(str, str, int, object)
 
 
-class LogWriter(QRunnable):
-    def __init__(self, mode, obj_name, msg):
-        super(LogWriter, self).__init__()
-        try:
-            _date_log = None
-            if mode == 'info':
-                _date_log = str(datetime.now().day).zfill(2) + '_' + str(datetime.now().month).zfill(2) + \
-                    '_' + str(datetime.now().year)
-            if mode == 'error':
-                _date_log = 'errors'
-
-            _path_logs = base_dir + '/log'
-            self.filename = _path_logs + '/' + _date_log + '.log'
-            self.msg = msg
-            self.nam_f = obj_name[0]
-            self.nam_m = obj_name[1]
-            self.num_line = obj_name[2]
-
-        except Exception as e:
-            print(str(e))
-
-    @pyqtSlot()
-    def run(self):
-        try:
-            with open(self.filename, 'a') as file:
-                time_msg = str(datetime.now())[:-3]
-                temp = f'{time_msg} - [{self.nam_f}].{self.nam_m}[{self.num_line}] - {self.msg}\n'
-                file.write(temp)
-
-        except Exception as err:
-            print(f'ERROR in thread LogWriter - {err}')
-
-
 class Writer(QRunnable):
     signals = Signals()
 

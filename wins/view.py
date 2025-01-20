@@ -66,7 +66,6 @@ class AppWindow(QMainWindow):
         self._init_conv_graph()
         self._start_page()
 
-    # FIXME log_msg_err_slot
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
@@ -91,9 +90,7 @@ class AppWindow(QMainWindow):
         self.win_exec.signals.operator_select.connect(self.operator_select)
 
         self.win_amort.signals.closed.connect(self.close_win_amort)
-
         self.win_set.signals.closed.connect(self.close_win_settings)
-
         self.win_archive.signals.closed.connect(self.close_win_archive)
 
     # FIXME
@@ -135,14 +132,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/update_data_view - {e}')
-
-    def log_msg_info_slot(self, txt_log):
-        self.model.log_info(txt_log)
-
-    # FIXME
-    def log_msg_err_slot(self, txt_log):
-        self.logger.error(txt_log)
-        self.status_bar_ui(txt_log)
 
     def controller_msg_slot(self, msg):
         try:
@@ -261,7 +250,7 @@ class AppWindow(QMainWindow):
             tag = 'warning'
             self.main_ui_msg(txt, tag)
             self.controller.work_interrupted_operator()
-            self.log_msg_info_slot(f'PUSH BIG RED BUTTON')
+            self.logger.info(f'PUSH BIG RED BUTTON')
 
         except Exception as e:
             self.logger.error(e)
@@ -844,7 +833,7 @@ class AppWindow(QMainWindow):
                        f'limit_recoil_one = {limit_recoil_one}, limit_comp_two = {limit_comp_two}, '
                        f'limit_recoil_two = {limit_recoil_two}, max_temper = {temper}')
 
-            self.log_msg_info_slot(txt_log)
+            self.logger.info(txt_log)
 
             self.model.update_main_dict({'hod': amort.hod})
 

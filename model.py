@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import inspect
 import time
 import crcmod
 import serial
@@ -9,7 +8,7 @@ from struct import pack, unpack
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 from logger import my_logger
-from my_thread.my_threads import LogWriter, Writer, Reader
+from my_thread.my_threads import Writer, Reader
 from settings import PrgSettings
 from my_obj.data_calculation import CalcData
 
@@ -67,40 +66,31 @@ class Model:
         if self.client:
             self._init_timer_writer()
             self._init_reader()
+
             self.write_bit_force_cycle(1)
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
             self.logger.warning(f'Нет подключения к контроллеру')
 
-    def _save_log(self, mode_s, msg_s):
-        try:
-            current_frame = inspect.currentframe()
-            caller_frame = current_frame.f_back
-            num_line = caller_frame.f_lineno
-            code_obj = caller_frame.f_code
-            code_obj_name = code_obj.co_name
-            temp_str = code_obj.co_filename
-            temp_d = temp_str.split('/')
-            nam_f = temp_d[len(temp_d) - 1]
-
-            self.log_writer = LogWriter(mode_s, (nam_f, code_obj_name, num_line), msg_s)
-            self.threadpool.start(self.log_writer)
-
-        except Exception as e:
-            print(str(e))
-
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
 
-    # FIXME
-    def log_error(self, txt_log):
-        self.status_bar_msg(txt_log)
-        self._save_log('error', txt_log)
+    def log_error_thread(self, txt_log):
+        try:
+            self.logger.error(txt_log)
+            self.status_bar_msg(txt_log)
 
-    def log_info(self, txt_log):
-        self.status_bar_msg(txt_log)
-        self._save_log('info', txt_log)
+        except Exception as e:
+            self.logger.error(e)
+
+    def log_info_thread(self, txt_log):
+        try:
+            self.logger.info(txt_log)
+            self.status_bar_msg(txt_log)
+
+        except Exception as e:
+            self.logger.error(e)
 
     def _init_connect(self):
         try:
@@ -130,8 +120,8 @@ class Model:
 
     def _init_reader(self):
         self.reader = Reader(self.client, cst)
-        self.reader.signals.thread_log.connect(self.log_info)
-        self.reader.signals.thread_err.connect(self.log_error)
+        self.reader.signals.thread_log.connect(self.log_info_thread)
+        self.reader.signals.thread_err.connect(self.log_error_thread)
         self.reader.signals.read_result.connect(self._reader_result)
         self.signals.read_start.connect(self.reader.start_read)
         self.signals.start_test.connect(self.reader.start_test)
@@ -602,8 +592,8 @@ class Model:
                             reg_write=reg_write,
                             freq_command=freq_command)
 
-            writer.signals.thread_log.connect(self.log_info)
-            writer.signals.thread_err.connect(self.log_error)
+            writer.signals.thread_log.connect(self.log_info_thread)
+            writer.signals.thread_err.connect(self.log_error_thread)
             writer.signals.write_result.connect(self._result_write)
 
             return writer

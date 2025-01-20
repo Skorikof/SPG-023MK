@@ -1,3 +1,6 @@
+from logger import my_logger
+
+
 class SpeedLimitForHod:
     def speed_limit(self, hod):
         if 40 <= hod < 50:
@@ -23,6 +26,9 @@ class SpeedLimitForHod:
 
 
 class CalcData:
+    def __init__(self):
+        self.logger = my_logger.get_logger(__name__)
+
     def middle_min_and_max_force(self, data: list):
         try:
             comp_index = data.index(min(data))
@@ -36,14 +42,14 @@ class CalcData:
             return max_recoil, max_comp
 
         except Exception as e:
-            print(f'ERROR in data_calculation/middle_min_and_max_force - {e}')
+            self.logger.error(e)
 
     def offset_move_by_hod(self, amort, min_p):
         try:
             return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 2)
 
         except Exception as e:
-            print(f'ERROR in data_calculation/offset_move_by_hod - {e}')
+            self.logger.error(e)
 
     def power_amort(self, move: list, force: list):
         try:
@@ -56,11 +62,11 @@ class CalcData:
             return temp
 
         except Exception as e:
-            print(f'ERROR in data_calculation/power_amort - {e}')
+            self.logger.error(e)
 
     def freq_piston_amort(self, speed, amort):
         try:
             return round(speed / (int(amort.hod) * 0.002 * 3.14), 3)
 
         except Exception as e:
-            print(f'ERROR in data_calculation/freq_piston_amort - {e}')
+            self.logger.error(e)
