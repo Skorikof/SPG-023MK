@@ -230,7 +230,9 @@ class AppWindow(QMainWindow):
                 backcolor = glob_var.COLOR_RED
                 color = glob_var.COLOR_LYELLOW
                 self.ui.message_btn_frame.setVisible(True)
+                self.main_ui_state(True)
                 self.ui.ok_message_btn.setVisible(True)
+                self.ui.ok_message_btn.setEnabled(True)
                 self.ui.cancel_message_btn.setVisible(False)
                 self.main_btn_state(False)
             self.ui.main_stackedWidget.setCurrentIndex(0)
@@ -345,6 +347,7 @@ class AppWindow(QMainWindow):
 
     def open_win_operator(self):
         self.main_ui_state(False)
+        self.main_btn_state(False)
         self.win_exec.show()
 
     def operator_select(self, name, rank):
@@ -357,18 +360,22 @@ class AppWindow(QMainWindow):
 
     def close_win_operator(self):
         self.main_ui_state(True)
+        self.main_btn_state(True)
         self.win_exec.hide()
 
     def open_win_amort(self):
         self.main_ui_state(False)
+        self.main_btn_state(False)
         self.win_amort.show()
 
     def close_win_amort(self):
         self.main_ui_state(True)
+        self.main_btn_state(True)
         self.win_amort.hide()
 
     def btn_search_hod_clicked(self):
         try:
+            self.main_ui_state(False)
             self.main_btn_state(False)
             self.main_stop_state(True)
             self.controller.search_hod_gear()
@@ -394,6 +401,7 @@ class AppWindow(QMainWindow):
 
     def btn_gear_set_pos(self):
         try:
+            self.main_ui_state(False)
             self.main_btn_state(False)
             self.main_stop_state(True)
             self.controller.move_gear_set_pos()
@@ -404,6 +412,8 @@ class AppWindow(QMainWindow):
 
     def btn_correct_force_clicked(self):
         try:
+            self.main_ui_state(False)
+            self.main_btn_state(False)
             self.model.init_timer_koef_force()
 
         except Exception as e:
@@ -416,6 +426,9 @@ class AppWindow(QMainWindow):
                                       f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
                                       )
 
+        self.main_ui_state(True)
+        self.main_btn_state(True)
+
     def btn_cancel_correct_force_clicked(self):
         try:
             self.model.cancel_koef_force()
@@ -423,6 +436,9 @@ class AppWindow(QMainWindow):
                                           'Внимание',
                                           f'<b style="color: #f00;">Корректировка датчика усилия сброшена</b>'
                                           )
+
+            self.main_ui_state(True)
+            self.main_btn_state(True)
 
         except Exception as e:
             self.logger.error(e)
@@ -1169,14 +1185,17 @@ class AppWindow(QMainWindow):
 
     def open_win_archive(self):
         self.main_ui_state(False)
+        self.main_btn_state(False)
         self.win_archive.show()
         self.win_archive.read_path_archive()
 
     def close_win_archive(self):
         self.main_ui_state(True)
+        self.main_btn_state(True)
         self.win_archive.hide()
 
     def open_win_settings(self):
+        self.main_btn_state(False)
         self.main_ui_state(False)
         self.model.update_main_dict({'type_test': 'hand'})
         self.win_set.show()
@@ -1187,6 +1206,7 @@ class AppWindow(QMainWindow):
         if bit == 0:
             self.model.write_bit_force_cycle(1)
         self.model.update_main_dict({'type_test': None})
+        self.main_btn_state(True)
         self.main_ui_state(True)
         self.win_set.hide()
 
