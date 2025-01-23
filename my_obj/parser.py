@@ -7,6 +7,39 @@ class ParserSPG023MK:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
 
+    def discard_left_data(self, request):
+        try:
+            # print(f'Count --> {request.get("count")}')
+            # print(f'Force --> {request.get("force")}')
+            # print(f'Move --> {request.get("move")}')
+            # print(f'State --> {request.get("state")}')
+            # print(f'Temper --> {request.get("temper")}')
+            # print(f'{"=" * 100}')
+
+            response = {'count': [],
+                        'force': [],
+                        'move': [],
+                        'state': [],
+                        'temper': [],
+                        }
+
+            if not request.get('force', []):
+                return None
+
+            else:
+                for ind, force in enumerate(request.get('force')):
+                    if force != -100000:
+                        response['count'].append(request.get('count')[ind])
+                        response['force'].append(request.get('force')[ind])
+                        response['move'].append(request.get('move')[ind])
+                        response['state'].append(request.get('state')[ind])
+                        response['temper'].append(request.get('temper')[ind])
+
+                return response
+
+        except Exception as e:
+            self.logger.error(e)
+
     def magnitude_effort(self, low_reg, big_reg):
         """Текущая величина усилия"""
         try:

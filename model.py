@@ -10,6 +10,7 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 from logger import my_logger
 from my_thread.my_threads import Writer, Reader
 from settings import PrgSettings
+from my_obj.parser import ParserSPG023MK
 from my_obj.data_calculation import CalcData
 
 
@@ -35,6 +36,8 @@ class Model:
         self.threadpool = QThreadPool()
 
         self.logger = my_logger.get_logger(__name__)
+        self.parser = ParserSPG023MK()
+        self.calc_data = CalcData()
 
         self.client = None
         self.log_writer = None
@@ -226,44 +229,36 @@ class Model:
 
     def _pars_buffer_result(self, response):
         try:
-            # print(f'Count --> {response.get("count")}')
-            # print(f'Force --> {response.get("force")}')
-            # print(f'Move --> {response.get("move")}')
-            # print(f'State --> {response.get("state")}')
-            # print(f'Temper --> {response.get("temper")}')
-            # print(f'{"=" * 100}')
-
             force_list = []
             move_list = []
 
-            for count, force in enumerate(response.get('force', [-100000])):
-                if force != -100000:
-                    force_list.append(response.get('force')[count])
-                    move_list.append(response.get('move')[count])
+            response = self.parser.discard_left_data(response)
 
-            if not force_list:
+            if response is None:
                 pass # Пришла пустая посылка
 
             else:
-                command = {'force_real': force_list[-1],
-                           'force': self.correct_force(force_list[-1]),
-                           'move': move_list[-1],
-                           'force_list': [self.correct_force(x) for x in force_list],
-                           'move_list': move_list[:],
-                           'temp_list': response.get('temper')[:],
-                           'count': response.get('count', [-32000])[-1],
-                           }
+                data_dict = {'force_real': response.get('force')[-1],
+                             'force': self.correct_force(response.get('force')[-1]),
+                             'move': response.get('move')[-1],
+                             'force_list': [self.correct_force(x) for x in response.get('force')],
+                             'move_list': response.get('move')[:],
+                             'temp_list': response.get('temper')[:],
+                             'temperature': response.get('temper')[-1],
+                             'max_temperature': self.calc_data.check_temperature(response.get('temper'),
+                                                                                 self.set_regs.get('max_temperature', 0)),
+                             'count': response.get('count')[-1],
+                             }
+
+                reg_dict = self.parser.register_state(response.get('state')[-1])
+
+                command = {**data_dict, **reg_dict}
 
                 self.update_main_dict(command)
 
-                state = response.get('state')[-1]
-                self._register_state(state)
-
-                self._check_temperature(self.set_regs['temp_list'])
-
                 self.signals.read_finish.emit(self.set_regs)
 
-                self._pars_response_on_circle(self.set_regs.get('force_list'), self.set_regs.get('move_list'))
+                self._pars_response_on_circle(data_dict.get('force_list'), data_dict.get('move_list'))
 
         except Exception as e:
             self.logger.error(e)
@@ -274,22 +269,23 @@ class Model:
             if not res:
                 pass
             else:
-                force = self._magnitude_effort(res[0], res[1])
-                command = {
-                    'force_real': force,
-                    'force': self.correct_force(force),
-                    'move': self._movement_amount(res[2]),
-                    'count': self._counter_time(res[4]),
-                    'traverse_move': round(0.5 * self._movement_amount(res[6]), 1),
-                    'temper_first': self._temperature_value(res[7], res[8]),
-                    'force_alarm': self._emergency_force(res[10], res[11]),
-                    'temper_second': self._temperature_value(res[12], res[13]),
-                }
+                force = self.parser.magnitude_effort(res[0], res[1])
+                data_dict = {'force_real': force,
+                             'force': self.correct_force(force),
+                             'move': self.parser.movement_amount(res[2]),
+                             'count': self.parser.counter_time(res[4]),
+                             'traverse_move': round(0.5 * self.parser.movement_amount(res[6]), 1),
+                             'temper_first': self.parser.temperature_value(res[7], res[8]),
+                             'force_alarm': self.parser.emergency_force(res[10], res[11]),
+                             'temper_second': self.parser.temperature_value(res[12], res[13]),
+                             }
+
+                reg_dict = self.parser.register_state(res[3])
+                switch_dict = self.parser.switch_state(res[5])
+
+                command = {**data_dict, **reg_dict, **switch_dict}
 
                 self.update_main_dict(command)
-
-                self._register_state(res[3])
-                self._switch_state(res[5])
 
                 self.signals.read_finish.emit(self.set_regs)
 
@@ -451,17 +447,17 @@ class Model:
                 move_list = self.set_regs.get('move_accum_list')[:]
                 force_list = self.set_regs.get('force_accum_list')[:]
 
-                max_recoil, max_comp = CalcData().middle_min_and_max_force(force_list)
+                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(force_list)
 
-                offset_p = CalcData().offset_move_by_hod(amort, self.min_point)
+                offset_p = self.calc_data.offset_move_by_hod(amort, self.min_point)
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
                            'force_graph': list(map(lambda x: round(x * (-1), 1), force_list)),
                            'move_real_list': move_list[:],
                            'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
-                           'power': CalcData().power_amort(move_list, force_list),
-                           'freq_piston': CalcData().freq_piston_amort(speed, amort),
+                           'power': self.calc_data.power_amort(move_list, force_list),
+                           'freq_piston': self.calc_data.freq_piston_amort(speed, amort),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }
@@ -783,120 +779,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_calc_values_write - {e}')
-
-    def _check_temperature(self, temp_list: list):
-        try:
-            self.set_regs['temperature'] = temp_list[-1]
-
-            if max(temp_list) > self.set_regs.get('max_temperature', 0):
-                self.set_regs['max_temperature'] = max(temp_list)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/find_max_temperature - {e}')
-
-    #FIXME
-    def _magnitude_effort(self, low_reg, big_reg):
-        """Текущая величина усилия"""
-        try:
-            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
-
-            return val_temp
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_magnitude_effort - {e}')
-
-    def _movement_amount(self, data) -> float:
-        """Текущая величина перемещения штока аммортизатора или траверсы"""
-        try:
-            result = round(-0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
-
-            return result
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_movement_amount - {e}')
-
-    def _register_state(self, reg):
-        """Регистр состояния 0х2003"""
-        try:
-            if self.reg_state != reg:
-                self.reg_state = reg
-                temp = bin(reg)[2:].zfill(16)
-                bits = ''.join(reversed(temp))
-
-                command = {'list_state': [int(x) for x in bits],
-                           'cycle_force': bool(int(bits[0])),
-                           'red_light': bool(int(bits[1])),
-                           'green_light': bool(int(bits[2])),
-                           'lost_control': bool(int(bits[3])),
-                           'excess_force': bool(int(bits[4])),
-                           'select_temper': int(bits[6]),
-                           'safety_fence': bool(int(bits[8])),
-                           'traverse_block': bool(int(bits[9])),
-                           'state_freq': bool(int(bits[11])),
-                           'state_force': bool(int(bits[12])),
-                           'yellow_btn': bool(int(bits[13]))
-                           }
-
-                self.update_main_dict(command)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_register_state - {e}')
-
-    def _counter_time(self, register):
-        """Регистр счётчика времени"""
-        try:
-            return register
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_counter_time - {e}')
-
-    def _switch_state(self, reg):
-        """Регистр состояния входов модуля МВ110-224.16ДН"""
-        try:
-            if self.reg_switch != reg:
-                self.reg_switch = reg
-                temp = bin(reg)[2:].zfill(16)
-                bits = ''.join(reversed(temp))
-
-                command = {'traverse_block_left': bool(int(bits[1])),
-                           'traverse_block_right': bool(int(bits[2])),
-                           'alarm_highest_position': bool(int(bits[8])),
-                           'alarm_lowest_position': bool(int(bits[9])),
-                           'highest_position': bool(int(bits[12])),
-                           'lowest_position': bool(int(bits[13]))}
-
-                self.update_main_dict(command)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_switch_state - {e}')
-
-    def _temperature_value(self, low_reg, big_reg):
-        """Величина температуры с модуля МВ-110-224-2А"""
-        try:
-            val_temp = round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
-
-            return val_temp
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_temperature_value - {e}')
-
-    def _emergency_force(self, low_reg, big_reg):
-        """Аварийное усилие"""
-        try:
-            val_temp = unpack('f', pack('<HH', big_reg, low_reg))[0]
-
-            return val_temp
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_emergency_force - {e}')
 
     def calculate_freq(self, speed):
         """Пересчёт скорости в частоту для записи в частотник"""

@@ -29,6 +29,16 @@ class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
 
+    def check_temperature(self, temp_list: list, max_temper: float):
+        try:
+            if max(temp_list) > max_temper:
+                return max(temp_list)
+            else:
+                return max_temper
+
+        except Exception as e:
+            self.logger.error(e)
+
     def middle_min_and_max_force(self, data: list):
         try:
             comp_index = data.index(min(data))
