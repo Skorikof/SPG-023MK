@@ -25,6 +25,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         super(ArchiveWin, self).__init__()
         try:
             self.logger = my_logger.get_logger(__name__)
+            self.calc_data = CalcData()
             self.compare_data = []
             self.type_graph = 'move'
             self.ind_type_test = 0
@@ -514,14 +515,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             force_list = obj.force_list
             push_force = self._select_push_force(obj)
 
-            recoil, comp = CalcData().middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = CalcData().power_amort(move_list, force_list)
+            power = self.calc_data.power_amort(move_list, force_list)
 
             speed = float(obj.speed)
-            freq = CalcData().freq_piston_amort(speed, obj.amort)
+            freq = self.calc_data.freq_piston_amort(speed, obj.amort)
 
             self.push_force_le.setText(f'{push_force}')
             self.power_le.setText(f'{power}')
@@ -555,7 +556,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 elif flag_push_force == '0':
                     push_force = float(obj.static_push_force)
 
-                recoil, comp = CalcData().middle_min_and_max_force(obj.force_list)
+                recoil, comp = self.calc_data.middle_min_and_max_force(obj.force_list)
 
                 recoil_list.append(round(recoil + push_force, 2))
                 comp_list.append(round(comp * (-1) + push_force, 2))
@@ -618,7 +619,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             force_list = self.archive.struct.tests[index].force_list
             self.push_force_le.setText(f'{0}')
 
-            recoil, comp = CalcData().middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
 
             self.comp_le.setText(f'{recoil}')
             self.recoil_le.setText(f'{comp}')
@@ -639,27 +640,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_triple_hod_graph(self, hod):
         try:
-            hod_x, hod_y = self._calc_hod_triple_coord(hod)
+            hod_x, hod_y = self.calc_data.calc_coord_sinus(hod, 360, 1)
             pen = pg.mkPen(color='black', width=3)
             self.graphwidget.plot(hod_x, hod_y, pen=pen, name='Смещение')
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
-
-    def _calc_hod_triple_coord(self, hod):
-        try:
-            mid_hod = hod / 2
-            fs = 360
-            f = 1
-            x = np.arange(360)
-            y = np.sin(2 * np.pi * f * x / fs) * mid_hod
-
-            return x, y
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_hod_triple_list - {e}')
 
     def _calc_index_middle_hod_triple(self, x_coord: list, hod: int):
         try:
@@ -770,7 +757,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             push_force = self._select_push_force(self.archive.struct.tests[index])
             self.push_force_le.setText(f'{push_force}')
 
-            recoil, comp = CalcData().middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
 
             self.comp_le.setText(f'{comp}')
             self.recoil_le.setText(f'{recoil}')
@@ -1030,7 +1017,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                         elif flag_push_force == '0':
                             push_force = float(graph.static_push_force)
 
-                        recoil, comp = CalcData().middle_min_and_max_force(graph.force_list)
+                        recoil, comp = self.calc_data.middle_min_and_max_force(graph.force_list)
 
                         recoil_list.append(round(recoil + push_force, 2))
                         comp_list.append(round(comp * (-1) + push_force, 2))
