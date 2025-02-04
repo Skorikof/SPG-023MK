@@ -15,18 +15,15 @@ class PrgSettings:
             temp_val = config['ComPort']['PortSettings']
             temp_val = str.split(temp_val, ',')
 
-            con_set = {'COM': 'COM' + config['ComPort']['NumberPort'],
-                       'baudrate': int(temp_val[0]),
-                       'parity': temp_val[1],
-                       'bytesize': int(temp_val[2]),
-                       'stopbits': int(temp_val[3]),
-                       }
+            self.con_set = {'COM': 'COM' + config['ComPort']['NumberPort'],
+                            'baudrate': int(temp_val[0]),
+                            'parity': temp_val[1],
+                            'bytesize': int(temp_val[2]),
+                            'stopbits': int(temp_val[3]),
+                            }
 
             force_koef = self._force_koef(config['Settings']['ForceKoef'].replace(',', '.'))
             finish_temper = float(config['Settings']['FinishTemper'].replace(',', '.'))
-
-            self.settings = {'con_set': con_set,
-                             }
 
             self.state = {'operator': {'name': '', 'rank': ''},
                           'amort': None,

@@ -1,50 +1,50 @@
 # -*- coding: utf-8 -*-
 import time
-import crcmod
-import serial
 import modbus_tk.defines as cst
-import modbus_tk.modbus_rtu as modbus_rtu
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 from logger import my_logger
-from my_thread.my_threads import Writer, Reader
+from my_thread.my_threads import Reader
 from settings import PrgSettings
 from my_obj.parser import ParserSPG023MK
 from my_obj.data_calculation import CalcData
+from my_obj.writer import Writer
+from my_obj.client import Client
 
 
 class WinSignals(QObject):
-    connect_ctrl = pyqtSignal()
     stbar_msg = pyqtSignal(str)
     read_start = pyqtSignal()
     start_test = pyqtSignal()
     stop_test = pyqtSignal()
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
-    read_finish = pyqtSignal()
+
     win_set_update = pyqtSignal()
     full_cycle_count = pyqtSignal()
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
     save_koef_force = pyqtSignal()
 
+    check_buffer = pyqtSignal(str, str)
+
+    connect_ctrl = pyqtSignal()
+    read_finish = pyqtSignal()
+
 
 class Model:
     def __init__(self):
         self.signals = WinSignals()
-        self.set_dict = PrgSettings().settings
         self.threadpool = QThreadPool()
 
         self.logger = my_logger.get_logger(__name__)
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
+        self.client = Client()
 
-        self.client = None
-        self.log_writer = None
         self.set_regs = {}
         self.reader = None
-        self.writer_flag_init = False
-        self.flag_write = False
+        self.writer = None
         self.timer_add_koef = None
         self.koef_force_list = []
         self.timer_calc_koef = None
@@ -54,22 +54,21 @@ class Model:
         self.main_min_point = 100
         self.min_point = 0
         self.max_point = 0
-        self.reg_state = None
-        self.reg_switch = None
 
         self._start_param_model()
 
     def _start_param_model(self):
-        self._init_connect()
+        self.client.connect_client()
         self._init_timer_yellow_btn()
+
         start_state = PrgSettings().state
         self.update_main_dict(start_state)
 
-        if self.client:
-            self._init_timer_writer()
-            self._init_reader()
+        if self.client.set_dict['connect']:
+            self.writer = Writer(self.client.client)
+            self.writer.timer_writer_start()
 
-            self.write_bit_force_cycle(1)
+            self._init_reader()
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
@@ -94,34 +93,14 @@ class Model:
         except Exception as e:
             self.logger.error(e)
 
-    def _init_connect(self):
-        try:
-            self.client = modbus_rtu.RtuMaster(serial.Serial(port=self.set_dict.get('con_set')['COM'],
-                                                             baudrate=self.set_dict.get('con_set')['baudrate'],
-                                                             bytesize=self.set_dict.get('con_set')['bytesize'],
-                                                             parity=self.set_dict.get('con_set')['parity'],
-                                                             stopbits=self.set_dict.get('con_set')['stopbits'],
-                                                             timeout=0.000001))
+    def _init_signals(self):
+        self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
-            self.client.set_timeout(1.0)
-            self.client.set_verbose(True)
-            self.client.open()
-            self.set_dict['con_set']['connect'] = True
-            self.status_bar_msg(f'Контроллер подключен')
-
-        except Exception as e:
-            self.client = None
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_init_connect - {e}')
-
-    def disconnect_client(self):
-        if self.client:
-            self.client.close()
-            self.set_dict['con_set']['connect'] = False
-            self.status_bar_msg(f'Контроллер отключен')
+    def check_buffer_state(self, res, state):
+        self.set_regs['buffer_state'] = [res, state]
 
     def _init_reader(self):
-        self.reader = Reader(self.client, cst)
+        self.reader = Reader(self.client.client, cst)
         self.reader.signals.thread_log.connect(self.log_info_thread)
         self.reader.signals.thread_err.connect(self.log_error_thread)
         self.reader.signals.read_result.connect(self._reader_result)
@@ -224,11 +203,37 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
 
+    def _pars_regs_result(self, res):
+        try:
+            if not res:
+                pass
+            else:
+                force = self.parser.magnitude_effort(res[0], res[1])
+                data_dict = {'force_real': force,
+                             'force': self.correct_force(force),
+                             'move': self.parser.movement_amount(res[2]),
+                             'count': self.parser.counter_time(res[4]),
+                             'traverse_move': round(0.5 * self.parser.movement_amount(res[6]), 1),
+                             'temper_first': self.parser.temperature_value(res[7], res[8]),
+                             'force_alarm': self.parser.emergency_force(res[10], res[11]),
+                             'temper_second': self.parser.temperature_value(res[12], res[13]),
+                             }
+
+                reg_dict = self.parser.register_state(res[3])
+                switch_dict = self.parser.switch_state(res[5])
+
+                command = {**data_dict, **reg_dict, **switch_dict}
+
+                self.update_main_dict(command)
+
+                self._read_controller_finish()
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
+
     def _pars_buffer_result(self, response):
         try:
-            force_list = []
-            move_list = []
-
             response = self.parser.discard_left_data(response)
 
             if response is None:
@@ -260,35 +265,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
-
-    def _pars_regs_result(self, res):
-        try:
-            if not res:
-                pass
-            else:
-                force = self.parser.magnitude_effort(res[0], res[1])
-                data_dict = {'force_real': force,
-                             'force': self.correct_force(force),
-                             'move': self.parser.movement_amount(res[2]),
-                             'count': self.parser.counter_time(res[4]),
-                             'traverse_move': round(0.5 * self.parser.movement_amount(res[6]), 1),
-                             'temper_first': self.parser.temperature_value(res[7], res[8]),
-                             'force_alarm': self.parser.emergency_force(res[10], res[11]),
-                             'temper_second': self.parser.temperature_value(res[12], res[13]),
-                             }
-
-                reg_dict = self.parser.register_state(res[3])
-                switch_dict = self.parser.switch_state(res[5])
-
-                command = {**data_dict, **reg_dict, **switch_dict}
-
-                self.update_main_dict(command)
-
-                self._read_controller_finish()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
     # FIXME
     def _read_controller_finish(self):
@@ -515,94 +491,7 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_response_on_circle - {e}')
 
-    def _init_timer_writer(self):
-        self.timer_writer = QTimer()
-        self.timer_writer.setInterval(50)
-        self.timer_writer.timeout.connect(self._control_write)
-        self.timer_writer.start()
-
-    def _control_write(self):
-        try:
-            if not self.set_regs.get('query_write', False):
-                if self.set_regs.get('list_write', []):
-                    obj_wr = self.set_regs.get('list_write')[0]
-                    self.set_regs['query_write'] = True
-
-                    self.threadpool.start(obj_wr)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_control_write - {e}')
-
-    def _result_write(self, res, tag, addr, value):
-        try:
-            if self.set_regs.get('query_write', False):
-                self.set_regs['query_write'] = False
-                self.set_regs['list_write'].pop(0)
-
-                if res == 'OK!':
-                    pass
-                    # if tag == 'reg':
-                    #     self._pars_result_reg_write(addr, value[0])
-                    #
-                    # elif tag == 'FC':
-                    #     if not self.set_regs.get('repeat_command'):
-                    #         self.set_regs['fc_ready'] = True
-                    #     else:
-                    #         self.set_regs['repeat_command'] = False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_result_write - {e}')
-
-    def _pars_result_reg_write(self, addr, value):
-        if addr == 8195:  # Регистр состояния 0х2003
-            temp = bin(value)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-            self._switch_read_buffer(bool(int(bits[0])))
-
-    def _switch_read_buffer(self, flag):
-        try:
-            if flag:
-                if not self.set_regs.get('flag_bit_force', False):
-                    self.set_regs['flag_bit_force'] = True
-
-            else:
-                if self.set_regs.get('flag_bit_force', True):
-                    self.set_regs['flag_bit_force'] = False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_switch_read_buffer - {e}')
-
-    def write_out(self, tag, values=None, reg_write=None, freq_command=None):
-        try:
-            self.set_regs['list_write'].append(self._init_writer(tag, values, reg_write, freq_command))
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_out - {e}')
-
-    def _init_writer(self, tag, values=None, reg_write=None, freq_command=None):
-        try:
-            writer = Writer(client=self.client,
-                            cst=cst,
-                            tag=tag,
-                            values=values,
-                            reg_write=reg_write,
-                            freq_command=freq_command)
-
-            writer.signals.thread_log.connect(self.log_info_thread)
-            writer.signals.thread_err.connect(self.log_error_thread)
-            writer.signals.write_result.connect(self._result_write)
-
-            return writer
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_init_writer - {e}')
-
-    def _write_reg_state(self, bit, value):
+    def _write_reg_state(self, bit, value, command=None):
         try:
             temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             com_list = self.set_regs.get('list_state', temp_list)[:]
@@ -616,7 +505,10 @@ class Model:
 
             values.append(res)
 
-            self.write_out('reg', values, 0x2003)
+            self.writer.write_out('reg',
+                                  values=values,
+                                  reg_write=0x2003,
+                                  command=command)
 
         except Exception as e:
             self.logger.error(e)
@@ -626,7 +518,12 @@ class Model:
         try:
             bit = self.set_regs.get('cycle_force', 0)
             if int(bit) != value:
-                self._write_reg_state(0, value)
+                if value == 1:
+                    command = 'buffer_on'
+                else:
+                    command = 'buffer_off'
+
+                self._write_reg_state(0, value, command)
 
         except Exception as e:
             self.logger.error(e)
@@ -681,7 +578,7 @@ class Model:
         try:
             arr = self.calc_data.emergency_force(value)
 
-            self.write_out('reg', arr, 0x200a)
+            self.writer.write_out('reg', values=arr, reg_write=0x200a)
 
         except Exception as e:
             self.logger.error(e)
@@ -695,10 +592,10 @@ class Model:
             if self.set_regs.get('excess_force'):
                 self.write_bit_emergency_force()
 
-            command = command + self._calc_crc(command)
-            values = self._calc_values_write(command)
+            command = command + self.calc_data.calc_crc(command)
+            values = self.calc_data.values_freq_command(command)
 
-            self.write_out('FC', freq_command=values)
+            self.writer.write_out('FC', freq_command=values)
 
         except Exception as e:
             self.logger.error(e)
@@ -752,45 +649,3 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/motor_stop - {e}')
-
-    def _calc_crc(self, data):
-        try:
-            byte_data = bytes.fromhex(data)
-            crc16 = crcmod.mkCrcFun(0x18005, initCrc=0xFFFF, rev=True, xorOut=0x0000)
-            crc_str = hex(crc16(byte_data))[2:].zfill(4)
-            crc_str = crc_str[2:] + crc_str[:2]
-
-            return crc_str
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_calc_crc - {e}')
-
-    def _calc_values_write(self, data):
-        try:
-            val_regs = []
-            for i in range(0, len(data), 4):
-                temp = data[i:i + 4]
-                temp_byte = bytearray.fromhex(temp)
-                temp_val = int.from_bytes(temp_byte, 'big')
-                val_regs.append(temp_val)
-
-            return val_regs
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_calc_values_write - {e}')
-
-    def calculate_freq(self, speed):
-        """Пересчёт скорости в частоту для записи в частотник"""
-        try:
-            koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
-            hod = self.set_regs.get('hod', 120) / 1000
-            radius = hod / 2
-            freq = int(100 * (koef * speed) / radius)
-
-            return freq
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/calculate_freq - {e}')

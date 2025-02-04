@@ -4,6 +4,7 @@ from functools import reduce
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
 from logger import my_logger
+from my_obj.data_calculation import CalcData
 
 
 class ControlSignals(QObject):
@@ -25,10 +26,11 @@ class ControlSignals(QObject):
 class Controller:
     def __init__(self, model):
         try:
+            self.logger = my_logger.get_logger(__name__)
+
             self.signals = ControlSignals()
             self.model = model
-
-            self.logger = my_logger.get_logger(__name__)
+            self.calc_data = CalcData()
 
             self.timer_process = None
             self.flag_freq_1_step = False
@@ -649,7 +651,9 @@ class Controller:
         try:
             value = 0
             if not freq:
-                value = self.model.calculate_freq(speed)
+                hod = self.model.set_regs.get('hod', 120)
+                value = self.calc_data.freq_from_speed(speed, hod)
+
             elif not speed:
                 value = 100 * freq
 

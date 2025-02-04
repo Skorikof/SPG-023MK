@@ -16,35 +16,30 @@ from wins.archive_win import ArchiveWin
 class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
         super(AppWindow, self).__init__()
-
         self.logger = my_logger.get_logger(__name__)
-
-        self.list_lab = []
-        self.dict_lab_cascade = {}
-
-        self.index_amort = 0
-        self.index_type_test = 0
-
-        self.bit_temper = None
-
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
         self.model = model
         self.controller = controller
         self.win_set = win_set
-
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
+
+        self.list_lab = []
+        self.dict_lab_cascade = {}
+        self.index_amort = 0
+        self.index_type_test = 0
+        self.bit_temper = None
 
         self._start_param_view()
 
     def closeEvent(self, event):
         self.controller.timer_process.stop()
+        self.model.writer.timer_writer_stop()
         self.model.reader_exit()
         self.model.threadpool.waitForDone()
-        self.model.disconnect_client()
+        self.model.client.disconnect_client()
         self.close()
 
     def _create_statusbar_ui(self):
@@ -1179,9 +1174,6 @@ class AppWindow(QMainWindow):
         self.win_set.update_data_win_set()
 
     def close_win_settings(self):
-        bit = int(self.model.set_regs.get('cycle_force', 0))
-        if bit == 0:
-            self.model.write_bit_force_cycle(1)
         self.model.set_regs['type_test'] = None
         self.main_btn_state(True)
         self.main_ui_state(True)

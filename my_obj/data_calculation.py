@@ -1,4 +1,5 @@
 import numpy as np
+import crcmod
 from struct import pack
 
 from logger import my_logger
@@ -31,6 +32,45 @@ class SpeedLimitForHod:
 class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
+
+    def calc_crc(self, data):
+        try:
+            byte_data = bytes.fromhex(data)
+            crc16 = crcmod.mkCrcFun(0x18005, initCrc=0xFFFF, rev=True, xorOut=0x0000)
+            crc_str = hex(crc16(byte_data))[2:].zfill(4)
+            crc_str = crc_str[2:] + crc_str[:2]
+
+            return crc_str
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def values_freq_command(self, data):
+        try:
+            val_regs = []
+            for i in range(0, len(data), 4):
+                temp = data[i:i + 4]
+                temp_byte = bytearray.fromhex(temp)
+                temp_val = int.from_bytes(temp_byte, 'big')
+                val_regs.append(temp_val)
+
+            return val_regs
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def freq_from_speed(self, speed: float, hod: int):
+        """Пересчёт скорости в частоту для записи в частотник"""
+        try:
+            koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
+            hod = hod / 1000
+            radius = hod / 2
+            freq = int(100 * (koef * speed) / radius)
+
+            return freq
+
+        except Exception as e:
+            self.logger.error(e)
 
     def emergency_force(self, value):
         try:

@@ -1,25 +1,21 @@
 # -*- coding: utf-8 -*-
 import time
 from struct import pack, unpack
-from datetime import datetime
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
-
-
-base_dir = 'c:/System'
 
 
 class Signals(QObject):
     thread_log = pyqtSignal(str)
     thread_err = pyqtSignal(str)
     read_result = pyqtSignal(dict, str)
-    write_result = pyqtSignal(str, str, int, object)
+    write_result = pyqtSignal(list)
 
 
-class Writer(QRunnable):
+class WriterThread(QRunnable):
     signals = Signals()
 
-    def __init__(self, client, cst, tag, values, reg_write, freq_command):
-        super(Writer, self).__init__()
+    def __init__(self, client, cst, tag, values, reg_write, freq_command, command='reg'):
+        super(WriterThread, self).__init__()
         self.client = client
         self.cst = cst
         self.tag = tag
@@ -31,6 +27,7 @@ class Writer(QRunnable):
         self.reg_len_freq = 0x2060
         self.reg_freq_buffer = 0x2061
         self.freq_command = freq_command
+        self.command = command
         self.number_attempts = 0
         self.max_attempts = 5
         self.cond = True
@@ -38,24 +35,29 @@ class Writer(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        try:
-            if self.tag == 'reg':
+        if self.tag == 'reg':
+            try:
                 while self.number_attempts <= self.max_attempts:
                     try:
                         rw = self.client.execute(self.dev_id, self.cst.WRITE_MULTIPLE_REGISTERS,
                                                  self.reg_write, output_value=tuple(self.values))
-                        self.signals.write_result.emit('OK!', self.tag, self.reg_write, self.values)
                         self.number_attempts = 10
+                        response = ['OK!', self.tag, self.reg_write, self.values, self.command]
+                        self.signals.write_result.emit(response)
 
-                    except Exception as e:
-                        self.signals.write_result.emit('ERROR!', self.tag, self.reg_write, self.values)
+                    except:
                         self.number_attempts += 1
                         time.sleep(0.02)
 
                 if not self.number_attempts == 10:
-                    self.signals.write_result.emit('ERROR!', self.tag, self.reg_write, self.values)
+                    response = ['ERROR!', self.tag, self.reg_write, self.values, self.command]
+                    self.signals.write_result.emit(response)
 
-            if self.tag == 'FC':
+            except Exception as e:
+                self.signals.thread_err.emit(f'ERROR in thread writer reg --> {e}')
+
+        if self.tag == 'FC':
+            try:
                 while self.cond:  # Проверяем бит занятости ПЧ
                     time.sleep(0.02)
                     rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS, self.reg_state, 1)
@@ -68,7 +70,7 @@ class Writer(QRunnable):
                     else:
                         self.number_attempts += 1
                         if self.number_attempts >= self.max_attempts:
-                            print('ERROR WRITE!!!')
+                            # print('ERROR WRITE!!!')
                             self.flag_next = False
                             self.cond = False
 
@@ -88,7 +90,8 @@ class Writer(QRunnable):
                         except Exception as e:
                             self.number_attempts += 1
                             if self.number_attempts >= self.max_attempts:
-                                print('ERROR WRITE')
+                                # print('ERROR WRITE')
+                                self.flag_next = False
 
                 if self.flag_next:  # Проверяем бит занятости ПЧ
                     self.flag_next = False
@@ -131,10 +134,11 @@ class Writer(QRunnable):
                                 print('ERROR WRITE')
 
                 if self.flag_next:
-                    self.signals.write_result.emit('OK!', self.tag, self.reg_freq_buffer, self.freq_command)
+                    response = ['OK!', self.tag, self.reg_freq_buffer, self.freq_command, self.command]
+                    self.signals.write_result.emit(response)
 
-        except Exception as e:
-            self.signals.thread_err.emit(f'ERROR in thread Writer - {e}')
+            except Exception as e:
+                self.signals.thread_err.emit(f'ERROR in thread writer FC --> {e}')
 
     def _dec_to_bin_str(self, val_d):
         try:
@@ -182,11 +186,11 @@ class Reader(QRunnable):
     @pyqtSlot()
     def run(self):
         while self.cycle:
-            try:
-                if not self.is_run:
-                    time.sleep(0.001)
-                else:
-                    if self.read_tag == 'reg':
+            if not self.is_run:
+                time.sleep(0.001)
+            else:
+                if self.read_tag == 'reg':
+                    try:
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.start_reg, self.count_reg)
 
@@ -194,9 +198,16 @@ class Reader(QRunnable):
 
                         self.signals.read_result.emit(self.result, self.read_tag)
 
-                    elif self.read_tag == 'buffer':
+                    except Exception as e:
+                        self.signals.thread_err.emit(f'ERROR in thread reader reg - {e}')
 
-                        self.result = {'count': [], 'force': [], 'move': [], 'state': [], 'temper': []}
+                elif self.read_tag == 'buffer':
+                    try:
+                        self.result = {'count': [],
+                                       'force': [],
+                                       'move': [],
+                                       'state': [],
+                                       'temper': []}
 
                         rr = self.client.execute(self.dev_id, self.cst.READ_HOLDING_REGISTERS,
                                                  self.reg_buffer, self.buffer_count * 6)
@@ -254,8 +265,8 @@ class Reader(QRunnable):
                         else:
                             self.signals.thread_err.emit(str(rr))
 
-            except Exception as e:
-                self.signals.thread_err.emit(f'ERROR in thread Reader - {e}')
+                    except Exception as e:
+                        self.signals.thread_err.emit(f'ERROR in thread reader buffer - {e}')
 
     def start_test(self):
         self.num_rec = 0

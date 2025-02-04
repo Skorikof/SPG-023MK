@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 
 from logger import my_logger
+from my_obj.data_calculation import CalcData
 from ui_py.settings_ui import Ui_SettingsWindow
 
 
@@ -20,6 +21,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         try:
             self.logger = my_logger.get_logger(__name__)
             self.model = model
+            self.calc_data = CalcData()
             self.setupUi(self)
 
             self.hide()
@@ -135,7 +137,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         try:
             value = self.lineEdit_speed_main.text()
             value = float(value.replace(',', '.'))
-            speed = self.model.calculate_freq(value)
+            hod = self.model.set_regs.get('hod', 120)
+            speed = self.calc_data.freq_from_speed(value, hod)
+
             self.model.write_frequency(1, speed)
 
         except Exception as e:
