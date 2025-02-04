@@ -30,7 +30,6 @@ class Controller:
 
             self.logger = my_logger.get_logger(__name__)
 
-            self.response = {}
             self.timer_process = None
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
@@ -69,14 +68,6 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_init_signals - {e}')
 
-    def update_data_ctrl(self, response):
-        try:
-            self.response = {**self.response, **response}
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/update_data - {e}')
-
     def _update_full_cycle(self):
         try:
             self.count_cycle += 1
@@ -101,8 +92,8 @@ class Controller:
 
     def _update_stage_on_timer(self):
         try:
-            stage = self.response.get('stage')
-            test_flag = self.response.get('test_flag')
+            stage = self.model.set_regs.get('stage')
+            test_flag = self.model.set_regs.get('test_flag')
 
             # self._control_alarm_traverse_position()
 
@@ -113,10 +104,10 @@ class Controller:
                 pass
 
             elif stage == 'alarm_traverse':
-                if self.response.get('alarm_tag', '') == 'alarm_traverse_up':
+                if self.model.set_regs.get('alarm_tag', '') == 'alarm_traverse_up':
                     self.set_trav_point = 10
 
-                elif self.response.get('alarm_tag', '') == 'alarm_traverse_down':
+                elif self.model.set_regs.get('alarm_tag', '') == 'alarm_traverse_down':
                     self.set_trav_point = 500
 
                 flag = self._control_traverse_move()
@@ -135,7 +126,7 @@ class Controller:
             elif stage == 'search_hod':
                 if self.count_cycle >= 1:
                     self.model.motor_stop(1)
-                    hod = round(abs(self.response.get('min_point')) + abs(self.response.get('max_point')), 1)
+                    hod = round(abs(self.model.set_regs.get('min_point')) + abs(self.model.set_regs.get('max_point')), 1)
 
                     command = {'stage': 'wait',
                                'hod_measure': hod,
@@ -145,9 +136,9 @@ class Controller:
                     self._stop_gear_min_pos()
 
             elif stage == 'pos_set_gear':
-                if self.response.get('gear_referent', False):
-                    if self.response.get('max_pos', False):
-                        if abs(14 - self.response.get('move', 200)) < 5:
+                if self.model.set_regs.get('gear_referent', False):
+                    if self.model.set_regs.get('max_pos', False):
+                        if abs(14 - self.model.set_regs.get('move', 200)) < 5:
                             self.model.motor_stop(1)
                             command = {'stage': 'wait',
                                        'max_pos': False,
@@ -161,7 +152,7 @@ class Controller:
                             self.signals.reset_ui.emit()
 
             elif stage == 'traverse_referent':
-                if self.response.get('highest_position', False) is True:
+                if self.model.set_regs.get('highest_position', False) is True:
                     self.model.motor_stop(2)
 
                     command = {'traverse_referent': True,
@@ -196,7 +187,7 @@ class Controller:
 
             elif stage == 'pumping':
                 if self.count_cycle >= 3:
-                    type_test = self.response.get('type_test')
+                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'lab_hand':
                         self._test_lab_hand_speed()
                     elif type_test == 'temper':
@@ -208,10 +199,10 @@ class Controller:
 
             elif stage == 'test_speed_one':
                 if self.count_cycle >= 5:
-                    type_test = self.response.get('type_test')
+                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
-                        max_comp = self.response.get('max_comp')
-                        max_recoil = self.response.get('max_recoil')
+                        max_comp = self.model.set_regs.get('max_comp')
+                        max_recoil = self.model.set_regs.get('max_recoil')
                         self._result_conveyor_test('one', max_comp, max_recoil)
 
                     elif type_test == 'lab':
@@ -221,10 +212,10 @@ class Controller:
 
             elif stage == 'test_speed_two':
                 if self.count_cycle >= 5:
-                    type_test = self.response.get('type_test')
+                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
-                        max_comp = self.response.get('max_comp')
-                        max_recoil = self.response.get('max_recoil')
+                        max_comp = self.model.set_regs.get('max_comp')
+                        max_recoil = self.model.set_regs.get('max_recoil')
                         self._result_conveyor_test('two', max_comp, max_recoil)
 
                     elif type_test == 'lab':
@@ -245,10 +236,10 @@ class Controller:
 
             elif stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    max_temper = self.response.get('temperature')
-                    if max_temper < self.response.get('finish_temper', 80):
-                        max_comp = self.response.get('max_comp')
-                        max_recoil = self.response.get('max_recoil')
+                    max_temper = self.model.set_regs.get('temperature')
+                    if max_temper < self.model.set_regs.get('finish_temper', 80):
+                        max_comp = self.model.set_regs.get('max_comp')
+                        max_recoil = self.model.set_regs.get('max_recoil')
                         force = f'{max_recoil}|{max_comp}'
                         self._fill_temper_graph(max_temper, force)
                         self.count_cycle = 0
@@ -264,7 +255,7 @@ class Controller:
                 if self.count_cycle >= 5:
                     self.signals.lab_save_result.emit('cont')
                     if self.cascade < self.max_cascade:
-                        speed = self.response.get('speed_cascade')[self.cascade]
+                        speed = self.model.set_regs.get('speed_cascade')[self.cascade]
                         self._write_speed_motor(1, speed=speed)
                         command = {'speed': speed,
                                    'force_accum_list': [],
@@ -286,7 +277,7 @@ class Controller:
                         self._stop_gear_end_test()
 
             elif stage == 'stop_gear_end_test':
-                move_list = self.response.get('move_list')
+                move_list = self.model.set_regs.get('move_list')
                 stop_point = reduce(lambda x, y: round(abs(abs(x) - abs(y)), 3), move_list)
 
                 if stop_point < 0.2 or stop_point == move_list[0]:  # Перемещение перестало изменяться
@@ -297,11 +288,11 @@ class Controller:
 
                 if self.count_wait_point > 3:
                     self.count_wait_point = 0
-                    self.model.update_main_dict({'stage': 'wait'})
+                    self.model.set_regs['stage'] = 'wait'
                     self._stop_gear_min_pos()
 
             elif stage == 'stop_gear_min_pos':
-                if self.response.get('move') < self.model.main_min_point + 2:
+                if self.model.set_regs.get('move') < self.model.main_min_point + 2:
                     self.model.motor_stop(1)
 
                     command = {'stage': 'wait',
@@ -315,12 +306,12 @@ class Controller:
 
                     self.model.update_main_dict(command)
 
-                    if self.response.get('search_hod', False):
-                        self.model.update_main_dict({'search_hod': False})
+                    if self.model.set_regs.get('search_hod', False):
+                        self.model.set_regs['search_hod'] = False
                         self.signals.search_hod.emit()
 
-                    if self.response.get('type_test') == 'conv':
-                        if self.response.get('test_launch', False) is True:
+                    if self.model.set_regs.get('type_test') == 'conv':
+                        if self.model.set_regs.get('test_launch', False) is True:
                             self.traverse_install_point('install')
                         else:
                             self.traverse_install_point('stop_test')
@@ -331,7 +322,7 @@ class Controller:
             elif stage == 'stop_test':
                 flag = self._control_traverse_move()
                 if flag:
-                    if not self.response.get('alarm_flag', False):
+                    if not self.model.set_regs.get('alarm_flag', False):
                         self.signals.cancel_test.emit()
 
                     command = {'stage': 'wait',
@@ -348,17 +339,17 @@ class Controller:
 
     def _control_traverse_move(self) -> bool:  # Функция отслеживания траверсы, при достижении точки останов
         try:
-            if 5 < abs(self.set_trav_point - self.response.get('traverse_move')) <= 10:
+            if 5 < abs(self.set_trav_point - self.model.set_regs.get('traverse_move')) <= 10:
                 if not self.flag_freq_1_step:
                     self._write_speed_motor(2, freq=15)
                     self.flag_freq_1_step = True
 
-            if 1 < abs(self.set_trav_point - float(self.response.get('traverse_move'))) <= 5:
+            if 1 < abs(self.set_trav_point - float(self.model.set_regs.get('traverse_move'))) <= 5:
                 if not self.flag_freq_2_step:
                     self._write_speed_motor(2, freq=10)
                     self.flag_freq_2_step = True
 
-            if abs(self.set_trav_point - self.response.get('traverse_move')) <= 1:
+            if abs(self.set_trav_point - self.model.set_regs.get('traverse_move')) <= 1:
                 self.model.motor_stop(2)
                 return True
 
@@ -370,7 +361,7 @@ class Controller:
 
     def _control_switch_traverse_position(self):
         try:
-            if self.response.get('type_test') == 'hand':
+            if self.model.set_regs.get('type_test') == 'hand':
                 self.model.motor_stop(2)
 
         except Exception as e:
@@ -379,9 +370,9 @@ class Controller:
 
     def _control_alarm_traverse_position(self):
         try:
-            if self.response.get('alarm_highest_position', True) is False:
+            if self.model.set_regs.get('alarm_highest_position', True) is False:
                 self._alarm_traverse_position('up')
-            if self.response.get('alarm_lowest_position', True) is False:
+            if self.model.set_regs.get('alarm_lowest_position', True) is False:
                 self._alarm_traverse_position('down')
 
         except Exception as e:
@@ -405,15 +396,15 @@ class Controller:
 
     def _control_alarm_state(self):
         try:
-            if not self.response.get('type_test') == 'temper':
-                if self.response.get('max_temperature', 0) >= self.response.get('amort').max_temper:
+            if not self.model.set_regs.get('type_test') == 'temper':
+                if self.model.set_regs.get('max_temperature', 0) >= self.model.set_regs.get('amort').max_temper:
                     self._excess_temperature()
 
-            if self.response.get('lost_control', False) is True:
+            if self.model.set_regs.get('lost_control', False) is True:
                 self._lost_control()
-            if self.response.get('excess_force', False) is True:
+            if self.model.set_regs.get('excess_force', False) is True:
                 self._excess_force()
-            if self.response.get('safety_fence', False) is True:
+            if self.model.set_regs.get('safety_fence', False) is True:
                 self._safety_fence()
 
         except Exception as e:
@@ -615,8 +606,8 @@ class Controller:
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
         try:
             if state:
-                if self.response.get('test_flag', False) is False:
-                    if self.response.get('green_light') or self.response.get('red_light'):
+                if self.model.set_regs.get('test_flag', False) is False:
+                    if self.model.set_regs.get('green_light') or self.model.set_regs.get('red_light'):
                         self.lamp_all_switch_off()
                         time.sleep(0.2)
 
@@ -634,16 +625,16 @@ class Controller:
                     self.model.update_main_dict(command)
                     self.model.reset_min_point()
 
-                    if self.response.get('lost_control'):
+                    if self.model.set_regs.get('lost_control'):
                         self.model.write_bit_unblock_control()
 
-                    if self.response.get('excess_force'):
+                    if self.model.set_regs.get('excess_force'):
                         self.model.write_bit_emergency_force()
 
                     self.traverse_install_point('start_test')
 
                 else:
-                    self.model.update_main_dict({'test_flag': False})
+                    self.model.set_regs['test_flag'] = False
                     self.stop_test_clicked()
 
         except Exception as e:
@@ -674,10 +665,10 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            if self.response.get('excess_force', False) is True:
+            if self.model.set_regs.get('excess_force', False) is True:
                 self.model.write_bit_emergency_force()
 
-            if self.response.get('lost_control', False) is True:
+            if self.model.set_regs.get('lost_control', False) is True:
                 self.model.write_bit_unblock_control()
 
             self.lamp_all_switch_off()
@@ -706,7 +697,7 @@ class Controller:
 
             if self.flag_repeat:
                 self.flag_repeat = False
-                type_test = self.response.get('type_test')
+                type_test = self.model.set_regs.get('type_test')
                 self.model.reader_start_test()
                 if type_test == 'lab_hand':
                     self._test_lab_hand_speed()
@@ -721,7 +712,7 @@ class Controller:
                     self._test_on_two_speed(1)
 
             else:
-                if self.response.get('traverse_move', 0) < 10:
+                if self.model.set_regs.get('traverse_move', 0) < 10:
                     self._traverse_referent_point()
 
                 else:
@@ -750,7 +741,7 @@ class Controller:
 
             self.model.update_main_dict(command)
 
-            if self.response.get('gear_referent'):
+            if self.model.set_regs.get('gear_referent'):
                 self._stop_gear_end_test()
             else:
                 self.model.motor_stop(1)
@@ -765,7 +756,7 @@ class Controller:
     def search_hod_gear(self):
         try:
             # self.model.write_bit_force_cycle(1)
-            hod = self.response.get('hod', 120)
+            hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
                 speed = 0.03
             elif 50 < hod <= 100:
@@ -795,7 +786,7 @@ class Controller:
 
             self.model.reader_start_test()
 
-            self.model.update_main_dict({'stage': 'search_hod'})
+            self.model.set_regs['stage'] = 'search_hod'
 
             self.model.motor_up(1)
 
@@ -806,7 +797,7 @@ class Controller:
     def move_gear_set_pos(self):
         try:
             # self.model.write_bit_force_cycle(1)
-            hod = self.response.get('hod', 120)
+            hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
                 speed = 0.03
             elif 50 < hod <= 100:
@@ -835,7 +826,7 @@ class Controller:
 
             self.model.reader_start_test()
 
-            self.model.update_main_dict({'stage': 'pos_set_gear'})
+            self.model.set_regs['stage'] = 'pos_set_gear'
 
             self.model.motor_up(1)
 
@@ -849,9 +840,9 @@ class Controller:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
             self._write_speed_motor(2, freq=20)
-            self.model.update_main_dict({'traverse_freq': 20})
+            self.model.set_regs['traverse_freq'] = 20
             self.set_trav_point = float(set_point)
-            pos_trav = self.response.get('traverse_move')
+            pos_trav = self.model.set_regs.get('traverse_move')
 
             if pos_trav > self.set_trav_point:
                 self.model.motor_up(2)
@@ -879,8 +870,8 @@ class Controller:
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
-            amort = self.response.get('amort')
-            stock_point = self.response.get('traverse_stock')
+            amort = self.model.set_regs.get('amort')
+            stock_point = self.model.set_regs.get('traverse_stock')
             hod = amort.hod
             len_min = amort.min_length
             len_max = amort.max_length
@@ -890,27 +881,27 @@ class Controller:
             if tag == 'install':
                 install_point = int((stock_point + hod / 2) - len_max - adapter)
                 self._position_traverse()
-                pos_trav = float(self.response.get('traverse_move'))
+                pos_trav = float(self.model.set_regs.get('traverse_move'))
                 if abs(pos_trav - install_point) < 2:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
-                    self.model.update_main_dict({'stage': 'install_amort'})
+                    self.model.set_regs['stage'] = 'install_amort'
                     self._traverse_move_position(install_point)
 
             elif tag == 'start_test':
                 start_point = int(stock_point - len_max - adapter + mid_point)
                 self._position_traverse()
-                self.model.update_main_dict({'stage': 'start_point_amort'})
+                self.model.set_regs['stage'] = 'start_point_amort'
                 self._traverse_move_position(start_point)
 
             elif tag == 'stop_test':
-                if not self.response.get('alarm_flag', False):
+                if not self.model.set_regs.get('alarm_flag', False):
                     self._position_traverse()
 
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
 
-                self.model.update_main_dict({'stage': 'stop_test'})
+                self.model.set_regs['stage'] = 'stop_test'
                 self._traverse_move_position(end_point)
 
         except Exception as e:
@@ -922,7 +913,7 @@ class Controller:
         try:
             # self.model.write_bit_force_cycle(1)
             self._move_detection()
-            hod = self.response.get('hod', 120)
+            hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
                 speed = 0.07
             elif 50 < hod <= 100:
@@ -932,7 +923,7 @@ class Controller:
 
             self._write_speed_motor(1, speed=speed)
 
-            self.model.update_main_dict({'stage': 'test_move_cycle'})
+            self.model.set_regs['stage'] = 'test_move_cycle'
 
             self.count_cycle = 0
 
@@ -946,7 +937,7 @@ class Controller:
 
     def _calc_excess_force(self):
         try:
-            amort = self.response.get('amort')
+            amort = self.model.set_regs.get('amort')
             force = int(max(amort.max_comp, amort.max_recoil) * 4)
             if force >= 2000:
                 return 2000
@@ -963,7 +954,7 @@ class Controller:
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
         try:
             self._pumping_msg()
-            hod = self.response.get('hod', 120)
+            hod = self.model.set_regs.get('hod', 120)
             if hod >= 100:
                 speed = 0.2
             elif 50 < hod <= 100:
@@ -973,7 +964,7 @@ class Controller:
             
             self._write_speed_motor(1, speed=speed)
 
-            self.model.update_main_dict({'stage': 'pumping'})
+            self.model.set_regs['stage'] = 'pumping'
 
             self.count_cycle = 0
             self.model.motor_up(1)
@@ -984,14 +975,14 @@ class Controller:
 
     def _test_on_two_speed(self, ind):
         try:
-            type_test = self.response.get('type_test')
+            type_test = self.model.set_regs.get('type_test')
             if type_test == 'conv':
                 self.signals.conv_win_test.emit()
             elif type_test == 'lab':
                 self.signals.lab_win_test.emit()
 
-            speed_one = self.response.get('amort').speed_one
-            speed_two = self.response.get('amort').speed_two
+            speed_one = self.model.set_regs.get('amort').speed_one
+            speed_two = self.model.set_regs.get('amort').speed_two
 
             if ind == 1:
                 self._write_speed_motor(1, speed=speed_one)
@@ -1022,7 +1013,7 @@ class Controller:
     def _test_lab_hand_speed(self):
         try:
             self.signals.lab_win_test.emit()
-            speed = self.response.get('speed')
+            speed = self.model.set_regs.get('speed')
             self._write_speed_motor(1, speed=speed)
             command = {'stage': 'test_lab_hand_speed',
                        'force_accum_list': [],
@@ -1042,7 +1033,7 @@ class Controller:
     def _test_temper(self):
         try:
             self.signals.lab_win_test.emit()
-            speed = self.response.get('speed')
+            speed = self.model.set_regs.get('speed')
             self._write_speed_motor(1, speed=speed)
             command = {'stage': 'test_temper',
                        'force_accum_list': [],
@@ -1063,14 +1054,14 @@ class Controller:
 
     def _fill_temper_graph(self, temper, force):
         try:
-            temper_graph = self.response.get('temper_graph', [])
+            temper_graph = self.model.set_regs.get('temper_graph', [])
             temper_graph.append(temper)
 
-            force_graph = self.response.get('temper_force_graph', [])
+            force_graph = self.model.set_regs.get('temper_force_graph', [])
             force_graph.append(force)
 
-            self.model.update_main_dict({'temper_graph': temper_graph})
-            self.model.update_main_dict({'temper_force_graph': force_graph})
+            self.model.set_regs['temper_graph'] = temper_graph[:]
+            self.model.set_regs['temper_force_graph'] = force_graph[:]
 
         except Exception as e:
             self.logger.error(e)
@@ -1079,7 +1070,7 @@ class Controller:
     def _result_conveyor_test(self, speed, comp, recoil):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
         try:
-            amort = self.response.get('amort')
+            amort = self.model.set_regs.get('amort')
             min_comp, max_comp = 0, 2000
             min_recoil, max_recoil = 0, 2000
 
@@ -1104,7 +1095,7 @@ class Controller:
     def _test_lab_cascade(self):
         try:
             self.signals.lab_win_test.emit()
-            speed_list = self.response.get('speed_cascade')
+            speed_list = self.model.set_regs.get('speed_cascade')
             self.cascade = 1
             self.max_cascade = len(speed_list)
             self._write_speed_motor(1, speed=speed_list[0])
@@ -1129,7 +1120,7 @@ class Controller:
         try:
             self.model.motor_stop(1)
 
-            self.model.update_main_dict({'stage': 'stop_gear_end_test'})
+            self.model.set_regs['stage'] = 'stop_gear_end_test'
 
         except Exception as e:
             self.logger.error(e)
@@ -1142,7 +1133,7 @@ class Controller:
             # time.sleep(0.2)
             # self.model.write_bit_force_cycle(0)
 
-            hod = self.response.get('hod', 120)
+            hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
                 speed = 0.03
             elif 50 < hod <= 100:
@@ -1154,7 +1145,7 @@ class Controller:
 
             self.model.motor_up(1)
 
-            self.model.update_main_dict({'stage': 'stop_gear_min_pos'})
+            self.model.set_regs['stage'] = 'stop_gear_min_pos'
 
         except Exception as e:
             self.logger.error(e)
@@ -1163,9 +1154,9 @@ class Controller:
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
         try:
-            if not self.response.get('green_light'):
+            if not self.model.set_regs.get('green_light'):
                 self.model.write_bit_green_light(1)
-            if not self.response.get('red_light'):
+            if not self.model.set_regs.get('red_light'):
                 self.model.write_bit_red_light(1)
             self.signals.conv_lamp.emit('all_on')
 
@@ -1176,9 +1167,9 @@ class Controller:
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
         try:
-            if self.response.get('green_light'):
+            if self.model.set_regs.get('green_light'):
                 self.model.write_bit_green_light(0)
-            if self.response.get('red_light'):
+            if self.model.set_regs.get('red_light'):
                 self.model.write_bit_red_light(0)
             self.signals.conv_lamp.emit('all_off')
 
@@ -1189,9 +1180,9 @@ class Controller:
     def lamp_green_switch_on(self):
         """Выключение зелёного индикатора"""
         try:
-            if not self.response.get('green_light'):
+            if not self.model.set_regs.get('green_light'):
                 self.model.write_bit_green_light(1)
-            if self.response.get('red_light'):
+            if self.model.set_regs.get('red_light'):
                 self.model.write_bit_red_light(0)
             self.signals.conv_lamp.emit('green_on')
 
@@ -1202,9 +1193,9 @@ class Controller:
     def lamp_red_switch_on(self):
         """Выключение красного индикатора"""
         try:
-            if self.response.get('green_light'):
+            if self.model.set_regs.get('green_light'):
                 self.model.write_bit_green_light(0)
-            if not self.response.get('red_light'):
+            if not self.model.set_regs.get('red_light'):
                 self.model.write_bit_red_light(1)
             self.signals.conv_lamp.emit('red_on')
 

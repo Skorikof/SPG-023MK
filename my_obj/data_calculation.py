@@ -1,4 +1,5 @@
 import numpy as np
+from struct import pack
 
 from logger import my_logger
 
@@ -30,6 +31,18 @@ class SpeedLimitForHod:
 class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
+
+    def emergency_force(self, value):
+        try:
+            arr = []
+            val = pack('>f', value)
+            for i in range(0, 4, 2):
+                arr.append(int((hex(val[i])[2:] + hex(val[i + 1])[2:]), 16))
+
+            return arr
+
+        except Exception as e:
+            self.logger.error(e)
 
     def check_temperature(self, temp_list: list, max_temper: float):
         try:

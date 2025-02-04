@@ -19,7 +19,6 @@ class AppWindow(QMainWindow):
 
         self.logger = my_logger.get_logger(__name__)
 
-        self.response = {}
         self.list_lab = []
         self.dict_lab_cascade = {}
 
@@ -64,12 +63,13 @@ class AppWindow(QMainWindow):
         self._init_signals()
         self._init_lab_graph()
         self._init_conv_graph()
+
         self._start_page()
 
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.read_finish.connect(self.update_data_view)
+        self.model.signals.win_set_update.connect(self.update_data_win_settings)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
@@ -93,7 +93,6 @@ class AppWindow(QMainWindow):
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
 
-    # FIXME
     def _init_buttons(self):
         self.ui.test_save_btn.setVisible(False)
         self.ui.main_STOP_btn.clicked.connect(self.btn_main_stop_clicked)
@@ -110,28 +109,13 @@ class AppWindow(QMainWindow):
         self.ui.main_cancel_correct_force_btn.clicked.connect(self.btn_cancel_correct_force_clicked)
 
         self.ui.specif_continue_btn.clicked.connect(self.specif_continue_btn_click)
-        self.ui.select_temp_sensor_btn.clicked.connect(self.change_temper_sensor_slot)
+        self.ui.select_temp_sensor_btn.clicked.connect(self.select_temper_sensor)
         self.ui.btn_add_speed.clicked.connect(self.specif_add_lab_cascade_table)
         self.ui.btn_reduce_speed.clicked.connect(self.specif_reduce_lab_cascade_table)
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
         self.ui.test_change_speed_btn.clicked.connect(self.change_speed_lab_test)
-
-    def update_data_view(self, response):
-        try:
-            self.response = {**self.response, **response}
-
-            self.controller.update_data_ctrl(self.response)
-
-            if self.response.get('type_test') == 'hand':
-                self.win_set.update_data_win_set(self.response)
-
-            self.change_temper_sensor_btn()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/update_data_view - {e}')
 
     def controller_msg_slot(self, msg):
         try:
@@ -240,7 +224,7 @@ class AppWindow(QMainWindow):
             self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
                                                     "color: " + color + ";")
 
-            self.response['tag_msg'] = tag
+            self.model.set_regs['tag_msg'] = tag
 
         except Exception as e:
             self.logger.error(e)
@@ -260,8 +244,8 @@ class AppWindow(QMainWindow):
 
     def btn_ok_message_clicked(self):
         try:
-            tag = self.response.get('tag_msg')
-            alarm_tag = self.response.get('alarm_tag')
+            tag = self.model.set_regs.get('tag_msg')
+            alarm_tag = self.model.set_regs.get('alarm_tag')
             if tag == 'warning':
                 if alarm_tag == 'alarm_traverse_up':
                     self.controller.move_traverse_out_alarm('up')
@@ -351,9 +335,7 @@ class AppWindow(QMainWindow):
         self.win_exec.show()
 
     def operator_select(self, name, rank):
-        command = {'operator': {'name': name, 'rank': rank}}
-
-        self.model.update_main_dict(command)
+        self.model.set_regs['operator'] = {'name': name, 'rank': rank}
 
         self.ui.operator_name_le.setText(f'{name}')
         self.ui.operator_rank_le.setText(f'{rank}')
@@ -388,7 +370,8 @@ class AppWindow(QMainWindow):
         try:
             msg = QMessageBox.information(self,
                                           'Внимание',
-                                          f'<b style="color: #f00;">Ход шатуна равен {self.response.get("hod_measure", 0)}</b>'
+                                          f'<b style="color: #f00;">Ход шатуна равен '
+                                          f'{self.model.set_regs.get("hod_measure", 0)}</b>'
                                           )
             self.main_ui_state(True)
             self.main_btn_state(True)
@@ -460,6 +443,8 @@ class AppWindow(QMainWindow):
         self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
         self.change_index_type_test(0)
 
+        self.change_temper_sensor_btn()
+
     def change_index_select_amort(self, index):
         self.index_amort = index
         self.select_amort()
@@ -470,13 +455,12 @@ class AppWindow(QMainWindow):
 
     def update_graph_view(self):
         try:
-            temp = self.response.get('type_test', 'hand')
-            if temp == 'conv':
-                self._update_conv_graph()
-
-            elif temp == 'hand':
+            temp = self.model.set_regs.get('type_test', 'hand')
+            if temp == 'hand':
                 pass
-                # self.win_set.update_graph_hand_set()
+
+            elif temp == 'conv':
+                self._update_conv_graph()
 
             elif temp == 'temper':
                 self._update_temper_graph()
@@ -492,23 +476,23 @@ class AppWindow(QMainWindow):
         try:
             ind = self.index_type_test
             if ind == 0:
-                self.model.update_main_dict({'type_test': 'lab'})
+                self.model.set_regs['type_test'] = 'lab'
                 self.specif_enable_gui(True, True, False)
 
             elif ind == 1:
-                self.model.update_main_dict({'type_test': 'lab_hand'})
+                self.model.set_regs['type_test'] = 'lab_hand'
                 self.specif_enable_gui(False, False, False)
 
             elif ind == 2:
-                self.model.update_main_dict({'type_test': 'lab_cascade'})
+                self.model.set_regs['type_test'] = 'lab_cascade'
                 self.specif_enable_gui(False, False, True)
 
             elif ind == 3:
-                self.model.update_main_dict({'type_test': 'temper'})
+                self.model.set_regs['type_test'] = 'temper'
                 self.specif_enable_gui(False, False, False)
 
             elif ind == 4:
-                self.model.update_main_dict({'type_test': 'conv'})
+                self.model.set_regs['type_test'] = 'conv'
                 self.specif_enable_gui(True, True, False)
 
         except Exception as e:
@@ -601,7 +585,7 @@ class AppWindow(QMainWindow):
                                               )
 
             speed = float(text.replace(',', '.'))
-            hod = int(self.response.get('hod', 40))
+            hod = int(self.model.set_regs.get('hod', 40))
             max_speed = SpeedLimitForHod().speed_limit(hod)
             if 0.02 <= speed <= max_speed:
                 return speed
@@ -667,7 +651,7 @@ class AppWindow(QMainWindow):
                 for i in range(count_rows):
                     list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
 
-                self.model.update_main_dict({'speed_cascade': list_speed})
+                self.model.set_regs['speed_cascade'] = list_speed[:]
                 return True
 
         except Exception as e:
@@ -682,9 +666,9 @@ class AppWindow(QMainWindow):
 
     def change_temper_sensor_btn(self):
         try:
-            bit = self.response.get('list_state')[6]
-            if self.bit_temper != self.response.get('list_state')[6]:
-                self.bit_temper = self.response.get('list_state')[6]
+            bit = self.model.set_regs.get('list_state')[6]
+            if self.bit_temper != self.model.set_regs.get('list_state')[6]:
+                self.bit_temper = self.model.set_regs.get('list_state')[6]
                 if bit == 0:
                     self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
                 else:
@@ -694,27 +678,16 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/change_temper_sensor_btn - {e}')
 
-    def change_temper_sensor_slot(self):
-        try:
-            btn = self.ui.select_temp_sensor_btn.text()
-            if 'Бесконтактный' in btn:
-                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
-
-            else:
-                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/change_temper_sensor_slot - {e}')
-
     def select_temper_sensor(self):
         try:
             btn = self.ui.select_temp_sensor_btn.text()
             if 'Бесконтактный' in btn:
-                self.model.write_bit_select_temper(0)
+                self.model.write_bit_select_temper(1)
+                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
             else:
-                self.model.write_bit_select_temper(1)
+                self.model.write_bit_select_temper(0)
+                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
 
         except Exception as e:
             self.logger.error(e)
@@ -722,13 +695,13 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            name = self.response.get('operator')['name']
-            rank = self.response.get('operator')['rank']
+            name = self.model.set_regs.get('operator')['name']
+            rank = self.model.set_regs.get('operator')['rank']
 
             if name != '' and rank != '':
                 self.flag_push_force_set()
 
-                type_test = self.response.get('type_test')
+                type_test = self.model.set_regs.get('type_test')
 
                 if type_test == 'conv':
                     self.begin_test()
@@ -740,13 +713,12 @@ class AppWindow(QMainWindow):
                     if flag:
                         serial_number = self.ui.specif_serial_lineEdit.text()
                         if serial_number != '':
-                            self.model.update_main_dict({'serial_number': serial_number})
+                            self.model.set_regs['serial_number'] = serial_number
                             flag = self.static_push_force_editing()
                             if flag:
                                 if type_test == 'lab_cascade':
                                     flag = self.specif_read_lab_cascade_table()
                                     if flag:
-                                        self.select_temper_sensor()
                                         self.begin_test()
                                     else:
                                         self.specif_msg_none_cascade_speed()
@@ -754,12 +726,10 @@ class AppWindow(QMainWindow):
                                 elif type_test == 'lab_hand' or type_test == 'temper':
                                     speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                     if speed:
-                                        self.model.update_main_dict({'speed': speed})
-                                        self.select_temper_sensor()
+                                        self.model.set_regs['speed'] = speed
                                         self.begin_test()
 
                                 else:
-                                    self.select_temper_sensor()
                                     self.begin_test()
 
             else:
@@ -792,7 +762,7 @@ class AppWindow(QMainWindow):
                 return False
 
             push_force = float(text.replace(',', '.'))
-            self.model.update_main_dict({'static_push_force': push_force})
+            self.model.set_regs['static_push_force'] = push_force
 
             return True
 
@@ -823,12 +793,12 @@ class AppWindow(QMainWindow):
 
     def save_log_begin_test(self):
         try:
-            amort = self.response.get('amort')
-            type_test = self.response.get('type_test')
+            amort = self.model.set_regs.get('amort')
+            type_test = self.model.set_regs.get('type_test')
             if type_test == 'lab_hand' or type_test == 'temper':
-                speed = self.response.get('speed', self.ui.specif_speed_one_lineEdit.text())
+                speed = self.model.set_regs.get('speed', self.ui.specif_speed_one_lineEdit.text())
             elif type_test == 'lab_cascade':
-                speed = self.response.get('speed_cascade')
+                speed = self.model.set_regs.get('speed_cascade')
             else:
                 speed = amort.speed_one
 
@@ -851,7 +821,7 @@ class AppWindow(QMainWindow):
 
             self.logger.info(txt_log)
 
-            self.model.update_main_dict({'hod': amort.hod})
+            self.model.set_regs['hod'] = amort.hod
 
         except Exception as e:
             self.logger.error(e)
@@ -859,7 +829,7 @@ class AppWindow(QMainWindow):
 
     def fill_gui_lab_test(self):
         try:
-            amort = self.response.get('amort')
+            amort = self.model.set_regs.get('amort')
             name = amort.name
             hod = f'{amort.hod}'
             speed_one = f'{amort.speed_one}'
@@ -878,7 +848,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
             self.ui.lab_hod_le.setText(hod)
 
-            self.ui.lbl_push_force_lab.setText(self.response.get('lbl_push_force', ''))
+            self.ui.lbl_push_force_lab.setText(self.model.set_regs.get('lbl_push_force', ''))
 
         except Exception as e:
             self.logger.error(e)
@@ -889,11 +859,11 @@ class AppWindow(QMainWindow):
             self.main_stop_state(True)
             self.main_btn_state(False)
 
-            type_test = self.response.get('type_test')
+            type_test = self.model.set_regs.get('type_test')
 
             if type_test == 'conv':
                 self._conv_win_clear()
-                self.ui.lbl_push_force_conv.setText(self.response.get('lbl_push_force', ''))
+                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
             else:
                 self.list_lab = []
@@ -988,7 +958,9 @@ class AppWindow(QMainWindow):
         try:
             self.ui.lab_GraphWidget.clear()
             pen = pg.mkPen(color='black', width=3)
-            self.ui.lab_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
+            self.ui.lab_GraphWidget.plot(self.model.set_regs.get('move_graph'),
+                                         self.model.set_regs.get('force_graph'),
+                                         pen=pen)
 
             self._update_lab_data()
 
@@ -1003,8 +975,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.clear()
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
-            x_list = [float(x) for x in self.response.get('temper_graph')]
-            for value in self.response.get('temper_force_graph'):
+            x_list = [float(x) for x in self.model.set_regs.get('temper_graph')]
+            for value in self.model.set_regs.get('temper_force_graph'):
                 temp_list = value.split('|')
                 recoil, comp = temp_list[0], temp_list[1]
                 recoil_list.append(float(recoil))
@@ -1021,14 +993,14 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            self.ui.lab_comp_le.setText(f'{self.response.get("max_comp", 0)}')
-            self.ui.lab_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
-            self.ui.lab_now_temp_le.setText(f'{self.response.get("temperature", 0)}')
-            self.ui.lab_max_temp_le.setText(f'{self.response.get("max_temperature", 0)}')
-            self.ui.lab_speed_le.setText(f'{self.response.get("speed", 0)}')
-            self.ui.lab_serial_le.setText(f'{self.response.get("serial_number", 0)}')
-            self.ui.lab_power_le.setText(f'{self.response.get("power", 0)}')
-            self.ui.lab_freq_le.setText(f'{self.response.get("freq_piston", 0)}')
+            self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+            self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+            self.ui.lab_now_temp_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
+            self.ui.lab_max_temp_le.setText(f'{self.model.set_regs.get("max_temperature", 0)}')
+            self.ui.lab_speed_le.setText(f'{self.model.set_regs.get("speed", 0)}')
+            self.ui.lab_serial_le.setText(f'{self.model.set_regs.get("serial_number", 0)}')
+            self.ui.lab_power_le.setText(f'{self.model.set_regs.get("power", 0)}')
+            self.ui.lab_freq_le.setText(f'{self.model.set_regs.get("freq_piston", 0)}')
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
 
         except Exception as e:
@@ -1037,11 +1009,11 @@ class AppWindow(QMainWindow):
 
     def _fill_push_force(self):
         try:
-            if self.response.get('flag_push_force', True):
-                push_force = self.response.get('dynamic_push_force', 0)
+            if self.model.set_regs.get('flag_push_force', True):
+                push_force = self.model.set_regs.get('dynamic_push_force', 0)
 
             else:
-                push_force = self.response.get('static_push_force', 0)
+                push_force = self.model.set_regs.get('static_push_force', 0)
 
             return push_force
 
@@ -1075,7 +1047,9 @@ class AppWindow(QMainWindow):
         try:
             self.ui.conv_GraphWidget.clear()
             pen = pg.mkPen(color='black', width=3)
-            self.ui.conv_GraphWidget.plot(self.response.get('move_graph'), self.response.get('force_graph'), pen=pen)
+            self.ui.conv_GraphWidget.plot(self.model.set_regs.get('move_graph'),
+                                          self.model.set_regs.get('force_graph'),
+                                          pen=pen)
             
             self._update_conv_data()
 
@@ -1085,17 +1059,17 @@ class AppWindow(QMainWindow):
             
     def _update_conv_data(self):
         try:
-            amort = self.response.get('amort')
-            self.ui.conv_comp_le.setText(f'{self.response.get("max_comp", 0)}')
-            self.ui.conv_recoil_le.setText(f'{self.response.get("max_recoil", 0)}')
-            self.ui.conv_temperture_le.setText(f'{self.response.get("temperature", 0)}')
+            amort = self.model.set_regs.get('amort')
+            self.ui.conv_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+            self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+            self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
 
-            if self.response.get('stage') == 'test_speed_one':
+            if self.model.set_regs.get('stage') == 'test_speed_one':
                 self.ui.conv_speed_le.setText(f'{amort.speed_one}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             
-            elif self.response.get('stage') == 'test_speed_two':
+            elif self.model.set_regs.get('stage') == 'test_speed_two':
                 self.ui.conv_speed_le.setText(f'{amort.speed_two}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
@@ -1119,7 +1093,7 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
-                self.model.update_main_dict({'test_launch': False})
+                self.model.set_regs['test_launch'] = False
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1131,7 +1105,7 @@ class AppWindow(QMainWindow):
         try:
             speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
             if speed:
-                self.model.update_main_dict({'speed': speed})
+                self.model.set_regs['speed'] = speed
 
         except Exception as e:
             self.logger.error(e)
@@ -1156,7 +1130,7 @@ class AppWindow(QMainWindow):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 
-        type_test = self.response.get('type_test')
+        type_test = self.model.set_regs.get('type_test')
 
         if type_test == 'lab_hand':
             self.ui.lab_speed_le.setReadOnly(False)
@@ -1197,26 +1171,29 @@ class AppWindow(QMainWindow):
     def open_win_settings(self):
         self.main_btn_state(False)
         self.main_ui_state(False)
-        self.model.update_main_dict({'type_test': 'hand'})
+        self.model.set_regs['type_test'] = 'hand'
         self.win_set.show()
         self.win_set.start_param_win_set()
 
+    def update_data_win_settings(self):
+        self.win_set.update_data_win_set()
+
     def close_win_settings(self):
-        bit = int(self.response.get('cycle_force', 0))
+        bit = int(self.model.set_regs.get('cycle_force', 0))
         if bit == 0:
             self.model.write_bit_force_cycle(1)
-        self.model.update_main_dict({'type_test': None})
+        self.model.set_regs['type_test'] = None
         self.main_btn_state(True)
         self.main_ui_state(True)
         self.win_set.hide()
 
     def slot_save_lab_result(self, command):
         try:
-            type_test = self.response.get('type_test')
+            type_test = self.model.set_regs.get('type_test')
             if type_test == 'lab' or type_test == 'lab_cascade':
-                data_dict = {'speed': self.response.get('speed'),
-                             'move': self.response.get('move_graph')[:],
-                             'force': self.response.get('force_graph')[:]}
+                data_dict = {'speed': self.model.set_regs.get('speed'),
+                             'move': self.model.set_regs.get('move_graph')[:],
+                             'force': self.model.set_regs.get('force_graph')[:]}
 
                 self.list_lab.append(data_dict)
 
@@ -1231,19 +1208,19 @@ class AppWindow(QMainWindow):
 
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.response.get('move_graph')[:],
-                         'force_graph': self.response.get('force_graph')[:],
-                         'temper_graph': self.response.get('temper_graph', [0])[:],
-                         'temper_force_graph': self.response.get('temper_force_graph', [0])[:],
-                         'type_test': self.response.get('type_test'),
-                         'speed': self.response.get('speed'),
-                         'operator': self.response.get('operator').copy(),
-                         'serial': self.response.get('serial_number'),
-                         'amort': self.response.get('amort'),
-                         'flag_push_force': int(self.response.get('flag_push_force')),
-                         'static_push_force': self.response.get('static_push_force'),
-                         'dynamic_push_force': self.response.get('dynamic_push_force'),
-                         'max_temperature': self.response.get('max_temperature')}
+            data_dict = {'move_graph': self.model.set_regs.get('move_graph')[:],
+                         'force_graph': self.model.set_regs.get('force_graph')[:],
+                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[:],
+                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
+                         'type_test': self.model.set_regs.get('type_test'),
+                         'speed': self.model.set_regs.get('speed'),
+                         'operator': self.model.set_regs.get('operator').copy(),
+                         'serial': self.model.set_regs.get('serial_number'),
+                         'amort': self.model.set_regs.get('amort'),
+                         'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
+                         'static_push_force': self.model.set_regs.get('static_push_force'),
+                         'dynamic_push_force': self.model.set_regs.get('dynamic_push_force'),
+                         'max_temperature': self.model.set_regs.get('max_temperature')}
 
             ReadArchive().save_test_in_archive(data_dict)
 

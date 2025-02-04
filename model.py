@@ -4,7 +4,6 @@ import crcmod
 import serial
 import modbus_tk.defines as cst
 import modbus_tk.modbus_rtu as modbus_rtu
-from struct import pack, unpack
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 from logger import my_logger
@@ -22,7 +21,8 @@ class WinSignals(QObject):
     stop_test = pyqtSignal()
     read_stop = pyqtSignal()
     read_exit = pyqtSignal()
-    read_finish = pyqtSignal(dict)
+    read_finish = pyqtSignal()
+    win_set_update = pyqtSignal()
     full_cycle_count = pyqtSignal()
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
@@ -45,7 +45,6 @@ class Model:
         self.reader = None
         self.writer_flag_init = False
         self.flag_write = False
-        self.time_response = None
         self.timer_add_koef = None
         self.koef_force_list = []
         self.timer_calc_koef = None
@@ -221,8 +220,6 @@ class Model:
                 else:
                     pass
 
-            self.time_response = time.monotonic()
-
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
@@ -256,7 +253,7 @@ class Model:
 
                 self.update_main_dict(command)
 
-                self.signals.read_finish.emit(self.set_regs)
+                self._read_controller_finish()
 
                 self._pars_response_on_circle(data_dict.get('force_list'), data_dict.get('move_list'))
 
@@ -287,11 +284,18 @@ class Model:
 
                 self.update_main_dict(command)
 
-                self.signals.read_finish.emit(self.set_regs)
+                self._read_controller_finish()
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
+
+    # FIXME
+    def _read_controller_finish(self):
+        # self.signals.read_finish.emit()
+
+        if self.set_regs.get('type_test', 'hand') == 'hand':
+            self.signals.win_set_update.emit()
 
     def _init_timer_yellow_btn(self):
         try:
@@ -675,10 +679,7 @@ class Model:
 
     def write_emergency_force(self, value):
         try:
-            arr = []
-            val = pack('>f', value)
-            for i in range(0, 4, 2):
-                arr.append(int((hex(val[i])[2:] + hex(val[i + 1])[2:]), 16))
+            arr = self.calc_data.emergency_force(value)
 
             self.write_out('reg', arr, 0x200a)
 

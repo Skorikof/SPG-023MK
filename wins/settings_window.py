@@ -2,10 +2,10 @@
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import QObject, pyqtSignal, QSignalMapper, pyqtSlot
 import time
+from datetime import datetime
 
 from logger import my_logger
 from ui_py.settings_ui import Ui_SettingsWindow
-from wins.graph_win import GraphUi
 
 
 class WinSignals(QObject):
@@ -19,11 +19,10 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         super(SetWindow, self).__init__()
         try:
             self.logger = my_logger.get_logger(__name__)
-            self.response = {}
             self.model = model
             self.setupUi(self)
+
             self.hide()
-            self.graph_ui = GraphUi(self.model)
 
         except Exception as e:
             self.logger.error(e)
@@ -66,7 +65,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self._statusbar_set_ui(f'ERROR in settings_window/_check_operator - {e}')
 
     def _fill_lbl_temp_sens(self):
-        channel = self.response.get('select_temper', 0)
+        channel = self.model.set_regs.get('select_temper', 0)
         txt = ''
         if channel == 0:
             txt = 'Бесконтактный датчик температуры'
@@ -110,9 +109,10 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.btn_connect.setVisible(False)
         self.btn_read.setVisible(False)
 
-    def update_data_win_set(self, response):
+    def update_data_win_set(self):
         try:
-            self.response = {**self.response, **response}
+            date = str(datetime.now())[:-4]
+            self._statusbar_set_ui(f'Данные обновлены в {date}')
             self._update_win()
 
         except Exception as e:
@@ -125,7 +125,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             if not temp:
                 pass
             else:
-                self.model.update_main_dict({'hod': temp})
+                self.model.set_regs['hod'] = temp
 
         except Exception as e:
             self.logger.error(e)
@@ -170,7 +170,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
     def _write_alarm_force(self):
         try:
             value = float(self.lineEdit_F_alarm.text())
-            if value == float(self.response.get('force_alarm')):
+            if value == float(self.model.set_regs.get('force_alarm')):
                 pass
             else:
                 self.model.write_emergency_force(value)
@@ -188,8 +188,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
     def _btn_set_doclick(self):
         try:
             btn = self.sender().objectName()
-            temp_list = [x for x in self.response.get('list_state')]
-
+            temp_list = [x for x in self.model.set_regs.get('list_state')]
             if btn == 'btn_cycle_F':
                 if temp_list[0] == 0:
                     value = 1
@@ -241,37 +240,38 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.lbl_temp_sens.setText(txt)
 
     def _update_win(self):
-        self.lcdTime.display(self.response.get('count'))
-        self.lcdF.display(self.response.get('force'))
-        self.lcdH.display(self.response.get('move'))
-        self.lcdH_T.display(self.response.get('traverse_move'))
-        self.lcdTemp_1.display(self.response.get('temper_first', 0))
-        self.lcdTemp_2.display(self.response.get('temper_second', 0))
-        self.lineEdit_F_alarm.setText(f'{self.response.get("force_alarm")}')
+        self.lcdTime.display(self.model.set_regs.get('count'))
+        self.lcdF.display(self.model.set_regs.get('force'))
+        self.lcdH.display(self.model.set_regs.get('move'))
+        self.lcdH_T.display(self.model.set_regs.get('traverse_move'))
+        self.lcdTemp_1.display(self.model.set_regs.get('temper_first', 0))
+        self.lcdTemp_2.display(self.model.set_regs.get('temper_second', 0))
+        self.lineEdit_F_alarm.setText(f'{self.model.set_regs.get("force_alarm")}')
 
         self._update_color_switch()
 
     def _update_color_switch(self):
         try:
-            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.response.get('cycle_force', False)))
-            self.fram_no_control.setStyleSheet(self._set_color_fram(self.response.get('lost_control', False)))
-            self.fram_max_F.setStyleSheet(self._set_color_fram(self.response.get('excess_force', False)))
-            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.response.get('safety_fence', False)))
-            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.response.get('state_freq', False)))
-            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.response.get('state_force', False)))
+            obj = self.model.set_regs
+            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('cycle_force', False)))
+            self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.set_regs.get('lost_control', False)))
+            self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('excess_force', False)))
+            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.model.set_regs.get('safety_fence', False)))
+            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.model.set_regs.get('state_freq', False)))
+            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('state_force', False)))
             self.fram_block_traverse_1.setStyleSheet(self._set_color_fram(
-                self.response.get('traverse_block_left', True), True))
+                self.model.set_regs.get('traverse_block_left', True), True))
             self.fram_block_traverse_2.setStyleSheet(self._set_color_fram(
-                self.response.get('traverse_block_right', True), True))
-            self.fram_down_point.setStyleSheet(self._set_color_fram(self.response.get('lowest_position', False)))
+                self.model.set_regs.get('traverse_block_right', True), True))
+            self.fram_down_point.setStyleSheet(self._set_color_fram(self.model.set_regs.get('lowest_position', False)))
             self.fram_down__alarm_point.setStyleSheet(self._set_color_fram(
-                self.response.get('alarm_lowest_position', True), True))
-            self.fram_up_point.setStyleSheet(self._set_color_fram(self.response.get('highest_position', False)))
+                self.model.set_regs.get('alarm_lowest_position', True), True))
+            self.fram_up_point.setStyleSheet(self._set_color_fram(self.model.set_regs.get('highest_position', False)))
             self.fram_up_alarm_point.setStyleSheet(self._set_color_fram(
-                self.response.get('alarm_highest_position', True), True))
-            self.fram_green_light.setStyleSheet(self._set_color_fram(self.response.get('green_light', False)))
-            self.fram_red_light.setStyleSheet(self._set_color_fram(self.response.get('red_light', False)))
-            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.response.get('yellow_btn', True), True))
+                self.model.set_regs.get('alarm_highest_position', True), True))
+            self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.set_regs.get('green_light', False)))
+            self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.set_regs.get('red_light', False)))
+            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.set_regs.get('yellow_btn', True), True))
 
         except Exception as e:
             self.logger.error(e)
@@ -307,14 +307,5 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
             self.model.reader_start_test()
 
-            # self.graph_ui.show()
-
         else:
             self.model.reader_stop_test()
-
-    # def update_graph_hand_set(self):
-    #     try:
-    #         self.graph_ui.data_line_test.setData(self.response.get('move_graph'), self.response.get('force_graph'))
-    #
-    #     except Exception as e:
-    #         self._statusbar_set_ui(f'ERROR in settings_window/update_graph_hand_set - {e}')
