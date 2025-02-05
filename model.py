@@ -21,7 +21,7 @@ class WinSignals(QObject):
     read_exit = pyqtSignal()
 
     win_set_update = pyqtSignal()
-    full_cycle_count = pyqtSignal()
+    full_cycle_count = pyqtSignal(str)
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
     save_koef_force = pyqtSignal()
@@ -78,20 +78,12 @@ class Model:
         self.signals.stbar_msg.emit(txt_bar)
 
     def log_error_thread(self, txt_log):
-        try:
-            self.logger.error(txt_log)
-            self.status_bar_msg(txt_log)
-
-        except Exception as e:
-            self.logger.error(e)
+        self.logger.error(txt_log)
+        self.status_bar_msg(txt_log)
 
     def log_info_thread(self, txt_log):
-        try:
-            self.logger.info(txt_log)
-            self.status_bar_msg(txt_log)
-
-        except Exception as e:
-            self.logger.error(e)
+        self.logger.info(txt_log)
+        self.status_bar_msg(txt_log)
 
     def _init_signals(self):
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
@@ -328,7 +320,7 @@ class Model:
 
     def _find_direction_and_point(self, move):
         try:
-            direction = self.set_regs.get('current_direction')
+            direction = self.set_regs.get('current_direction', '')
             if direction == 'up':
                 if max(move) > move[-1]:
                     if not -1 < max(move) < 1:
@@ -350,6 +342,7 @@ class Model:
                                    }
 
                         self.update_main_dict(command)
+
                         if self.min_point < self.main_min_point:
                             self.main_min_point = self.min_point
 
@@ -446,7 +439,7 @@ class Model:
 
                 self.signals.update_data_graph.emit()
 
-            self.signals.full_cycle_count.emit()
+            self.signals.full_cycle_count.emit('+1')
 
             command = {'min_pos': False,
                        'max_pos': False,
@@ -613,15 +606,27 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_frequency - {e}')
 
-    def write_frequency(self, adr_freq, freq):
+    def write_speed_motor(self, adr: int, speed: float = None, freq: int = None):
+        """
+        Запись скорости вращения двигателя, если задана скорость, то она пересчитывается в частоту,
+        частота записывается напрямую
+        """
         try:
-            freq_hex = hex(freq)[2:].zfill(4)
-            freq_hex = f'0{adr_freq}06010D{freq_hex}'
+            value = 0
+            if not freq:
+                hod = self.set_regs.get('hod', 120)
+                value = self.calc_data.freq_from_speed(speed, hod)
+
+            elif not speed:
+                value = 100 * freq
+
+            freq_hex = hex(value)[2:].zfill(4)
+            freq_hex = f'0{adr}06010D{freq_hex}'
             self._motor_command(freq_hex)
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_frequency - {e}')
+            self.status_bar_msg(f'ERROR in model/write_speed_motor - {e}')
 
     def motor_up(self, adr_freq):
         try:

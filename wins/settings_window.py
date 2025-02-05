@@ -137,10 +137,8 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         try:
             value = self.lineEdit_speed_main.text()
             value = float(value.replace(',', '.'))
-            hod = self.model.set_regs.get('hod', 120)
-            speed = self.calc_data.freq_from_speed(value, hod)
 
-            self.model.write_frequency(1, speed)
+            self.model.write_speed_motor(1, speed=value)
 
         except Exception as e:
             self.logger.error(e)
@@ -148,9 +146,9 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _write_frequency_set(self):
         try:
-            value = int(self.lineEdit_freq_traverse.text())
+            value = int(self.lineEdit_freq_traverse.text()) * 100
 
-            self.model.write_frequency(2, value * 100)
+            self.model.write_speed_motor(2, freq=value)
 
         except Exception as e:
             self.logger.error(e)

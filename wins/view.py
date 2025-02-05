@@ -240,13 +240,13 @@ class AppWindow(QMainWindow):
     def btn_ok_message_clicked(self):
         try:
             tag = self.model.set_regs.get('tag_msg')
-            alarm_tag = self.model.set_regs.get('alarm_tag')
+            alarm_tag = self.model.set_regs.get('alarm_tag', '')
             if tag == 'warning':
                 if alarm_tag == 'alarm_traverse_up':
-                    self.controller.move_traverse_out_alarm('up')
+                    self.controller.steps.step_move_traverse_out_alarm('up')
 
                 elif alarm_tag == 'alarm_traverse_down':
-                    self.controller.move_traverse_out_alarm('down')
+                    self.controller.steps.step_move_traverse_out_alarm('down')
 
                 else:
                     self.controller.lamp_all_switch_off()
@@ -1059,12 +1059,12 @@ class AppWindow(QMainWindow):
             self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
             self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
 
-            if self.model.set_regs.get('stage') == 'test_speed_one':
+            if self.model.set_regs.get('stage', '') == 'test_speed_one':
                 self.ui.conv_speed_le.setText(f'{amort.speed_one}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             
-            elif self.model.set_regs.get('stage') == 'test_speed_two':
+            elif self.model.set_regs.get('stage', '') == 'test_speed_two':
                 self.ui.conv_speed_le.setText(f'{amort.speed_two}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
