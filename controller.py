@@ -9,9 +9,8 @@ from my_obj.steps_logic import Steps
 
 class ControlSignals(QObject):
     control_msg = pyqtSignal(str)
-    traverse_referent = pyqtSignal()
+    traverse_referent_msg = pyqtSignal()
     wait_yellow_btn = pyqtSignal()
-    test_move_cycle = pyqtSignal()
     conv_win_test = pyqtSignal()
     conv_lamp = pyqtSignal(str)
     lab_win_test = pyqtSignal()
@@ -19,7 +18,7 @@ class ControlSignals(QObject):
     lab_save_result = pyqtSignal(str)
     cancel_test = pyqtSignal()
     end_test = pyqtSignal()
-    search_hod = pyqtSignal()
+    search_hod_msg = pyqtSignal()
     reset_ui = pyqtSignal()
 
 
@@ -95,8 +94,6 @@ class Controller:
         try:
             stage = self.model.set_regs.get('stage', 'wait')
             test_flag = self.model.set_regs.get('test_flag', False)
-
-            # self._control_alarm_traverse_position()
 
             if test_flag is True:
                 self._select_alarm_state(self.steps.stage_control_alarm_state())
@@ -273,16 +270,17 @@ class Controller:
 
                     if self.model.set_regs.get('search_hod', False):
                         self.model.set_regs['search_hod'] = False
-                        self.signals.search_hod.emit()
-
-                    if self.model.set_regs.get('type_test') == 'conv':
-                        if self.model.set_regs.get('test_launch', False) is True:
-                            self.traverse_install_point('install')
-                        else:
-                            self.traverse_install_point('stop_test')
+                        self.signals.search_hod_msg.emit()
 
                     else:
-                        self.signals.lab_test_stop.emit()
+                        if self.model.set_regs.get('type_test') == 'conv':
+                            if self.model.set_regs.get('test_launch', False) is True:
+                                self.traverse_install_point('install')
+                            else:
+                                self.traverse_install_point('stop_test')
+
+                        else:
+                            self.signals.lab_test_stop.emit()
 
             elif stage == 'stop_test':
                 flag = self.steps.step_control_traverse_move(self.set_trav_point)
@@ -514,7 +512,6 @@ class Controller:
                 if self.model.set_regs.get('test_flag', False) is False:
                     if self.model.set_regs.get('green_light') or self.model.set_regs.get('red_light'):
                         self.lamp_all_switch_off()
-                        time.sleep(0.2)
 
                     command = {'alarm_flag': False,
                                'alarm_tag': '',
@@ -579,8 +576,8 @@ class Controller:
             self.model.update_main_dict(command)
             self.model.reset_min_point()
 
-            force = self._calc_excess_force()
-            self.model.write_emergency_force(force)
+            amort = self.model.set_regs.get('amort')
+            self.model.write_emergency_force(self.calc_data.excess_force(amort))
 
             if self.flag_repeat:
                 self.flag_repeat = False
@@ -662,17 +659,12 @@ class Controller:
                        'max_pos': False,
                        'next_stage': 'search_hod',
                        }
-
             self.model.update_main_dict(command)
 
             self._move_detection()
-
             self.model.write_speed_motor(1, speed=speed)
-
             self._full_cycle_update('0')
-
             self.model.set_regs['stage'] = 'wait_buffer'
-
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -681,7 +673,6 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
-            # self.model.write_bit_force_cycle(1)
             hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
                 speed = 0.03
@@ -691,7 +682,6 @@ class Controller:
                 speed = 0.01
 
             command = {'stage': 'wait',
-                       'search_hod': False,
                        'test_launch': False,
                        'test_flag': False,
                        'fill_graph': False,
@@ -700,20 +690,14 @@ class Controller:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
+                       'next_stage': 'pos_set_gear',
                        }
             self.model.update_main_dict(command)
-
             self._gear_set_pos()
-
             self.model.write_speed_motor(1, speed=speed)
-
             self._full_cycle_update('0')
-
-            self.model.reader_start_test()
-
-            self.model.set_regs['stage'] = 'pos_set_gear'
-
-            self.model.motor_up(1)
+            self.model.set_regs['stage'] = 'wait_buffer'
+            self.model.write_bit_force_cycle(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -722,7 +706,7 @@ class Controller:
     def _traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
-            self.signals.traverse_referent.emit()
+            self.signals.traverse_referent_msg.emit()
             self.model.write_speed_motor(2, freq=20)
             self.model.set_regs['stage'] = 'traverse_referent'
 
@@ -802,21 +786,6 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_test_move_cycle - {e}')
-
-    def _calc_excess_force(self):
-        try:
-            amort = self.model.set_regs.get('amort')
-            force = int(max(amort.max_comp, amort.max_recoil) * 4)
-            if force >= 2000:
-                return 2000
-            if force // 100 == 0:
-                return 100
-            else:
-                return (force // 100) * 100 + 100
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_calc_excess_force - {e}')
 
     def _pumping_before_test(self):
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""

@@ -69,7 +69,7 @@ class AppWindow(QMainWindow):
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
-        self.controller.signals.traverse_referent.connect(self.msg_traverse_referent)
+        self.controller.signals.traverse_referent_msg.connect(self.msg_traverse_referent)
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
@@ -78,7 +78,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.end_test.connect(self.slot_write_end_test)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.lab_save_result.connect(self.slot_save_lab_result)
-        self.controller.signals.search_hod.connect(self.slot_search_hod)
+        self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self.slot_start_page)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)

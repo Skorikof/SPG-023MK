@@ -148,3 +148,14 @@ class CalcData:
 
         except Exception as e:
             self.logger.error(e)
+
+    def excess_force(self, amort):
+        try:
+            force = int(max(amort.max_comp, amort.max_recoil) * 4)
+            if force >= 2000:
+                return 2000
+            else:
+                return (force // 100) * 100 + 100
+
+        except Exception as e:
+            self.logger.error(e)
