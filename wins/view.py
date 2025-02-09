@@ -67,12 +67,12 @@ class AppWindow(QMainWindow):
         self.model.signals.win_set_update.connect(self.update_data_win_settings)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
+        self.model.signals.conv_lamp.connect(self.conv_test_lamp)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent_msg.connect(self.msg_traverse_referent)
         self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
-        self.controller.signals.conv_lamp.connect(self.conv_test_lamp)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
         self.controller.signals.end_test.connect(self.slot_write_end_test)
@@ -249,12 +249,12 @@ class AppWindow(QMainWindow):
                     self.controller.steps.step_move_traverse_out_alarm('down')
 
                 else:
-                    self.controller.lamp_all_switch_off()
+                    self.model.lamp_all_switch_off()
                     time.sleep(0.1)
                     self._start_page()
 
             elif tag == 'question':
-                self.controller.lamp_all_switch_off()
+                self.model.lamp_all_switch_off()
                 time.sleep(0.1)
                 self.main_btn_state(False)
                 self.main_stop_state(True)
@@ -271,7 +271,7 @@ class AppWindow(QMainWindow):
                        }
             self.model.update_main_dict(command)
 
-            self.controller.lamp_all_switch_off()
+            self.model.lamp_all_switch_off()
             time.sleep(0.1)
             self._start_page()
 

@@ -25,6 +25,7 @@ class WinSignals(QObject):
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
     save_koef_force = pyqtSignal()
+    conv_lamp = pyqtSignal(str)
 
     check_buffer = pyqtSignal(str, str)
 
@@ -654,3 +655,63 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/motor_stop - {e}')
+
+    def lamp_all_switch_on(self):
+        """Включение всех индикаторов"""
+        try:
+            if not self.set_regs.get('green_light'):
+                self.write_bit_green_light(1)
+            if not self.set_regs.get('red_light'):
+                self.write_bit_red_light(1)
+
+            if self.set_regs.get('type_test', 'hand') == 'conv':
+                self.signals.conv_lamp.emit('all_on')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/lamp_all_switch_on - {e}')
+
+    def lamp_all_switch_off(self):
+        """Выключение всех индикаторов"""
+        try:
+            if self.set_regs.get('green_light'):
+                self.write_bit_green_light(0)
+            if self.set_regs.get('red_light'):
+                self.write_bit_red_light(0)
+
+            if self.set_regs.get('type_test', 'hand') == 'conv':
+                self.signals.conv_lamp.emit('all_off')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/lamp_all_switch_off - {e}')
+
+    def lamp_green_switch_on(self):
+        """Выключение зелёного индикатора"""
+        try:
+            if not self.set_regs.get('green_light'):
+                self.write_bit_green_light(1)
+            if self.set_regs.get('red_light'):
+                self.write_bit_red_light(0)
+
+            if self.set_regs.get('type_test', 'hand') == 'conv':
+                self.signals.conv_lamp.emit('green_on')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/lamp_green_switch_on - {e}')
+
+    def lamp_red_switch_on(self):
+        """Выключение красного индикатора"""
+        try:
+            if self.set_regs.get('green_light'):
+                self.write_bit_green_light(0)
+            if not self.set_regs.get('red_light'):
+                self.write_bit_red_light(1)
+
+            if self.set_regs.get('type_test', 'hand') == 'conv':
+                self.signals.conv_lamp.emit('red_on')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/lamp_red_switch_on - {e}')

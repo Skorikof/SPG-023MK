@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
 from logger import my_logger
@@ -12,7 +11,6 @@ class ControlSignals(QObject):
     traverse_referent_msg = pyqtSignal()
     wait_yellow_btn = pyqtSignal()
     conv_win_test = pyqtSignal()
-    conv_lamp = pyqtSignal(str)
     lab_win_test = pyqtSignal()
     lab_test_stop = pyqtSignal()
     lab_save_result = pyqtSignal(str)
@@ -325,7 +323,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
-        # self.model.write_bit_force_cycle(0)
+        self.model.write_bit_force_cycle(0)
 
         self.logger.warning(f'lost control')
         self.model.status_bar_msg(f'lost control')
@@ -370,7 +368,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
-        # self.model.write_bit_force_cycle(0)
+        self.model.write_bit_force_cycle(0)
 
         self.logger.warning(f'excess force')
         self.model.status_bar_msg(f'excess force')
@@ -436,7 +434,7 @@ class Controller:
         self.model.status_bar_msg(f'safety fence')
         self.signals.control_msg.emit('safety_fence')
 
-        # self.model.write_bit_force_cycle(0)
+        self.model.write_bit_force_cycle(0)
 
         # if self.flag_safety_fence is False:
         #     self.time_safety_fence = time.monotonic()
@@ -469,8 +467,7 @@ class Controller:
         self.model.update_main_dict(command)
 
         self.model.reader_stop_test()
-        # time.sleep(0.2)
-        # self.model.write_bit_force_cycle(0)
+        self.model.write_bit_force_cycle(0)
 
         if self.flag_alarm_traverse:
             self.logger.warning(f'alarm traverse {pos}')
@@ -496,14 +493,13 @@ class Controller:
                    'test_flag': False}
         self.model.update_main_dict(command)
 
-        self.lamp_all_switch_off()
+        self.model.lamp_all_switch_off()
 
         if self.model.client.set_dict['connect']:
             self.model.motor_stop(1)
             self.model.motor_stop(2)
             self.model.reader_stop_test()
-            # time.sleep(0.2)
-            # self.model.write_bit_force_cycle(0)
+            self.model.write_bit_force_cycle(0)
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
@@ -511,7 +507,7 @@ class Controller:
             if state:
                 if self.model.set_regs.get('test_flag', False) is False:
                     if self.model.set_regs.get('green_light') or self.model.set_regs.get('red_light'):
-                        self.lamp_all_switch_off()
+                        self.model.lamp_all_switch_off()
 
                     command = {'alarm_flag': False,
                                'alarm_tag': '',
@@ -555,8 +551,7 @@ class Controller:
             if self.model.set_regs.get('lost_control', False) is True:
                 self.model.write_bit_unblock_control()
 
-            self.lamp_all_switch_off()
-            # self.model.write_bit_force_cycle(1)
+            self.model.lamp_all_switch_off()
 
             command = {'test_launch': True,
                        'test_flag': False,
@@ -580,6 +575,7 @@ class Controller:
             self.model.write_emergency_force(self.calc_data.excess_force(amort))
 
             if self.flag_repeat:
+                # FIXME
                 self.flag_repeat = False
                 type_test = self.model.set_regs.get('type_test')
                 self.model.reader_start_test()
@@ -608,7 +604,7 @@ class Controller:
 
     def stop_test_clicked(self):
         """
-        Завершение теста, если определена референтная коленвала, то остановка в нижней точке,
+        Завершение теста, если определена референтная точка коленвала, то остановка в нижней точке,
         иначе моментальная остановка
         """
         try:
@@ -763,7 +759,6 @@ class Controller:
     def _test_move_cycle(self):
         """Проверочный ход"""
         try:
-            # self.model.write_bit_force_cycle(1)
             self._move_detection()
             hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
@@ -774,14 +769,10 @@ class Controller:
                 speed = 0.03
 
             self.model.write_speed_motor(1, speed=speed)
-
-            self.model.set_regs['stage'] = 'test_move_cycle'
-
+            self.model.set_regs['next_stage'] = 'test_move_cycle'
+            self.model.set_regs['stage'] = 'wait_buffer'
             self._full_cycle_update('0')
-
-            self.model.reader_start_test()
-
-            self.model.motor_up(1)
+            self.model.write_bit_force_cycle(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -922,10 +913,10 @@ class Controller:
                 min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
 
             if min_comp < comp < max_comp and min_recoil < recoil < max_recoil:
-                self.lamp_green_switch_on()
+                self.model.lamp_green_switch_on()
 
             else:
-                self.lamp_red_switch_on()
+                self.model.lamp_red_switch_on()
 
         except Exception as e:
             self.logger.error(e)
@@ -988,63 +979,3 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_stop_gear_min_pos - {e}')
-
-    def lamp_all_switch_on(self):
-        """Включение всех индикаторов"""
-        try:
-            if not self.model.set_regs.get('green_light'):
-                self.model.write_bit_green_light(1)
-            if not self.model.set_regs.get('red_light'):
-                self.model.write_bit_red_light(1)
-
-            if self.model.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('all_on')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/lamp_all_switch_on - {e}')
-
-    def lamp_all_switch_off(self):
-        """Выключение всех индикаторов"""
-        try:
-            if self.model.set_regs.get('green_light'):
-                self.model.write_bit_green_light(0)
-            if self.model.set_regs.get('red_light'):
-                self.model.write_bit_red_light(0)
-
-            if self.model.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('all_off')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/lamp_all_switch_off - {e}')
-
-    def lamp_green_switch_on(self):
-        """Выключение зелёного индикатора"""
-        try:
-            if not self.model.set_regs.get('green_light'):
-                self.model.write_bit_green_light(1)
-            if self.model.set_regs.get('red_light'):
-                self.model.write_bit_red_light(0)
-
-            if self.model.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('green_on')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/lamp_green_switch_on - {e}')
-
-    def lamp_red_switch_on(self):
-        """Выключение красного индикатора"""
-        try:
-            if self.model.set_regs.get('green_light'):
-                self.model.write_bit_green_light(0)
-            if not self.model.set_regs.get('red_light'):
-                self.model.write_bit_red_light(1)
-
-            if self.model.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('red_on')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/lamp_red_switch_on - {e}')
