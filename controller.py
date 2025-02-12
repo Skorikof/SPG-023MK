@@ -103,13 +103,36 @@ class Controller:
             elif stage == 'wait_buffer':
                 if self.model.set_regs['buffer_state'][0] == 'OK!':
                     if self.model.set_regs['buffer_state'][1] == 'buffer_on':
-                        self.model.set_regs['stage'] = self.model.set_regs.get('next_stage')
                         self.model.reader_start_test()
-                        self.model.motor_up(1)
+
+                        self.model.set_regs['stage'] = 'start_motor'
 
                     elif self.model.set_regs['buffer_state'][1] == 'buffer_off':
                         pass
                         # Ну и в данном случае мы чтото делаем
+
+            # FIXME
+            elif stage == 'start_motor':
+                if not self.flag_repeat:
+                    self.model.motor_up(1)
+
+                else:
+                    self.flag_repeat = False
+
+                self.model.set_regs['stage'] = self.model.set_regs.get('next_stage')
+
+            # FIXME
+            elif stage == 'repeat_test':
+                self.model.set_regs['stage'] = 'wait'
+                type_test = self.model.set_regs.get('type_test')
+                if type_test == 'lab_hand':
+                    self._test_lab_hand_speed()
+                elif type_test == 'temper':
+                    self._test_temper()
+                elif type_test == 'lab_cascade':
+                    self._test_lab_cascade()
+                else:
+                    self._test_on_two_speed(1)
 
             elif stage == 'alarm_traverse':
                 point = 10
@@ -576,20 +599,9 @@ class Controller:
 
             if self.flag_repeat:
                 # FIXME
-                self.flag_repeat = False
-                type_test = self.model.set_regs.get('type_test')
-                self.model.reader_start_test()
-                if type_test == 'lab_hand':
-                    self._test_lab_hand_speed()
-
-                elif type_test == 'temper':
-                    self._test_temper()
-
-                elif type_test == 'lab_cascade':
-                    self._test_lab_cascade()
-
-                else:
-                    self._test_on_two_speed(1)
+                self.model.set_regs['next_stage'] = 'repeat_test'
+                self.model.set_regs['stage'] = 'wait_buffer'
+                self.model.write_bit_force_cycle(1)
 
             else:
                 if self.model.set_regs.get('traverse_move', 0) < 10:

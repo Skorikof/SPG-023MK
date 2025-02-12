@@ -38,6 +38,7 @@ class AppWindow(QMainWindow):
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
         self.model.reader_exit()
+        self.model.write_bit_force_cycle(0)
         self.model.threadpool.waitForDone()
         self.model.client.disconnect_client()
         self.close()
