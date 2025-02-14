@@ -89,7 +89,7 @@ class ReadArchive:
 
             self.index_archive = self.files_name_arr.index(data)
 
-            with open(self.files_arr[self.index_archive]) as f:
+            with open(self.files_arr[self.index_archive], encoding='utf-8') as f:
                 archive_str = f.readlines()
                 for i in archive_str:
                     archive_list = i.split(';')
@@ -193,7 +193,7 @@ class ReadArchive:
             if os.path.isfile(path_file):
                 flag_add_title = False
 
-            with open('archive/' + nam_f, 'a', encoding='cp1251') as file_arch:
+            with open('archive/' + nam_f, 'a', encoding='utf-8') as file_arch:
                 if flag_add_title:
                     str_t = (f'Время;'
                              f'ФИО оператора;'
@@ -284,7 +284,7 @@ class ReadArchive:
         try:
             nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
 
-            with open('archive/' + nam_f, 'a') as file_arch:
+            with open('archive/' + nam_f, 'a', encoding='utf-8') as file_arch:
                 str_t = f'end_test;\n'
                 file_arch.write(str_t)
 

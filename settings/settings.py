@@ -11,7 +11,7 @@ class PrgSettings:
             self.settings = {}
             self.state = {}
             config = ConfigParser()
-            config.read('settings.ini')
+            config.read('settings.ini', encoding='utf-8')
             temp_val = config['ComPort']['PortSettings']
             temp_val = str.split(temp_val, ',')
 
@@ -29,6 +29,7 @@ class PrgSettings:
                           'amort': None,
                           'force_koef': force_koef,
                           'finish_temper': finish_temper,
+                          'buffer_state': ['null', 'null'],
                           }
 
         except Exception as e:

@@ -5,7 +5,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from logger import my_logger
 from ui_py.new_amort import Ui_MainWindow
-from my_obj.data_calculation import SpeedLimitForHod
+from calc_data.data_calculation import SpeedLimitForHod
 
 
 class AmortSignals(QObject):

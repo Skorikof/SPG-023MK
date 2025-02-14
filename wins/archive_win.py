@@ -11,7 +11,7 @@ import os
 from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
-from my_obj.data_calculation import CalcData
+from calc_data.data_calculation import CalcData
 
 
 class WinSignals(QObject):

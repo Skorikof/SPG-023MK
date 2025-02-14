@@ -5,11 +5,11 @@ from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 from logger import my_logger
 from my_thread.my_threads import Reader
-from settings import PrgSettings
-from my_obj.parser import ParserSPG023MK
-from my_obj.data_calculation import CalcData
-from my_obj.writer import Writer
-from my_obj.client import Client
+from settings.settings import PrgSettings
+from my_parser.parser import ParserSPG023MK
+from calc_data.data_calculation import CalcData
+from writer.writer import Writer
+from connect.client import Client
 
 
 class ModelSignals(QObject):

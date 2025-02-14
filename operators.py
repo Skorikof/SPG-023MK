@@ -3,6 +3,7 @@ import configparser
 
 from logger import my_logger
 
+
 class Operators:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
@@ -15,7 +16,7 @@ class Operators:
         try:
             self.names = []
             self.ranks = []
-            self.config.read('operators.ini')
+            self.config.read('operators.ini', encoding='utf-8')
             for section in self.config.sections():
                 try:
                     for key in self.config[section]:
@@ -43,7 +44,7 @@ class Operators:
                 self.config.set(nam_section, 'name', self.names[i])
                 self.config.set(nam_section, 'rank', self.ranks[i])
 
-            with open('operators.ini', 'w', encoding='cp1251') as configfile:
+            with open('operators.ini', 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
@@ -57,7 +58,7 @@ class Operators:
             self.config.set(name_section, 'name', name)
             self.config.set(name_section, 'rank', rank)
 
-            with open('operators.ini', 'w', encoding='cp1251') as configfile:
+            with open('operators.ini', 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:

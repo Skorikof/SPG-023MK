@@ -60,7 +60,7 @@ class Amort:
         try:
             self.names = []
             self.struct.amorts.clear()
-            self.config.read("amorts.ini")
+            self.config.read("amorts.ini", encoding='utf-8')
             ind = -1
             for section in self.config.sections():
                 try:
@@ -137,7 +137,7 @@ class Amort:
                 self.config.set(nam_section, 'max_recoil_2', str(self.struct.amorts[i].max_recoil_2))
                 self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
 
-            with open('amorts.ini', "w", encoding='cp1251') as configfile:
+            with open('amorts.ini', "w", encoding='utf-8') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:
@@ -168,7 +168,7 @@ class Amort:
             self.config.set(nam_section, 'max_recoil_2', obj.get('recoil_max_2'))
             self.config.set(nam_section, 'max_temper', obj.get('temper'))
 
-            with open('amorts.ini', 'w', encoding='cp1251') as configfile:
+            with open('amorts.ini', 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:

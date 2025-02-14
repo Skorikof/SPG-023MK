@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 from logger import my_logger
-from my_obj.data_calculation import CalcData
+from calc_data.data_calculation import CalcData
 from ui_py.settings_ui import Ui_SettingsWindow
 
 
@@ -113,8 +113,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def update_data_win_set(self):
         try:
-            date = str(datetime.now())[:-4]
-            self._statusbar_set_ui(f'Данные обновлены в {date}')
             self._update_win()
 
         except Exception as e:

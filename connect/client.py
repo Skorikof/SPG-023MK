@@ -2,7 +2,7 @@ import serial
 import modbus_tk.modbus_rtu as modbus_rtu
 
 from logger import my_logger
-from settings import PrgSettings
+from settings.settings import PrgSettings
 
 
 class Client:

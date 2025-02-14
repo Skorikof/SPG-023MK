@@ -6,7 +6,7 @@ from PyQt5.QtGui import QIcon
 
 from logger import my_logger
 from model import Model
-from controller import Controller
+from controller.controller import Controller
 from wins.view import AppWindow
 from wins.settings_window import SetWindow
 

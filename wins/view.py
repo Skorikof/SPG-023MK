@@ -2,11 +2,11 @@
 import time
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
-import glob_var
+from settings import glob_var
 
 from logger import my_logger
 from archive import ReadArchive
-from my_obj.data_calculation import SpeedLimitForHod
+from calc_data.data_calculation import SpeedLimitForHod
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
@@ -697,22 +697,22 @@ class AppWindow(QMainWindow):
 
             if name != '' and rank != '':
                 self.flag_push_force_set()
+                self.ui.test_change_speed_btn.setVisible(False)
+                self.ui.lab_speed_le.setReadOnly(True)
 
                 type_test = self.model.set_regs.get('type_test')
 
-                if type_test == 'conv':
-                    self.begin_test()
+                flag = self.static_push_force_editing()
+                if flag:
+                    if type_test == 'conv':
+                        self.begin_test()
 
-                else:
-                    self.ui.test_change_speed_btn.setVisible(False)
-                    self.ui.lab_speed_le.setReadOnly(True)
-                    flag = self.serial_editing_finished()
-                    if flag:
-                        serial_number = self.ui.specif_serial_lineEdit.text()
-                        if serial_number != '':
-                            self.model.set_regs['serial_number'] = serial_number
-                            flag = self.static_push_force_editing()
-                            if flag:
+                    else:
+                        flag = self.serial_editing_finished()
+                        if flag:
+                            serial_number = self.ui.specif_serial_lineEdit.text()
+                            if serial_number != '':
+                                self.model.set_regs['serial_number'] = serial_number
                                 if type_test == 'lab_cascade':
                                     flag = self.specif_read_lab_cascade_table()
                                     if flag:
@@ -872,7 +872,7 @@ class AppWindow(QMainWindow):
             self.save_log_begin_test()
             if self.flag_repeat:
                 self.flag_repeat = False
-                self.controller.repeat_test_clicked()
+                self.controller.steps_tests.step_repeat_test()
             else:
                 self.controller.start_test_clicked()
 
@@ -1057,13 +1057,14 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_conv_graph - {e}')
-            
+
     def _update_conv_data(self):
         try:
             amort = self.model.set_regs.get('amort')
             self.ui.conv_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
             self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
             self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
+            self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
             if self.model.set_regs.get('stage', '') == 'test_speed_one':
                 self.ui.conv_speed_le.setText(f'{amort.speed_one}')
