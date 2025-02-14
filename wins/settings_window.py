@@ -146,7 +146,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _write_frequency_set(self):
         try:
-            value = int(self.lineEdit_freq_traverse.text()) * 100
+            value = int(self.lineEdit_freq_traverse.text())
 
             self.model.write_speed_motor(2, freq=value)
 

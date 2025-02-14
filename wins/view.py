@@ -31,6 +31,7 @@ class AppWindow(QMainWindow):
         self.index_amort = 0
         self.index_type_test = 0
         self.bit_temper = None
+        self.flag_repeat = False
 
         self._start_param_view()
 
@@ -110,7 +111,7 @@ class AppWindow(QMainWindow):
         self.ui.btn_reduce_speed.clicked.connect(self.specif_reduce_lab_cascade_table)
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
-        self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked)
+        self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked_slot)
         self.ui.test_change_speed_btn.clicked.connect(self.change_speed_lab_test)
 
     def controller_msg_slot(self, msg):
@@ -869,7 +870,11 @@ class AppWindow(QMainWindow):
                 self.fill_gui_lab_test()
 
             self.save_log_begin_test()
-            self.controller.start_test_clicked()
+            if self.flag_repeat:
+                self.flag_repeat = False
+                self.controller.repeat_test_clicked()
+            else:
+                self.controller.start_test_clicked()
 
         except Exception as e:
             self.logger.error(e)
@@ -1077,8 +1082,8 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
 
-    def repeat_test_clicked(self):
-        self.controller.change_flag_repeat(True)
+    def repeat_test_clicked_slot(self):
+        self.flag_repeat = True
         self.begin_test()
 
     def cancel_test_clicked(self):

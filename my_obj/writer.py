@@ -87,9 +87,9 @@ class Writer:
 
                 if command == 'buffer_on' or command == 'buffer_off':
                     self._pars_result_write_force(res, command)
-
-                if res == 'OK!':
-                    pass
+                #
+                # if res == 'OK!':
+                #     pass
 
         except Exception as e:
             self.logger.error(e)

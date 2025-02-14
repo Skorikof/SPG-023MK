@@ -12,7 +12,7 @@ from my_obj.writer import Writer
 from my_obj.client import Client
 
 
-class WinSignals(QObject):
+class ModelSignals(QObject):
     stbar_msg = pyqtSignal(str)
     read_start = pyqtSignal()
     start_test = pyqtSignal()
@@ -27,15 +27,13 @@ class WinSignals(QObject):
     save_koef_force = pyqtSignal()
     conv_lamp = pyqtSignal(str)
 
-    check_buffer = pyqtSignal(str, str)
-
     connect_ctrl = pyqtSignal()
     read_finish = pyqtSignal()
 
 
 class Model:
     def __init__(self):
-        self.signals = WinSignals()
+        self.signals = ModelSignals()
         self.threadpool = QThreadPool()
 
         self.logger = my_logger.get_logger(__name__)
@@ -69,7 +67,11 @@ class Model:
             self.writer = Writer(self.client.client)
             self.writer.timer_writer_start()
 
+            self._init_signals()
+
             self._init_reader()
+
+            self.write_bit_force_cycle(0)
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
@@ -227,25 +229,32 @@ class Model:
 
     def _pars_buffer_result(self, response):
         try:
-            response = self.parser.discard_left_data(response)
+            data = self.parser.discard_left_data(response)
 
-            if response is None:
+            if not data:
                 pass # Пришла пустая посылка
 
             else:
-                data_dict = {'force_real': response.get('force')[-1],
-                             'force': self.correct_force(response.get('force')[-1]),
-                             'move': response.get('move')[-1],
-                             'force_list': [self.correct_force(x) for x in response.get('force')],
-                             'move_list': response.get('move')[:],
-                             'temp_list': response.get('temper')[:],
-                             'temperature': response.get('temper')[-1],
-                             'max_temperature': self.calc_data.check_temperature(response.get('temper'),
+                # print(f'Count --> {data.get("count")}')
+                # print(f'Force --> {data.get("force")}')
+                # print(f'Move --> {data.get("move")}')
+                # print(f'State --> {data.get("state")}')
+                # print(f'Temper --> {data.get("temper")}')
+                # print(f'{"=" * 100}')
+
+                data_dict = {'force_real': data.get('force')[-1],
+                             'force': self.correct_force(data.get('force')[-1]),
+                             'move': data.get('move')[-1],
+                             'force_list': [self.correct_force(x) for x in data.get('force')],
+                             'move_list': data.get('move')[:],
+                             'temp_list': data.get('temper')[:],
+                             'temperature': data.get('temper')[-1],
+                             'max_temperature': self.calc_data.check_temperature(data.get('temper'),
                                                                                  self.set_regs.get('max_temperature', 0)),
-                             'count': response.get('count')[-1],
+                             'count': data.get('count')[-1],
                              }
 
-                reg_dict = self.parser.register_state(response.get('state')[-1])
+                reg_dict = self.parser.register_state(data.get('state')[-1])
 
                 command = {**data_dict, **reg_dict}
 
@@ -256,8 +265,11 @@ class Model:
                 self._pars_response_on_circle(data_dict.get('force_list'), data_dict.get('move_list'))
 
         except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+            if str(e) == 'list index out of range':
+                pass
+            else:
+                self.logger.error(e)
+                self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
 
     # FIXME
     def _read_controller_finish(self):
@@ -449,6 +461,13 @@ class Model:
             self.update_main_dict(command)
 
         except Exception as e:
+            command = {'min_pos': False,
+                       'max_pos': False,
+                       'force_accum_list': [],
+                       'move_accum_list': [],
+                       }
+            self.update_main_dict(command)
+
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_full_circle_done - {e}')
 
@@ -510,14 +529,12 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
-            bit = self.set_regs.get('cycle_force', 0)
-            if int(bit) != value:
-                if value == 1:
-                    command = 'buffer_on'
-                else:
-                    command = 'buffer_off'
+            if value == 1:
+                command = 'buffer_on'
+            else:
+                command = 'buffer_off'
 
-                self._write_reg_state(0, value, command)
+            self._write_reg_state(0, value, command)
 
         except Exception as e:
             self.logger.error(e)

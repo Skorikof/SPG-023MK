@@ -229,17 +229,7 @@ class Reader(QRunnable):
                                     self.num_rec += 1
                                     self.count_rec += 1
 
-                                    self.result['count'].append(rr[ind])
-
-                                    force = round(unpack('f', pack('<HH', rr[ind + 2], rr[ind + 1]))[0], 1)
-                                    self.result['force'].append(force)
-
-                                    move = round(-0.1 * (int.from_bytes(pack('>H', rr[ind + 3]), 'big', signed=True))
-                                                 , 1)
-                                    self.result['move'].append(move)
-
-                                    self.result['state'].append(rr[ind + 4])
-                                    self.result['temper'].append(round(rr[ind + 5] * 0.01, 1))
+                                    self._pars_result(rr, ind)
 
                                 else:
                                     # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
@@ -267,6 +257,19 @@ class Reader(QRunnable):
 
                     except Exception as e:
                         self.signals.thread_err.emit(f'ERROR in thread reader buffer - {e}')
+
+    def _pars_result(self, request, ind):
+        try:
+            self.result['count'].append(request[ind])
+            force = round(unpack('f', pack('<HH', request[ind + 2], request[ind + 1]))[0], 1)
+            self.result['force'].append(force)
+            move = round(-0.1 * (int.from_bytes(pack('>H', request[ind + 3]), 'big', signed=True)), 1)
+            self.result['move'].append(move)
+            self.result['state'].append(request[ind + 4])
+            self.result['temper'].append(round(request[ind + 5] * 0.01, 1))
+
+        except Exception as e:
+            self.signals.thread_err.emit(f'ERROR in thread reader/_pars_result - {e}')
 
     def start_test(self):
         self.num_rec = 0

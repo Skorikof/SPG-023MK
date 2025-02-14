@@ -97,11 +97,11 @@ class CalcData:
     def middle_min_and_max_force(self, data: list):
         try:
             comp_index = data.index(min(data))
-            comp_list = [abs(x) for x in data[comp_index - 10:comp_index + 10]]
+            comp_list = [abs(x) for x in data[comp_index - 5:comp_index + 5]]
             max_comp = round((sum(comp_list) / len(comp_list)), 1)
 
             recoil_index = data.index(max(data))
-            recoil_list = [abs(x) for x in data[recoil_index - 10:recoil_index + 10]]
+            recoil_list = [abs(x) for x in data[recoil_index - 5:recoil_index + 5]]
             max_recoil = round((sum(recoil_list) / len(recoil_list)), 1)
 
             return max_recoil, max_comp

@@ -35,7 +35,6 @@ class Controller:
             self.set_trav_point = 0
             self.cascade = 1
             self.max_cascade = 0
-            self.flag_repeat = False
 
             self._init_signals()
             self._init_timer_test()
@@ -74,9 +73,6 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_full_cycle_update - {e}')
 
-    def change_flag_repeat(self, flag):
-        self.flag_repeat = flag
-
     def _init_timer_test(self):
         try:
             self.timer_process = QTimer()
@@ -101,25 +97,17 @@ class Controller:
 
             # FIXME
             elif stage == 'wait_buffer':
-                if self.model.set_regs['buffer_state'][0] == 'OK!':
-                    if self.model.set_regs['buffer_state'][1] == 'buffer_on':
+                buffer_state = self.model.set_regs.get('buffer_state', ['null', 'null'])
+                if buffer_state[0] == 'OK!':
+                    if buffer_state[1] == 'buffer_on':
                         self.model.reader_start_test()
+                        self.model.set_regs['buffer_state'] = ['null', 'null']
+                        self.model.motor_up(1)
+                        self.model.set_regs['stage'] = self.model.set_regs.get('next_stage')
 
-                        self.model.set_regs['stage'] = 'start_motor'
-
-                    elif self.model.set_regs['buffer_state'][1] == 'buffer_off':
+                    elif buffer_state[1] == 'buffer_off':
                         pass
                         # Ну и в данном случае мы чтото делаем
-
-            # FIXME
-            elif stage == 'start_motor':
-                if not self.flag_repeat:
-                    self.model.motor_up(1)
-
-                else:
-                    self.flag_repeat = False
-
-                self.model.set_regs['stage'] = self.model.set_regs.get('next_stage')
 
             # FIXME
             elif stage == 'repeat_test':
@@ -161,7 +149,6 @@ class Controller:
             elif stage == 'pos_set_gear':
                 if self.steps.stage_pos_set_gear():
                     self.model.set_regs['stage'] = 'wait'
-                    self.model.reader_stop_test()
                     self.signals.reset_ui.emit()
 
             elif stage == 'traverse_referent':
@@ -346,6 +333,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
+
         self.model.write_bit_force_cycle(0)
 
         self.logger.warning(f'lost control')
@@ -391,6 +379,7 @@ class Controller:
         self.model.reader_stop_test()
 
         self.model.write_bit_red_light(1)
+
         self.model.write_bit_force_cycle(0)
 
         self.logger.warning(f'excess force')
@@ -597,22 +586,51 @@ class Controller:
             amort = self.model.set_regs.get('amort')
             self.model.write_emergency_force(self.calc_data.excess_force(amort))
 
-            if self.flag_repeat:
-                # FIXME
-                self.model.set_regs['next_stage'] = 'repeat_test'
-                self.model.set_regs['stage'] = 'wait_buffer'
-                self.model.write_bit_force_cycle(1)
+            if self.model.set_regs.get('traverse_move', 0) < 10:
+                self._traverse_referent_point()
 
             else:
-                if self.model.set_regs.get('traverse_move', 0) < 10:
-                    self._traverse_referent_point()
-
-                else:
-                    self.traverse_install_point('install')
+                self.traverse_install_point('install')
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/start_test_clicked - {e}')
+
+    def repeat_test_clicked(self):
+        try:
+            if self.model.set_regs.get('excess_force', False) is True:
+                self.model.write_bit_emergency_force()
+
+            if self.model.set_regs.get('lost_control', False) is True:
+                self.model.write_bit_unblock_control()
+
+            self.model.lamp_all_switch_off()
+
+            command = {'test_launch': True,
+                       'test_flag': False,
+                       'fill_graph': False,
+                       'alarm_flag': False,
+                       'alarm_tag': '',
+                       'force_accum_list': [],
+                       'move_accum_list': [],
+                       'force_graph': [],
+                       'move_real_list': [],
+                       'max_temperature': 0,
+                       'start_direction': False,
+                       'min_pos': False,
+                       'max_pos': False,
+                       }
+
+            self.model.update_main_dict(command)
+            self.model.reset_min_point()
+
+            self.model.set_regs['next_stage'] = 'repeat_test'
+            self.model.set_regs['stage'] = 'wait_buffer'
+            self.model.write_bit_force_cycle(1)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/stop_test_clicked - {e}')
 
     def stop_test_clicked(self):
         """
@@ -780,10 +798,10 @@ class Controller:
             else:
                 speed = 0.03
 
+            self._full_cycle_update('0')
             self.model.write_speed_motor(1, speed=speed)
             self.model.set_regs['next_stage'] = 'test_move_cycle'
             self.model.set_regs['stage'] = 'wait_buffer'
-            self._full_cycle_update('0')
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -807,7 +825,6 @@ class Controller:
             self.model.set_regs['stage'] = 'pumping'
 
             self._full_cycle_update('0')
-            self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -834,8 +851,6 @@ class Controller:
                            }
                 self.model.update_main_dict(command)
 
-                self.model.motor_up(1)
-
             elif ind == 2:
                 command = {'speed': speed_two,
                            'stage': 'test_speed_two',
@@ -861,9 +876,6 @@ class Controller:
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
-
-            self.model.motor_up(1)
-
             self._full_cycle_update('0')
 
         except Exception as e:
@@ -883,8 +895,6 @@ class Controller:
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
-
-            self.model.motor_up(1)
 
             self._full_cycle_update('0')
 
@@ -950,8 +960,6 @@ class Controller:
             self.model.update_main_dict(command)
 
             self._full_cycle_update('0')
-
-            self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)

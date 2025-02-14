@@ -193,7 +193,7 @@ class ReadArchive:
             if os.path.isfile(path_file):
                 flag_add_title = False
 
-            with open('archive/' + nam_f, 'a') as file_arch:
+            with open('archive/' + nam_f, 'a', encoding='cp1251') as file_arch:
                 if flag_add_title:
                     str_t = (f'Время;'
                              f'ФИО оператора;'

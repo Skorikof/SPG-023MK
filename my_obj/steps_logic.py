@@ -57,7 +57,8 @@ class Steps:
                 if self.model.set_regs.get('max_pos', False):
                     if abs(14 - self.model.set_regs.get('move', 200)) < 5:
                         self.model.motor_stop(1)
-
+                        self.model.reader_stop_test()
+                        self.model.write_bit_force_cycle(0)
                         self.model.set_regs['max_pos'] = False
 
                         return True
