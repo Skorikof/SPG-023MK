@@ -10,7 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from my_obj.click_lineedit import MyLineEdit
+from modified_ui_obj.click_lineedit import MyLineEdit
 
 
 class Ui_SettingsWindow(object):

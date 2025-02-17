@@ -1,11 +1,20 @@
+from PyQt5.QtCore import QObject, pyqtSignal
+
 from logger import my_logger
+
+
+class StepTestsSignals(QObject):
+    stage_from_tests = pyqtSignal(str)
+    next_stage_from_tests = pyqtSignal(str)
 
 
 class StepTests:
     def __init__(self, model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
+        self.signals = StepTestsSignals()
 
+    # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание
     def step_yellow_btn_push(self):
         try:
             if self.model.set_regs.get('test_flag', False) is False:
@@ -15,7 +24,6 @@ class StepTests:
                 command = {'alarm_flag': False,
                            'alarm_tag': '',
                            'test_flag': True,
-                           'fill_graph': False,
                            'force_accum_list': [],
                            'move_accum_list': [],
                            'force_graph': [],
@@ -32,11 +40,11 @@ class StepTests:
                 if self.model.set_regs.get('excess_force'):
                     self.model.write_bit_emergency_force()
 
-                return 'start_test'
+                return 'start'
 
             else:
                 self.model.set_regs['test_flag'] = False
-                return 'stop_test'
+                return 'stop'
 
         except Exception as e:
             self.logger.error(e)
@@ -53,14 +61,12 @@ class StepTests:
             self.model.lamp_all_switch_off()
 
             command = {'test_launch': True,
-                       'test_flag': False,
-                       'fill_graph': False,
                        'alarm_flag': False,
                        'alarm_tag': '',
-                       'force_accum_list': [],
-                       'move_accum_list': [],
-                       'force_graph': [],
-                       'move_real_list': [],
+                       # 'force_accum_list': [],
+                       # 'move_accum_list': [],
+                       # 'force_graph': [],
+                       # 'move_real_list': [],
                        'max_temperature': 0,
                        'start_direction': False,
                        'min_pos': False,
@@ -85,8 +91,6 @@ class StepTests:
             self.model.lamp_all_switch_off()
 
             command = {'test_launch': True,
-                       'test_flag': False,
-                       'fill_graph': False,
                        'alarm_flag': False,
                        'alarm_tag': '',
                        'force_accum_list': [],
@@ -97,13 +101,14 @@ class StepTests:
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
+                       'repeat': True,
                        }
 
             self.model.update_main_dict(command)
             self.model.reset_min_point()
 
-            self.model.set_regs['next_stage'] = 'repeat_test'
-            self.model.set_regs['stage'] = 'wait_buffer'
+            self.signals.stage_from_tests.emit('wait_buffer')
+            self.signals.next_stage_from_tests.emit('repeat_test')
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -112,8 +117,8 @@ class StepTests:
 
     def step_stop_test(self):
         try:
-            command = {'stage': 'wait',
-                       'test_launch': False,
+            self.signals.stage_from_tests.emit('wait')
+            command = {'test_launch': False,
                        'fill_graph': False,
                        'test_flag': False,
                        'force_accum_list': [],
@@ -134,8 +139,8 @@ class StepTests:
             if ind == 1:
                 speed_one = self.model.set_regs.get('amort').speed_one
                 self.model.write_speed_motor(1, speed=speed_one)
+                self.signals.stage_from_tests.emit('test_speed_one')
                 command = {'speed': speed_one,
-                           'stage': 'test_speed_one',
                            'force_accum_list': [],
                            'move_accum_list': [],
                            'fill_graph': True,
@@ -144,12 +149,14 @@ class StepTests:
 
             elif ind == 2:
                 speed_two = self.model.set_regs.get('amort').speed_two
-                command = {'speed': speed_two,
-                           'stage': 'test_speed_two',
-                           }
-                self.model.update_main_dict(command)
+                self.signals.stage_from_tests.emit('test_speed_two')
+                self.model.set_regs['speed'] = speed_two
 
                 self.model.write_speed_motor(1, speed=speed_two)
+
+            if self.model.set_regs.get('repeat', False):
+                self.model.set_regs['repeat'] = False
+                self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -159,12 +166,16 @@ class StepTests:
         try:
             speed = self.model.set_regs.get('speed')
             self.model.write_speed_motor(1, speed=speed)
-            command = {'stage': 'test_lab_hand_speed',
-                       'force_accum_list': [],
+            self.signals.stage_from_tests.emit('test_lab_hand_speed')
+            command = {'force_accum_list': [],
                        'move_accum_list': [],
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
+
+            if self.model.set_regs.get('repeat', False):
+                self.model.set_regs['repeat'] = False
+                self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -173,13 +184,17 @@ class StepTests:
     def step_test_lab_cascade(self, speed_list: list):
         try:
             self.model.write_speed_motor(1, speed=speed_list[0])
+            self.signals.stage_from_tests.emit('test_lab_cascade')
             command = {'speed': speed_list[0],
-                       'stage': 'test_lab_cascade',
                        'force_accum_list': [],
                        'move_accum_list': [],
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
+
+            if self.model.set_regs.get('repeat', False):
+                self.model.set_regs['repeat'] = False
+                self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -189,14 +204,18 @@ class StepTests:
         try:
             speed = self.model.set_regs.get('speed')
             self.model.write_speed_motor(1, speed=speed)
-            command = {'stage': 'test_temper',
-                       'force_accum_list': [],
+            self.signals.stage_from_tests.emit('test_temper')
+            command = {'force_accum_list': [],
                        'move_accum_list': [],
                        'temper_graph': [],
                        'temper_force_graph': [],
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
+
+            if self.model.set_regs.get('repeat', False):
+                self.model.set_regs['repeat'] = False
+                self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)

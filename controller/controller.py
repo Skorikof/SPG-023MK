@@ -33,6 +33,8 @@ class Controller:
             self.steps_tests = StepTests(model)
             self.calc_data = CalcData()
 
+            self.stage = 'wait'
+            self.next_stage = 'wait'
             self.timer_process = None
             self.flag_alarm_traverse = True
             self.count_cycle = 0
@@ -52,12 +54,24 @@ class Controller:
             self.model.signals.full_cycle_count.connect(self._full_cycle_update)
             self.model.signals.test_launch.connect(self._yellow_btn_push)
 
+            self.alarm_steps.signals.stage_from_alarm.connect(self.change_stage_controller)
+            self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
+
+            self.steps.signals.stage_from_logic.connect(self.change_stage_controller)
+            self.steps.signals.next_stage_from_logic.connect(self.change_next_stage_controller)
+
+            self.steps_tests.signals.stage_from_tests.connect(self.change_stage_controller)
+            self.steps_tests.signals.next_stage_from_tests.connect(self.change_next_stage_controller)
+
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_init_signals - {e}')
 
     def _position_traverse(self):
         self.signals.control_msg.emit(f'pos_traverse')
+
+    def _alarm_traverse_position(self, pos):
+        self.signals.control_msg.emit(f'alarm_traverse_{pos}')
 
     def _move_detection(self):
         self.signals.control_msg.emit(f'move_detection')
@@ -67,6 +81,12 @@ class Controller:
 
     def _pumping_msg(self):
         self.signals.control_msg.emit(f'pumping')
+
+    def change_stage_controller(self, stage: str):
+        self.stage = stage
+
+    def change_next_stage_controller(self, stage: str):
+        self.next_stage = stage
 
     def _full_cycle_update(self, command: str):
         try:
@@ -92,30 +112,31 @@ class Controller:
 
     def _update_stage_on_timer(self):
         try:
-            stage = self.model.set_regs.get('stage', 'wait')
-            test_flag = self.model.set_regs.get('test_flag', False)
+            self.alarm_steps.step_alarm_traverse_position()
 
-            if test_flag is True:
+            if self.model.set_regs.get('test_flag', False):
                 self._select_alarm_state(self.steps.stage_control_alarm_state())
 
-            if stage == 'wait':
+            if self.stage == 'wait':
                 pass
 
-            elif stage == 'wait_buffer':
+            elif self.stage == 'wait_buffer':
                 if self.model.set_regs['buffer_state'][0] == 'OK!':
                     if self.model.set_regs['buffer_state'][1] == 'buffer_on':
-                        self.model.reader_start_test()
                         self.model.set_regs['buffer_state'] = ['null', 'null']
+                        self.model.reader_start_test()
                         self.model.motor_up(1)
-                        self.model.set_regs['stage'] = self.model.set_regs.get('next_stage')
+                        self.stage = self.next_stage
 
                     elif self.model.set_regs['buffer_state'][1] == 'buffer_off':
                         pass
                         # Ну и в данном случае мы чтото делаем
+                elif self.model.set_regs['buffer_state'][0] == 'ERROR!':
+                    self.model.set_regs['buffer_state'] = ['null', 'null']
+                    self.model.write_bit_force_cycle(1)
 
-            # FIXME
-            elif stage == 'repeat_test':
-                self.model.set_regs['stage'] = 'wait'
+            elif self.stage == 'repeat_test':
+                self.stage = 'wait'
                 type_test = self.model.set_regs.get('type_test')
                 if type_test == 'lab_hand':
                     self._test_lab_hand_speed()
@@ -126,59 +147,53 @@ class Controller:
                 else:
                     self._test_on_two_speed(1)
 
-            elif stage == 'alarm_traverse':
-                point = 10
-                if self.model.set_regs.get('alarm_tag', '') == 'alarm_traverse_up':
-                    point = 10
-
-                elif self.model.set_regs.get('alarm_tag', '') == 'alarm_traverse_down':
-                    point = 500
-
-                if self.steps.step_control_traverse_move(point):
-                    self.flag_alarm_traverse = True
+            elif self.stage == 'alarm_traverse':
+                if self.steps.step_control_traverse_move(self.set_trav_point):
                     self.model.motor_stop(2)
                     self.model.write_bit_red_light(0)
-                    command = {'stage': 'wait',
-                               'alarm_flag': False,
+                    self.alarm_steps.flag_alarm_traverse = False
+                    self.stage = 'wait'
+                    command = {'alarm_flag': False,
                                'alarm_tag': '',
                                }
                     self.model.update_main_dict(command)
                     self.signals.reset_ui.emit()
 
-            elif stage == 'search_hod':
+            elif self.stage == 'search_hod':
                 if self.steps.stage_search_hod(self.count_cycle):
-                    self.model.set_regs['stage'] = 'wait'
+                    self.stage = 'wait'
                     self.steps.step_stop_gear_min_pos()
 
-            elif stage == 'pos_set_gear':
+            elif self.stage == 'pos_set_gear':
                 if self.steps.stage_pos_set_gear():
-                    self.model.set_regs['stage'] = 'wait'
+                    self.stage = 'wait'
                     self.signals.reset_ui.emit()
 
-            elif stage == 'traverse_referent':
+            elif self.stage == 'traverse_referent':
                 if self.steps.stage_traverse_referent():
-                    self.model.set_regs['stage'] = 'wait'
+                    self.stage = 'wait'
                     self.traverse_install_point('install')
 
-            elif stage == 'install_amort':
+            elif self.stage == 'install_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
-                    self.model.set_regs['stage'] = 'wait'
+                    self.stage = 'wait'
                     self.signals.wait_yellow_btn.emit()
 
-            elif stage == 'start_point_amort':
+            elif self.stage == 'start_point_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
-                    self.model.set_regs['stage'] = 'wait'
+                    self.next_stage = 'test_move_cycle'
                     self._move_detection()
                     self._full_cycle_update('0')
                     self.steps.step_test_move_cycle()
+                    self.stage = 'wait_buffer'
 
-            elif stage == 'test_move_cycle':
+            elif self.stage == 'test_move_cycle':
                 if self.count_cycle >= 1:
                     self._pumping_msg()
                     self._full_cycle_update('0')
                     self.steps.step_pumping_before_test()
 
-            elif stage == 'pumping':
+            elif self.stage == 'pumping':
                 if self.count_cycle >= 3:
                     type_test = self.model.set_regs.get('type_test')
                     if type_test == 'lab_hand':
@@ -190,7 +205,7 @@ class Controller:
                     else:
                         self._test_on_two_speed(1)
 
-            elif stage == 'test_speed_one':
+            elif self.stage == 'test_speed_one':
                 if self.count_cycle >= 5:
                     type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
@@ -201,7 +216,7 @@ class Controller:
 
                     self._test_on_two_speed(2)
 
-            elif stage == 'test_speed_two':
+            elif self.stage == 'test_speed_two':
                 if self.count_cycle >= 5:
                     type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
@@ -210,20 +225,18 @@ class Controller:
                     elif type_test == 'lab':
                         self.signals.lab_save_result.emit('end')
 
-                    command = {'stage': 'wait',
-                               'fill_graph': False}
-                    self.model.update_main_dict(command)
+                    self.stage = 'wait'
+                    self.model.set_regs['fill_graph'] = False
                     self.steps.step_stop_gear_end_test()
 
-            elif stage == 'test_lab_hand_speed':
+            elif self.stage == 'test_lab_hand_speed':
                 if self.count_cycle >= 5:
-                    command = {'stage': 'wait',
-                               'fill_graph': False}
-                    self.model.update_main_dict(command)
+                    self.stage = 'wait'
+                    self.model.set_regs['fill_graph'] = False
                     self.signals.lab_save_result.emit('end')
                     self.steps.step_stop_gear_end_test()
 
-            elif stage == 'test_temper':
+            elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
                     max_temper = self.model.set_regs.get('temperature', 0)
                     if max_temper < self.model.set_regs.get('finish_temper', 80):
@@ -234,13 +247,12 @@ class Controller:
                         self._full_cycle_update('0')
 
                     else:
-                        command = {'stage': 'wait',
-                                   'fill_graph': False}
-                        self.model.update_main_dict(command)
+                        self.stage = 'wait'
+                        self.model.set_regs['fill_graph'] = False
                         self.signals.lab_save_result.emit('end')
                         self.steps.step_stop_gear_end_test()
 
-            elif stage == 'test_lab_cascade':
+            elif self.stage == 'test_lab_cascade':
                 if self.count_cycle >= 5:
                     self.signals.lab_save_result.emit('cont')
                     if self.count_cascade < self.max_cascade:
@@ -258,18 +270,17 @@ class Controller:
                         self._full_cycle_update('0')
 
                     else:
-                        command = {'stage': 'wait',
-                                   'fill_graph': False}
-                        self.model.update_main_dict(command)
+                        self.stage = 'wait'
+                        self.model.set_regs['fill_graph'] = False
                         self.count_cascade = 1
                         self.signals.end_test.emit()
                         self.steps.step_stop_gear_end_test()
 
-            elif stage == 'stop_gear_end_test':
+            elif self.stage == 'stop_gear_end_test':
                 if self.steps.stage_stop_gear_end_test():
                     self.steps.step_stop_gear_min_pos()
 
-            elif stage == 'stop_gear_min_pos':
+            elif self.stage == 'stop_gear_min_pos':
                 if self.steps.stage_stop_gear_min_pos():
                     if self.model.set_regs.get('search_hod', False):
                         self.model.set_regs['search_hod'] = False
@@ -285,13 +296,12 @@ class Controller:
                         else:
                             self.signals.lab_test_stop.emit()
 
-            elif stage == 'stop_test':
+            elif self.stage == 'stop_test':
                 flag = self.steps.step_control_traverse_move(self.set_trav_point)
                 if flag:
+                    self.stage = 'wait'
                     if not self.model.set_regs.get('alarm_flag', False):
                         self.signals.cancel_test.emit()
-
-                    self.model.set_regs['stage'] = 'wait'
 
             else:
                 pass
@@ -325,9 +335,23 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_select_alarm_state - {e}')
 
+    def traverse_move_out_alarm(self, pos):
+        try:
+            if pos == 'up':
+                self.set_trav_point = 20
+            elif pos == 'down':
+                self.set_trav_point = 550
+
+            self.stage = 'alarm_traverse'
+            self.steps.step_traverse_move_position(self.set_trav_point)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in controller/traverse_move_out_alarm - {e}')
+
     def work_interrupted_operator(self):
-        command = {'stage': 'wait',
-                   'test_launch': False,
+        self.stage = 'wait'
+        command = {'test_launch': False,
                    'test_flag': False}
         self.model.update_main_dict(command)
 
@@ -344,10 +368,10 @@ class Controller:
         try:
             if state:
                 tag = self.steps_tests.step_yellow_btn_push()
-                if tag == 'start_test':
+                if tag == 'start':
                     self.traverse_install_point('start_test')
 
-                elif tag == 'stop_test':
+                elif tag == 'stop':
                     self.stop_test_clicked()
 
         except Exception as e:
@@ -382,7 +406,7 @@ class Controller:
         иначе моментальная остановка
         """
         try:
-            self.steps_tests.step_repeat_test()
+            self.steps_tests.step_stop_test()
 
             if self.model.set_regs.get('gear_referent', False):
                 self.steps.step_stop_gear_end_test()
@@ -435,14 +459,14 @@ class Controller:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
-                    self.model.set_regs['stage'] = 'install_amort'
+                    self.stage = 'install_amort'
                     self.set_trav_point = install_point
                     self.steps.step_traverse_move_position(install_point)
 
             elif tag == 'start_test':
                 start_point = int(stock_point - len_max - adapter + mid_point)
                 self._position_traverse()
-                self.model.set_regs['stage'] = 'start_point_amort'
+                self.stage = 'start_point_amort'
                 self.set_trav_point = start_point
                 self.steps.step_traverse_move_position(start_point)
 
@@ -452,7 +476,7 @@ class Controller:
 
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
 
-                self.model.set_regs['stage'] = 'stop_test'
+                self.stage = 'stop_test'
                 self.set_trav_point = end_point
                 self.steps.step_traverse_move_position(end_point)
 

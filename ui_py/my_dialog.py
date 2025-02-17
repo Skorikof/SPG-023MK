@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from my_obj.exam_lineedit import LineEdit
+from modified_ui_obj.exam_lineedit import LineEdit
 
 
 class OperatorDialog(object):

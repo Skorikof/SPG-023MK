@@ -1,10 +1,20 @@
+from PyQt5.QtCore import QObject, pyqtSignal
+
 from logger import my_logger
+
+
+class AlarmSignals(QObject):
+    stage_from_alarm = pyqtSignal(str)
+    alarm_traverse = pyqtSignal(str)
 
 
 class AlarmSteps:
     def __init__(self, model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
+        self.signals = AlarmSignals()
+
+        self.flag_alarm_traverse = False
 
         # self.time_start_wait = None
         # self.time_all_wait = None
@@ -18,8 +28,8 @@ class AlarmSteps:
 
     def step_lost_control(self):
         try:
-            command = {'stage': 'wait',
-                       'alarm_flag': True,
+            self.signals.stage_from_alarm.emit('wait')
+            command = {'alarm_flag': True,
                        'alarm_tag': 'lost_control',
                        'test_launch': False,
                        'test_flag': False}
@@ -44,13 +54,12 @@ class AlarmSteps:
             #     self.model.motor_stop(1)
             #     self.model.motor_stop(2)
             #
-            #     # self.model.set_regs['stage'] = 'wait'
+            #     # self.signals.stage_from_alarm.emit('wait')
             #     # self.model.set_regs['alarm_flag'] = True
             #     # self.model.set_regs['test_launch'] = False
             #     # self.model.set_regs['test_flag'] = False
             #
-            #     command = {'stage': 'wait',
-            #                'alarm_flag': True,
+            #     command = {'alarm_flag': True,
             #                'test_launch': False,
             #                'test_flag': False}
             #     self.model.update_main_dict(command)
@@ -68,8 +77,8 @@ class AlarmSteps:
 
     def step_excess_force(self):
         try:
-            command = {'stage': 'wait',
-                       'alarm_flag': True,
+            self.signals.stage_from_alarm.emit('wait')
+            command = {'alarm_flag': True,
                        'alarm_tag': 'excess_force',
                        'test_launch': False,
                        'test_flag': False}
@@ -94,13 +103,12 @@ class AlarmSteps:
             #     self.model.motor_stop(1)
             #     self.model.motor_stop(2)
             #
-            #     # self.model.set_regs['stage'] = 'wait'
             #     # self.model.set_regs['alarm_flag'] = True
             #     # self.model.set_regs['test_launch'] = False
             #     # self.model.set_regs['test_flag'] = False
             #
-            #     command = {'stage': 'wait',
-            #                'alarm_flag': True,
+            #     self.signals.stage_from_alarm.emit('wait')
+            #     command = {'alarm_flag': True,
             #                'test_launch': False,
             #                'test_flag': False}
             #     self.model.update_main_dict(command)
@@ -177,26 +185,31 @@ class AlarmSteps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in alarm_steps/step_safety_fence - {e}')
 
-    # def step_alarm_traverse_position(self, pos):
-    #     try:
-    #         self.model.write_bit_red_light(1)
-    #
-    #         command = {'stage': 'alarm_traverse',
-    #                    'alarm_flag': True,
-    #                    'alarm_tag': f'alarm_traverse_{pos}',
-    #                    'test_launch': False,
-    #                    'test_flag': False}
-    #         self.model.update_main_dict(command)
-    #
-    #         self.model.reader_stop_test()
-    #         self.model.write_bit_force_cycle(0)
-    #
-    #         if self.flag_alarm_traverse:
-    #             self.logger.warning(f'alarm traverse {pos}')
-    #             self.model.status_bar_msg(f'alarm traverse {pos}')
-    #             self.signals.control_msg.emit(f'alarm_traverse_{pos}')
-    #             self.flag_alarm_traverse = False
-    #
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #         self.model.status_bar_msg(f'ERROR in alarm_steps/step_alarm_traverse_position - {e}')
+    def step_alarm_traverse_position(self):
+        try:
+            tag = 'null'
+            if not self.model.set_regs.get('alarm_highest_position', False):
+                tag = 'up'
+            if not self.model.set_regs.get('alarm_lowest_position', False):
+                tag = 'down'
+
+            if tag != 'null':
+                if not self.flag_alarm_traverse:
+                    self.flag_alarm_traverse = True
+                    self.model.write_bit_red_light(1)
+
+                    command = {'alarm_flag': True,
+                               'alarm_tag': f'alarm_traverse_{tag}',
+                               'test_launch': False,
+                               'test_flag': False}
+                    self.model.update_main_dict(command)
+
+                    self.model.reader_stop_test()
+
+                    self.model.write_bit_force_cycle(0)
+
+                    self.signals.alarm_traverse.emit(tag)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in alarm_steps/step_alarm_traverse_position - {e}')

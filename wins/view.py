@@ -114,6 +114,9 @@ class AppWindow(QMainWindow):
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked_slot)
         self.ui.test_change_speed_btn.clicked.connect(self.change_speed_lab_test)
 
+        self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
+        self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
+
     def controller_msg_slot(self, msg):
         try:
             self.ui.ok_message_btn.setText('OK')
@@ -245,10 +248,10 @@ class AppWindow(QMainWindow):
             alarm_tag = self.model.set_regs.get('alarm_tag', '')
             if tag == 'warning':
                 if alarm_tag == 'alarm_traverse_up':
-                    self.controller.steps.step_move_traverse_out_alarm('up')
+                    self.controller.traverse_move_out_alarm('up')
 
                 elif alarm_tag == 'alarm_traverse_down':
-                    self.controller.steps.step_move_traverse_out_alarm('down')
+                    self.controller.traverse_move_out_alarm('down')
 
                 else:
                     self.model.lamp_all_switch_off()
@@ -268,10 +271,8 @@ class AppWindow(QMainWindow):
 
     def btn_cancel_message_clicked(self):
         try:
-            command = {'stage': 'wait',
-                       'test_launch': False,
-                       }
-            self.model.update_main_dict(command)
+            self.controller.change_stage_controller('wait')
+            self.model.set_regs['test_launch'] = False
 
             self.model.lamp_all_switch_off()
             time.sleep(0.1)
@@ -432,13 +433,11 @@ class AppWindow(QMainWindow):
             self.ui.specif_continue_btn.setEnabled(False)
         else:
             self.ui.specif_continue_btn.setEnabled(True)
-            self.ui.specif_choice_comboBox.setCurrentIndex(0)
-            self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
-            self.change_index_select_amort(0)
+            self.ui.specif_choice_comboBox.setCurrentIndex(self.index_amort)
+            self.change_index_select_amort(self.index_amort)
 
-        self.ui.specif_type_test_comboBox.setCurrentIndex(0)
-        self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
-        self.change_index_type_test(0)
+        self.ui.specif_type_test_comboBox.setCurrentIndex(self.index_type_test)
+        self.change_index_type_test(self.index_type_test)
 
         self.change_temper_sensor_btn()
 
@@ -710,24 +709,22 @@ class AppWindow(QMainWindow):
                     else:
                         flag = self.serial_editing_finished()
                         if flag:
-                            serial_number = self.ui.specif_serial_lineEdit.text()
-                            if serial_number != '':
-                                self.model.set_regs['serial_number'] = serial_number
-                                if type_test == 'lab_cascade':
-                                    flag = self.specif_read_lab_cascade_table()
-                                    if flag:
-                                        self.begin_test()
-                                    else:
-                                        self.specif_msg_none_cascade_speed()
-
-                                elif type_test == 'lab_hand' or type_test == 'temper':
-                                    speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                    if speed:
-                                        self.model.set_regs['speed'] = speed
-                                        self.begin_test()
-
-                                else:
+                            self.model.set_regs['serial_number'] = self.ui.specif_serial_lineEdit.text()
+                            if type_test == 'lab_cascade':
+                                flag = self.specif_read_lab_cascade_table()
+                                if flag:
                                     self.begin_test()
+                                else:
+                                    self.specif_msg_none_cascade_speed()
+
+                            elif type_test == 'lab_hand' or type_test == 'temper':
+                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                if speed:
+                                    self.model.set_regs['speed'] = speed
+                                    self.begin_test()
+
+                            else:
+                                self.begin_test()
 
             else:
                 self.open_win_operator()
@@ -866,6 +863,8 @@ class AppWindow(QMainWindow):
                 self.list_lab = []
                 self._lab_win_clear()
                 self.ui.test_repeat_btn.setVisible(False)
+                self.ui.lab_speed_le.setReadOnly(True)
+                self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
                 self.fill_gui_lab_test()
 
@@ -1066,12 +1065,12 @@ class AppWindow(QMainWindow):
             self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
             self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
-            if self.model.set_regs.get('stage', '') == 'test_speed_one':
+            if self.controller.stage == 'test_speed_one':
                 self.ui.conv_speed_le.setText(f'{amort.speed_one}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
-            
-            elif self.model.set_regs.get('stage', '') == 'test_speed_two':
+
+            if self.controller.stage == 'test_speed_two':
                 self.ui.conv_speed_le.setText(f'{amort.speed_two}')
                 self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
                 self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
@@ -1095,6 +1094,7 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
+                self.controller.steps_tests.step_stop_test()
                 self.model.set_regs['test_launch'] = False
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
@@ -1162,8 +1162,8 @@ class AppWindow(QMainWindow):
     def open_win_archive(self):
         self.main_ui_state(False)
         self.main_btn_state(False)
-        self.win_archive.show()
         self.win_archive.read_path_archive()
+        self.win_archive.show()
 
     def close_win_archive(self):
         self.main_ui_state(True)

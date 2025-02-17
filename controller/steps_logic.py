@@ -1,12 +1,19 @@
 from functools import reduce
+from PyQt5.QtCore import pyqtSignal, QObject
 
 from logger import my_logger
+
+
+class StepsSignal(QObject):
+    stage_from_logic = pyqtSignal(str)
+    next_stage_from_logic = pyqtSignal(str)
 
 
 class Steps:
     def __init__(self, model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
+        self.signals = StepsSignal()
 
         self.flag_freq_1_step = False
         self.flag_freq_2_step = False
@@ -42,22 +49,19 @@ class Steps:
             else:
                 speed = 0.01
 
-            command = {'stage': 'wait',
-                       'search_hod': True,
-                       'test_launch': False,
-                       'test_flag': False,
-                       'fill_graph': False,
+            self.signals.stage_from_logic.emit('wait')
+            self.signals.next_stage_from_logic.emit('search_hod')
+            command = {'search_hod': True,
                        'alarm_flag': False,
                        'alarm_tag': '',
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
-                       'next_stage': 'search_hod',
                        }
             self.model.update_main_dict(command)
 
             self.model.write_speed_motor(1, speed=speed)
-            self.model.set_regs['stage'] = 'wait_buffer'
+            self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -93,20 +97,17 @@ class Steps:
             else:
                 speed = 0.01
 
-            command = {'stage': 'wait',
-                       'test_launch': False,
-                       'test_flag': False,
-                       'fill_graph': False,
-                       'alarm_flag': False,
+            self.signals.stage_from_logic.emit('wait')
+            self.signals.next_stage_from_logic.emit('pos_set_gear')
+            command = {'alarm_flag': False,
                        'alarm_tag': '',
                        'start_direction': False,
                        'min_pos': False,
                        'max_pos': False,
-                       'next_stage': 'pos_set_gear',
                        }
             self.model.update_main_dict(command)
             self.model.write_speed_motor(1, speed=speed)
-            self.model.set_regs['stage'] = 'wait_buffer'
+            self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -135,8 +136,7 @@ class Steps:
         """Остановка двигателя после испытания и перед исходным положением"""
         try:
             self.model.motor_stop(1)
-
-            self.model.set_regs['stage'] = 'stop_gear_end_test'
+            self.signals.stage_from_logic.emit('stop_gear_end_test')
 
         except Exception as e:
             self.logger.error(e)
@@ -155,7 +155,7 @@ class Steps:
 
             if self.count_wait_point > 3:
                 self.count_wait_point = 0
-                self.model.set_regs['stage'] = 'wait'
+                self.signals.stage_from_logic.emit('wait')
                 return True
             return False
 
@@ -181,7 +181,7 @@ class Steps:
 
             self.model.motor_up(1)
 
-            self.model.set_regs['stage'] = 'stop_gear_min_pos'
+            self.signals.stage_from_logic.emit('stop_gear_min_pos')
 
         except Exception as e:
             self.logger.error(e)
@@ -192,8 +192,8 @@ class Steps:
             if self.model.set_regs.get('move') < self.model.main_min_point + 2:
                 self.model.motor_stop(1)
 
-                command = {'stage': 'wait',
-                           'force_accum_list': [],
+                self.signals.stage_from_logic.emit('wait')
+                command = {'force_accum_list': [],
                            'move_accum_list': [],
                            'start_direction': False,
                            'min_pos': False,
@@ -221,10 +221,7 @@ class Steps:
                 speed = 0.05
             else:
                 speed = 0.03
-
             self.model.write_speed_motor(1, speed=speed)
-            self.model.set_regs['next_stage'] = 'test_move_cycle'
-            self.model.set_regs['stage'] = 'wait_buffer'
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -244,7 +241,7 @@ class Steps:
 
             self.model.write_speed_motor(1, speed=speed)
 
-            self.model.set_regs['stage'] = 'pumping'
+            self.signals.stage_from_logic.emit('pumping')
 
         except Exception as e:
             self.logger.error(e)
@@ -254,7 +251,7 @@ class Steps:
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
             self.model.write_speed_motor(2, freq=20)
-            self.model.set_regs['stage'] = 'traverse_referent'
+            self.signals.stage_from_logic.emit('traverse_referent')
 
             self.model.motor_up(2)
 

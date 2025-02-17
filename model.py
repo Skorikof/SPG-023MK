@@ -188,11 +188,12 @@ class Model:
             if tag == 'reg':
                 self._pars_regs_result(response.get('regs'))
 
-            if self.set_regs.get('test_launch', False) is True:
-                if not self.timer_yellow.isActive():
-                    self.timer_yellow.start()
-                else:
-                    pass
+            # FIXME
+            # if self.set_regs.get('test_launch', False) is True:
+            #     if not self.timer_yellow.isActive():
+            #         self.timer_yellow.start()
+            #     else:
+            #         pass
 
         except Exception as e:
             self.logger.error(e)
@@ -231,7 +232,7 @@ class Model:
         try:
             data = self.parser.discard_left_data(response)
 
-            if not data:
+            if data is None:
                 pass # Пришла пустая посылка
 
             else:
@@ -281,7 +282,7 @@ class Model:
     def _init_timer_yellow_btn(self):
         try:
             self.timer_yellow = QTimer()
-            self.timer_yellow.setInterval(200)
+            self.timer_yellow.setInterval(1000)
             self.timer_yellow.timeout.connect(self.yellow_btn_click)
 
         except Exception as e:
