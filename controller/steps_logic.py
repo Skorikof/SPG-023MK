@@ -250,7 +250,7 @@ class Steps:
     def step_traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
-            self.model.write_speed_motor(2, freq=20)
+            self.model.write_speed_motor(2, freq=30)
             self.signals.stage_from_logic.emit('traverse_referent')
 
             self.model.motor_up(2)
@@ -277,7 +277,7 @@ class Steps:
         try:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.write_speed_motor(2, freq=10)
+            self.model.write_speed_motor(2, freq=30)
             if pos == 'up':
                 self.model.motor_down(2)
 
@@ -293,7 +293,7 @@ class Steps:
         try:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.write_speed_motor(2, freq=20)
+            self.model.write_speed_motor(2, freq=30)
             pos_trav = self.model.set_regs.get('traverse_move')
 
             if pos_trav > set_point:
@@ -309,12 +309,12 @@ class Steps:
         try:
             if 5 < abs(point - self.model.set_regs.get('traverse_move')) <= 10:
                 if not self.flag_freq_1_step:
-                    self.model.write_speed_motor(2, freq=15)
+                    self.model.write_speed_motor(2, freq=20)
                     self.flag_freq_1_step = True
 
             if 1 < abs(point - float(self.model.set_regs.get('traverse_move'))) <= 5:
                 if not self.flag_freq_2_step:
-                    self.model.write_speed_motor(2, freq=10)
+                    self.model.write_speed_motor(2, freq=15)
                     self.flag_freq_2_step = True
 
             if abs(point - self.model.set_regs.get('traverse_move')) <= 1:

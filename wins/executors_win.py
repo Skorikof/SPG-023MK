@@ -6,7 +6,7 @@ from PyQt5.QtGui import QIcon
 from logger import my_logger
 from ui_py.executors_ui import Ui_ExecutorWindow
 from operators import Operators
-from ui_py.my_dialog import OperatorDialog
+from ui_py.new_oper import OperatorDialog
 
 
 class WinSignals(QObject):

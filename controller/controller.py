@@ -452,10 +452,10 @@ class Controller:
             adapter = amort.adapter_len
 
             if tag == 'install':
-                install_point = int((stock_point + hod / 2) - len_max - adapter)
+                install_point = int((stock_point + hod / 2) - len_max - adapter + 1)
                 self._position_traverse()
                 pos_trav = float(self.model.set_regs.get('traverse_move'))
-                if abs(pos_trav - install_point) < 2:
+                if abs(pos_trav - install_point) < 1:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
@@ -474,7 +474,7 @@ class Controller:
                 if not self.model.set_regs.get('alarm_flag', False):
                     self._position_traverse()
 
-                end_point = int((stock_point + hod / 2) - len_max - adapter)
+                end_point = int((stock_point + hod / 2) - len_max - adapter + 1)
 
                 self.stage = 'stop_test'
                 self.set_trav_point = end_point
