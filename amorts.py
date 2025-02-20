@@ -112,33 +112,7 @@ class Amort:
     def delete_amort(self, index_del):
         try:
             self.struct.amorts.pop(index_del)
-            self.config.clear()
-
-            for i in range(len(self.struct.amorts)):
-                nam_section = 'Amort' + str(i)
-                self.config.add_section(nam_section)
-
-                self.config.set(nam_section, 'name', self.struct.amorts[i].name)
-                self.config.set(nam_section, 'hod', str(self.struct.amorts[i].hod))
-                self.config.set(nam_section, 'adapter', str(self.struct.amorts[i].adapter))
-                self.config.set(nam_section, 'speed_one', str(self.struct.amorts[i].speed_one))
-                self.config.set(nam_section, 'speed_two', str(self.struct.amorts[i].speed_two))
-                self.config.set(nam_section, 'min_length', str(self.struct.amorts[i].min_length))
-                self.config.set(nam_section, 'max_length', str(self.struct.amorts[i].max_length))
-
-                self.config.set(nam_section, 'min_comp', str(self.struct.amorts[i].min_comp))
-                self.config.set(nam_section, 'min_comp_2', str(self.struct.amorts[i].min_comp_2))
-                self.config.set(nam_section, 'max_comp', str(self.struct.amorts[i].max_comp))
-                self.config.set(nam_section, 'max_comp_2', str(self.struct.amorts[i].max_comp_2))
-
-                self.config.set(nam_section, 'min_recoil', str(self.struct.amorts[i].min_recoil))
-                self.config.set(nam_section, 'min_recoil_2', str(self.struct.amorts[i].min_recoil_2))
-                self.config.set(nam_section, 'max_recoil', str(self.struct.amorts[i].max_recoil))
-                self.config.set(nam_section, 'max_recoil_2', str(self.struct.amorts[i].max_recoil_2))
-                self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
-
-            with open('amorts.ini', "w", encoding='utf-8') as configfile:
-                self.config.write(configfile)
+            self._write_struct_in_file()
 
         except Exception as e:
             self.logger.error(e)
@@ -169,6 +143,63 @@ class Amort:
             self.config.set(nam_section, 'max_temper', obj.get('temper'))
 
             with open('amorts.ini', 'w', encoding='utf-8') as configfile:
+                self.config.write(configfile)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def change_amort(self, ind, obj):
+        try:
+            self.struct.amorts[ind].name = obj.get('name')
+            self.struct.amorts[ind].min_length = obj.get('len_min')
+            self.struct.amorts[ind].max_length = obj.get('len_max')
+            self.struct.amorts[ind].hod = obj.get('hod')
+            self.struct.amorts[ind].adapter = obj.get('adapter')
+            self.struct.amorts[ind].speed_one = obj.get('speed_one')
+            self.struct.amorts[ind].speed_two = obj.get('speed_two')
+            self.struct.amorts[ind].min_comp = obj.get('comp_min')
+            self.struct.amorts[ind].min_comp_2 = obj.get('comp_min_2')
+            self.struct.amorts[ind].max_comp = obj.get('comp_max')
+            self.struct.amorts[ind].max_comp_2 = obj.get('comp_max_2')
+            self.struct.amorts[ind].min_recoil = obj.get('recoil_min')
+            self.struct.amorts[ind].min_recoil_2 = obj.get('recoil_min_2')
+            self.struct.amorts[ind].max_recoil = obj.get('recoil_max')
+            self.struct.amorts[ind].max_recoil_2 = obj.get('recoil_max_2')
+            self.struct.amorts[ind].max_temper = obj.get('temper')
+
+            self._write_struct_in_file()
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _write_struct_in_file(self):
+        try:
+            self.config.clear()
+
+            for i in range(len(self.struct.amorts)):
+                nam_section = 'Amort' + str(i)
+                self.config.add_section(nam_section)
+
+                self.config.set(nam_section, 'name', self.struct.amorts[i].name)
+                self.config.set(nam_section, 'hod', str(self.struct.amorts[i].hod))
+                self.config.set(nam_section, 'adapter', str(self.struct.amorts[i].adapter))
+                self.config.set(nam_section, 'speed_one', str(self.struct.amorts[i].speed_one))
+                self.config.set(nam_section, 'speed_two', str(self.struct.amorts[i].speed_two))
+                self.config.set(nam_section, 'min_length', str(self.struct.amorts[i].min_length))
+                self.config.set(nam_section, 'max_length', str(self.struct.amorts[i].max_length))
+
+                self.config.set(nam_section, 'min_comp', str(self.struct.amorts[i].min_comp))
+                self.config.set(nam_section, 'min_comp_2', str(self.struct.amorts[i].min_comp_2))
+                self.config.set(nam_section, 'max_comp', str(self.struct.amorts[i].max_comp))
+                self.config.set(nam_section, 'max_comp_2', str(self.struct.amorts[i].max_comp_2))
+
+                self.config.set(nam_section, 'min_recoil', str(self.struct.amorts[i].min_recoil))
+                self.config.set(nam_section, 'min_recoil_2', str(self.struct.amorts[i].min_recoil_2))
+                self.config.set(nam_section, 'max_recoil', str(self.struct.amorts[i].max_recoil))
+                self.config.set(nam_section, 'max_recoil_2', str(self.struct.amorts[i].max_recoil_2))
+                self.config.set(nam_section, 'max_temper', str(self.struct.amorts[i].max_temper))
+
+            with open('amorts.ini', "w", encoding='utf-8') as configfile:
                 self.config.write(configfile)
 
         except Exception as e:

@@ -27,8 +27,12 @@ class AmortNew(QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.logger.error(e)
 
-    def start_param_new_amort(self):
-        self.response = {'name': '',
+    def _init_buttons(self):
+        self.btn_save.clicked.connect(self._save_amort)
+
+    def start_param_new_amort(self, tag, amort=None):
+        self.response = {'tag': 'new',
+                         'name': '',
                          'len_min': '',
                          'len_max': '',
                          'hod': '',
@@ -45,8 +49,28 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                          'temper': '',
                          }
 
-    def _init_buttons(self):
-        self.btn_save.clicked.connect(self._save_amort)
+        if tag == 'change':
+            self.response['tag'] = 'change'
+            self._fill_dict_change_amort(amort)
+
+    def _fill_dict_change_amort(self, amort):
+        self.lineEdit_name.setText(f'{amort.name}')
+        self.le_length_min.setText(f'{amort.min_length}')
+        self.le_length_max.setText(f'{amort.max_length}')
+        self.le_hod.setText(f'{amort.hod}')
+        self.le_speed_one.setText(f'{amort.speed_one}')
+        self.le_speed_two.setText(f'{amort.speed_two}')
+        self.le_recoil_min.setText(f'{amort.min_recoil}')
+        self.le_recoil_min_two.setText(f'{amort.min_recoil_2}')
+        self.le_recoil_max.setText(f'{amort.max_recoil}')
+        self.le_recoil_max_two.setText(f'{amort.max_recoil_2}')
+        self.le_comp_min.setText(f'{amort.min_comp}')
+        self.le_comp_min_two.setText(f'{amort.min_comp_2}')
+        self.le_comp_max.setText(f'{amort.max_comp}')
+        self.le_comp_max_two.setText(f'{amort.max_comp_2}')
+        self.le_temper.setText(f'{amort.max_temper}')
+
+        self.adapter_cb.setCurrentText(f'{amort.adapter}')
 
     def name_editing_finished(self):
         text = self.lineEdit_name.text()

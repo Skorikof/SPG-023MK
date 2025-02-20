@@ -238,12 +238,14 @@ class Controller:
 
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    max_temper = self.model.set_regs.get('temperature', 0)
-                    if max_temper < self.model.set_regs.get('finish_temper', 80):
-                        max_comp = self.model.set_regs.get('max_comp', 0)
-                        max_recoil = self.model.set_regs.get('max_recoil', 0)
-                        force = f'{max_recoil}|{max_comp}'
-                        self.steps_tests.step_fill_temper_graph(max_temper, force)
+                    max_temper = self.model.set_regs.get('max_temperature', None)
+                    if max_temper <= self.model.set_regs.get('finish_temper', 80):
+                        max_recoil = self.model.set_regs.get('max_recoil', None)
+                        max_comp = self.model.set_regs.get('max_comp', None)
+                        if max_temper is not None and max_recoil is not None and max_comp is not None:
+                            force = f'{max_recoil}|{max_comp}'
+                            self.steps_tests.step_fill_temper_graph(max_temper, force)
+
                         self._full_cycle_update('0')
 
                     else:
@@ -384,17 +386,27 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            self.steps_tests.step_start_test()
+            if self._check_max_temper_test():
+                self.steps_tests.step_start_test()
 
-            amort = self.model.set_regs.get('amort')
-            self.model.write_emergency_force(self.calc_data.excess_force(amort))
+                amort = self.model.set_regs.get('amort')
+                self.model.write_emergency_force(self.calc_data.excess_force(amort))
 
-            if self.model.set_regs.get('traverse_move', 0) < 10:
-                self.signals.traverse_referent_msg.emit()
-                self.steps.step_traverse_referent_point()
+                if self.model.set_regs.get('repeat', False):
+                    self.stage = 'wait_buffer'
+                    self.next_stage = 'repeat_test'
+                    self.model.write_bit_force_cycle(1)
+
+                else:
+                    if self.model.set_regs.get('traverse_move', 0) < 10:
+                        self.signals.traverse_referent_msg.emit()
+                        self.steps.step_traverse_referent_point()
+
+                    else:
+                        self.traverse_install_point('install')
 
             else:
-                self.traverse_install_point('install')
+                self.steps_tests.step_stop_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -508,6 +520,19 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
+
+    def _check_max_temper_test(self):
+        if self.model.set_regs.get('type_test', 'hand') == 'temper':
+            temp_f = self.model.set_regs.get('temper_first', 0)
+            temp_s = self.model.set_regs.get('temper_second', 0)
+            temp_b = self.model.set_regs.get('temperature', 0)
+            finish_temp = self.model.set_regs.get('finish_temper', 80)
+            if temp_f < finish_temp and temp_s < finish_temp and temp_b < finish_temp:
+                return True
+
+            else:
+                self.signals.control_msg.emit('excess_temperature')
+                return False
 
     def _test_temper(self):
         try:

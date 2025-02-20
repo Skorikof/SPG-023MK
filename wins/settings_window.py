@@ -43,6 +43,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
+        self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
     def start_param_win_set(self):

@@ -152,7 +152,7 @@ class Model:
         try:
             self.timer_add_koef.stop()
             self.timer_calc_koef.stop()
-            self.set_regs['force_refresh'] = round(sum(self.koef_force_list) / len(self.koef_force_list), 1)
+            self.set_regs['force_refresh'] = round((sum(self.koef_force_list)) / len(self.koef_force_list), 1)
             self.signals.save_koef_force.emit()
 
         except Exception as e:

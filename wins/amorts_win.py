@@ -71,6 +71,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
         self.btn_exit.clicked.connect(self.close)
         self.btn_del.clicked.connect(self._btn_del_click)
         self.btn_add.clicked.connect(self._open_new_amort_win)
+        self.btn_change.clicked.connect(self._open_change_amort_win)
         self.btn_ok_quest.clicked.connect(self._ok_question)
         self.btn_cancel_quest.clicked.connect(self._cancel_question)
         self.btn_ok_warning.clicked.connect(self._ok_warning)
@@ -90,6 +91,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.combo_Names.clear()
             if len(self.amorts.config.sections()) == 0:
                 self.btn_del.setEnabled(False)
+                self.btn_change.setEnabled(False)
                 self._amorts_ui_clear()
 
             else:
@@ -99,6 +101,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 self.combo_Names.activated[int].connect(self._amort_select)
                 self._amort_select(0)
                 self.btn_del.setEnabled(True)
+                self.btn_change.setEnabled(True)
 
         except Exception as e:
             self.logger.error(e)
@@ -194,12 +197,23 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
     def _open_new_amort_win(self):
         try:
             self.setDisabled(True)
-            self.new_amort_win.start_param_new_amort()
+            self.new_amort_win.start_param_new_amort('new')
             self.new_amort_win.show()
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_open_new_amort_win - {e}')
+
+    def _open_change_amort_win(self):
+        try:
+            amort = self.amorts.struct.amorts[self.amorts.current_index]
+            self.setDisabled(True)
+            self.new_amort_win.start_param_new_amort('change', amort=amort)
+            self.new_amort_win.show()
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in amorts_win/_open_change_amort_win - {e}')
 
     def _close_new_amort_win(self):
         try:
@@ -215,8 +229,35 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.new_amort_win.hide()
             self.setEnabled(True)
 
-            flag_add = self._check_concurrence_name(obj.get('name'))
-            if flag_add:
+            if obj.get('tag') == 'new':
+                flag_add = self._check_concurrence_name(obj.get('name'))
+                if flag_add:
+                    name = obj.get('name')
+                    dimensions = f'{obj.get("len_min")} - {obj.get("len_max")}'
+                    hod = f'{obj.get("hod")}'
+                    adapter = f'{obj.get("adapter")}'
+                    speed_one = f'{obj.get("speed_one")}'
+                    limit_comp_one = f'{obj.get("comp_min")} - {obj.get("comp_max")}'
+                    limit_recoil_one = f'{obj.get("recoil_min")} - {obj.get("recoil_max")}'
+                    speed_two = f'{obj.get("speed_two")}'
+                    limit_comp_two = f'{obj.get("comp_min_2")} - {obj.get("comp_max_2")}'
+                    limit_recoil_two = f'{obj.get("recoil_min_2")} - {obj.get("recoil_max_2")}'
+                    temper = f'{obj.get("temper")}'
+
+                    txt_log = f'Amort is added --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
+                              f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
+                              f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
+                              f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
+                              f'max_temper = {temper}'
+
+                    self.logger.info(txt_log[:-1])
+                    self.amorts.add_amort(obj)
+
+                else:
+                    self.txt_warning.setText('Такой амортизатор<BR>уже имеется в списке')
+                    self._set_frame_warning(True)
+
+            elif obj.get('tag') == 'change':
                 name = obj.get('name')
                 dimensions = f'{obj.get("len_min")} - {obj.get("len_max")}'
                 hod = f'{obj.get("hod")}'
@@ -229,18 +270,18 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 limit_recoil_two = f'{obj.get("recoil_min_2")} - {obj.get("recoil_max_2")}'
                 temper = f'{obj.get("temper")}'
 
-                txt_log = f'Amort is added --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
+                txt_log = f'Amort is changed --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
                           f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
                           f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
                           f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
                           f'max_temper = {temper}'
 
                 self.logger.info(txt_log[:-1])
-                self.amorts.add_amort(obj)
-                self._amorts_update()
-            else:
-                self.txt_warning.setText('Такой амортизатор<BR>уже имеется в списке')
-                self._set_frame_warning(True)
+
+                ind = self.amorts.current_index
+                self.amorts.change_amort(ind, obj)
+
+            self._amorts_update()
 
         except Exception as e:
             self.logger.error(e)

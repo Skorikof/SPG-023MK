@@ -14,6 +14,9 @@ class StepTests:
         self.model = model
         self.signals = StepTestsSignals()
 
+        self.temper_graph = []
+        self.temper_force_graph = []
+
     # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание
     def step_yellow_btn_push(self):
         try:
@@ -80,40 +83,40 @@ class StepTests:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in steps_tests/step_start_test - {e}')
 
-    def step_repeat_test(self):
-        try:
-            if self.model.set_regs.get('excess_force', False) is True:
-                self.model.write_bit_emergency_force()
-
-            if self.model.set_regs.get('lost_control', False) is True:
-                self.model.write_bit_unblock_control()
-
-            self.model.lamp_all_switch_off()
-
-            command = {'test_launch': True,
-                       'alarm_flag': False,
-                       'alarm_tag': '',
-                       'force_accum_list': [],
-                       'move_accum_list': [],
-                       'force_graph': [],
-                       'move_real_list': [],
-                       'max_temperature': 0,
-                       'start_direction': False,
-                       'min_pos': False,
-                       'max_pos': False,
-                       'repeat': True,
-                       }
-
-            self.model.update_main_dict(command)
-            self.model.reset_min_point()
-
-            self.signals.stage_from_tests.emit('wait_buffer')
-            self.signals.next_stage_from_tests.emit('repeat_test')
-            self.model.write_bit_force_cycle(1)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in steps_tests/step_repeat_test - {e}')
+    # def step_repeat_test(self):
+    #     try:
+    #         if self.model.set_regs.get('excess_force', False) is True:
+    #             self.model.write_bit_emergency_force()
+    #
+    #         if self.model.set_regs.get('lost_control', False) is True:
+    #             self.model.write_bit_unblock_control()
+    #
+    #         self.model.lamp_all_switch_off()
+    #
+    #         command = {'test_launch': True,
+    #                    'alarm_flag': False,
+    #                    'alarm_tag': '',
+    #                    'force_accum_list': [],
+    #                    'move_accum_list': [],
+    #                    'force_graph': [],
+    #                    'move_real_list': [],
+    #                    'max_temperature': 0,
+    #                    'start_direction': False,
+    #                    'min_pos': False,
+    #                    'max_pos': False,
+    #                    'repeat': True,
+    #                    }
+    #
+    #         self.model.update_main_dict(command)
+    #         self.model.reset_min_point()
+    #
+    #         self.signals.stage_from_tests.emit('wait_buffer')
+    #         self.signals.next_stage_from_tests.emit('repeat_test')
+    #         self.model.write_bit_force_cycle(1)
+    #
+    #     except Exception as e:
+    #         self.logger.error(e)
+    #         self.model.status_bar_msg(f'ERROR in steps_tests/step_repeat_test - {e}')
 
     def step_stop_test(self):
         try:
@@ -205,6 +208,9 @@ class StepTests:
             speed = self.model.set_regs.get('speed')
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_tests.emit('test_temper')
+            self.temper_graph = []
+            self.temper_force_graph = []
+
             command = {'force_accum_list': [],
                        'move_accum_list': [],
                        'temper_graph': [],
@@ -223,14 +229,11 @@ class StepTests:
 
     def step_fill_temper_graph(self, temper, force):
         try:
-            temper_graph = self.model.set_regs.get('temper_graph', [])
-            temper_graph.append(temper)
+            self.temper_graph.append(temper)
+            self.temper_force_graph.append(force)
 
-            force_graph = self.model.set_regs.get('temper_force_graph', [])
-            force_graph.append(force)
-
-            self.model.set_regs['temper_graph'] = temper_graph[:]
-            self.model.set_regs['temper_force_graph'] = force_graph[:]
+            self.model.set_regs['temper_graph'] = self.temper_graph[:]
+            self.model.set_regs['temper_force_graph'] = self.temper_force_graph[:]
 
         except Exception as e:
             self.logger.error(e)

@@ -871,9 +871,10 @@ class AppWindow(QMainWindow):
             self.save_log_begin_test()
             if self.flag_repeat:
                 self.flag_repeat = False
-                self.controller.steps_tests.step_repeat_test()
-            else:
-                self.controller.start_test_clicked()
+                self.model.set_regs['repeat'] = True
+                # self.controller.steps_tests.step_repeat_test()
+
+            self.controller.start_test_clicked()
 
         except Exception as e:
             self.logger.error(e)
@@ -1088,7 +1089,9 @@ class AppWindow(QMainWindow):
 
     def cancel_test_clicked(self):
         try:
+
             temp = self.ui.test_cancel_btn.text()
+
             if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
                 self.ui.test_cancel_btn.setText('ОСТАНОВКА')
                 self.controller.stop_test_clicked()
