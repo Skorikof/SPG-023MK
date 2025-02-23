@@ -162,7 +162,7 @@ class Controller:
             elif self.stage == 'search_hod':
                 if self.steps.stage_search_hod(self.count_cycle):
                     self.stage = 'wait'
-                    self.steps.step_stop_gear_min_pos()
+                    self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'pos_set_gear':
                 if self.steps.stage_pos_set_gear():
@@ -456,7 +456,8 @@ class Controller:
         """Позционирование траверсы"""
         try:
             amort = self.model.set_regs.get('amort')
-            stock_point = self.model.set_regs.get('traverse_stock', 756)
+            # stock_point = self.model.set_regs.get('traverse_stock', 760)
+            stock_point = 760 # Константа, измереная высота у стенда
             hod = amort.hod
             len_min = amort.min_length
             len_max = amort.max_length
@@ -464,7 +465,7 @@ class Controller:
             adapter = amort.adapter_len
 
             if tag == 'install':
-                install_point = int((stock_point + hod / 2) - len_max - adapter + 1)
+                install_point = int((stock_point + hod / 2) - len_max - adapter)
                 self._position_traverse()
                 pos_trav = float(self.model.set_regs.get('traverse_move'))
                 if abs(pos_trav - install_point) < 1:
@@ -486,7 +487,7 @@ class Controller:
                 if not self.model.set_regs.get('alarm_flag', False):
                     self._position_traverse()
 
-                end_point = int((stock_point + hod / 2) - len_max - adapter + 1)
+                end_point = int((stock_point + hod / 2) - len_max - adapter)
 
                 self.stage = 'stop_test'
                 self.set_trav_point = end_point
@@ -523,16 +524,20 @@ class Controller:
 
     def _check_max_temper_test(self):
         if self.model.set_regs.get('type_test', 'hand') == 'temper':
-            temp_f = self.model.set_regs.get('temper_first', 0)
-            temp_s = self.model.set_regs.get('temper_second', 0)
-            temp_b = self.model.set_regs.get('temperature', 0)
             finish_temp = self.model.set_regs.get('finish_temper', 80)
-            if temp_f < finish_temp and temp_s < finish_temp and temp_b < finish_temp:
-                return True
+        else:
+            finish_temp = self.model.set_regs.get('amort').max_temper
 
-            else:
-                self.signals.control_msg.emit('excess_temperature')
-                return False
+        temp_f = self.model.set_regs.get('temper_first', 0)
+        temp_s = self.model.set_regs.get('temper_second', 0)
+        temp_b = self.model.set_regs.get('temperature', 0)
+
+        if temp_f < finish_temp and temp_s < finish_temp and temp_b < finish_temp:
+            return True
+
+        else:
+            self.signals.control_msg.emit('excess_temperature')
+            return False
 
     def _test_temper(self):
         try:

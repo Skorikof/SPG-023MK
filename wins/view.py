@@ -401,11 +401,16 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'btn_correct_force_clicked - {e}')
 
-    def btn_correct_force_slot(self):
+    def btn_correct_force_slot(self, tag):
+        if tag == 'done':
+            txt_msg = 'Показания с датчика усилия обнулены'
+
+        elif tag == 'bad':
+            txt_msg = 'Неудачная попытка откорректировать датчик, повторите пожалуйста'
+
         msg = QMessageBox.information(self,
                                       'Внимание',
-                                      f'<b style="color: #f00;">Показания с датчика усилия обнулены</b>'
-                                      )
+                                      f'<b style="color: #f00;">{txt_msg}</b>')
 
         self.main_ui_state(True)
         self.main_btn_state(True)

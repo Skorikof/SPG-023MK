@@ -24,7 +24,7 @@ class ModelSignals(QObject):
     full_cycle_count = pyqtSignal(str)
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
-    save_koef_force = pyqtSignal()
+    save_koef_force = pyqtSignal(str)
     conv_lamp = pyqtSignal(str)
 
     connect_ctrl = pyqtSignal()
@@ -146,14 +146,25 @@ class Model:
         self.timer_calc_koef.start()
 
     def _add_koef_force_in_list(self):
-        self.koef_force_list.append(self.set_regs.get('force_real', 0))
+        force = (self.set_regs.get('force_real', 0))
+        if force != -100000.0:
+            self.koef_force_list.append(force)
+        else:
+            pass
 
     def _calc_and_save_force_koef(self):
         try:
             self.timer_add_koef.stop()
             self.timer_calc_koef.stop()
-            self.set_regs['force_refresh'] = round((sum(self.koef_force_list)) / len(self.koef_force_list), 1)
-            self.signals.save_koef_force.emit()
+
+            if self.koef_force_list:
+                sum_list = round(sum(self.koef_force_list), 1)
+                self.set_regs['force_refresh'] = round(sum_list / len(self.koef_force_list), 1)
+                self.koef_force_list.clear()
+                self.signals.save_koef_force.emit('done')
+
+            else:
+                self.signals.save_koef_force.emit('bad')
 
         except Exception as e:
             self.logger.error(e)
@@ -530,6 +541,7 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
+            self.set_regs['buffer_state'] = ['null', 'null']
             if value == 1:
                 command = 'buffer_on'
             else:

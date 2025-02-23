@@ -43,11 +43,11 @@ class Steps:
         try:
             hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
-                speed = 0.03
+                speed = 0.1
             elif 50 < hod <= 100:
-                speed = 0.02
+                speed = 0.06
             else:
-                speed = 0.01
+                speed = 0.03
 
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('search_hod')
@@ -71,7 +71,6 @@ class Steps:
     def stage_search_hod(self, count_cycle):
         try:
             if count_cycle >= 1:
-                self.model.motor_stop(1)
                 min_point = self.model.set_regs.get('min_point', 0)
                 max_point = self.model.set_regs.get('max_point', 0)
                 hod = round(abs(min_point) + abs(max_point), 1)
@@ -136,6 +135,7 @@ class Steps:
         """Остановка двигателя после испытания и перед исходным положением"""
         try:
             self.model.motor_stop(1)
+
             self.signals.stage_from_logic.emit('stop_gear_end_test')
 
         except Exception as e:
@@ -147,15 +147,15 @@ class Steps:
             move_list = self.model.set_regs.get('move_list')
             stop_point = reduce(lambda x, y: round(abs(abs(x) - abs(y)), 3), move_list)
 
-            if stop_point < 0.2 or stop_point == move_list[0]:  # Перемещение перестало изменяться
+            if stop_point < 0.2 or stop_point == abs(move_list[0]):  # Перемещение перестало изменяться
                 self.count_wait_point += 1
 
             else:
                 self.count_wait_point = 0
 
-            if self.count_wait_point > 3:
-                self.count_wait_point = 0
+            if self.count_wait_point > 5:
                 self.signals.stage_from_logic.emit('wait')
+                self.count_wait_point = 0
                 return True
             return False
 
@@ -167,6 +167,7 @@ class Steps:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
+
             self.model.write_bit_force_cycle(0)
 
             hod = self.model.set_regs.get('hod', 120)
@@ -216,11 +217,11 @@ class Steps:
         try:
             hod = self.model.set_regs.get('hod', 120)
             if hod > 100:
-                speed = 0.07
+                speed = 0.06
             elif 50 < hod <= 100:
-                speed = 0.05
-            else:
                 speed = 0.03
+            else:
+                speed = 0.01
             self.model.write_speed_motor(1, speed=speed)
             self.model.write_bit_force_cycle(1)
 
