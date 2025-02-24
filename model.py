@@ -199,7 +199,7 @@ class Model:
             if tag == 'reg':
                 self._pars_regs_result(response.get('regs'))
 
-            # FIXME
+            # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
             # if self.set_regs.get('test_launch', False) is True:
             #     if not self.timer_yellow.isActive():
             #         self.timer_yellow.start()
@@ -283,10 +283,7 @@ class Model:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
 
-    # FIXME
     def _read_controller_finish(self):
-        # self.signals.read_finish.emit()
-
         if self.set_regs.get('type_test', 'hand') == 'hand':
             self.signals.win_set_update.emit()
 

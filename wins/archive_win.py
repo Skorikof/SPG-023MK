@@ -233,6 +233,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                             f'{self.archive.struct.tests[i].speed}')
                     temp_arr.append(temp)
 
+            self.index_test = 0
             if temp_arr:
                 self.combo_test.addItems(temp_arr)
                 self._archive_test_select()

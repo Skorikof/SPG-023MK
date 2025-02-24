@@ -41,6 +41,7 @@ class Controller:
             self.set_trav_point = 0
             self.count_cascade = 1
             self.max_cascade = 0
+            self.last_max_temper = -100
 
             self._init_signals()
             self._init_timer_test()
@@ -239,20 +240,24 @@ class Controller:
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
                     max_temper = self.model.set_regs.get('max_temperature', None)
-                    if max_temper <= self.model.set_regs.get('finish_temper', 80):
-                        max_recoil = self.model.set_regs.get('max_recoil', None)
-                        max_comp = self.model.set_regs.get('max_comp', None)
-                        if max_temper is not None and max_recoil is not None and max_comp is not None:
-                            force = f'{max_recoil}|{max_comp}'
-                            self.steps_tests.step_fill_temper_graph(max_temper, force)
+                    if max_temper is not None and max_temper != self.last_max_temper:
+                        if max_temper <= self.model.set_regs.get('finish_temper', 80):
+                            self.last_max_temper = max_temper
+                            max_recoil = self.model.set_regs.get('max_recoil', None)
+                            max_comp = self.model.set_regs.get('max_comp', None)
+                            if max_temper is not None and max_recoil is not None and max_comp is not None:
+                                force = f'{max_recoil}|{max_comp}'
+                                self.steps_tests.step_fill_temper_graph(max_temper, force)
 
-                        self._full_cycle_update('0')
+                            self._full_cycle_update('0')
 
+                        else:
+                            self.model.set_regs['fill_graph'] = False
+                            self.stage = 'wait'
+                            self.signals.lab_save_result.emit('end')
+                            self.steps.step_stop_gear_end_test()
                     else:
-                        self.stage = 'wait'
-                        self.model.set_regs['fill_graph'] = False
-                        self.signals.lab_save_result.emit('end')
-                        self.steps.step_stop_gear_end_test()
+                        self._full_cycle_update('0')
 
             elif self.stage == 'test_lab_cascade':
                 if self.count_cycle >= 5:
@@ -542,6 +547,7 @@ class Controller:
     def _test_temper(self):
         try:
             self.signals.lab_win_test.emit()
+            self.last_max_temper = -100
             self.steps_tests.step_test_temper()
             self._full_cycle_update('0')
 

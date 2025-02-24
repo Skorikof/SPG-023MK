@@ -402,11 +402,9 @@ class AppWindow(QMainWindow):
             self.status_bar_ui(f'btn_correct_force_clicked - {e}')
 
     def btn_correct_force_slot(self, tag):
+        txt_msg = 'Неудачная попытка откорректировать датчик, повторите пожалуйста'
         if tag == 'done':
             txt_msg = 'Показания с датчика усилия обнулены'
-
-        elif tag == 'bad':
-            txt_msg = 'Неудачная попытка откорректировать датчик, повторите пожалуйста'
 
         msg = QMessageBox.information(self,
                                       'Внимание',
@@ -436,8 +434,12 @@ class AppWindow(QMainWindow):
         self.ui.specif_choice_comboBox.addItems(self.win_amort.amorts.names)
         if len(self.win_amort.amorts.names) < 1:
             self.ui.specif_continue_btn.setEnabled(False)
+            self.ui.specif_choice_comboBox.setEnabled(False)
+            self.ui.specif_type_test_comboBox.setEnabled(False)
         else:
             self.ui.specif_continue_btn.setEnabled(True)
+            self.ui.specif_choice_comboBox.setEnabled(True)
+            self.ui.specif_type_test_comboBox.setEnabled(True)
             self.ui.specif_choice_comboBox.setCurrentIndex(self.index_amort)
             self.change_index_select_amort(self.index_amort)
 
@@ -453,6 +455,7 @@ class AppWindow(QMainWindow):
     def change_index_type_test(self, index):
         self.index_type_test = index
         self.select_type_test()
+        self.select_amort()
 
     def update_graph_view(self):
         try:
@@ -478,29 +481,29 @@ class AppWindow(QMainWindow):
             ind = self.index_type_test
             if ind == 0:
                 self.model.set_regs['type_test'] = 'lab'
-                self.specif_enable_gui(True, True, False)
+                self.specif_enable_gui(True, True, False, True)
 
             elif ind == 1:
                 self.model.set_regs['type_test'] = 'lab_hand'
-                self.specif_enable_gui(False, False, False)
+                self.specif_enable_gui(False, False, False, True)
 
             elif ind == 2:
                 self.model.set_regs['type_test'] = 'lab_cascade'
-                self.specif_enable_gui(False, False, True)
+                self.specif_enable_gui(False, False, True, True)
 
             elif ind == 3:
                 self.model.set_regs['type_test'] = 'temper'
-                self.specif_enable_gui(False, False, False)
+                self.specif_enable_gui(False, False, False, False)
 
             elif ind == 4:
                 self.model.set_regs['type_test'] = 'conv'
-                self.specif_enable_gui(True, True, False)
+                self.specif_enable_gui(True, True, False, True)
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/select_type_test - {e}')
 
-    def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade):
+    def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade, flag_temper):
         self.ui.specif_speed_one_lineEdit.setReadOnly(flag_change_speed)
 
         self.ui.specif_speed_two_lineEdit.setVisible(flag_enable_two_test)
@@ -508,6 +511,8 @@ class AppWindow(QMainWindow):
         self.ui.specif_max_recoil_lineEdit_2.setVisible(flag_enable_two_test)
         self.ui.specif_min_comp_lineEdit_2.setVisible(flag_enable_two_test)
         self.ui.specif_max_comp_lineEdit_2.setVisible(flag_enable_two_test)
+
+        self.ui.specif_max_temp_lineEdit.setReadOnly(flag_temper)
 
         self.ui.btn_add_speed.setVisible(flag_cascade)
         self.ui.btn_reduce_speed.setVisible(flag_cascade)
@@ -544,7 +549,11 @@ class AppWindow(QMainWindow):
             self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
             self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
             self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
-            self.ui.specif_max_temp_lineEdit.setText(str(obj.max_temper))
+            if self.model.set_regs.get('type_test', None) == 'temper':
+                max_temper = self.model.set_regs.get('finish_temper', 80)
+            else:
+                max_temper = obj.max_temper
+            self.ui.specif_max_temp_lineEdit.setText(str(max_temper))
 
         except Exception as e:
             self.logger.error(e)
@@ -722,10 +731,16 @@ class AppWindow(QMainWindow):
                                 else:
                                     self.specif_msg_none_cascade_speed()
 
-                            elif type_test == 'lab_hand' or type_test == 'temper':
+                            elif type_test == 'lab_hand':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
                                     self.model.set_regs['speed'] = speed
+                                    self.begin_test()
+                            elif type_test == 'temper':
+                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                if speed:
+                                    self.model.set_regs['speed'] = speed
+                                    self.model.set_regs['finish_temper'] = float(self.ui.specif_max_temp_lineEdit.text())
                                     self.begin_test()
 
                             else:
@@ -877,7 +892,6 @@ class AppWindow(QMainWindow):
             if self.flag_repeat:
                 self.flag_repeat = False
                 self.model.set_regs['repeat'] = True
-                # self.controller.steps_tests.step_repeat_test()
 
             self.controller.start_test_clicked()
 
@@ -1217,8 +1231,8 @@ class AppWindow(QMainWindow):
         try:
             data_dict = {'move_graph': self.model.set_regs.get('move_graph')[:],
                          'force_graph': self.model.set_regs.get('force_graph')[:],
-                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[:],
-                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
+                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[1:],
+                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[1:],
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
                          'operator': self.model.set_regs.get('operator').copy(),

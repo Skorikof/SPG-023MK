@@ -96,13 +96,13 @@ class CalcData:
 
     def middle_min_and_max_force(self, data: list):
         try:
-            comp_index = data.index(min(data))
-            comp_list = [abs(x) for x in data[comp_index - 5:comp_index + 5]]
-            max_comp = round((sum(comp_list) / len(comp_list)), 1)
-
             recoil_index = data.index(max(data))
             recoil_list = [abs(x) for x in data[recoil_index - 5:recoil_index + 5]]
             max_recoil = round((sum(recoil_list) / len(recoil_list)), 1)
+
+            comp_index = data.index(min(data))
+            comp_list = [abs(x) for x in data[comp_index - 5:comp_index + 5]]
+            max_comp = round((sum(comp_list) / len(comp_list)), 1)
 
             return max_recoil, max_comp
 
@@ -117,14 +117,17 @@ class CalcData:
             self.logger.error(e)
 
     def power_amort(self, move: list, force: list):
+        """Расчёт мощности, выталкивающая сила не учитывается"""
         try:
             temp = 0
             for i in range(1, len(move)):
-                temp = round(temp + abs(move[i] - abs(move[i - 1])) * abs(force[i - 1]), 1)
+                step = abs(abs(move[i]) - abs(move[i - 1]))
+                if step != 0:
+                    temp = round(temp + step * abs(force[i - 1]), 1)
 
-            temp = round((temp * 0.009807) / 1000, 3)
+            power = round((temp * 0.009807) / 1000, 3)
 
-            return temp
+            return power
 
         except Exception as e:
             self.logger.error(e)
