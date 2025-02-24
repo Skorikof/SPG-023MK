@@ -387,7 +387,6 @@ class Model:
                 command = {'force_accum_list': [],
                            'move_accum_list': [],
                            'force_graph': [],
-                           'move_real_list': [],
                            'start_direction': False,
                            'min_pos': False,
                            'max_pos': False,
@@ -440,7 +439,7 @@ class Model:
                 amort = self.set_regs.get('amort')
 
                 move_list = self.set_regs.get('move_accum_list')[:]
-                force_list = self.set_regs.get('force_accum_list')[:]
+                force_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(force_list)
 
@@ -448,8 +447,7 @@ class Model:
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
-                           'force_graph': list(map(lambda x: round(x * (-1), 1), force_list)),
-                           'move_real_list': move_list[:],
+                           'force_graph': force_list[:],
                            'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
                            'power': self.calc_data.power_amort(move_list, force_list),
                            'freq_piston': self.calc_data.freq_piston_amort(speed, amort),
