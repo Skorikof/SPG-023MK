@@ -117,6 +117,26 @@ class AppWindow(QMainWindow):
         self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
         self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
 
+    def _init_lab_graph(self):
+        try:
+            self.ui.lab_GraphWidget.showGrid(True, True)
+            self.ui.lab_GraphWidget.setBackground('w')
+            self.ui.lab_GraphWidget.addLegend()
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_init_lab_graph - {e}')
+
+    def _init_conv_graph(self):
+        try:
+            self.ui.conv_GraphWidget.showGrid(True, True)
+            self.ui.conv_GraphWidget.setBackground('w')
+            self.ui.conv_GraphWidget.addLegend()
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_init_conv_graph - {e}')
+
     def controller_msg_slot(self, msg):
         try:
             self.ui.ok_message_btn.setText('OK')
@@ -875,23 +895,17 @@ class AppWindow(QMainWindow):
 
             type_test = self.model.set_regs.get('type_test')
 
-            if type_test == 'conv':
-                self._conv_win_clear()
-                self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
-
-            else:
+            if type_test != 'conv':
                 self.list_lab = []
-                self._lab_win_clear()
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
                 self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
-                self.fill_gui_lab_test()
 
             self.save_log_begin_test()
             if self.flag_repeat:
-                self.flag_repeat = False
                 self.model.set_regs['repeat'] = True
+                self.flag_repeat = False
 
             self.controller.start_test_clicked()
 
@@ -915,6 +929,8 @@ class AppWindow(QMainWindow):
 
     def lab_test_win(self):
         try:
+            self._lab_win_clear()
+            self.fill_gui_lab_test()
             self.ui.main_stackedWidget.setCurrentIndex(2)
 
         except Exception as e:
@@ -936,6 +952,8 @@ class AppWindow(QMainWindow):
 
     def conv_test_win(self):
         try:
+            self._conv_win_clear()
+            self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
@@ -965,22 +983,15 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/conv_test_lamp - {e}')
 
-    def _init_lab_graph(self):
-        try:
-            self.ui.lab_GraphWidget.showGrid(True, True)
-            self.ui.lab_GraphWidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_init_lab_graph - {e}')
-
     def _update_lab_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
             pen = pg.mkPen(color='black', width=3)
+            name = str(self.model.set_regs.get('speed'))
             self.ui.lab_GraphWidget.plot(self.model.set_regs.get('move_graph'),
                                          self.model.set_regs.get('force_graph'),
-                                         pen=pen)
+                                         pen=pen,
+                                         name=f'{name} м/с')
 
             self._update_lab_data()
 
@@ -1002,8 +1013,8 @@ class AppWindow(QMainWindow):
                 recoil_list.append(float(recoil))
                 comp_list.append(float(comp))
 
-            self.ui.lab_GraphWidget.plot(x_list, recoil_list, pen=pen_recoil)
-            self.ui.lab_GraphWidget.plot(x_list, comp_list, pen=pen_comp)
+            self.ui.lab_GraphWidget.plot(x_list, recoil_list, pen=pen_recoil, name='Отбой')
+            self.ui.lab_GraphWidget.plot(x_list, comp_list, pen=pen_comp, name='Сжатие')
 
             self._update_lab_data()
 
@@ -1054,22 +1065,15 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_lab_cascade_graph - {e}')
 
-    def _init_conv_graph(self):
-        try:
-            self.ui.conv_GraphWidget.showGrid(True, True)
-            self.ui.conv_GraphWidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_init_conv_graph - {e}')
-
     def _update_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.clear()
             pen = pg.mkPen(color='black', width=3)
+            name = self.model.set_regs.get('speed')
             self.ui.conv_GraphWidget.plot(self.model.set_regs.get('move_graph'),
                                           self.model.set_regs.get('force_graph'),
-                                          pen=pen)
+                                          pen=pen,
+                                          name=f'{name} м/с')
             
             self._update_conv_data()
 

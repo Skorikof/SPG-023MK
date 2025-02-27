@@ -318,7 +318,7 @@ class Steps:
                     self.model.write_speed_motor(2, freq=15)
                     self.flag_freq_2_step = True
 
-            if abs(point - self.model.set_regs.get('traverse_move')) <= 1:
+            if abs(point - self.model.set_regs.get('traverse_move')) <= 0.5:
                 self.model.motor_stop(2)
                 return True
 

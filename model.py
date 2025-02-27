@@ -73,6 +73,8 @@ class Model:
 
             self.write_bit_force_cycle(0)
 
+            self.write_max_frequency(1, 120)
+
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
             self.logger.warning(f'Нет подключения к контроллеру')
@@ -626,7 +628,6 @@ class Model:
             freq_hex = hex(freq)[2:].zfill(4)
             freq_hex = f'0{adr_freq}06010B{freq_hex}'
             self._motor_command(freq_hex)
-            print('max freq rewrite')
 
         except Exception as e:
             self.logger.error(e)

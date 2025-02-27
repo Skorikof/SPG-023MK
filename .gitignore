@@ -1,6 +1,6 @@
 /.git/
 /.idea/
-/__pycache__/
+/archive/
 /dist/
-/venv/
 /logs/
+/venv/

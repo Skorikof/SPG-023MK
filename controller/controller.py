@@ -81,7 +81,7 @@ class Controller:
         self.signals.control_msg.emit('gear_set_pos')
 
     def _pumping_msg(self):
-        self.signals.control_msg.emit(f'pumping')
+        self.signals.control_msg.emit('pumping')
 
     def change_stage_controller(self, stage: str):
         self.stage = stage
@@ -197,14 +197,19 @@ class Controller:
             elif self.stage == 'pumping':
                 if self.count_cycle >= 3:
                     type_test = self.model.set_regs.get('type_test')
-                    if type_test == 'lab_hand':
-                        self._test_lab_hand_speed()
-                    elif type_test == 'temper':
-                        self._test_temper()
-                    elif type_test == 'lab_cascade':
-                        self._test_lab_cascade()
-                    else:
+                    if type_test == 'conv':
+                        self.signals.conv_win_test.emit()
                         self._test_on_two_speed(1)
+                    else:
+                        self.signals.lab_win_test.emit()
+                        if type_test == 'lab_hand':
+                            self._test_lab_hand_speed()
+                        elif type_test == 'temper':
+                            self._test_temper()
+                        elif type_test == 'lab_cascade':
+                            self._test_lab_cascade()
+                        else:
+                            self._test_on_two_speed(1)
 
             elif self.stage == 'test_speed_one':
                 if self.count_cycle >= 5:
@@ -461,7 +466,6 @@ class Controller:
         """Позционирование траверсы"""
         try:
             amort = self.model.set_regs.get('amort')
-            # stock_point = self.model.set_regs.get('traverse_stock', 760)
             stock_point = 760 # Константа, измереная высота у стенда
             hod = amort.hod
             len_min = amort.min_length
@@ -470,10 +474,10 @@ class Controller:
             adapter = amort.adapter_len
 
             if tag == 'install':
-                install_point = int((stock_point + hod / 2) - len_max - adapter)
+                install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
                 self._position_traverse()
                 pos_trav = float(self.model.set_regs.get('traverse_move'))
-                if abs(pos_trav - install_point) < 1:
+                if abs(abs(pos_trav) - abs(install_point)) < 0.5:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
@@ -520,6 +524,7 @@ class Controller:
     def _test_lab_hand_speed(self):
         try:
             self.signals.lab_win_test.emit()
+
             self.steps_tests.step_test_lab_hand_speed()
             self._full_cycle_update('0')
 
@@ -535,9 +540,8 @@ class Controller:
 
         temp_f = self.model.set_regs.get('temper_first', 0)
         temp_s = self.model.set_regs.get('temper_second', 0)
-        temp_b = self.model.set_regs.get('temperature', 0)
 
-        if temp_f < finish_temp and temp_s < finish_temp and temp_b < finish_temp:
+        if temp_f < finish_temp and temp_s < finish_temp:
             return True
 
         else:
