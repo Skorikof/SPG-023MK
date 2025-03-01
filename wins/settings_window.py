@@ -2,18 +2,17 @@
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import QObject, pyqtSignal, QSignalMapper, pyqtSlot
 import time
-from datetime import datetime
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
-from ui_py.settings_ui import Ui_SettingsWindow
+from ui_py.settings_ui import UiSettingsWindow
 
 
 class WinSignals(QObject):
     closed = pyqtSignal()
 
 
-class SetWindow(QMainWindow, Ui_SettingsWindow):
+class SetWindow(QMainWindow, UiSettingsWindow):
     signals = WinSignals()
 
     def __init__(self, model):
@@ -80,7 +79,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.statusbar = self.statusBar()
         self.statusbar.showMessage('Окно управления стенда в ручную')
 
-    def _statusbar_set_ui(self, txt_bar):
+    def statusbar_set_ui(self, txt_bar):
         try:
             self.statusbar.showMessage(txt_bar)
 
@@ -88,7 +87,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             self.logger.error(e)
 
     def _init_buttons(self):
-        self.btn_exit.clicked.connect(self.close)
         self.btn_hod.clicked.connect(self._write_hod)
         self.btn_speed_main.clicked.connect(self._write_speed_set)
         self.btn_freq_trverse.clicked.connect(self._write_frequency_set)
@@ -104,13 +102,11 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
         self.btn_green_light.clicked.connect(self._btn_set_doclick)
         self.btn_red_light.clicked.connect(self._btn_set_doclick)
         self.btn_temper_channel.clicked.connect(self._btn_set_doclick)
+        self.btn_correct_force.clicked.connect(self._btn_set_doclick)
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
 
         self.lineEdit_F_alarm.returnPressed.connect(self._write_alarm_force)
-
-        self.btn_connect.setVisible(False)
-        self.btn_read.setVisible(False)
 
     def update_data_win_set(self):
         try:
@@ -118,7 +114,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/update_data - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/update_data_win_set - {e}')
 
     def _write_hod(self):
         try:
@@ -130,7 +126,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_hod - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_write_hod - {e}')
 
     def _write_speed_set(self):
         try:
@@ -141,7 +137,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_speed_set - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_write_speed_set - {e}')
 
     def _write_frequency_set(self):
         try:
@@ -151,7 +147,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_frequency_set - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_write_frequency_set - {e}')
 
     def _click_btn_motor_up(self):
         self.model.motor_up(2)
@@ -184,7 +180,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
 
     def _btn_set_doclick(self):
         try:
@@ -225,12 +221,16 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
             elif btn == 'btn_max_F':
                 self.model.write_bit_emergency_force()
 
+            elif btn == 'btn_correct_force':
+                self.setEnabled(False)
+                self.model.init_timer_koef_force()
+
             else:
                 pass
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_btn_set_doclick - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_btn_set_doclick - {e}')
 
     def _change_lbl_temper_channel(self, value):
         if value == 1:
@@ -242,9 +242,11 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _update_win(self):
         self.lcdTime.display(self.model.set_regs.get('count'))
-        self.lcdF.display(self.model.set_regs.get('force'))
-        self.lcdH.display(self.model.set_regs.get('move'))
-        self.lcdH_T.display(self.model.set_regs.get('traverse_move'))
+        self.clear_force_lcd.display(self.model.set_regs.get('force_clear', -100))
+        self.koef_force_lcd.display(self.model.set_regs.get('force_cor_koef', -100))
+        self.correct_force_lcd.display(self.model.set_regs.get('force', -100))
+        self.lcdH.display(self.model.set_regs.get('move', -100))
+        self.lcdH_T.display(self.model.set_regs.get('traverse_move', -100))
         self.lcdTemp_1.display(self.model.set_regs.get('temper_first', 0))
         self.lcdTemp_2.display(self.model.set_regs.get('temper_second', 0))
         self.lineEdit_F_alarm.setText(f'{self.model.set_regs.get("force_alarm")}')
@@ -253,7 +255,6 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
     def _update_color_switch(self):
         try:
-            obj = self.model.set_regs
             self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('cycle_force', False)))
             self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.set_regs.get('lost_control', False)))
             self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('excess_force', False)))
@@ -276,7 +277,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
 
     def _set_color_fram(self, state, rev=False):
         try:
@@ -294,7 +295,7 @@ class SetWindow(QMainWindow, Ui_SettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_set_color_fram - {e}')
+            self.statusbar_set_ui(f'ERROR in settings_window/_set_color_fram - {e}')
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():

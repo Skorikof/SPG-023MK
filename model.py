@@ -148,7 +148,7 @@ class Model:
         self.timer_calc_koef.start()
 
     def _add_koef_force_in_list(self):
-        force = (self.set_regs.get('force_real', 0))
+        force = (self.set_regs.get('force_cor_koef', 0))
         if force != -100000.0:
             self.koef_force_list.append(force)
         else:
@@ -180,11 +180,20 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
 
+    def correct_force_with_koef(self, force):
+        try:
+            koef = self.set_regs.get('force_koef', 1)
+            return round(force * koef, 1)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/correct_force_with_koef - {e}')
+
     def correct_force(self, force):
         try:
             refresh = self.set_regs.get('force_refresh', 0)
-            koef = self.set_regs.get('force_koef', 1)
-            return round((force - refresh) * koef, 1)
+            force_cor_koef = self.set_regs.get('force_cor_koef', 0)
+            return round(force_cor_koef - refresh, 1)
 
         except Exception as e:
             self.logger.error(e)
@@ -218,7 +227,8 @@ class Model:
                 pass
             else:
                 force = self.parser.magnitude_effort(res[0], res[1])
-                data_dict = {'force_real': force,
+                data_dict = {'force_clear': force,
+                             'force_cor_koef': self.correct_force_with_koef(force),
                              'force': self.correct_force(force),
                              'move': self.parser.movement_amount(res[2]),
                              'count': self.parser.counter_time(res[4]),
@@ -256,7 +266,8 @@ class Model:
                 # print(f'Temper --> {data.get("temper")}')
                 # print(f'{"=" * 100}')
 
-                data_dict = {'force_real': data.get('force')[-1],
+                data_dict = {'force_clear': data.get('force')[-1],
+                             'force_cor_koef': self.correct_force_with_koef(data.get('force')[-1]),
                              'force': self.correct_force(data.get('force')[-1]),
                              'move': data.get('move')[-1],
                              'force_list': [self.correct_force(x) for x in data.get('force')],
@@ -286,7 +297,7 @@ class Model:
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
 
     def _read_controller_finish(self):
-        if self.set_regs.get('type_test', 'hand') == 'hand':
+        if self.set_regs.get('type_test', None) == 'hand':
             self.signals.win_set_update.emit()
 
     def _init_timer_yellow_btn(self):

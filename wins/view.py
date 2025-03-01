@@ -426,12 +426,17 @@ class AppWindow(QMainWindow):
         if tag == 'done':
             txt_msg = 'Показания с датчика усилия обнулены'
 
-        msg = QMessageBox.information(self,
-                                      'Внимание',
-                                      f'<b style="color: #f00;">{txt_msg}</b>')
+        if self.model.set_regs.get('type_test', 'hand') == 'hand':
+            self.win_set.setEnabled(True)
+            self.win_set.statusbar_set_ui(txt_msg)
 
-        self.main_ui_state(True)
-        self.main_btn_state(True)
+        else:
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">{txt_msg}</b>')
+
+            self.main_ui_state(True)
+            self.main_btn_state(True)
 
     def btn_cancel_correct_force_clicked(self):
         try:

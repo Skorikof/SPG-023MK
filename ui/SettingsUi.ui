@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>610</width>
-    <height>700</height>
+    <height>725</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>610</width>
-    <height>655</height>
+    <height>725</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>610</width>
-    <height>700</height>
+    <height>725</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
    <string notr="true">background-color: rgb(255, 255, 255);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLCDNumber" name="lcdF">
+   <widget class="QLCDNumber" name="clear_force_lcd">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -45,19 +45,19 @@
      <enum>QLCDNumber::Flat</enum>
     </property>
     <property name="value" stdset="0">
-     <double>10000.000000000000000</double>
+     <double>-100.000000000000000</double>
     </property>
     <property name="intValue" stdset="0">
-     <number>10000</number>
+     <number>-100</number>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt2">
+   <widget class="QLabel" name="_lbl_txt2">
     <property name="geometry">
      <rect>
-      <x>34</x>
+      <x>10</x>
       <y>58</y>
-      <width>117</width>
-      <height>31</height>
+      <width>141</width>
+      <height>32</height>
      </rect>
     </property>
     <property name="font">
@@ -70,66 +70,13 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Усилие (кгс):</string>
+     <string>Чистое усилие (кгс):</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="btn_exit">
-    <property name="geometry">
-     <rect>
-      <x>480</x>
-      <y>620</y>
-      <width>80</width>
-      <height>40</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>80</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>80</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri</family>
-      <pointsize>14</pointsize>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 5px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}</string>
-    </property>
-    <property name="text">
-     <string>ВЫХОД</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lbl_txt1">
+   <widget class="QLabel" name="_lbl_txt1">
     <property name="geometry">
      <rect>
       <x>38</x>
@@ -266,7 +213,7 @@ QPushButton:checked
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt3">
+   <widget class="QLabel" name="_lbl_txt3">
     <property name="geometry">
      <rect>
       <x>350</x>
@@ -291,7 +238,7 @@ QPushButton:checked
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt5">
+   <widget class="QLabel" name="_lbl_txt5">
     <property name="geometry">
      <rect>
       <x>350</x>
@@ -496,7 +443,7 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt6">
+   <widget class="QLabel" name="_lbl_txt6">
     <property name="geometry">
      <rect>
       <x>350</x>
@@ -521,11 +468,11 @@ border-color: rgb(0, 0, 0);</string>
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt8">
+   <widget class="QLabel" name="_lbl_txt8">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>327</y>
+      <y>367</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -550,7 +497,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>327</y>
+      <y>367</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -582,7 +529,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>362</y>
+      <y>402</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -610,11 +557,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt9">
+   <widget class="QLabel" name="_lbl_txt9">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>362</y>
+      <y>402</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -635,11 +582,11 @@ border-color: rgb(0, 0, 0);</string>
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt10">
+   <widget class="QLabel" name="_lbl_txt10">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>222</y>
+      <y>262</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -664,7 +611,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>222</y>
+      <y>262</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -696,7 +643,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>257</y>
+      <y>297</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -724,11 +671,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt11">
+   <widget class="QLabel" name="_lbl_txt11">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>257</y>
+      <y>297</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -749,11 +696,11 @@ border-color: rgb(0, 0, 0);</string>
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt12">
+   <widget class="QLabel" name="_lbl_txt12">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>292</y>
+      <y>332</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -778,7 +725,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>292</y>
+      <y>332</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -806,13 +753,13 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt15">
+   <widget class="QLabel" name="_lbl_txt15">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>106</y>
+      <y>192</y>
       <width>143</width>
-      <height>31</height>
+      <height>35</height>
      </rect>
     </property>
     <property name="font">
@@ -825,7 +772,8 @@ border-color: rgb(0, 0, 0);</string>
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Перемещение (мм):</string>
+     <string>Перемещение
+шатуна (мм):</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -835,7 +783,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>102</y>
+      <y>192</y>
       <width>101</width>
       <height>43</height>
      </rect>
@@ -853,13 +801,13 @@ border-color: rgb(0, 0, 0);</string>
      <number>0</number>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt15_2">
+   <widget class="QLabel" name="_lbl_txt15_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>200</y>
+      <y>285</y>
       <width>143</width>
-      <height>31</height>
+      <height>35</height>
      </rect>
     </property>
     <property name="font">
@@ -883,7 +831,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>200</y>
+      <y>284</y>
       <width>101</width>
       <height>43</height>
      </rect>
@@ -905,7 +853,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>397</y>
+      <y>437</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -933,11 +881,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt8_2">
+   <widget class="QLabel" name="_lbl_txt8_2">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>397</y>
+      <y>437</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -962,7 +910,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>432</y>
+      <y>472</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -990,11 +938,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt9_2">
+   <widget class="QLabel" name="_lbl_txt9_2">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>432</y>
+      <y>472</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -1019,7 +967,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>467</y>
+      <y>507</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -1047,11 +995,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt8_3">
+   <widget class="QLabel" name="_lbl_txt8_3">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>463</y>
+      <y>503</y>
       <width>243</width>
       <height>31</height>
      </rect>
@@ -1077,7 +1025,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>502</y>
+      <y>542</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -1105,11 +1053,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt9_3">
+   <widget class="QLabel" name="_lbl_txt9_3">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>500</y>
+      <y>540</y>
       <width>243</width>
       <height>31</height>
      </rect>
@@ -1135,7 +1083,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>150</y>
+      <y>238</y>
       <width>101</width>
       <height>43</height>
      </rect>
@@ -1153,11 +1101,11 @@ border-color: rgb(0, 0, 0);</string>
      <number>0</number>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt15_3">
+   <widget class="QLabel" name="_lbl_txt15_3">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>150</y>
+      <y>238</y>
       <width>143</width>
       <height>35</height>
      </rect>
@@ -1179,11 +1127,11 @@ border-color: rgb(0, 0, 0);</string>
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt5_2">
+   <widget class="QLabel" name="_lbl_txt5_2">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>117</y>
+      <y>222</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -1208,7 +1156,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>117</y>
+      <y>222</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -1236,11 +1184,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt6_2">
+   <widget class="QLabel" name="_lbl_txt6_2">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>152</y>
+      <y>185</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -1265,7 +1213,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>152</y>
+      <y>187</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -1297,7 +1245,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>115</y>
+      <y>220</y>
       <width>30</width>
       <height>30</height>
      </rect>
@@ -1355,7 +1303,7 @@ QPushButton:checked
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>150</y>
+      <y>185</y>
       <width>30</width>
       <height>30</height>
      </rect>
@@ -1409,11 +1357,11 @@ QPushButton:checked
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt15_4">
+   <widget class="QLabel" name="_lbl_txt15_4">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>300</y>
+      <y>380</y>
       <width>143</width>
       <height>40</height>
      </rect>
@@ -1439,9 +1387,9 @@ QPushButton:checked
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>300</y>
+      <y>378</y>
       <width>101</width>
-      <height>40</height>
+      <height>43</height>
      </rect>
     </property>
     <property name="font">
@@ -1463,7 +1411,7 @@ QPushButton:checked
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>540</y>
+      <y>580</y>
       <width>25</width>
       <height>25</height>
      </rect>
@@ -1491,11 +1439,11 @@ border-color: rgb(0, 0, 0);</string>
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt6_3">
+   <widget class="QLabel" name="_lbl_txt6_3">
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>540</y>
+      <y>580</y>
       <width>243</width>
       <height>23</height>
      </rect>
@@ -1510,7 +1458,7 @@ border-color: rgb(0, 0, 0);</string>
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Жёлтая кнопка</string>
+     <string>Кнопка ПУСК/ОСТАНОВ</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1520,7 +1468,7 @@ border-color: rgb(0, 0, 0);</string>
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>185</y>
+      <y>115</y>
       <width>30</width>
       <height>30</height>
      </rect>
@@ -1578,7 +1526,7 @@ QPushButton:checked
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>187</y>
+      <y>117</y>
       <width>281</width>
       <height>23</height>
      </rect>
@@ -1603,7 +1551,7 @@ QPushButton:checked
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>340</y>
+      <y>430</y>
       <width>301</width>
       <height>271</height>
      </rect>
@@ -1614,7 +1562,7 @@ QPushButton:checked
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QLabel" name="lbl_txt1_3">
+    <widget class="QLabel" name="_lbl_txt1_3">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -1639,7 +1587,7 @@ QPushButton:checked
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lbl_txt1_2">
+    <widget class="QLabel" name="_lbl_txt1_2">
      <property name="geometry">
       <rect>
        <x>107</x>
@@ -1664,7 +1612,7 @@ QPushButton:checked
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lbl_txt19_2">
+    <widget class="QLabel" name="_lbl_txt19_2">
      <property name="geometry">
       <rect>
        <x>13</x>
@@ -1689,7 +1637,7 @@ QPushButton:checked
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lbl_txt19">
+    <widget class="QLabel" name="_lbl_txt19">
      <property name="geometry">
       <rect>
        <x>13</x>
@@ -1960,7 +1908,7 @@ QPushButton:checked
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QLabel" name="lbl_txt1_4">
+    <widget class="QLabel" name="_lbl_txt1_4">
      <property name="geometry">
       <rect>
        <x>205</x>
@@ -2310,7 +2258,7 @@ QPushButton:checked
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QLabel" name="lbl_txt10_3">
+    <widget class="QLabel" name="_lbl_txt10_3">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -2336,118 +2284,11 @@ QPushButton:checked
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="btn_connect">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>620</y>
-      <width>170</width>
-      <height>40</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>100</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>170</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri</family>
-      <pointsize>14</pointsize>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 5px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}</string>
-    </property>
-    <property name="text">
-     <string>ПОДКЛЮЧИТЬСЯ</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_read">
-    <property name="geometry">
-     <rect>
-      <x>270</x>
-      <y>620</y>
-      <width>150</width>
-      <height>40</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>100</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>150</width>
-      <height>40</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri</family>
-      <pointsize>14</pointsize>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton 
-{
-	color: rgb(0, 0, 0);
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
-
-	border: 1px rgb(0, 0, 0);
-	border-radius: 5px;
-
-	border-style: outset;
-
-	padding: 5px;
-}
-
-QPushButton:hover
-{
-	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
-	
-}
-</string>
-    </property>
-    <property name="text">
-     <string>ЧИТАТЬ</string>
-    </property>
-   </widget>
    <widget class="QLCDNumber" name="lcdTemp_2">
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>250</y>
+      <y>330</y>
       <width>101</width>
       <height>43</height>
      </rect>
@@ -2465,11 +2306,11 @@ QPushButton:hover
      <number>0</number>
     </property>
    </widget>
-   <widget class="QLabel" name="lbl_txt15_5">
+   <widget class="QLabel" name="_lbl_txt15_5">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>250</y>
+      <y>332</y>
       <width>143</width>
       <height>31</height>
      </rect>
@@ -2489,6 +2330,185 @@ QPushButton:hover
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="koef_force_lcd">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>100</y>
+      <width>101</width>
+      <height>43</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(0, 0, 0);</string>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+    <property name="value" stdset="0">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="intValue" stdset="0">
+     <number>-100</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="_lbl_txt2_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>104</y>
+      <width>141</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>Скорректированное
+усилие (кгс):</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="correct_force_lcd">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>146</y>
+      <width>101</width>
+      <height>43</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(0, 0, 0);</string>
+    </property>
+    <property name="segmentStyle">
+     <enum>QLCDNumber::Flat</enum>
+    </property>
+    <property name="value" stdset="0">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="intValue" stdset="0">
+     <number>-100</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="_lbl_txt2_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>141</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>Обнулённое
+усилие (кгс):</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_correct_force">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>150</y>
+      <width>30</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>30</width>
+      <height>30</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>30</width>
+      <height>30</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton 
+{
+	color: rgb(0, 0, 0);
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(240, 240, 240, 255), stop:1 rgba(207, 207, 207, 255));
+
+	border: 1px rgb(0, 0, 0);
+	border-radius: 5px;
+
+	border-style: outset;
+
+	padding: 5px;
+}
+
+QPushButton:hover
+{
+	background-color: qlineargradient(spread:pad, x1:0.489, y1:0.0227273, x2:0.489, y2:1, stop:0 rgba(234, 246, 253, 255), stop:1 rgba(169, 219, 246, 255));
+	
+}
+	
+
+QPushButton:checked
+{
+	background-color: rgb(0, 255, 0)
+	
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+    <property name="checked">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="_lbl_txt3_2">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>152</y>
+      <width>243</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>Обнулить датчик силы</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>
