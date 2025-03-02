@@ -15,7 +15,8 @@ class ControlSignals(QObject):
     conv_win_test = pyqtSignal()
     lab_win_test = pyqtSignal()
     lab_test_stop = pyqtSignal()
-    lab_save_result = pyqtSignal(str)
+    conv_test_stop = pyqtSignal()
+    save_result_test = pyqtSignal(str)
     cancel_test = pyqtSignal()
     end_test = pyqtSignal()
     search_hod_msg = pyqtSignal()
@@ -217,9 +218,7 @@ class Controller:
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('one')
 
-                    elif type_test == 'lab':
-                        self.signals.lab_save_result.emit('end')
-
+                    self.signals.save_result_test.emit('end')
                     self._test_on_two_speed(2)
 
             elif self.stage == 'test_speed_two':
@@ -228,8 +227,7 @@ class Controller:
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('two')
 
-                    elif type_test == 'lab':
-                        self.signals.lab_save_result.emit('end')
+                    self.signals.save_result_test.emit('end')
 
                     self.stage = 'wait'
                     self.model.set_regs['fill_graph'] = False
@@ -239,7 +237,7 @@ class Controller:
                 if self.count_cycle >= 5:
                     self.stage = 'wait'
                     self.model.set_regs['fill_graph'] = False
-                    self.signals.lab_save_result.emit('end')
+                    self.signals.save_result_test.emit('end')
                     self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'test_temper':
@@ -259,14 +257,14 @@ class Controller:
                         else:
                             self.model.set_regs['fill_graph'] = False
                             self.stage = 'wait'
-                            self.signals.lab_save_result.emit('end')
+                            self.signals.save_result_test.emit('end')
                             self.steps.step_stop_gear_end_test()
                     else:
                         self._full_cycle_update('0')
 
             elif self.stage == 'test_lab_cascade':
                 if self.count_cycle >= 5:
-                    self.signals.lab_save_result.emit('cont')
+                    self.signals.save_result_test.emit('casc')
                     if self.count_cascade < self.max_cascade:
                         speed = self.model.set_regs.get('speed_cascade')[self.count_cascade]
                         self.model.write_speed_motor(1, speed=speed)
@@ -300,10 +298,7 @@ class Controller:
 
                     else:
                         if self.model.set_regs.get('type_test') == 'conv':
-                            if self.model.set_regs.get('test_launch', False) is True:
-                                self.traverse_install_point('install')
-                            else:
-                                self.traverse_install_point('stop_test')
+                            self.signals.conv_test_stop.emit()
 
                         else:
                             self.signals.lab_test_stop.emit()

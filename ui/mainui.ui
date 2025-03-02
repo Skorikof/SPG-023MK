@@ -70,54 +70,27 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>5</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>5</number>
        </property>
        <item alignment="Qt::AlignHCenter">
-        <widget class="QFrame" name="main_title_frame">
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
+        <widget class="QLabel" name="main_title_label">
+         <property name="font">
+          <font>
+           <family>Arial Black</family>
+           <pointsize>20</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
          </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+         <property name="text">
+          <string>СТЕНД ПРОВЕРКИ АМОРТИЗАТОРОВ</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="main_title_label">
-            <property name="font">
-             <font>
-              <family>Arial Black</family>
-              <pointsize>20</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>СТЕНД ПРОВЕРКИ АМОРТИЗАТОРОВ</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
         </widget>
        </item>
       </layout>
@@ -603,7 +576,7 @@
         <item>
          <widget class="QStackedWidget" name="main_stackedWidget">
           <property name="currentIndex">
-           <number>2</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="start_page_1">
            <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -3293,19 +3266,19 @@ QPushButton:checked
               <x>0</x>
               <y>0</y>
               <width>1024</width>
-              <height>70</height>
+              <height>60</height>
              </rect>
             </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>70</height>
+              <height>60</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>100</height>
+              <height>60</height>
              </size>
             </property>
             <property name="frameShape">
@@ -3316,32 +3289,32 @@ QPushButton:checked
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <property name="spacing">
-              <number>5</number>
+              <number>10</number>
              </property>
              <property name="leftMargin">
-              <number>5</number>
+              <number>0</number>
              </property>
              <property name="topMargin">
               <number>5</number>
              </property>
              <property name="rightMargin">
-              <number>5</number>
+              <number>0</number>
              </property>
              <property name="bottomMargin">
               <number>5</number>
              </property>
              <item>
-              <widget class="QLineEdit" name="red_signal">
+              <widget class="QLineEdit" name="first_signal">
                <property name="minimumSize">
                 <size>
                  <width>300</width>
-                 <height>60</height>
+                 <height>50</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
                  <width>300</width>
-                 <height>60</height>
+                 <height>50</height>
                 </size>
                </property>
                <property name="styleSheet">
@@ -3363,17 +3336,17 @@ QPushButton:checked
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="green_signal">
+              <widget class="QLineEdit" name="second_signal">
                <property name="minimumSize">
                 <size>
                  <width>300</width>
-                 <height>60</height>
+                 <height>50</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
                  <width>300</width>
-                 <height>60</height>
+                 <height>50</height>
                 </size>
                </property>
                <property name="styleSheet">
@@ -3400,9 +3373,9 @@ QPushButton:checked
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>70</y>
+              <y>60</y>
               <width>1024</width>
-              <height>610</height>
+              <height>600</height>
              </rect>
             </property>
             <property name="minimumSize">
@@ -3492,15 +3465,15 @@ QPushButton:checked
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>679</y>
+              <y>660</y>
               <width>1024</width>
-              <height>121</height>
+              <height>140</height>
              </rect>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>130</height>
+              <height>16777215</height>
              </size>
             </property>
             <property name="frameShape">
@@ -3512,22 +3485,22 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_8">
              <property name="geometry">
               <rect>
-               <x>170</x>
-               <y>5</y>
-               <width>145</width>
-               <height>25</height>
+               <x>20</x>
+               <y>29</y>
+               <width>250</width>
+               <height>20</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>25</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3537,28 +3510,28 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Усилие отбоя, кгс:</string>
+              <string>Максимальное усилие отбоя, кгс:</string>
              </property>
             </widget>
             <widget class="QLabel" name="lbl_9">
              <property name="geometry">
               <rect>
-               <x>500</x>
-               <y>5</y>
+               <x>20</x>
+               <y>83</y>
                <width>220</width>
-               <height>25</height>
+               <height>20</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>25</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3574,22 +3547,22 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_10">
              <property name="geometry">
               <rect>
-               <x>170</x>
-               <y>35</y>
-               <width>145</width>
-               <height>25</height>
+               <x>20</x>
+               <y>56</y>
+               <width>250</width>
+               <height>20</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>25</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3599,28 +3572,28 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Усилие сжатия, кгс:</string>
+              <string>Максимальное усилие сжатия, кгс:</string>
              </property>
             </widget>
             <widget class="QLabel" name="lbl_11">
              <property name="geometry">
               <rect>
-               <x>500</x>
-               <y>35</y>
+               <x>20</x>
+               <y>110</y>
                <width>220</width>
-               <height>25</height>
+               <height>20</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>25</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3636,22 +3609,22 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_comp_limit_le">
              <property name="geometry">
               <rect>
-               <x>740</x>
-               <y>35</y>
-               <width>200</width>
+               <x>280</x>
+               <y>110</y>
+               <width>120</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>25</height>
+               <width>0</width>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>200</width>
-               <height>25</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3670,22 +3643,22 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_recoil_limit_le">
              <property name="geometry">
               <rect>
-               <x>740</x>
-               <y>5</y>
-               <width>200</width>
+               <x>280</x>
+               <y>83</y>
+               <width>120</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>25</height>
+               <width>0</width>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>200</width>
-               <height>25</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3708,21 +3681,21 @@ QPushButton:checked
              <property name="geometry">
               <rect>
                <x>320</x>
-               <y>5</y>
-               <width>120</width>
+               <y>29</y>
+               <width>80</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
-               <width>120</width>
-               <height>25</height>
+               <width>0</width>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>120</width>
-               <height>25</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3745,86 +3718,21 @@ QPushButton:checked
              <property name="geometry">
               <rect>
                <x>320</x>
-               <y>35</y>
-               <width>120</width>
-               <height>25</height>
-              </rect>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>120</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>120</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <family>Arial</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-            <widget class="QLabel" name="lbl_12">
-             <property name="geometry">
-              <rect>
-               <x>170</x>
-               <y>65</y>
-               <width>145</width>
+               <y>56</y>
+               <width>80</width>
                <height>25</height>
               </rect>
              </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>25</height>
+               <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <family>Arial</family>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Скорость, м/с:</string>
-             </property>
-            </widget>
-            <widget class="QLineEdit" name="conv_speed_le">
-             <property name="geometry">
-              <rect>
-               <x>320</x>
-               <y>65</y>
-               <width>120</width>
-               <height>25</height>
-              </rect>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>120</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>120</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3843,8 +3751,8 @@ QPushButton:checked
             <widget class="QLineEdit" name="conv_temperture_le">
              <property name="geometry">
               <rect>
-               <x>740</x>
-               <y>65</y>
+               <x>930</x>
+               <y>83</y>
                <width>80</width>
                <height>25</height>
               </rect>
@@ -3857,8 +3765,8 @@ QPushButton:checked
              </property>
              <property name="maximumSize">
               <size>
-               <width>80</width>
-               <height>25</height>
+               <width>16777215</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3877,8 +3785,76 @@ QPushButton:checked
             <widget class="QLabel" name="lbl_13">
              <property name="geometry">
               <rect>
-               <x>580</x>
-               <y>65</y>
+               <x>790</x>
+               <y>83</y>
+               <width>130</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Температура, °С:</string>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_speed_one_le">
+             <property name="geometry">
+              <rect>
+               <x>320</x>
+               <y>2</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLabel" name="lbl_12">
+             <property name="geometry">
+              <rect>
+               <x>20</x>
+               <y>2</y>
                <width>145</width>
                <height>25</height>
               </rect>
@@ -3892,7 +3868,7 @@ QPushButton:checked
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3902,14 +3878,227 @@ QPushButton:checked
               </font>
              </property>
              <property name="text">
-              <string>Температура, °С:</string>
+              <string>Скорость, м/с:</string>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_speed_two_le">
+             <property name="geometry">
+              <rect>
+               <x>460</x>
+               <y>2</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_recoil_le_2">
+             <property name="geometry">
+              <rect>
+               <x>460</x>
+               <y>29</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_comp_le_2">
+             <property name="geometry">
+              <rect>
+               <x>460</x>
+               <y>56</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_recoil_limit_le_2">
+             <property name="geometry">
+              <rect>
+               <x>420</x>
+               <y>83</y>
+               <width>120</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_comp_limit_le_2">
+             <property name="geometry">
+              <rect>
+               <x>420</x>
+               <y>110</y>
+               <width>120</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="conv_push_force_le">
+             <property name="geometry">
+              <rect>
+               <x>930</x>
+               <y>110</y>
+               <width>80</width>
+               <height>25</height>
+              </rect>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>80</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Arial</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
             <widget class="QLabel" name="lbl_push_force_conv">
              <property name="geometry">
               <rect>
-               <x>240</x>
-               <y>90</y>
+               <x>590</x>
+               <y>110</y>
                <width>330</width>
                <height>25</height>
               </rect>
@@ -3923,7 +4112,7 @@ QPushButton:checked
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>25</height>
+               <height>16777215</height>
               </size>
              </property>
              <property name="font">
@@ -3942,40 +4131,6 @@ QPushButton:checked
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-            <widget class="QLineEdit" name="conv_push_force_le">
-             <property name="geometry">
-              <rect>
-               <x>625</x>
-               <y>90</y>
-               <width>80</width>
-               <height>25</height>
-              </rect>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>80</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>80</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <family>Arial</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
              </property>
             </widget>
            </widget>

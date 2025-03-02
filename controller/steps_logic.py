@@ -7,6 +7,7 @@ from logger import my_logger
 class StepsSignal(QObject):
     stage_from_logic = pyqtSignal(str)
     next_stage_from_logic = pyqtSignal(str)
+    conv_result_lamp = pyqtSignal(str, str)
 
 
 class Steps:
@@ -347,9 +348,11 @@ class Steps:
 
             if min_comp < comp < max_comp and min_recoil < recoil < max_recoil:
                 self.model.lamp_green_switch_on()
+                self.signals.conv_result_lamp.emit(step, 'green')
 
             else:
                 self.model.lamp_red_switch_on()
+                self.signals.conv_result_lamp.emit(step, 'red')
 
         except Exception as e:
             self.logger.error(e)

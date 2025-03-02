@@ -69,7 +69,6 @@ class AppWindow(QMainWindow):
         self.model.signals.win_set_update.connect(self.update_data_win_settings)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
-        self.model.signals.conv_lamp.connect(self.conv_test_lamp)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.traverse_referent_msg.connect(self.msg_traverse_referent)
@@ -79,9 +78,11 @@ class AppWindow(QMainWindow):
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
         self.controller.signals.end_test.connect(self.slot_write_end_test)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
-        self.controller.signals.lab_save_result.connect(self.slot_save_lab_result)
+        self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
+        self.controller.signals.save_result_test.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self.slot_start_page)
+        self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.operator_select.connect(self.operator_select)
@@ -484,14 +485,15 @@ class AppWindow(QMainWindow):
 
     def update_graph_view(self):
         try:
-            temp = self.model.set_regs.get('type_test', 'hand')
-            if temp == 'hand':
+            type_test = self.model.set_regs.get('type_test', 'hand')
+            if type_test == 'hand':
                 pass
 
-            elif temp == 'conv':
+            elif type_test == 'conv':
                 self._update_conv_graph()
+                self._update_conv_data()
 
-            elif temp == 'temper':
+            elif type_test == 'temper':
                 self._update_temper_graph()
 
             else:
@@ -906,6 +908,11 @@ class AppWindow(QMainWindow):
                 self.ui.lab_speed_le.setReadOnly(True)
                 self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+                self.ui.test_cancel_btn.setEnabled(True)
+
+            else:
+                self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+                self.ui.test_conv_cancel_btn.setEnabled(True)
 
             self.save_log_begin_test()
             if self.flag_repeat:
@@ -945,11 +952,19 @@ class AppWindow(QMainWindow):
     def _conv_win_clear(self):
         try:
             self.ui.conv_comp_le.clear()
+            self.ui.conv_comp_le_2.clear()
             self.ui.conv_recoil_le.clear()
-            self.ui.conv_speed_le.clear()
+            self.ui.conv_recoil_le_2.clear()
+            self.ui.conv_speed_one_le.clear()
+            self.ui.conv_speed_two_le.clear()
             self.ui.conv_comp_limit_le.clear()
+            self.ui.conv_comp_limit_le_2.clear()
             self.ui.conv_recoil_limit_le.clear()
+            self.ui.conv_recoil_limit_le_2.clear()
             self.ui.conv_temperture_le.clear()
+            self.ui.conv_push_force_le.clear()
+            self.conv_test_lamp_slot('one', 'white')
+            self.conv_test_lamp_slot('two', 'white')
             
         except Exception as e:
             self.logger.error(e)
@@ -959,34 +974,88 @@ class AppWindow(QMainWindow):
         try:
             self._conv_win_clear()
             self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
+            self.conv_test_fill_sample()
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/conv_test_win - {e}')
 
-    def conv_test_lamp(self, command):
+    def conv_test_fill_sample(self):
         try:
-            border = "border-color: rgb(0, 0, 0);"
-            if command == 'all_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n" + border)
-                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n" + border)
-
-            elif command == 'all_off':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
-                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
-
-            elif command == 'red_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 0, 0);\n" + border)
-                self.ui.green_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
-
-            elif command == 'green_on':
-                self.ui.red_signal.setStyleSheet("background-color: rgb(255, 255, 255);\n" + border)
-                self.ui.green_signal.setStyleSheet("background-color: rgb(0, 255, 0);\n" + border)
+            amort = self.model.set_regs.get('amort')
+            self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
+            self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
+            self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
+            self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/conv_test_lamp - {e}')
+            self.status_bar_ui(f'ERROR in view/conv_test_fill_sample - {e}')
+
+    def conv_color_lamp(self, color):
+        try:
+            border = "border-color: rgb(0, 0, 0);"
+            if color == 'white':
+                res = f"background-color: rgb(255, 255, 255);\n{border}"
+            elif color == 'red':
+                res = f"background-color: rgb(255, 0, 0);\n{border}"
+            elif color == 'green':
+                res = f"background-color: rgb(0, 255, 0);\n{border}"
+            else:
+                res = f"background-color: rgb(0, 0, 0);\n{border}"
+
+            return res
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/conv_color_lamp - {e}')
+
+    def conv_test_lamp_slot(self, step, color):
+        try:
+            if step == 'one':
+                self.ui.first_signal.setStyleSheet(self.conv_color_lamp(color))
+            elif step == 'two':
+                self.ui.second_signal.setStyleSheet(self.conv_color_lamp(color))
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/conv_test_lamp_slot - {e}')
+
+    def _update_conv_graph(self):
+        try:
+            self.ui.conv_GraphWidget.clear()
+            pen = pg.mkPen(color='black', width=3)
+            name = self.model.set_regs.get('speed')
+            self.ui.conv_GraphWidget.plot(self.model.set_regs.get('move_graph'),
+                                          self.model.set_regs.get('force_graph'),
+                                          pen=pen,
+                                          name=f'{name} м/с')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_conv_graph - {e}')
+
+    def _update_conv_data(self):
+        try:
+            self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
+            self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
+
+            if self.controller.stage == 'test_speed_one':
+                self.ui.conv_speed_one_le.setText(f'{self.model.set_regs.get("speed", 0)}')
+                self.ui.conv_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+                self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+
+            if self.controller.stage == 'test_speed_two':
+                self.ui.conv_speed_two_le.setText(f'{self.model.set_regs.get("speed", 0)}')
+                self.ui.conv_comp_le_2.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+                self.ui.conv_recoil_le_2.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+
+            else:
+                pass
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
 
     def _update_lab_graph(self):
         try:
@@ -1070,47 +1139,6 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_lab_cascade_graph - {e}')
 
-    def _update_conv_graph(self):
-        try:
-            self.ui.conv_GraphWidget.clear()
-            pen = pg.mkPen(color='black', width=3)
-            name = self.model.set_regs.get('speed')
-            self.ui.conv_GraphWidget.plot(self.model.set_regs.get('move_graph'),
-                                          self.model.set_regs.get('force_graph'),
-                                          pen=pen,
-                                          name=f'{name} м/с')
-            
-            self._update_conv_data()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_conv_graph - {e}')
-
-    def _update_conv_data(self):
-        try:
-            amort = self.model.set_regs.get('amort')
-            self.ui.conv_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-            self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
-            self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
-            self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
-
-            if self.controller.stage == 'test_speed_one':
-                self.ui.conv_speed_le.setText(f'{amort.speed_one}')
-                self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
-                self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
-
-            if self.controller.stage == 'test_speed_two':
-                self.ui.conv_speed_le.setText(f'{amort.speed_two}')
-                self.ui.conv_comp_limit_le.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
-                self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
-
-            else:
-                pass
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
-
     def repeat_test_clicked_slot(self):
         self.flag_repeat = True
         self.begin_test()
@@ -1121,7 +1149,7 @@ class AppWindow(QMainWindow):
             temp = self.ui.test_cancel_btn.text()
 
             if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
-                self.ui.test_cancel_btn.setText('ОСТАНОВКА')
+                self.ui.test_cancel_btn.setEnabled(False)
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
@@ -1160,6 +1188,7 @@ class AppWindow(QMainWindow):
             self.status_bar_ui(f'ERROR in view/show_compare_graph - {e}')
 
     def slot_lab_test_stop(self):
+        self.ui.test_cancel_btn.setEnabled(True)
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 
@@ -1172,9 +1201,24 @@ class AppWindow(QMainWindow):
         elif type_test == 'lab' or type_test == 'lab_cascade':
             self.show_compare_graph()
 
+    def slot_conv_test_stop(self):
+        self.ui.test_conv_cancel_btn.setEnabled(True)
+        self.ui.test_conv_cancel_btn.setText('НАЗАД')
+        self.show_compare_graph()
+
     def cancel_test_conv_clicked(self):
         try:
-            self.controller.stop_test_clicked()
+            temp = self.ui.test_conv_cancel_btn.text()
+
+            if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
+                self.ui.test_conv_cancel_btn.setEnabled(False)
+                self.controller.stop_test_clicked()
+
+            elif temp == 'НАЗАД':
+                self.controller.steps_tests.step_stop_test()
+                self.model.set_regs['test_launch'] = False
+                self.controller.traverse_install_point('stop_test')
+                self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
             self.logger.error(e)
@@ -1220,7 +1264,7 @@ class AppWindow(QMainWindow):
     def slot_save_lab_result(self, command):
         try:
             type_test = self.model.set_regs.get('type_test')
-            if type_test == 'lab' or type_test == 'lab_cascade':
+            if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
                 data_dict = {'speed': self.model.set_regs.get('speed'),
                              'move': self.model.set_regs.get('move_graph')[:],
                              'force': self.model.set_regs.get('force_graph')[:]}

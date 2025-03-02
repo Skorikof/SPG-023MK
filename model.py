@@ -25,7 +25,6 @@ class ModelSignals(QObject):
     update_data_graph = pyqtSignal()
     test_launch = pyqtSignal(bool)
     save_koef_force = pyqtSignal(str)
-    conv_lamp = pyqtSignal(str)
 
     connect_ctrl = pyqtSignal()
     read_finish = pyqtSignal()
@@ -701,9 +700,6 @@ class Model:
             if not self.set_regs.get('red_light'):
                 self.write_bit_red_light(1)
 
-            if self.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('all_on')
-
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_all_switch_on - {e}')
@@ -715,9 +711,6 @@ class Model:
                 self.write_bit_green_light(0)
             if self.set_regs.get('red_light'):
                 self.write_bit_red_light(0)
-
-            if self.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('all_off')
 
         except Exception as e:
             self.logger.error(e)
@@ -731,9 +724,6 @@ class Model:
             if self.set_regs.get('red_light'):
                 self.write_bit_red_light(0)
 
-            if self.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('green_on')
-
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_green_switch_on - {e}')
@@ -745,9 +735,6 @@ class Model:
                 self.write_bit_green_light(0)
             if not self.set_regs.get('red_light'):
                 self.write_bit_red_light(1)
-
-            if self.set_regs.get('type_test', 'hand') == 'conv':
-                self.signals.conv_lamp.emit('red_on')
 
         except Exception as e:
             self.logger.error(e)
