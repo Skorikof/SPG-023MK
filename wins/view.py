@@ -744,34 +744,30 @@ class AppWindow(QMainWindow):
 
                 flag = self.static_push_force_editing()
                 if flag:
-                    if type_test == 'conv':
-                        self.begin_test()
-
-                    else:
-                        flag = self.serial_editing_finished()
-                        if flag:
-                            self.model.set_regs['serial_number'] = self.ui.specif_serial_lineEdit.text()
-                            if type_test == 'lab_cascade':
-                                flag = self.specif_read_lab_cascade_table()
-                                if flag:
-                                    self.begin_test()
-                                else:
-                                    self.specif_msg_none_cascade_speed()
-
-                            elif type_test == 'lab_hand':
-                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                if speed:
-                                    self.model.set_regs['speed'] = speed
-                                    self.begin_test()
-                            elif type_test == 'temper':
-                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                if speed:
-                                    self.model.set_regs['speed'] = speed
-                                    self.model.set_regs['finish_temper'] = float(self.ui.specif_max_temp_lineEdit.text())
-                                    self.begin_test()
-
-                            else:
+                    flag = self.serial_editing_finished()
+                    if flag:
+                        self.model.set_regs['serial_number'] = self.ui.specif_serial_lineEdit.text()
+                        if type_test == 'lab_cascade':
+                            flag = self.specif_read_lab_cascade_table()
+                            if flag:
                                 self.begin_test()
+                            else:
+                                self.specif_msg_none_cascade_speed()
+
+                        elif type_test == 'lab_hand':
+                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                            if speed:
+                                self.model.set_regs['speed'] = speed
+                                self.begin_test()
+                        elif type_test == 'temper':
+                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                            if speed:
+                                self.model.set_regs['speed'] = speed
+                                self.model.set_regs['finish_temper'] = float(self.ui.specif_max_temp_lineEdit.text())
+                                self.begin_test()
+
+                        else:
+                            self.begin_test()
 
             else:
                 self.open_win_operator()
@@ -1217,6 +1213,7 @@ class AppWindow(QMainWindow):
             elif temp == 'НАЗАД':
                 self.controller.steps_tests.step_stop_test()
                 self.model.set_regs['test_launch'] = False
+                self.model.set_regs['serial_number'] = str(int(self.model.set_regs.get('serial_number')) + 1)
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1289,7 +1286,7 @@ class AppWindow(QMainWindow):
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
                          'operator': self.model.set_regs.get('operator').copy(),
-                         'serial': self.model.set_regs.get('serial_number'),
+                         'serial': self.model.set_regs.get('serial_number', 0),
                          'amort': self.model.set_regs.get('amort'),
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
                          'static_push_force': self.model.set_regs.get('static_push_force'),
