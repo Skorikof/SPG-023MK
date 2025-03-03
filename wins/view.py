@@ -701,6 +701,38 @@ class AppWindow(QMainWindow):
                                       f'<b style="color: #f00;">Не введено ни одной скорости для испытания</b>'
                                       )
 
+    def specif_lab_input_temper(self, obj):
+        try:
+            text = obj.text()
+            if not text:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              'Заполните поле максимальной температуры испытания'
+                                              )
+
+            temper = float(text.replace(',', '.'))
+            if 0 <= temper <= 200:
+                return temper
+
+            else:
+                msg = QMessageBox.information(self,
+                                              'Внимание',
+                                              f'Данная температура (<b style="color: #f00;">{temper}</b>)'
+                                              f'не попадает в диапазон от 0 до 200'
+                                              )
+
+        except ValueError:
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
+                                          f'Максимальная температура</b>'
+                                          )
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/specif_lab_input_temper - {e}')
+
+
     def change_temper_sensor_btn(self):
         try:
             bit = self.model.set_regs.get('list_state')[6]
@@ -747,27 +779,39 @@ class AppWindow(QMainWindow):
                     flag = self.serial_editing_finished()
                     if flag:
                         self.model.set_regs['serial_number'] = self.ui.specif_serial_lineEdit.text()
-                        if type_test == 'lab_cascade':
-                            flag = self.specif_read_lab_cascade_table()
-                            if flag:
-                                self.begin_test()
-                            else:
-                                self.specif_msg_none_cascade_speed()
-
-                        elif type_test == 'lab_hand':
-                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                            if speed:
-                                self.model.set_regs['speed'] = speed
-                                self.begin_test()
-                        elif type_test == 'temper':
-                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                            if speed:
-                                self.model.set_regs['speed'] = speed
-                                self.model.set_regs['finish_temper'] = float(self.ui.specif_max_temp_lineEdit.text())
-                                self.begin_test()
+                        self.lab_test_second_force_gui(False)
+                        if type_test == 'conv':
+                            self._conv_win_clear()
+                            self.conv_test_fill_template()
+                            self.begin_test()
 
                         else:
-                            self.begin_test()
+                            self._lab_win_clear()
+                            self.fill_gui_lab_test()
+                            if type_test == 'lab_cascade':
+                                flag = self.specif_read_lab_cascade_table()
+                                if flag:
+                                    self.begin_test()
+                                else:
+                                    self.specif_msg_none_cascade_speed()
+
+                            elif type_test == 'lab_hand':
+                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                if speed:
+                                    self.model.set_regs['speed'] = speed
+                                    self.begin_test()
+                            elif type_test == 'temper':
+                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                                if speed:
+                                    self.model.set_regs['speed'] = speed
+                                    temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
+                                    if temper:
+                                        self.model.set_regs['finish_temper'] = temper
+                                        self.begin_test()
+
+                            else:
+                                self.lab_test_second_force_gui(True)
+                                self.begin_test()
 
             else:
                 self.open_win_operator()
@@ -775,6 +819,10 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/specif_continue_btn_click - {e}')
+
+    def lab_test_second_force_gui(self, flag):
+        self.ui.lab_recoil_le_2.setVisible(flag)
+        self.ui.lab_comp_le_2.setVisible(flag)
 
     def serial_editing_finished(self):
         text = self.ui.specif_serial_lineEdit.text()
@@ -886,6 +934,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_hod_le.setText(hod)
 
             self.ui.lbl_push_force_lab.setText(self.model.set_regs.get('lbl_push_force', ''))
+            self.ui.lab_serial_le.setText(f'{self.model.set_regs.get("serial_number", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -937,8 +986,6 @@ class AppWindow(QMainWindow):
 
     def lab_test_win(self):
         try:
-            self._lab_win_clear()
-            self.fill_gui_lab_test()
             self.ui.main_stackedWidget.setCurrentIndex(2)
 
         except Exception as e:
@@ -968,22 +1015,21 @@ class AppWindow(QMainWindow):
 
     def conv_test_win(self):
         try:
-            self._conv_win_clear()
-            self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
-            self.conv_test_fill_sample()
             self.ui.main_stackedWidget.setCurrentIndex(3)
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/conv_test_win - {e}')
 
-    def conv_test_fill_sample(self):
+    def conv_test_fill_template(self):
         try:
             amort = self.model.set_regs.get('amort')
             self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
             self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
             self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
             self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+
+            self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
         except Exception as e:
             self.logger.error(e)
@@ -1094,12 +1140,21 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-            self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+            if self.model.set_regs.get('type_test') == 'lab':
+                if self.controller.stage == 'test_speed_one':
+                    self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+                    self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+
+                elif self.controller.stage == 'test_speed_two':
+                    self.ui.lab_comp_le_2.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+                    self.ui.lab_recoil_le_2.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+            else:
+                self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
+                self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+
             self.ui.lab_now_temp_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
             self.ui.lab_max_temp_le.setText(f'{self.model.set_regs.get("max_temperature", 0)}')
             self.ui.lab_speed_le.setText(f'{self.model.set_regs.get("speed", 0)}')
-            self.ui.lab_serial_le.setText(f'{self.model.set_regs.get("serial_number", 0)}')
             self.ui.lab_power_le.setText(f'{self.model.set_regs.get("power", 0)}')
             self.ui.lab_freq_le.setText(f'{self.model.set_regs.get("freq_piston", 0)}')
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')

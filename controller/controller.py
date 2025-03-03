@@ -132,7 +132,7 @@ class Controller:
 
                     elif self.model.set_regs['buffer_state'][1] == 'buffer_off':
                         pass
-                        # Ну и в данном случае мы чтото делаем
+
                 elif self.model.set_regs['buffer_state'][0] == 'ERROR!':
                     self.model.set_regs['buffer_state'] = ['null', 'null']
                     self.model.write_bit_force_cycle(1)
