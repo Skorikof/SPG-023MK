@@ -6,7 +6,7 @@ from settings import glob_var
 
 from logger import my_logger
 from archive import ReadArchive
-from calc_data.data_calculation import SpeedLimitForHod
+from calc_data.data_calculation import CalcData
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
@@ -22,6 +22,7 @@ class AppWindow(QMainWindow):
         self.model = model
         self.controller = controller
         self.win_set = win_set
+        self.calc_data = CalcData()
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
@@ -623,7 +624,7 @@ class AppWindow(QMainWindow):
 
             speed = float(text.replace(',', '.'))
             hod = int(self.model.set_regs.get('hod', 40))
-            max_speed = SpeedLimitForHod().speed_limit(hod)
+            max_speed = self.calc_data.max_speed(hod)
             if 0.02 <= speed <= max_speed:
                 return speed
 

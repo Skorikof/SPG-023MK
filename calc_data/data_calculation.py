@@ -5,30 +5,6 @@ from struct import pack
 from logger import my_logger
 
 
-class SpeedLimitForHod:
-    def speed_limit(self, hod):
-        if 40 <= hod < 50:
-            return 0.41
-        elif 50 <= hod < 60:
-            return 0.51
-        elif 60 <= hod < 70:
-            return 0.62
-        elif 70 <= hod < 80:
-            return 0.72
-        elif 80 <= hod < 90:
-            return 0.82
-        elif 90 <= hod < 100:
-            return 0.92
-        elif 100 <= hod < 110:
-            return 1.03
-        elif 110 <= hod < 120:
-            return 1.13
-        elif hod == 120:
-            return 1.23
-        else:
-            return 0.41
-
-
 class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
@@ -55,6 +31,15 @@ class CalcData:
                 val_regs.append(temp_val)
 
             return val_regs
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def max_speed(self, hod, freq=119):
+        try:
+            koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
+            radius = round((hod / 1000) / 2, 3)
+            return round((freq * radius) / koef, 3)
 
         except Exception as e:
             self.logger.error(e)

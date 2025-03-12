@@ -5,7 +5,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from logger import my_logger
 from ui_py.new_amort import Ui_MainWindow
-from calc_data.data_calculation import SpeedLimitForHod
+from calc_data.data_calculation import CalcData
 
 
 class AmortSignals(QObject):
@@ -21,6 +21,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/shock-absorber.png'))
             self.signals = AmortSignals()
+            self.calc_data = CalcData()
             self._init_buttons()
             self.response = {}
             self.hide()
@@ -189,7 +190,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimitForHod().speed_limit(hod)
+            max_speed = self.calc_data.max_speed(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_one'] = str(temp)
@@ -225,7 +226,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             temp = float(text.replace(',', '.'))
 
             hod = int(self.response.get('hod', 40))
-            max_speed = SpeedLimitForHod().speed_limit(hod)
+            max_speed = self.calc_data.max_speed(hod)
 
             if 0.02 <= temp <= max_speed:
                 self.response['speed_two'] = str(temp)
