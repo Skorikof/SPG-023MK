@@ -462,7 +462,7 @@ class Model:
                            'force_graph': force_list[:],
                            'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
                            'power': self.calc_data.power_amort(move_list, force_list),
-                           'freq_piston': self.calc_data.freq_piston_amort(speed, amort),
+                           'freq_piston': self.calc_data.freq_piston_amort(speed, amort.hod),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }

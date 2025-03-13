@@ -4,14 +4,18 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PIL import ImageGrab
 import pyqtgraph as pg
-import numpy as np
-from functools import reduce
 import os
 
 from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from calc_data.data_calculation import CalcData
+from calc_graph.move_graph import MoveGraph
+from calc_graph.cascad_graph import CascadeGraph
+from calc_graph.triple_graph import TripleGraph
+from calc_graph.boost_graph_one import BoostGraphOne
+from calc_graph.boost_graph_two import BoostGraphTwo
+from calc_graph.temper_graph import TemperGraph
 
 
 class WinSignals(QObject):
@@ -25,7 +29,19 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         super(ArchiveWin, self).__init__()
         try:
             self.logger = my_logger.get_logger(__name__)
+            self.setupUi(self)
+            self.setWindowIcon(QIcon('icon/archive.png'))
+            self.hide()
+
             self.calc_data = CalcData()
+            self.move_graph = MoveGraph(self.graphwidget)
+            self.cascade_graph = CascadeGraph(self.graphwidget)
+            self.triple_graph = TripleGraph(self.graphwidget)
+            self.boost_one_graph = BoostGraphOne(self.graphwidget)
+            self.boost_two_graph = BoostGraphTwo(self.graphwidget)
+            self.temper_graph = TemperGraph(self.graphwidget)
+            self.archive = ReadArchive()
+
             self.compare_data = []
             self.type_graph = 'move'
             self.ind_type_test = 0
@@ -45,10 +61,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                               'pink',
                               'grey',
                               'red']
-            self.archive = ReadArchive()
-            self.setupUi(self)
-            self.setWindowIcon(QIcon('icon/archive.png'))
-            self.hide()
+
             self._create_statusbar_set()
             self._init_buttons()
 
@@ -256,76 +269,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_power_freq_visible - {e}')
 
-    def _gui_move_graph(self):
-        try:
-            self.graphwidget.plot(clear=True)
-            self.graphwidget.setLabel('left', 'Усилие', units='кгс', color='k')
-            self.graphwidget.setLabel('bottom', 'Перемещение', units='мм', color='k')
-            self.graphwidget.setLabel('right', 'Усилие', units='кгс', color='k')
-            self.graphwidget.setTitle('График зависимости усилия от перемещения', color='k', size='14pt')
-            self.graphwidget.showGrid(True, True)
-            self.graphwidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_move_graph - {e}')
-
-    def _gui_speed_graph(self):
-        try:
-            self.graphwidget.plot(clear=True)
-            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
-            self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
-            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
-            self.graphwidget.setTitle('График зависимости усилия от скорости')
-            self.graphwidget.showGrid(True, True)
-            self.graphwidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_speed_graph - {e}')
-
-    def _gui_triple_graph(self):
-        try:
-            self.graphwidget.plot(clear=True)
-            self.graphwidget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с')
-            self.graphwidget.setLabel('bottom', 'ω * t', units='°')
-            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
-            self.graphwidget.setTitle('Диаграмма хода, скорости, силы сопротивления')
-            self.graphwidget.showGrid(True, True)
-            self.graphwidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_triple_graph - {e}')
-
-    def _gui_boost_graph(self):
-        try:
-            self.graphwidget.plot(clear=True)
-            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
-            self.graphwidget.setLabel('bottom', 'Скорость', units='м/с')
-            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
-            self.graphwidget.setTitle('График зависимости усилия от скорости')
-            self.graphwidget.showGrid(True, True)
-            self.graphwidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_boost_graph - {e}')
-
-    def _gui_temper_graph(self):
-        try:
-            self.graphwidget.plot(clear=True)
-            self.graphwidget.setLabel('left', 'Усилие', units='кгс')
-            self.graphwidget.setLabel('bottom', 'Температура', units='℃')
-            self.graphwidget.setLabel('right', 'Усилие', units='кгс')
-            self.graphwidget.setTitle('График зависимости усилия от температуры')
-            self.graphwidget.showGrid(True, True)
-            self.graphwidget.setBackground('w')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_gui_temper_graph - {e}')
-
+    # FIXME
     def _archive_test_select(self):
         try:
             self.btn_compare.setVisible(True)
@@ -469,38 +413,41 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_graph(self):
         try:
-            self.graphwidget.plot(clear=True)
             if self.type_graph == 'move':
                 self._gui_power_freq_visible(True)
-                self._gui_move_graph()
+                self.move_graph.gui_graph()
                 self._fill_lab_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'speed':
                 self._gui_power_freq_visible(False)
-                self._gui_speed_graph()
+                self.cascade_graph.gui_graph()
                 self._fill_lab_cascade_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'triple':
                 self._gui_power_freq_visible(False)
-                self._gui_triple_graph()
+                self.triple_graph.gui_graph()
                 self._fill_triple_graph()
                 self._visible_compare_btn(False)
 
-            elif self.type_graph == 'boost_1' or self.type_graph == 'boost_2':
+            elif self.type_graph == 'boost_1':
                 self._gui_power_freq_visible(False)
-                self._gui_boost_graph()
-                self._fill_boost_graph()
+                self.boost_one_graph.gui_graph()
+                self._fill_boost_one_graph()
+                self._visible_compare_btn(False)
+
+            elif self.type_graph == 'boost_2':
+                self._gui_power_freq_visible(False)
+                self.boost_two_graph.gui_graph()
+                self._fill_boost_two_graph()
                 self._visible_compare_btn(False)
 
             elif self.type_graph == 'temper':
                 self._gui_power_freq_visible(False)
-                self._gui_temper_graph()
+                self.temper_graph.gui_graph()
                 self._fill_temper_graph()
                 self._visible_compare_btn(False)
-
-            self.graphwidget.addLegend()
 
         except Exception as e:
             self.logger.error(e)
@@ -509,31 +456,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_lab_graph(self):
         try:
             index = self.index_test
-            obj = self.archive.struct.tests[index]
 
-            move_list = obj.move_list
+            response = self.move_graph.fill_graph(self.archive.struct.tests[index])
 
-            force_list = obj.force_list
-            push_force = self._select_push_force(obj)
-
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
-            max_recoil = round(recoil + push_force, 2)
-            max_comp = round(comp - push_force, 2)
-
-            power = self.calc_data.power_amort(move_list, force_list)
-
-            speed = float(obj.speed)
-            freq = self.calc_data.freq_piston_amort(speed, obj.amort)
-
-            self.push_force_le.setText(f'{push_force}')
-            self.power_le.setText(f'{power}')
-            self.comp_le.setText(f'{max_comp}')
-            self.recoil_le.setText(f'{max_recoil}')
-            self.freq_le.setText(f'{freq}')
-
-            pen = pg.mkPen(color='black', width=3)
-
-            self.graphwidget.plot(move_list, force_list, pen=pen)
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
+            self.power_le.setText(f'{response.get("power", 0)}')
+            self.freq_le.setText(f'{response.get("freq", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -541,248 +471,52 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_lab_cascade_graph(self):
         try:
-            index = self.index_test_cascade
-            speed_list = [0]
-            comp_list = [0]
-            recoil_list = [0]
-            push_force = 0
-            data = self.archive.struct.cascade.get(index + 1)
+            index = self.index_test_cascade + 1
+            response = self.cascade_graph.fill_graph(self.archive.struct.cascade.get(index))
 
-            for obj in data:
-                speed_list.append(float(obj.speed))
-                flag_push_force = obj.flag_push_force
-                if flag_push_force == '1':
-                    push_force = float(obj.dynamic_push_force)
-
-                elif flag_push_force == '0':
-                    push_force = float(obj.static_push_force)
-
-                recoil, comp = self.calc_data.middle_min_and_max_force(obj.force_list)
-
-                recoil_list.append(round(recoil + push_force, 2))
-                comp_list.append(round(comp * (-1) + push_force, 2))
-
-            pen_recoil = pg.mkPen(color='black', width=3)
-            pen_comp = pg.mkPen(color='blue', width=3)
-
-            self.graphwidget.plot(speed_list, recoil_list, pen=pen_recoil, name='Отбой')
-            self.graphwidget.plot(speed_list, comp_list, pen=pen_comp, name='Сжатие')
-
-            self.recoil_le.setText(f'{max(recoil_list)}')
-            self.comp_le.setText(f'{abs(min(comp_list))}')
-
-            self._fill_limit_lab_cascade_graph(data[0])
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_lab_cascade_graph - {e}')
 
-    def _fill_limit_lab_cascade_graph(self, obj):
-        try:
-            lim_speed_1 = []
-            lim_speed_2 = []
-            lim_recoil_1 = []
-            lim_recoil_2 = []
-            lim_comp_1 = []
-            lim_comp_2 = []
-
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_2.append(float(obj.amort.speed_two))
-            lim_speed_2.append(float(obj.amort.speed_two))
-
-            lim_recoil_1.append(float(obj.amort.min_recoil))
-            lim_recoil_1.append(float(obj.amort.max_recoil))
-            lim_recoil_2.append(float(obj.amort.max_recoil_2))
-            lim_recoil_2.append(float(obj.amort.min_recoil_2))
-
-            lim_comp_1.append(float(obj.amort.min_comp) * -1)
-            lim_comp_1.append(float(obj.amort.max_comp) * -1)
-            lim_comp_2.append(float(obj.amort.max_comp_2) * -1)
-            lim_comp_2.append(float(obj.amort.min_comp_2) * -1)
-
-            pen = pg.mkPen(color='red', width=2)
-
-            self.graphwidget.plot(lim_speed_1, lim_recoil_1, pen=pen)
-            self.graphwidget.plot(lim_speed_2, lim_recoil_2, pen=pen)
-            self.graphwidget.plot(lim_speed_1, lim_comp_1, pen=pen)
-            self.graphwidget.plot(lim_speed_2, lim_comp_2, pen=pen)
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_limit_lab_cascade_graph - {e}')
-
     def _fill_triple_graph(self):
         try:
             index = self.index_test
-            hod = int(self.archive.struct.tests[index].amort.hod)
-            move_list = self.archive.struct.tests[index].move_list
-            force_list = self.archive.struct.tests[index].force_list
-            self.push_force_le.setText(f'{0}')
+            response = self.triple_graph.fill_graph(self.archive.struct.tests[index])
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
-
-            self.comp_le.setText(f'{recoil}')
-            self.recoil_le.setText(f'{comp}')
-
-            self._fill_triple_hod_graph(hod)
-
-            x_coord = self._convert_triple_move_in_degrees_coord(move_list)
-
-            index_mid_hod = self._calc_index_middle_hod_triple(x_coord, hod)
-
-            self._fill_triple_force_graph(x_coord, force_list, index_mid_hod)
-
-            self._fill_triple_speed_graph(move_list, x_coord, index_mid_hod)
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
 
-    def _fill_triple_hod_graph(self, hod):
-        try:
-            hod_x, hod_y = self.calc_data.calc_coord_sinus(hod, 360, 1)
-            pen = pg.mkPen(color='black', width=3)
-            self.graphwidget.plot(hod_x, hod_y, pen=pen, name='Смещение')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_hod_graph - {e}')
-
-    def _calc_index_middle_hod_triple(self, x_coord: list, hod: int):
-        try:
-            mid_hod = hod / 2
-            for point in x_coord:
-                if mid_hod - 1 < point < mid_hod + 1:
-                    return x_coord.index(point)
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_start_point_triple - {e}')
-
-    def _fill_triple_force_graph(self, x_coord: list, force: list, index):
-        try:
-            force_y = self._calc_triple_force_coord(force, index)
-            pen = pg.mkPen(color='blue', width=3)
-            self.graphwidget.plot(x_coord, force_y, pen=pen, name='Усилие')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_force_graph - {e}')
-
-    def _calc_triple_force_coord(self, force: list, index):
-        try:
-            return list(map(lambda x: round(x * (-1), 1), force[index:] + force[:index]))
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_force_coord - {e}')
-
-    def _convert_triple_move_in_degrees_coord(self, move: list):
-        try:
-            way = []
-            start_point = move[0]
-            if start_point < 0:
-                temp_list = list(map(lambda x: round(x + abs(start_point), 1), move))
-
-            else:
-                temp_list = list(map(lambda x: round(x - start_point, 1), move))
-
-            max_point = max(temp_list)
-            max_index = temp_list.index(max_point)
-
-            for i in range(len(temp_list)):
-                point = temp_list[i]
-                if i > max_index:
-                    point = round(max_point - abs(temp_list[i]) + max_point, 1)
-
-                way.append(point)
-
-            max_way = max(way)
-
-            return list(map(lambda x: round(360 * x / max_way, 1), way))
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_x_coord - {e}')
-
-    def _fill_triple_speed_graph(self, move: list, x_coord: list, index):
-        try:
-            speed_list = self._calc_triple_speed_coord(move, index)
-
-            w = np.hanning(200)
-            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
-
-            speed_y = list(map(lambda x: round(x * 100, 1), y_approxy))
-
-            pen = pg.mkPen(color='red', width=3)
-            self.graphwidget.plot(x_coord, speed_y,
-                                  pen=pen,
-                                  name='Скорость')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_speed_graph - {e}')
-
-    def _calc_triple_speed_coord(self, move: list, index):
-        try:
-            speed_list = []
-            y_coord = []
-
-            if index != 0:
-                shift_list = move[index:] + move[:index]
-                temp_list = shift_list[5:] + shift_list + shift_list[:5]
-
-            else:
-                temp_list = move[5:] + move + move[:5]
-
-            for i in range(len(move)):
-                for j in range(10):
-                    speed_list.append(round(abs(abs(temp_list[i + j]) - abs(temp_list[i + j + 1])), 3))
-
-                temp = reduce(lambda x, y: round(x + y, 3), speed_list)
-                y_coord.append(temp)
-                speed_list = []
-
-            return y_coord
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_calc_triple_speed_coord - {e}')
-
-    def _fill_boost_graph(self):
+    def _fill_boost_one_graph(self):
         try:
             index = self.index_test
-            move_list = self.archive.struct.tests[index].move_list
-            force_list = self.archive.struct.tests[index].force_list
-            push_force = self._select_push_force(self.archive.struct.tests[index])
-            self.push_force_le.setText(f'{push_force}')
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
+            response = self.boost_one_graph.fill_graph(self.archive.struct.tests[index])
 
-            self.comp_le.setText(f'{comp}')
-            self.recoil_le.setText(f'{recoil}')
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
 
-            if self.type_graph == 'boost_2':
-                offset_p = abs(move_list[0] + int(self.archive.struct.tests[index].amort.hod) / 2)
-                move_list = [round(x - offset_p) for x in move_list]
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
 
-            speed_list = self._calc_triple_speed_coord(move_list, 0)
+    def _fill_boost_two_graph(self):
+        try:
+            index = self.index_test
 
-            w = np.hanning(200)
-            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
+            response = self.boost_two_graph.fill_graph(self.archive.struct.tests[index])
 
-            x_coord = list(map(lambda x: round(x, 1), y_approxy))
-
-            min_x = x_coord[0]
-            max_x = x_coord[-1]
-            if min_x < max_x:
-                koef = min_x
-            else:
-                koef = max_x
-            x_coord = [x - koef for x in x_coord]
-            pen = pg.mkPen(color='blue', width=5)
-            self.graphwidget.plot(x_coord, force_list, pen=pen, name='Скорость')
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -790,50 +524,17 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_temper_graph(self):
         try:
-            recoil_list = []
-            comp_list = []
             index = self.index_test_temper
-            temper_coord = self.archive.struct.temper[index].temper_graph
 
-            for value in self.archive.struct.temper[index].temper_force_graph:
-                value = value.strip('\'\"')
-                value = value.replace(',', '.')
-                value = value.split('|')
-                recoil, comp = float(value[0]), float(value[1])
-                recoil_list.append(recoil)
-                comp_list.append(comp)
+            response = self.temper_graph.fill_graph(self.archive.struct.temper[index])
 
-            push_force = self._select_push_force(self.archive.struct.temper[index])
-            self.push_force_le.setText(f'{push_force}')
-
-            self.comp_le.setText(f'{comp_list[-1]}')
-            self.recoil_le.setText(f'{recoil_list[-1]}')
-
-            pen_recoil = pg.mkPen(color=self.color_pen[0], width=3)
-            pen_comp = pg.mkPen(color=self.color_pen[1], width=3)
-
-            self.graphwidget.plot(temper_coord, recoil_list, pen=pen_recoil, name='Отбой')
-            self.graphwidget.plot(temper_coord, comp_list, pen=pen_comp, name='Сжатие')
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_temper_graph - {e}')
-
-    def _select_push_force(self, obj):
-        try:
-            flag_push_force = obj.flag_push_force
-            if flag_push_force == '1':
-                return float(obj.dynamic_push_force)
-
-            elif flag_push_force == '0':
-                return float(obj.static_push_force)
-
-            else:
-                return 0
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_select_push_force - {e}')
 
     def _archive_save_form(self):
         try:
@@ -1001,8 +702,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                     self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
 
-                self.graphwidget.addLegend()
-
             elif self.type_graph == 'speed':
                 for arch_obj in obj:
                     speed_list = [0]
@@ -1035,9 +734,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
                     self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
 
-                self._fill_limit_lab_cascade_graph(obj[0][0])
-
-                self.graphwidget.addLegend()
+                self.cascade_graph.limit_line_graph(obj[0][0])
 
         except Exception as e:
             self.logger.error(e)

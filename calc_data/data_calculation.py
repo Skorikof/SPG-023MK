@@ -117,22 +117,9 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def freq_piston_amort(self, speed, amort):
+    def freq_piston_amort(self, speed, hod):
         try:
-            return round(speed / (int(amort.hod) * 0.002 * 3.14), 3)
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def calc_coord_sinus(self, height, border, count_wave):
-        """Расчёт графика синусоиды. height: высота волны, border: до какой точки, count_wave: количество волн"""
-        try:
-            height = int(height / 2)
-
-            x = np.arange(border)
-            y = np.sin(2 * np.pi * count_wave * x / border) * height
-
-            return x, y
+            return round(speed / (int(hod) * 0.002 * 3.14), 3)
 
         except Exception as e:
             self.logger.error(e)
@@ -144,6 +131,20 @@ class CalcData:
                 return 2000
             else:
                 return (force // 100) * 100 + 100
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def offset_move_list_by_zero(self, move: list, index: int):
+        try:
+            return list(map(lambda x: round(x - move[index], 1), move))
+
+            # start_point = move[0]
+            # if start_point < 0:
+            #     return list(map(lambda x: round(x + abs(start_point), 1), move))
+            #
+            # else:
+            #     return list(map(lambda x: round(x - start_point, 1), move))
 
         except Exception as e:
             self.logger.error(e)
