@@ -2,9 +2,6 @@
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
-from PIL import ImageGrab
-import pyqtgraph as pg
-import os
 
 from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
@@ -16,6 +13,8 @@ from calc_graph.triple_graph import TripleGraph
 from calc_graph.boost_graph_one import BoostGraphOne
 from calc_graph.boost_graph_two import BoostGraphTwo
 from calc_graph.temper_graph import TemperGraph
+from calc_graph.compare_graph import CompareGraph
+from screenshot.save_screen import ScreenSave
 
 
 class WinSignals(QObject):
@@ -40,27 +39,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.boost_one_graph = BoostGraphOne(self.graphwidget)
             self.boost_two_graph = BoostGraphTwo(self.graphwidget)
             self.temper_graph = TemperGraph(self.graphwidget)
+            self.compare_graph = CompareGraph(self.graphwidget)
+            self.screen_save = ScreenSave()
             self.archive = ReadArchive()
 
             self.compare_data = []
             self.type_graph = 'move'
-            self.ind_type_test = 0
             self.index_date = ''
+            self.index_type_test = 0
             self.index_test = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
-            self.color_pen = ['black',
-                              'blue',
-                              'green',
-                              'orange',
-                              'purple',
-                              'brown',
-                              'olive',
-                              'cyan',
-                              'yellow',
-                              'pink',
-                              'grey',
-                              'red']
+            self.ind_type_graph = 0
 
             self._create_statusbar_set()
             self._init_buttons()
@@ -91,6 +81,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.btn_show.clicked.connect(self._show_compare_data)
 
         self.combo_dates.activated[str].connect(self._change_index_date)
+        self.combo_type_test.activated[int].connect(self._change_index_type_test)
         self.combo_test.activated[int].connect(self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)
 
@@ -98,8 +89,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             self.compare_data = []
             self.type_graph = 'move'
-            self.ind_type_test = 0
+            self.ind_type_graph = 0
             self.index_date = ''
+            self.index_type_test = 0
             self.index_test = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
@@ -156,6 +148,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
 
+    # FIXME
+    def _change_index_type_test(self, index):
+        try:
+            if self.index_type_test != index:
+                self.index_type_test = index
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
+
     def _change_index_test(self, index):
         try:
             if self.type_graph == 'speed':
@@ -182,8 +184,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _change_type_graph(self, index):
         try:
-            if self.ind_type_test != index:
-                self.ind_type_test = index
+            if self.ind_type_graph != index:
+                self.ind_type_graph = index
                 if index == 0:
                     self.type_graph = 'move'
 
@@ -506,7 +508,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_one_graph - {e}')
 
     def _fill_boost_two_graph(self):
         try:
@@ -520,7 +522,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_graph - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_boost_two_graph - {e}')
 
     def _fill_temper_graph(self):
         try:
@@ -538,103 +540,49 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_save_form(self):
         try:
-            rect = self.frameGeometry()
-            pos = rect.getRect()
-            x = pos[0] + 1
-            y = pos[1] + 80
-            height = 820
-            width = 1024
-
-            image = ImageGrab.grab((x, y, x + width, y + height))
             main_dir = ''
             date_dir = self.index_date
             name = '1'
             if self.type_graph == 'move':
                 index = self.index_test
-                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '1_Усилие_Перемещение'
 
             elif self.type_graph == 'speed':
                 index = self.index_test_cascade
-                name = self._name_screen_for_save_speed(self.archive.struct.cascade[index + 1])
+                name = self.screen_save.name_screen_for_save_speed(self.archive.struct.cascade[index + 1])
                 main_dir = '2_Усилие_Скорость'
 
             elif self.type_graph == 'triple':
                 index = self.index_test
-                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '3_Ход_Скорость_Сопротивление'
 
             elif self.type_graph == 'boost_1' or self.type_graph == 'boost_2':
                 index = self.index_test
-                name = self._name_screen_for_save(self.archive.struct.tests[index])
+                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '4_Скорость_Сопротивление'
 
             elif self.type_graph == 'temper':
                 index = self.index_test_temper
-                name = self._name_screen_for_save_temper(self.archive.struct.temper[index])
+                name = self.screen_save.name_screen_for_save_temper(self.archive.struct.temper[index])
                 main_dir = '5_Температура_Сопротвление'
 
-            self._create_dir_for_save(main_dir)
+            self.screen_save.create_dir_for_save(main_dir, date_dir)
+
             file_dir = f"screens/{main_dir}/{date_dir}/{name}.bmp"
+            image = self.screen_save.create_image_for_save(self.frameGeometry())
             image.save(file_dir, "BMP")
+
+            msg = QMessageBox.information(self,
+                                          'Внимание',
+                                          f'<b style="color: #f00;">'
+                                          f'Скриншот успешно сохранён в директории'
+                                          )
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_save_form - {e}')
-
-    def _create_dir_for_save(self, main_dir):
-        try:
-            date_dir = self.index_date
-            directory = f'screens/{main_dir}/{date_dir}'
-            os.makedirs(directory, exist_ok=True)
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_create_dir_for_save - {e}')
-
-    def _name_screen_for_save(self, obj):
-        try:
-            time = obj.time_test.replace(':', '.')
-            name = (f'{time}_'
-                    f'{obj.amort.name}_'
-                    f'{obj.serial_number}_'
-                    f'{obj.speed}')
-
-            return name
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save - {e}')
-
-    def _name_screen_for_save_speed(self, obj):
-        try:
-            time = obj[0].time_test.replace(':', '.')
-            name = (f'{time}_'
-                    f'{obj[0].amort.name}_'
-                    f'{obj[0].serial_number}_'
-                    f'{obj[0].speed}~{obj[-1].speed}')
-
-            return name
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_speed - {e}')
-
-    def _name_screen_for_save_temper(self, obj):
-        try:
-            time = obj.time_test.replace(':', '.')
-            begin_temp = obj.temper_graph[0]
-            finish_temp = obj.temper_graph[-1]
-            name = (f'{time}_'
-                    f'{obj.amort.name}_'
-                    f'{obj.serial_number}_'
-                    f'{begin_temp}~{finish_temp} °С')
-
-            return name
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_name_screen_for_save_temper - {e}')
 
     def _clear_compare_data(self):
         try:
@@ -653,6 +601,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 if not self.archive.struct.cascade[index + 1] in self.compare_data:
                     self.compare_data.append(self.archive.struct.cascade[index + 1])
 
+            # FIXME
             elif self.type_graph == 'temper':
                 index = self.index_test_temper
 
@@ -669,7 +618,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _show_compare_data(self):
         try:
             if 0 < len(self.compare_data) < 13:
-                self._show_graph(self.compare_data)
+                self.compare_graph.show_graph(self.type_graph, self.compare_data)
 
             elif len(self.compare_data) == 0:
                 pass
@@ -685,57 +634,3 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_show_compare_data - {e}')
-
-    def _show_graph(self, obj):
-        try:
-            self.graphwidget.plot(clear=True)
-            if self.type_graph == 'move':
-                for graph in obj:
-                    x_list = graph.move_list
-                    y_list = graph.force_list
-                    pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-
-                    name = (f'{graph.time_test} - '
-                            f'{graph.amort.name} - '
-                            f'{graph.serial_number} - '
-                            f'{graph.speed}')
-
-                    self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
-
-            elif self.type_graph == 'speed':
-                for arch_obj in obj:
-                    speed_list = [0]
-                    comp_list = [0]
-                    recoil_list = [0]
-                    push_force = 0
-                    for graph in arch_obj:
-                        speed_list.append(float(graph.speed))
-                        flag_push_force = graph.flag_push_force
-                        if flag_push_force == '1':
-                            push_force = float(graph.dynamic_push_force)
-
-                        elif flag_push_force == '0':
-                            push_force = float(graph.static_push_force)
-
-                        recoil, comp = self.calc_data.middle_min_and_max_force(graph.force_list)
-
-                        recoil_list.append(round(recoil + push_force, 2))
-                        comp_list.append(round(comp * (-1) + push_force, 2))
-
-                    x_list = [*speed_list[::-1], *speed_list]
-                    y_list = [*comp_list[::-1], *recoil_list]
-
-                    pen = pg.mkPen(color=self.color_pen[obj.index(arch_obj)], width=3)
-
-                    name = (f'{arch_obj[0].time_test} - '
-                            f'{arch_obj[0].amort.name} - '
-                            f'{arch_obj[0].serial_number} - '
-                            f'{arch_obj[0].speed}~{arch_obj[-1].speed}')
-
-                    self.graphwidget.plot(x_list, y_list, pen=pen, name=name)
-
-                self.cascade_graph.limit_line_graph(obj[0][0])
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_show_graph - {e}')

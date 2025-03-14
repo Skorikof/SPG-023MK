@@ -34,6 +34,19 @@ class AppWindow(QMainWindow):
         self.bit_temper = None
         self.flag_repeat = False
 
+        self.color_pen = ['black',
+                          'blue',
+                          'green',
+                          'orange',
+                          'purple',
+                          'brown',
+                          'olive',
+                          'cyan',
+                          'yellow',
+                          'pink',
+                          'grey',
+                          'red']
+
         self._start_param_view()
 
     def closeEvent(self, event):
@@ -1229,7 +1242,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.clear()
             for graph in self.list_lab:
                 name = f'{graph["speed"]} м/с'
-                pen = pg.mkPen(color=self.win_archive.color_pen[self.list_lab.index(graph)], width=3)
+                pen = pg.mkPen(color=self.color_pen[self.list_lab.index(graph)], width=3)
 
                 self.ui.lab_GraphWidget.plot(graph['move'], graph['force'], pen=pen, name=name)
 
