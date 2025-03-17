@@ -1,4 +1,3 @@
-import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -33,29 +32,22 @@ class TripleGraph:
             move_list = data.move_list
             force_list = data.force_list
 
+            index_mid_hod = self._calc_index_zero_point_piston(move_list, hod)
+
+            self._fill_piston_graph(hod)
+
+            offset_list = self._offset_move_by_zero(move_list)
+            unfold_move = self._unfolding_move(offset_list)
+            convert_move = self._convert_move_to_deg(unfold_move)
+            convert_force = self._convert_force_list(force_list, index_mid_hod)
+            self._fill_force_graph(convert_move, convert_force)
+
+            speed_list = self.calc_graph_values.speed_coord(move_list, index_mid_hod)
+            round_speed_list = self.calc_graph_values.rounding_coord(speed_list, 5)
+            speed_coord = [round(x * 100, 1) for x in round_speed_list]
+            self._fill_speed_graph(convert_move, speed_coord)
+
             recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
-
-            self._fill_triple_hod_graph(hod)
-
-            # index_mid_hod = self._calc_index_middle_hod_triple(move_list, hod)
-            #
-            # index_max_force = force_list.index(max(force_list))
-            #
-            # correct_move = self.calc_data.offset_move_list_by_zero(move_list, index_mid_hod)
-            #
-            # force_coord = self._force_triple_graph(force_list, index_mid_hod)
-            #
-            # move_coord = self._convert_triple_move_in_degrees_coord(correct_move, index_max_force)
-            #
-            # self._fill_triple_force_graph(move_coord, force_coord)
-
-            # x_coord = self._convert_triple_move_in_degrees_coord(correct_move)
-            #
-            # # index_mid_hod = self._calc_index_middle_hod_triple(x_coord, hod)
-            #
-            # self._fill_triple_force_graph(x_coord, force_list, index_mid_hod)
-            #
-            # self._fill_triple_speed_graph(correct_move, x_coord, index_mid_hod)
 
             return {'recoil': recoil,
                     'comp': comp,
@@ -65,16 +57,32 @@ class TripleGraph:
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_triple_hod_graph(self, hod):
+    def _offset_move_by_zero(self, move: list):
         try:
-            hod_x, hod_y = self.calc_graph_values.coord_sinus(hod, 360, 1)
-            pen = pg.mkPen(color='black', width=3)
-            self.widget.plot(hod_x, hod_y, pen=pen, name='Смещение')
+            koef = min(move)
+            return [x + abs(koef) for x in move]
 
         except Exception as e:
             self.logger.error(e)
 
-    def _calc_index_middle_hod_triple(self, move: list, hod: int):
+    def _unfolding_move(self, move: list):
+        try:
+            way = []
+            max_val = max(move)
+            max_index = move.index(max_val)
+            for i in range(len(move)):
+                point = move[i]
+                if i < max_index:
+                    point = round(max_val - abs(move[i]) + max_val, 1)
+
+                way.append(point)
+
+            return way
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _calc_index_zero_point_piston(self, move: list, hod: int):
         try:
             mid_hod = hod // 2
             find_point = move[0] + mid_hod
@@ -85,73 +93,59 @@ class TripleGraph:
         except Exception as e:
             self.logger.error(e)
 
-    def _force_triple_graph(self, force: list, index: int):
+    def _convert_move_to_deg(self, move: list):
         try:
-            return [x * (-1) for x in force[:index] + force[index:]]
+            min_limit = 0
+            max_limit = 360
+            first_point = move[0]
+            last_point = move[-1]
+
+            k = round((max_limit - min_limit) / (last_point - first_point), 4)
+            b = round(max_limit - k * last_point, 4)
+
+            change_list = [round(k * x + b, 2) for x in move]
+
+            return change_list
 
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_triple_force_graph(self, move: list, force: list):
+    def _convert_force_list(self, force: list, index: int):
         try:
-            # force_y = self._calc_triple_force_coord(force, index)
+            temp = force[index:] + force[:index]
+            temp_list = [x * (-1) for x in temp]
+
+            return temp_list
+
+            # w = np.hanning(10)
+            # force_approxy = np.convolve(w / w.sum(), temp_list, mode='same')
+            #
+            # return list(force_approxy)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _fill_piston_graph(self, hod):
+        try:
+            hod_x, hod_y = self.calc_graph_values.coord_sinus(hod, 360, 1)
+            pen = pg.mkPen(color='black', width=3)
+            self.widget.plot(hod_x, hod_y, pen=pen, name='Смещение')
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _fill_force_graph(self, move: list, force: list):
+        try:
             pen = pg.mkPen(color='blue', width=3)
             self.widget.plot(move, force, pen=pen, name='Усилие')
 
         except Exception as e:
             self.logger.error(e)
 
-    def _calc_triple_force_coord(self, force: list, index):
+    def _fill_speed_graph(self, move, speed):
         try:
-            return list(map(lambda x: round(x * (-1), 1), force[index:] + force[:index]))
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _convert_triple_move_in_degrees_coord(self, move: list, index: int):
-        try:
-            way = []
-            max_point = move[index]
-            for i in range(len(move)):
-                point = move[i]
-                if i > index:
-                    point = round(max_point - abs(move[i]) + max_point, 1)
-                way.append(point)
-
-            return way
-
-            # way = []
-            #
-            # max_point = max(move)
-            # max_index = move.index(max_point)
-            #
-            # for i in range(len(move)):
-            #     point = move[i]
-            #     if i > max_index:
-            #         point = round(max_point - abs(move[i]) + max_point, 1)
-            #
-            #     way.append(point)
-            #
-            # max_way = max(way)
-            #
-            # return list(map(lambda x: round(360 * x / max_way, 1), way))
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _fill_triple_speed_graph(self, move: list, x_coord: list, index):
-        try:
-            speed_list = self.calc_graph_values.speed_coord(move, index)
-
-            w = np.hanning(200)
-            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
-
-            speed_y = list(map(lambda x: round(x * 100, 1), y_approxy))
-
             pen = pg.mkPen(color='red', width=3)
-            self.widget.plot(x_coord, speed_y,
-                             pen=pen,
-                             name='Скорость')
+            self.widget.plot(move, speed, pen=pen, name='Скорость')
 
         except Exception as e:
             self.logger.error(e)

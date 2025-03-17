@@ -1,5 +1,4 @@
 import pyqtgraph as pg
-import numpy as np
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -40,21 +39,18 @@ class BoostGraphOne:
 
             speed_list = self.calc_graph_values.speed_coord(move_list, 0)
 
-            w = np.hanning(200)
-            y_approxy = np.convolve(w / w.sum(), speed_list, mode='same')
+            round_speed_list = self.calc_graph_values.rounding_coord(speed_list, 100)
 
-            x_coord = list(map(lambda x: round(x, 1), y_approxy))
-
-            min_x = x_coord[0]
-            max_x = x_coord[-1]
-            if min_x < max_x:
-                koef = min_x
-            else:
-                koef = max_x
-            x_coord = [x - koef for x in x_coord]
+            # min_x = round_speed_list[0]
+            # max_x = round_speed_list[-1]
+            # if min_x < max_x:
+            #     koef = min_x
+            # else:
+            #     koef = max_x
+            # x_coord = [x - koef for x in round_speed_list]
 
             pen = pg.mkPen(color='blue', width=5)
-            self.widget.plot(x_coord, force_list, pen=pen, name='Скорость')
+            self.widget.plot(round_speed_list, force_list, pen=pen, name='Скорость')
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

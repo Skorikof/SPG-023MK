@@ -23,6 +23,16 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
+    def rounding_coord(self, coord: list, degree: int):
+        try:
+            w = np.hanning(degree)
+            y_approxy = np.convolve(w / w.sum(), coord, mode='same')
+
+            return list(map(lambda x: round(x, 1), y_approxy))
+
+        except Exception as e:
+            self.logger.error(e)
+
     def speed_coord(self, move: list, index):
         try:
             speed_list = []
@@ -30,10 +40,10 @@ class CalcGraphValue:
 
             if index != 0:
                 shift_list = move[index:] + move[:index]
-                temp_list = shift_list[5:] + shift_list + shift_list[:5]
+                temp_list = shift_list[-5:] + shift_list + shift_list[:5]
 
             else:
-                temp_list = move[5:] + move + move[:5]
+                temp_list = move[-5:] + move + move[:5]
 
             for i in range(len(move)):
                 for j in range(10):

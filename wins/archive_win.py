@@ -163,19 +163,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             if self.type_graph == 'speed':
                 if self.index_test_cascade != index:
                     self.index_test_cascade = index
-                    self._archive_test_select()
                     self._archive_graph()
 
             elif self.type_graph == 'temper':
                 if self.index_test_temper != index:
                     self.index_test_temper = index
-                    self._archive_test_select()
                     self._archive_graph()
 
             else:
                 if self.index_test != index:
                     self.index_test = index
-                    self._archive_test_select()
                     self._archive_graph()
 
         except Exception as e:
@@ -251,7 +248,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_test = 0
             if temp_arr:
                 self.combo_test.addItems(temp_arr)
-                self._archive_test_select()
                 self._archive_graph()
             else:
                 self._archive_ui_clear()
@@ -270,89 +266,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_gui_power_freq_visible - {e}')
-
-    # FIXME
-    def _archive_test_select(self):
-        try:
-            self.btn_compare.setVisible(True)
-            if self.type_graph == 'speed':
-                self._pars_lab_cascade_data()
-
-            elif self.type_graph == 'triple':
-                self._pars_triple_data()
-
-            elif self.type_graph == 'temper':
-                self._pars_temper_data()
-
-            else:
-                self._pars_lab_data()
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_archive_test_select - {e}')
-
-    def _pars_lab_data(self):
-        try:
-            index = self.index_test
-
-            if self.archive.struct.tests[index]:
-
-                self._fill_archive_data_gui(self.archive.struct.tests[index])
-
-                self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-
-                self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_data - {e}')
-
-    def _pars_lab_cascade_data(self):
-        try:
-            index = self.index_test_cascade
-            if not self.archive.struct.cascade.get(index + 1) is None:
-                data = self.archive.struct.cascade.get(index + 1)
-                self._fill_archive_data_gui(data[0])
-
-                self._fill_flag_push_force(data[0].flag_push_force)
-
-                speed_list = []
-                for obj in data:
-                    speed_list.append(obj.speed)
-
-                self.speed_le.setText(f'{speed_list[0]}~{speed_list[-1]}')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_lab_cascade_data - {e}')
-
-    def _pars_triple_data(self):
-        try:
-            index = self.index_test
-            if self.archive.struct.tests[index]:
-
-                self._fill_archive_data_gui(self.archive.struct.tests[index])
-
-                self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-
-                self._fill_flag_push_force('2')
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_triple_data - {e}')
-
-    def _pars_temper_data(self):
-        try:
-            index = self.index_test_temper
-            if self.archive.struct.temper[index]:
-                self._fill_archive_data_gui(self.archive.struct.temper[index])
-
-                self.speed_le.setText(f'{self.archive.struct.temper[index].speed}')
-                self._fill_flag_push_force(self.archive.struct.temper[index].flag_push_force)
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_pars_temper_data - {e}')
 
     def _fill_archive_data_gui(self, obj):
         try:
@@ -461,6 +374,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             response = self.move_graph.fill_graph(self.archive.struct.tests[index])
 
+            self._fill_archive_data_gui(self.archive.struct.tests[index])
+            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
+            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
             self.push_force_le.setText(f'{response.get("push_force", 0)}')
@@ -474,7 +391,17 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_lab_cascade_graph(self):
         try:
             index = self.index_test_cascade + 1
-            response = self.cascade_graph.fill_graph(self.archive.struct.cascade.get(index))
+            data = self.archive.struct.cascade.get(index)
+
+            response = self.cascade_graph.fill_graph(data)
+
+            self._fill_archive_data_gui(data[0])
+            self._fill_flag_push_force(data[0].flag_push_force)
+
+            speed_list = []
+            for obj in data:
+                speed_list.append(obj.speed)
+            self.speed_le.setText(f'{speed_list[0]}~{speed_list[-1]}')
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -487,6 +414,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             index = self.index_test
             response = self.triple_graph.fill_graph(self.archive.struct.tests[index])
+
+            self._fill_archive_data_gui(self.archive.struct.tests[index])
+            self._fill_flag_push_force('2')
+            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -502,6 +433,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             response = self.boost_one_graph.fill_graph(self.archive.struct.tests[index])
 
+            self._fill_archive_data_gui(self.archive.struct.tests[index])
+            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
+            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
             self.push_force_le.setText(f'{response.get("push_force", 0)}')
@@ -516,6 +451,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             response = self.boost_two_graph.fill_graph(self.archive.struct.tests[index])
 
+            self._fill_archive_data_gui(self.archive.struct.tests[index])
+            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
+            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
             self.push_force_le.setText(f'{response.get("push_force", 0)}')
@@ -529,6 +468,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             index = self.index_test_temper
 
             response = self.temper_graph.fill_graph(self.archive.struct.temper[index])
+
+            self._fill_archive_data_gui(self.archive.struct.temper[index])
+            self.speed_le.setText(f'{self.archive.struct.temper[index].speed}')
+            self._fill_flag_push_force(self.archive.struct.temper[index].flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
