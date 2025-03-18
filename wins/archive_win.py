@@ -7,6 +7,7 @@ from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from calc_data.data_calculation import CalcData
+from calc_graph.conv_graph import ConvGraph
 from calc_graph.move_graph import MoveGraph
 from calc_graph.cascad_graph import CascadeGraph
 from calc_graph.triple_graph import TripleGraph
@@ -33,6 +34,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.hide()
 
             self.calc_data = CalcData()
+            self.conv_graph = ConvGraph(self.graphwidget)
             self.move_graph = MoveGraph(self.graphwidget)
             self.cascade_graph = CascadeGraph(self.graphwidget)
             self.triple_graph = TripleGraph(self.graphwidget)
@@ -48,6 +50,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_date = ''
             self.index_type_test = 0
             self.index_test = 0
+            self.index_conv = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
             self.ind_type_graph = 0
@@ -93,6 +96,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.index_date = ''
             self.index_type_test = 0
             self.index_test = 0
+            self.index_conv = 0
             self.index_test_cascade = 0
             self.index_test_temper = 0
 
@@ -132,7 +136,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.max_temp_le.setText('')
             self.hod_le.setText('')
             self.power_le.setText('')
+            self.freq_le.setText('')
             self.push_force_le.setText('')
+            self._fill_flag_push_force('-1')
 
         except Exception as e:
             self.logger.error(e)
@@ -148,11 +154,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
 
-    # FIXME
     def _change_index_type_test(self, index):
         try:
             if self.index_type_test != index:
                 self.index_type_test = index
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
@@ -168,6 +174,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             elif self.type_graph == 'temper':
                 if self.index_test_temper != index:
                     self.index_test_temper = index
+                    self._archive_graph()
+
+            elif self.type_graph == 'conv':
+                if self.index_conv != index:
+                    self.index_conv = index
                     self._archive_graph()
 
             else:
@@ -214,38 +225,49 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             temp_arr = []
             self.archive.select_file(date)
 
-            if self.type_graph == 'speed':
-                index = 1
-                for key, value in self.archive.struct.cascade.items():
-                    temp = (f'{index}) '
-                            f'{value[0].time_test} - '
-                            f'{value[0].amort.name} - '
-                            f'{value[0].serial_number} - '
-                            f'{value[0].speed}~{value[-1].speed}')
-                    temp_arr.append(temp)
-                    index += 1
+            if self.index_type_test == 0:
+                if self.type_graph == 'speed':
+                    index = 1
+                    for key, value in self.archive.struct.cascade.items():
+                        temp = (f'{index}) '
+                                f'{value[0].time_test} - '
+                                f'{value[0].amort.name} - '
+                                f'{value[0].serial_number} - '
+                                f'{value[0].speed}~{value[-1].speed}')
+                        temp_arr.append(temp)
+                        index += 1
 
-            elif self.type_graph == 'temper':
-                for i in range(len(self.archive.struct.temper)):
-                    begin_temp = self.archive.struct.temper[i].temper_graph[0]
-                    finish_temp = self.archive.struct.temper[i].temper_graph[-1]
+                elif self.type_graph == 'temper':
+                    for i in range(len(self.archive.struct.temper)):
+                        begin_temp = self.archive.struct.temper[i].temper_graph[0]
+                        finish_temp = self.archive.struct.temper[i].temper_graph[-1]
+                        temp = (f'{i + 1}) '
+                                f'{self.archive.struct.temper[i].time_test} - '
+                                f'{self.archive.struct.temper[i].amort.name} - '
+                                f'{self.archive.struct.temper[i].serial_number} - '
+                                f'{begin_temp}~{finish_temp} °С')
+                        temp_arr.append(temp)
+
+                else:
+                    for i in range(len(self.archive.struct.tests)):
+                        temp = (f'{i + 1}) '
+                                f'{self.archive.struct.tests[i].time_test} - '
+                                f'{self.archive.struct.tests[i].amort.name} - '
+                                f'{self.archive.struct.tests[i].serial_number} - '
+                                f'{self.archive.struct.tests[i].speed}')
+                        temp_arr.append(temp)
+                self.index_test = 0
+
+            elif self.index_type_test == 1:
+                for i in range(len(self.archive.struct.conv)):
                     temp = (f'{i + 1}) '
-                            f'{self.archive.struct.temper[i].time_test} - '
-                            f'{self.archive.struct.temper[i].amort.name} - '
-                            f'{self.archive.struct.temper[i].serial_number} - '
-                            f'{begin_temp}~{finish_temp} °С')
+                            f'{self.archive.struct.conv[i].time_test} - '
+                            f'{self.archive.struct.conv[i].amort.name} - '
+                            f'{self.archive.struct.conv[i].serial_number} - '
+                            f'{self.archive.struct.conv[i].speed}')
                     temp_arr.append(temp)
+                self.index_conv = 0
 
-            else:
-                for i in range(len(self.archive.struct.tests)):
-                    temp = (f'{i + 1}) '
-                            f'{self.archive.struct.tests[i].time_test} - '
-                            f'{self.archive.struct.tests[i].amort.name} - '
-                            f'{self.archive.struct.tests[i].serial_number} - '
-                            f'{self.archive.struct.tests[i].speed}')
-                    temp_arr.append(temp)
-
-            self.index_test = 0
             if temp_arr:
                 self.combo_test.addItems(temp_arr)
                 self._archive_graph()
@@ -313,6 +335,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         elif index == '2':
             txt = f'Выталкивающая сила не учитывается'
             self.push_force_le.setVisible(False)
+        elif index == '-1':
+            txt = ''
 
         self.lbl_push_force.setText(txt)
 
@@ -332,6 +356,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._gui_power_freq_visible(True)
                 self.move_graph.gui_graph()
                 self._fill_lab_graph()
+                self._visible_compare_btn(True)
+
+            elif self.type_graph == 'conv':
+                self._gui_power_freq_visible(True)
+                self.conv_graph.gui_graph()
+                self._fill_conv_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'speed':
@@ -367,6 +397,26 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
+
+    def _fill_conv_graph(self):
+        try:
+            index = self.index_conv
+
+            response = self.conv_graph.fill_graph(self.archive.struct.conv[index])
+
+            self._fill_archive_data_gui(self.archive.struct.conv[index])
+            self.speed_le.setText(f'{self.archive.struct.conv[index].speed}')
+            self._fill_flag_push_force(self.archive.struct.conv[index].flag_push_force)
+
+            self.recoil_le.setText(f'{response.get("recoil", 0)}')
+            self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.push_force_le.setText(f'{response.get("push_force", 0)}')
+            self.power_le.setText(f'{response.get("power", 0)}')
+            self.freq_le.setText(f'{response.get("freq", 0)}')
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_fill_conv_graph - {e}')
 
     def _fill_lab_graph(self):
         try:
@@ -491,6 +541,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
                 main_dir = '1_Усилие_Перемещение'
 
+            elif self.type_graph == 'conv':
+                index = self.index_conv
+                name = self.screen_save.name_screen_for_save(self.archive.struct.conv[index])
+                main_dir = '6_Конвейер'
+
             elif self.type_graph == 'speed':
                 index = self.index_test_cascade
                 name = self.screen_save.name_screen_for_save_speed(self.archive.struct.cascade[index + 1])
@@ -544,9 +599,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 if not self.archive.struct.cascade[index + 1] in self.compare_data:
                     self.compare_data.append(self.archive.struct.cascade[index + 1])
 
-            # FIXME
-            elif self.type_graph == 'temper':
-                index = self.index_test_temper
+            # elif self.type_graph == 'temper':
+            #     index = self.index_test_temper
+
+            elif self.type_graph == 'conv':
+                index = self.index_conv
+                if not self.archive.struct.conv[index] in self.compare_data:
+                    self.compare_data.append(self.archive.struct.conv[index])
 
             else:
                 index = self.index_test

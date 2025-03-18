@@ -33,8 +33,28 @@ class CompareGraph:
             if type_graph == 'move':
                 self.move_graph(obj)
 
+            elif type_graph == 'conv':
+                self.conv_graph(obj)
+
             elif type_graph == 'speed':
                 self.speed_graph(obj)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def conv_graph(self, obj):
+        try:
+            for graph in obj:
+                x_list = graph.move_list
+                y_list = graph.force_list
+                pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
+
+                name = (f'{graph.time_test} - '
+                        f'{graph.amort.name} - '
+                        f'{graph.serial_number} - '
+                        f'{graph.speed}')
+
+                self.widget.plot(x_list, y_list, pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)

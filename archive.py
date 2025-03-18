@@ -10,6 +10,7 @@ from amorts import DataAmort
 class FileArchive:
     def __init__(self):
         self.tests = []
+        self.conv = []
         self.cascade = {}
         self.temper = []
 
@@ -52,6 +53,7 @@ class ReadArchive:
         self.struct = None
         self.type_graph = None
         self.ind_test = -1
+        self.ind_test_conv = -1
         self.ind_casc = 0
         self.ind_temp = -1
         self.index_archive = None
@@ -82,6 +84,7 @@ class ReadArchive:
     def select_file(self, data):
         try:
             self.ind_test = -1
+            self.ind_test_conv = -1
             self.ind_casc = 1
             self.ind_temp = -1
             self.cascade_list = []
@@ -123,6 +126,13 @@ class ReadArchive:
                         temp_list = self._add_data_on_list_graph(archive_list[24:-1])
                         self.struct.temper[self.ind_temp].temper_graph = temp_list[:]
 
+                    elif self.type_graph == 'conv':
+                        self.ind_test_conv += 1
+                        self.struct.conv.append(TestArchive())
+                        self._fill_obj_archive_data(self.struct.conv[self.ind_test_conv], archive_list)
+                        temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+                        self.struct.conv[self.ind_test_conv].move_list = temp_list[:]
+
                     else:
                         self.ind_test += 1
                         self.struct.tests.append(TestArchive())
@@ -136,6 +146,11 @@ class ReadArchive:
                 elif archive_list[0] == '*':
                     if self.type_graph == 'temper':
                         self.struct.temper[self.ind_temp].temper_force_graph = archive_list[24:-1]
+
+                    elif self.type_graph == 'conv':
+                        temp_list = self._add_data_on_list_graph(archive_list[24:-1])
+                        self.struct.conv[self.ind_test_conv].force_list = temp_list[:]
+
                     else:
                         temp_list = self._add_data_on_list_graph(archive_list[24:-1])
 
