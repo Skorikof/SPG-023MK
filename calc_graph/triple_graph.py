@@ -1,4 +1,5 @@
 import pyqtgraph as pg
+import numpy as np
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -29,23 +30,21 @@ class TripleGraph:
     def fill_graph(self, data):
         try:
             hod = int(data.amort.hod)
+            speed = float(data.speed)
             move_list = data.move_list
             force_list = data.force_list
 
-            index_mid_hod = self._calc_index_zero_point_piston(move_list, hod)
+            index_zero_point = self.calc_graph_values.calc_index_zero_point_piston(move_list, hod)
 
             self._fill_piston_graph(hod)
 
-            offset_list = self._offset_move_by_zero(move_list)
-            unfold_move = self._unfolding_move(offset_list)
-            convert_move = self._convert_move_to_deg(unfold_move)
-            convert_force = self._convert_force_list(force_list, index_mid_hod)
-            self._fill_force_graph(convert_move, convert_force)
+            x_coord = self.calc_graph_values.convert_move_to_deg(move_list)
 
-            speed_list = self.calc_graph_values.speed_coord(move_list, index_mid_hod)
-            round_speed_list = self.calc_graph_values.rounding_coord(speed_list, 5)
-            speed_coord = [round(x * 100, 1) for x in round_speed_list]
-            self._fill_speed_graph(convert_move, speed_coord)
+            convert_force = self._convert_force_list(force_list, index_zero_point)
+            self._fill_force_graph(x_coord, convert_force)
+
+            speed_coord = self._calc_speed_coord(hod, speed, x_coord)
+            self._fill_speed_graph(x_coord, speed_coord)
 
             recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
 
@@ -57,59 +56,6 @@ class TripleGraph:
         except Exception as e:
             self.logger.error(e)
 
-    def _offset_move_by_zero(self, move: list):
-        try:
-            koef = min(move)
-            return [x + abs(koef) for x in move]
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _unfolding_move(self, move: list):
-        try:
-            way = []
-            max_val = max(move)
-            max_index = move.index(max_val)
-            for i in range(len(move)):
-                point = move[i]
-                if i < max_index:
-                    point = round(max_val - abs(move[i]) + max_val, 1)
-
-                way.append(point)
-
-            return way
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _calc_index_zero_point_piston(self, move: list, hod: int):
-        try:
-            mid_hod = hod // 2
-            find_point = move[0] + mid_hod
-            for point in move:
-                if find_point - 1 < point < find_point + 1:
-                    return move.index(point)
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _convert_move_to_deg(self, move: list):
-        try:
-            min_limit = 0
-            max_limit = 360
-            first_point = move[0]
-            last_point = move[-1]
-
-            k = round((max_limit - min_limit) / (last_point - first_point), 4)
-            b = round(max_limit - k * last_point, 4)
-
-            change_list = [round(k * x + b, 2) for x in move]
-
-            return change_list
-
-        except Exception as e:
-            self.logger.error(e)
-
     def _convert_force_list(self, force: list, index: int):
         try:
             temp = force[index:] + force[:index]
@@ -117,10 +63,30 @@ class TripleGraph:
 
             return temp_list
 
-            # w = np.hanning(10)
-            # force_approxy = np.convolve(w / w.sum(), temp_list, mode='same')
+        except Exception as e:
+            self.logger.error(e)
+
+    def _calc_speed_coord(self, hod: int, speed: float, angle: list):
+        try:
+            x = np.array(angle, 'float')
+            radius = round((hod / 1000) / 2, 3)
+            piston_rod = 0.4  # длина шатуна
+            lam = round(radius / piston_rod, 3)
+
+            first_order = radius * speed * np.sin(x)
+            second_order = ((lam * radius * speed) / 2) * np.sin(2 * x)
+
+            speed_order = (first_order + second_order) * 100
+
+            return speed_order
+
+            # pen_1 = pg.mkPen(color='black', width=3)
+            # pen_2 = pg.mkPen(color='blue', width=3)
+            # self.widget.plot(x, first_order, pen=pen_1, name='V1')
+            # self.widget.plot(x, second_order, pen=pen_2, name='V2')
             #
-            # return list(force_approxy)
+            # pen = pg.mkPen(color='red', width=3)
+            # self.widget.plot(x, speed_order, pen=pen, name='V')
 
         except Exception as e:
             self.logger.error(e)

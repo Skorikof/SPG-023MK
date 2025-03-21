@@ -63,10 +63,65 @@ class CalcGraphValue:
         try:
             height = int(height / 2)
 
-            x = np.arange(border)
+            x = np.arange(border + 1)
             y = np.sin(2 * np.pi * count_wave * x / border) * height
 
             return x, y
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def calc_index_zero_point_piston(self, move: list, hod: int):
+        try:
+            mid_hod = hod // 2
+            find_point = move[0] + mid_hod
+            for point in move:
+                if find_point - 1 < point < find_point + 1:
+                    return move.index(point)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _offset_move_by_zero(self, move: list):
+        try:
+            koef = min(move)
+            return [x + abs(koef) for x in move]
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def _unfolding_move(self, move: list):
+        try:
+            offset_list = self._offset_move_by_zero(move)
+            way = []
+            max_val = max(offset_list)
+            max_index = offset_list.index(max_val)
+            for i in range(len(offset_list)):
+                point = offset_list[i]
+                if i < max_index:
+                    point = round(max_val - abs(offset_list[i]) + max_val, 1)
+
+                way.append(point)
+
+            return way
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def convert_move_to_deg(self, move: list):
+        try:
+            unfold_move = self._unfolding_move(move)
+            min_limit = 0
+            max_limit = 360
+            first_point = unfold_move[0]
+            last_point = unfold_move[-1]
+
+            k = round((max_limit - min_limit) / (last_point - first_point), 4)
+            b = round(max_limit - k * last_point, 4)
+
+            change_list = [round(k * x + b, 2) for x in unfold_move]
+
+            return change_list
 
         except Exception as e:
             self.logger.error(e)
