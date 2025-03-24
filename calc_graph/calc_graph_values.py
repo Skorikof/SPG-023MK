@@ -125,3 +125,21 @@ class CalcGraphValue:
 
         except Exception as e:
             self.logger.error(e)
+
+    def calc_speed_coord(self, hod: int, speed: float, angle: list):
+        try:
+            x_deg = np.array(angle, 'float')
+            x_rad = (x_deg / 180) * np.pi
+            radius = round((hod / 1000) / 2, 3)
+            piston_rod = 0.4  # длина шатуна
+            lam = round(radius / piston_rod, 3)
+
+            first_order = radius * speed * np.sin(x_rad)
+            second_order = ((lam * radius * speed) / 2) * np.sin(2 * x_rad)
+
+            speed_order = (first_order + second_order) * 10000
+
+            return speed_order
+
+        except Exception as e:
+            self.logger.error(e)
