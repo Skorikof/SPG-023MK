@@ -26,32 +26,37 @@ class CalcGraphValue:
     def rounding_coord(self, coord: list, degree: int):
         try:
             w = np.hanning(degree)
-            y_approxy = np.convolve(w / w.sum(), coord, mode='same')
+            list_approxy = np.convolve(w / w.sum(), coord, mode='same')
 
-            return list(map(lambda x: round(x, 1), y_approxy))
+            return list(map(lambda x: round(x, 3), list_approxy))
 
         except Exception as e:
             self.logger.error(e)
 
-    def speed_coord(self, move: list, index):
+    def speed_coord(self, move: list, tag):
         try:
             speed_list = []
             y_coord = []
 
-            if index != 0:
-                shift_list = move[index:] + move[:index]
-                temp_list = shift_list[-5:] + shift_list + shift_list[:5]
+            temp_list = move[-5:] + move + move[:5]
 
-            else:
-                temp_list = move[-5:] + move + move[:5]
+            if tag == 'boost_one':
+                for i in range(len(move)):
+                    for j in range(10):
+                        speed_list.append(round(abs(abs(temp_list[i + j + 1]) - abs(temp_list[i + j])), 3))
 
-            for i in range(len(move)):
-                for j in range(10):
-                    speed_list.append(round(abs(abs(temp_list[i + j]) - abs(temp_list[i + j + 1])), 3))
+                    mid_val = round(sum(speed_list) / 10, 3)
+                    y_coord.append(mid_val)
+                    speed_list = []
 
-                temp = reduce(lambda x, y: round(x + y, 3), speed_list)
-                y_coord.append(temp)
-                speed_list = []
+            elif tag == 'boost_two':
+                for i in range(len(move)):
+                    for j in range(10):
+                        speed_list.append(round(temp_list[i + j + 1] - temp_list[i + j], 3))
+
+                    mid_val = round(sum(speed_list) / 10, 3)
+                    y_coord.append(mid_val)
+                    speed_list = []
 
             return y_coord
 
@@ -71,21 +76,10 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def calc_index_zero_point_piston(self, move: list, hod: int):
-        try:
-            mid_hod = hod // 2
-            find_point = move[0] + mid_hod
-            for point in move:
-                if find_point - 1 < point < find_point + 1:
-                    return move.index(point)
-
-        except Exception as e:
-            self.logger.error(e)
-
     def _offset_move_by_zero(self, move: list):
         try:
             koef = min(move)
-            return [x + abs(koef) for x in move]
+            return [round(x + abs(koef), 3) for x in move]
 
         except Exception as e:
             self.logger.error(e)
@@ -128,8 +122,7 @@ class CalcGraphValue:
 
     def calc_speed_coord(self, hod: int, speed: float, angle: list):
         try:
-            x_deg = np.array(angle, 'float')
-            x_rad = (x_deg / 180) * np.pi
+            x_rad = np.radians(angle)
             radius = round((hod / 1000) / 2, 3)
             piston_rod = 0.4  # длина шатуна
             lam = round(radius / piston_rod, 3)

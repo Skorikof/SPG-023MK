@@ -37,23 +37,13 @@ class BoostGraphTwo:
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            offset_p = abs(move_list[0] + int(data.amort.hod) / 2)
-            offset_list = [round(x - offset_p, 1) for x in move_list]
+            speed_coord = self.calc_graph_values.speed_coord(move_list, 'boost_two')
+            x_coord = self.calc_graph_values.rounding_coord(speed_coord, 10)
 
-            speed_list = self.calc_graph_values.speed_coord(offset_list, 0)
-
-            round_speed_list = self.calc_graph_values.rounding_coord(speed_list, 100)
-
-            # min_x = round_speed_list[0]
-            # max_x = round_speed_list[-1]
-            # if min_x < max_x:
-            #     koef = min_x
-            # else:
-            #     koef = max_x
-            # x_coord = [x - koef for x in round_speed_list]
+            revers_force = [round(x * (-1), 1) for x in force_list]
 
             pen = pg.mkPen(color='blue', width=5)
-            self.widget.plot(round_speed_list, force_list, pen=pen, name='Скорость')
+            self.widget.plot(x_coord, revers_force, pen=pen, name='Скорость')
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

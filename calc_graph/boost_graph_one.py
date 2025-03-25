@@ -37,20 +37,11 @@ class BoostGraphOne:
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            speed_list = self.calc_graph_values.speed_coord(move_list, 0)
-
-            round_speed_list = self.calc_graph_values.rounding_coord(speed_list, 100)
-
-            # min_x = round_speed_list[0]
-            # max_x = round_speed_list[-1]
-            # if min_x < max_x:
-            #     koef = min_x
-            # else:
-            #     koef = max_x
-            # x_coord = [x - koef for x in round_speed_list]
+            speed_coord = self.calc_graph_values.speed_coord(move_list, 'boost_one')
+            x_coord = self.calc_graph_values.rounding_coord(speed_coord, 10)
 
             pen = pg.mkPen(color='blue', width=5)
-            self.widget.plot(round_speed_list, force_list, pen=pen, name='Скорость')
+            self.widget.plot(x_coord, force_list, pen=pen, name='Скорость')
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

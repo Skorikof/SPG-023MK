@@ -16,10 +16,10 @@ class TripleGraph:
     def gui_graph(self):
         try:
             self.widget.plot(clear=True)
-            self.widget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с')
-            self.widget.setLabel('bottom', 'ω * t', units='°')
-            self.widget.setLabel('right', 'Усилие', units='кгс')
             self.widget.setTitle('Диаграмма хода, скорости, силы сопротивления')
+            self.widget.setLabel('bottom', 'ω * t', units='°', color='k')
+            self.widget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с', color='r')
+            self.widget.setLabel('right', 'Усилие', units='кгс', color='b')
             self.widget.showGrid(True, True)
             self.widget.setBackground('w')
             self.widget.addLegend()
@@ -34,8 +34,6 @@ class TripleGraph:
             move_list = data.move_list
             force_list = data.force_list
             force_array = np.array(force_list) * (-1)
-
-            # index_zero_point = self.calc_graph_values.calc_index_zero_point_piston(move_list, hod)
 
             self._fill_piston_graph(hod)
 
@@ -52,16 +50,6 @@ class TripleGraph:
                     'comp': comp,
                     'push_force': 0,
                     }
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _convert_force_list(self, force, index):
-        try:
-            temp = force[index:] + force[:index]
-            temp_list = [x * (-1) for x in temp]
-
-            return temp_list
 
         except Exception as e:
             self.logger.error(e)
