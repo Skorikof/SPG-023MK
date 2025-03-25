@@ -42,8 +42,10 @@ class ConvGraph:
             speed = float(data.speed)
             freq = self.calc_data.freq_piston_amort(speed, data.amort.hod)
 
-            pen = pg.mkPen(color='black', width=3)
+            move_list.append(move_list[0])
+            force_list.append(force_list[0])
 
+            pen = pg.mkPen(color='black', width=3)
             self.widget.plot(move_list, force_list, pen=pen)
 
             return {'recoil': max_recoil,

@@ -48,11 +48,13 @@ class CompareGraph:
                 x_list = graph.move_list
                 y_list = graph.force_list
                 pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-
                 name = (f'{graph.time_test} - '
                         f'{graph.amort.name} - '
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
+
+                x_list.append(x_list[0])
+                y_list.append(y_list[0])
 
                 self.widget.plot(x_list, y_list, pen=pen, name=name)
 
@@ -65,11 +67,13 @@ class CompareGraph:
                 x_list = graph.move_list
                 y_list = graph.force_list
                 pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-
                 name = (f'{graph.time_test} - '
                         f'{graph.amort.name} - '
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
+
+                x_list.append(x_list[0])
+                y_list.append(y_list[0])
 
                 self.widget.plot(x_list, y_list, pen=pen, name=name)
 
@@ -95,7 +99,6 @@ class CompareGraph:
                 y_list = [*comp_list[::-1], *recoil_list]
 
                 pen = pg.mkPen(color=self.color_pen[obj.index(arch_obj)], width=3)
-
                 name = (f'{arch_obj[0].time_test} - '
                         f'{arch_obj[0].amort.name} - '
                         f'{arch_obj[0].serial_number} - '
