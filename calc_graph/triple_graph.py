@@ -33,15 +33,17 @@ class TripleGraph:
             speed = float(data.speed)
             move_list = data.move_list
             force_list = data.force_list
-            force_array = np.array(force_list) * (-1)
 
             self._fill_piston_graph(hod)
 
             x_coord = self.calc_graph_values.convert_move_to_deg(move_list)
 
-            self._fill_force_graph(x_coord, force_array)
+            index_zero_point = self.calc_graph_values.calc_index_zero_point_piston(x_coord)
 
-            speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord)
+            force_coord = self.calc_graph_values.offset_force_coord(force_list, index_zero_point)
+            self._fill_force_graph(x_coord, force_coord)
+
+            speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord, index_zero_point)
             self._fill_speed_graph(x_coord, speed_coord)
 
             recoil, comp = self.calc_data.middle_min_and_max_force(force_list)

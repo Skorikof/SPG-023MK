@@ -38,7 +38,7 @@ class BoostGraphTwo:
             max_comp = round(comp - push_force, 2)
 
             speed_coord = self.calc_graph_values.speed_coord(move_list, 'boost_two')
-            round_coord = self.calc_graph_values.rounding_coord(speed_coord, 10)
+            round_coord = self.calc_graph_values.rounding_coord(speed_coord, 50)
 
             revers_force = [round(x * (-1), 1) for x in force_list]
 

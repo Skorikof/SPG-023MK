@@ -120,7 +120,26 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def calc_speed_coord(self, hod: int, speed: float, angle: list):
+    def calc_index_zero_point_piston(self, angle: list):
+        try:
+            for point in angle:
+                if 90 - 2 < point < 90 + 2:
+                    return angle.index(point)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def offset_force_coord(self, force, index):
+        try:
+            force = [x * (-1) for x in force]
+            force_list = force[index:] + force[:index]
+
+            return force_list
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def calc_speed_coord(self, hod: int, speed: float, angle: list, index: int):
         try:
             x_rad = np.radians(angle)
             radius = round((hod / 1000) / 2, 3)
@@ -130,9 +149,11 @@ class CalcGraphValue:
             first_order = radius * speed * np.sin(x_rad)
             second_order = ((lam * radius * speed) / 2) * np.sin(2 * x_rad)
 
-            speed_order = (first_order + second_order) * 10000
+            speed_order = list((first_order + second_order) * 10000)
 
-            return speed_order
+            speed_list = speed_order[index:] + speed_order[:index]
+
+            return speed_list
 
         except Exception as e:
             self.logger.error(e)

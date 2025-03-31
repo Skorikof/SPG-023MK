@@ -1,6 +1,6 @@
 import pyqtgraph as pg
-from logger import my_logger
 
+from logger import my_logger
 from calc_data.data_calculation import CalcData
 from calc_graph.calc_graph_values import CalcGraphValue
 
