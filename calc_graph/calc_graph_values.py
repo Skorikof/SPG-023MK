@@ -1,5 +1,5 @@
 import numpy as np
-from functools import reduce
+from scipy import interpolate
 
 from logger import my_logger
 
@@ -129,17 +129,21 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def offset_force_coord(self, force, index):
+    def reverse_force_coord(self, force):
         try:
-            force = [x * (-1) for x in force]
-            force_list = force[index:] + force[:index]
-
-            return force_list
+            return [x * (-1) for x in force]
 
         except Exception as e:
             self.logger.error(e)
 
-    def calc_speed_coord(self, hod: int, speed: float, angle: list, index: int):
+    def offset_force_coord(self, force, index):
+        try:
+            return force[index:] + force[:index]
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def calc_speed_coord(self, hod: int, speed: float, angle: list):
         try:
             x_rad = np.radians(angle)
             radius = round((hod / 1000) / 2, 3)
@@ -151,9 +155,24 @@ class CalcGraphValue:
 
             speed_order = list((first_order + second_order) * 10000)
 
-            speed_list = speed_order[index:] + speed_order[:index]
+            return speed_order
 
-            return speed_list
+        except Exception as e:
+            self.logger.error(e)
+
+    def offset_speed_coord(self, speed, index):
+        try:
+            return speed[index:] + speed[:index]
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def interpoly_line_coord(self, x, y):
+        try:
+            f = interpolate.interp1d(x, y, kind='cubic')
+            x_new = np.linspace(0, max(x), num=10000)
+            y_new = f(x_new)
+            return x_new, y_new
 
         except Exception as e:
             self.logger.error(e)

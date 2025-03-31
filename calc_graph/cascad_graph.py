@@ -78,8 +78,11 @@ class CascadeGraph:
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.widget.plot(speed_list, recoil_list, pen=pen_recoil, name='Отбой')
-            self.widget.plot(speed_list, comp_list, pen=pen_comp, name='Сжатие')
+            recoil_x, recoil_interp = self.calc_graph_values.interpoly_line_coord(speed_list, recoil_list)
+            comp_x, comp_interp = self.calc_graph_values.interpoly_line_coord(speed_list, comp_list)
+
+            self.widget.plot(recoil_x, recoil_interp, pen=pen_recoil, name='Отбой')
+            self.widget.plot(comp_x, comp_interp, pen=pen_comp, name='Сжатие')
 
             self.limit_line_graph(data[0])
 

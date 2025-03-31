@@ -1,5 +1,4 @@
 import pyqtgraph as pg
-import numpy as np
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -40,11 +39,13 @@ class TripleGraph:
 
             index_zero_point = self.calc_graph_values.calc_index_zero_point_piston(x_coord)
 
-            force_coord = self.calc_graph_values.offset_force_coord(force_list, index_zero_point)
-            self._fill_force_graph(x_coord, force_coord)
+            reversed_force = self.calc_graph_values.reverse_force_coord(force_list)
+            offset_force = self.calc_graph_values.offset_force_coord(reversed_force, index_zero_point)
+            self._fill_force_graph(x_coord, offset_force)
 
-            speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord, index_zero_point)
-            self._fill_speed_graph(x_coord, speed_coord)
+            speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord)
+            offset_speed = self.calc_graph_values.offset_speed_coord(speed_coord, index_zero_point)
+            self._fill_speed_graph(x_coord, offset_speed)
 
             recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
 

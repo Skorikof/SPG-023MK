@@ -95,8 +95,11 @@ class CompareGraph:
                     recoil_list.append(round(recoil + push_force, 2))
                     comp_list.append(round(comp * (-1) + push_force, 2))
 
-                x_list = [*speed_list[::-1], *speed_list]
-                y_list = [*comp_list[::-1], *recoil_list]
+                recoil_x, recoil_interp = self.calc_graph_values.interpoly_line_coord(speed_list, recoil_list)
+                comp_x, comp_interp = self.calc_graph_values.interpoly_line_coord(speed_list, comp_list)
+
+                x_list = [*recoil_x[::-1], *comp_x]
+                y_list = [*recoil_interp[::-1], *comp_interp]
 
                 pen = pg.mkPen(color=self.color_pen[obj.index(arch_obj)], width=3)
                 name = (f'{arch_obj[0].time_test} - '
