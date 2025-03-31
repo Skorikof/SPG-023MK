@@ -31,6 +31,20 @@ class ConvGraph:
             move_list = data.move_list
             force_list = data.force_list
 
+            move_list.append(move_list[0])
+            force_list.append(force_list[0])
+
+            pen = pg.mkPen(color='black', width=3)
+            self.widget.plot(move_list, force_list, pen=pen)
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def data_graph(self, data):
+        try:
+            move_list = data.move_list
+            force_list = data.force_list
+
             recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
             push_force = self.calc_graph_values.select_push_force(data)
 
@@ -41,12 +55,6 @@ class ConvGraph:
 
             speed = float(data.speed)
             freq = self.calc_data.freq_piston_amort(speed, data.amort.hod)
-
-            move_list.append(move_list[0])
-            force_list.append(force_list[0])
-
-            pen = pg.mkPen(color='black', width=3)
-            self.widget.plot(move_list, force_list, pen=pen)
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

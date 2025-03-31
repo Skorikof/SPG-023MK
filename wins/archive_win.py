@@ -401,15 +401,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_conv_graph(self):
         try:
             index = self.index_conv
+            obj = self.archive.struct.conv[index]
+            self.conv_graph.fill_graph(obj)
+            response = self.conv_graph.data_graph(obj)
 
-            response = self.conv_graph.fill_graph(self.archive.struct.conv[index])
-
-            self._fill_archive_data_gui(self.archive.struct.conv[index])
-            self.speed_le.setText(f'{self.archive.struct.conv[index].speed}')
-            self._fill_flag_push_force(self.archive.struct.conv[index].flag_push_force)
+            self._fill_archive_data_gui(obj)
+            self._fill_flag_push_force(obj.flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.speed_le.setText(f'{response.get("speed", 0)}')
             self.push_force_le.setText(f'{response.get("push_force", 0)}')
             self.power_le.setText(f'{response.get("power", 0)}')
             self.freq_le.setText(f'{response.get("freq", 0)}')
@@ -421,15 +422,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_lab_graph(self):
         try:
             index = self.index_test
+            obj = self.archive.struct.tests[index]
 
-            response = self.move_graph.fill_graph(self.archive.struct.tests[index])
-
-            self._fill_archive_data_gui(self.archive.struct.tests[index])
-            self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+            self.move_graph.fill_graph(obj)
+            response = self.move_graph.data_graph(obj)
+            self._fill_archive_data_gui(obj)
+            self._fill_flag_push_force(obj.flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
+            self.speed_le.setText(f'{response.get("speed", 0)}')
             self.push_force_le.setText(f'{response.get("push_force", 0)}')
             self.power_le.setText(f'{response.get("power", 0)}')
             self.freq_le.setText(f'{response.get("freq", 0)}')

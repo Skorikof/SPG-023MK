@@ -387,6 +387,7 @@ class AppWindow(QMainWindow):
         self.main_ui_state(True)
         self.main_btn_state(True)
         self.win_amort.hide()
+        self.specif_page()
 
     def btn_search_hod_clicked(self):
         try:
@@ -1079,10 +1080,17 @@ class AppWindow(QMainWindow):
     def _update_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.clear()
+
+            move_list = self.model.set_regs.get('move_graph')
+            force_list = self.model.set_regs.get('force_graph')
+
+            move_list.append(move_list[0])
+            force_list.append(force_list[0])
+
             pen = pg.mkPen(color='black', width=3)
             name = self.model.set_regs.get('speed')
-            self.ui.conv_GraphWidget.plot(self.model.set_regs.get('move_graph'),
-                                          self.model.set_regs.get('force_graph'),
+            self.ui.conv_GraphWidget.plot(move_list,
+                                          force_list,
                                           pen=pen,
                                           name=f'{name} м/с')
 
@@ -1115,10 +1123,17 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
+
+            move_list = self.model.set_regs.get('move_graph')
+            force_list = self.model.set_regs.get('force_graph')
+
+            move_list.append(move_list[0])
+            force_list.append(force_list[0])
+
             pen = pg.mkPen(color='black', width=3)
             name = str(self.model.set_regs.get('speed'))
-            self.ui.lab_GraphWidget.plot(self.model.set_regs.get('move_graph'),
-                                         self.model.set_regs.get('force_graph'),
+            self.ui.lab_GraphWidget.plot(move_list,
+                                         force_list,
                                          pen=pen,
                                          name=f'{name} м/с')
 
@@ -1321,10 +1336,10 @@ class AppWindow(QMainWindow):
         self.win_set.update_data_win_set()
 
     def close_win_settings(self):
-        self.model.set_regs['type_test'] = None
         self.main_btn_state(True)
         self.main_ui_state(True)
         self.win_set.hide()
+        self.select_type_test()
 
     def slot_save_lab_result(self, command):
         try:
@@ -1349,8 +1364,8 @@ class AppWindow(QMainWindow):
         try:
             data_dict = {'move_graph': self.model.set_regs.get('move_graph')[:],
                          'force_graph': self.model.set_regs.get('force_graph')[:],
-                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[1:],
-                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[1:],
+                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[:],
+                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
                          'operator': self.model.set_regs.get('operator').copy(),
