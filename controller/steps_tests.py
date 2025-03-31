@@ -229,10 +229,10 @@ class StepTests:
             self.temper_graph.append(temper)
             self.temper_force_graph.append(force)
 
-            self.model.set_regs['temper_graph'] = self.temper_graph[:]
-            self.model.set_regs['temper_force_graph'] = self.temper_force_graph[:]
+            if len(self.temper_graph) > 1:
+                self.model.set_regs['temper_graph'] = self.temper_graph[:]
+                self.model.set_regs['temper_force_graph'] = self.temper_force_graph[:]
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in steps_tests/step_fill_temper_graph - {e}')
-

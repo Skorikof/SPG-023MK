@@ -259,6 +259,7 @@ class Controller:
                             self.stage = 'wait'
                             self.signals.save_result_test.emit('end')
                             self.steps.step_stop_gear_end_test()
+
                     else:
                         self._full_cycle_update('0')
 
