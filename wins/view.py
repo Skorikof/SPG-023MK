@@ -746,7 +746,6 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/specif_lab_input_temper - {e}')
 
-
     def change_temper_sensor_btn(self):
         try:
             bit = self.model.set_regs.get('list_state')[6]
