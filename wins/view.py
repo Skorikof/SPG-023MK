@@ -749,10 +749,9 @@ class AppWindow(QMainWindow):
 
     def change_temper_sensor_btn(self):
         try:
-            bit = self.model.set_regs.get('list_state')[6]
-            if self.bit_temper != self.model.set_regs.get('list_state')[6]:
-                self.bit_temper = self.model.set_regs.get('list_state')[6]
-                if bit == 0:
+            if self.bit_temper != self.model.state_list[6]:
+                self.bit_temper = self.model.state_list[6]
+                if self.model.state_list[6] == 0:
                     self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
                 else:
                     self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')

@@ -27,11 +27,11 @@ class Steps:
                 if self.model.set_regs.get('max_temperature', 0) >= self.model.set_regs.get('amort').max_temper:
                     tag = 'excess_temperature'
 
-            if self.model.set_regs.get('lost_control', False) is True:
+            if self.model.state_dict.get('lost_control', False) is True:
                 tag = 'lost_control'
-            if self.model.set_regs.get('excess_force', False) is True:
+            if self.model.state_dict.get('excess_force', False) is True:
                 tag = 'excess_force'
-            if self.model.set_regs.get('safety_fence', False) is True:
+            if self.model.state_dict.get('safety_fence', False) is True:
                 tag = 'safety_fence'
 
             return tag

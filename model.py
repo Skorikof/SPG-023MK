@@ -41,6 +41,7 @@ class Model:
         self.client = Client()
 
         self.set_regs = {}
+        self.state_dict = {}
         self.reader = None
         self.writer = None
         self.timer_add_koef = None
@@ -52,6 +53,7 @@ class Model:
         self.main_min_point = 100
         self.min_point = 0
         self.max_point = 0
+        self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         self._start_param_model()
 
@@ -59,15 +61,13 @@ class Model:
         self.client.connect_client()
         self._init_timer_yellow_btn()
 
-        start_state = PrgSettings().state
-        self.update_main_dict(start_state)
+        self.update_main_dict(PrgSettings().state)
 
         if self.client.set_dict['connect']:
             self.writer = Writer(self.client.client)
             self.writer.timer_writer_start()
 
             self._init_signals()
-
             self._init_reader()
 
             self.write_bit_force_cycle(0)
@@ -126,6 +126,14 @@ class Model:
 
     def reader_exit(self):
         self.signals.read_exit.emit()
+
+    def update_state_dict(self, data):
+        try:
+            self.state_dict = {**self.state_dict, **data}
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/update_state_dict - {e}')
 
     def update_main_dict(self, data):
         try:
@@ -237,12 +245,10 @@ class Model:
                              'temper_second': self.parser.temperature_value(res[12], res[13]),
                              }
 
-                reg_dict = self.parser.register_state(res[3])
                 switch_dict = self.parser.switch_state(res[5])
-
-                command = {**data_dict, **reg_dict, **switch_dict}
-
+                command = {**data_dict, **switch_dict}
                 self.update_main_dict(command)
+                self._change_state_list(res[3])
 
                 self._read_controller_finish()
 
@@ -258,13 +264,6 @@ class Model:
                 pass # Пришла пустая посылка
 
             else:
-                # print(f'Count --> {data.get("count")}')
-                # print(f'Force --> {data.get("force")}')
-                # print(f'Move --> {data.get("move")}')
-                # print(f'State --> {data.get("state")}')
-                # print(f'Temper --> {data.get("temper")}')
-                # print(f'{"=" * 100}')
-
                 data_dict = {'force_clear': data.get('force')[-1],
                              'force_cor_koef': self.correct_force_with_koef(data.get('force')[-1]),
                              'force': self.correct_force(data.get('force')[-1]),
@@ -278,11 +277,8 @@ class Model:
                              'count': data.get('count')[-1],
                              }
 
-                reg_dict = self.parser.register_state(data.get('state')[-1])
-
-                command = {**data_dict, **reg_dict}
-
-                self.update_main_dict(command)
+                self.update_main_dict(data_dict)
+                self._change_state_list(data.get('state')[-1])
 
                 self._read_controller_finish()
 
@@ -294,6 +290,18 @@ class Model:
             else:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+
+    def _change_state_list(self, reg):
+        try:
+            temp = bin(reg)[2:].zfill(16)
+            bits = ''.join(reversed(temp))
+            self.state_list = [int(x) for x in bits]
+
+            self.update_state_dict(self.parser.register_state(reg))
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
 
     def _read_controller_finish(self):
         if self.set_regs.get('type_test', None) == 'hand':
@@ -311,7 +319,7 @@ class Model:
 
     def yellow_btn_click(self):
         try:
-            if self.set_regs.get('yellow_btn', True) is False:
+            if self.state_dict.get('yellow_btn', True) is False:
                 if self.yellow_rattle is False:
                     self.time_push_yellow = time.monotonic()
                     self.signals.test_launch.emit(True)
@@ -525,20 +533,16 @@ class Model:
 
     def _write_reg_state(self, bit, value, command=None):
         try:
-            temp_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            com_list = self.set_regs.get('list_state', temp_list)[:]
-            com_list[bit] = value
+            com_array = self.state_list[:]
+            com_array[bit] = value
 
             res = 0
-            values = []
 
             for i in range(16):
-                res = res + com_list[i] * 2 ** i
-
-            values.append(res)
+                res = res + com_array[i] * 2 ** i
 
             self.writer.write_out('reg',
-                                  values=values,
+                                  values=[res],
                                   reg_write=0x2003,
                                   command=command)
 
@@ -562,7 +566,7 @@ class Model:
 
     def write_bit_red_light(self, value):
         try:
-            bit = self.set_regs.get('red_light', 0)
+            bit = self.state_dict.get('red_light', 0)
             if int(bit) != value:
                 self._write_reg_state(1, value)
         except Exception as e:
@@ -571,7 +575,7 @@ class Model:
 
     def write_bit_green_light(self, value):
         try:
-            bit = self.set_regs.get('green_light', 0)
+            bit = self.state_dict.get('green_light', 0)
             if int(bit) != value:
                 self._write_reg_state(2, value)
 
@@ -597,7 +601,7 @@ class Model:
 
     def write_bit_select_temper(self, value):
         try:
-            bit = self.set_regs.get('select_temper', 0)
+            bit = self.state_dict.get('select_temper', 0)
             if int(bit) != value:
                 self._write_reg_state(6, value)
 
@@ -617,10 +621,10 @@ class Model:
 
     def _motor_command(self, command):
         try:
-            if self.set_regs.get('lost_control'):
+            if self.state_dict.get('lost_control'):
                 self.write_bit_unblock_control()
 
-            if self.set_regs.get('excess_force'):
+            if self.state_dict.get('excess_force'):
                 self.write_bit_emergency_force()
 
             command = command + self.calc_data.calc_crc(command)
@@ -695,9 +699,9 @@ class Model:
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
         try:
-            if not self.set_regs.get('green_light'):
+            if not self.state_dict.get('green_light'):
                 self.write_bit_green_light(1)
-            if not self.set_regs.get('red_light'):
+            if not self.state_dict.get('red_light'):
                 self.write_bit_red_light(1)
 
         except Exception as e:
@@ -707,9 +711,9 @@ class Model:
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
         try:
-            if self.set_regs.get('green_light'):
+            if self.state_dict.get('green_light'):
                 self.write_bit_green_light(0)
-            if self.set_regs.get('red_light'):
+            if self.state_dict.get('red_light'):
                 self.write_bit_red_light(0)
 
         except Exception as e:
@@ -719,9 +723,9 @@ class Model:
     def lamp_green_switch_on(self):
         """Выключение зелёного индикатора"""
         try:
-            if not self.set_regs.get('green_light'):
+            if not self.state_dict.get('green_light'):
                 self.write_bit_green_light(1)
-            if self.set_regs.get('red_light'):
+            if self.state_dict.get('red_light'):
                 self.write_bit_red_light(0)
 
         except Exception as e:
@@ -731,9 +735,9 @@ class Model:
     def lamp_red_switch_on(self):
         """Выключение красного индикатора"""
         try:
-            if self.set_regs.get('green_light'):
+            if self.state_dict.get('green_light'):
                 self.write_bit_green_light(0)
-            if not self.set_regs.get('red_light'):
+            if not self.state_dict.get('red_light'):
                 self.write_bit_red_light(1)
 
         except Exception as e:

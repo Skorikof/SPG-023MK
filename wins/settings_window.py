@@ -67,7 +67,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self._statusbar_set_ui(f'ERROR in settings_window/_check_operator - {e}')
 
     def _fill_lbl_temp_sens(self):
-        channel = self.model.set_regs.get('select_temper', 0)
+        channel = self.model.state_dict.get('select_temper', 0)
         txt = ''
         if channel == 0:
             txt = 'Бесконтактный датчик температуры'
@@ -105,7 +105,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.btn_correct_force.clicked.connect(self._btn_set_doclick)
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
-
         self.lineEdit_F_alarm.returnPressed.connect(self._write_alarm_force)
 
     def update_data_win_set(self):
@@ -185,30 +184,29 @@ class SetWindow(QMainWindow, UiSettingsWindow):
     def _btn_set_doclick(self):
         try:
             btn = self.sender().objectName()
-            temp_list = [x for x in self.model.set_regs.get('list_state')]
             if btn == 'btn_cycle_F':
-                if temp_list[0] == 0:
+                if self.model.state_list[0] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_force_cycle(value)
 
             elif btn == 'btn_red_light':
-                if temp_list[1] == 0:
+                if self.model.state_list[1] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_red_light(value)
 
             elif btn == 'btn_green_light':
-                if temp_list[2] == 0:
+                if self.model.state_list[2] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_green_light(value)
 
             elif btn == 'btn_temper_channel':
-                if temp_list[6] == 0:
+                if self.model.state_list[6] == 0:
                     value = 1
                 else:
                     value = 0
@@ -255,12 +253,12 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _update_color_switch(self):
         try:
-            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('cycle_force', False)))
-            self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.set_regs.get('lost_control', False)))
-            self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('excess_force', False)))
-            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.model.set_regs.get('safety_fence', False)))
-            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.model.set_regs.get('state_freq', False)))
-            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.model.set_regs.get('state_force', False)))
+            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('cycle_force', False)))
+            self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.state_dict.get('lost_control', False)))
+            self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('excess_force', False)))
+            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.model.state_dict.get('safety_fence', False)))
+            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_freq', False)))
+            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_force', False)))
             self.fram_block_traverse_1.setStyleSheet(self._set_color_fram(
                 self.model.set_regs.get('traverse_block_left', True), True))
             self.fram_block_traverse_2.setStyleSheet(self._set_color_fram(
@@ -271,9 +269,9 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.fram_up_point.setStyleSheet(self._set_color_fram(self.model.set_regs.get('highest_position', False)))
             self.fram_up_alarm_point.setStyleSheet(self._set_color_fram(
                 self.model.set_regs.get('alarm_highest_position', True), True))
-            self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.set_regs.get('green_light', False)))
-            self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.set_regs.get('red_light', False)))
-            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.set_regs.get('yellow_btn', True), True))
+            self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('green_light', False)))
+            self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('red_light', False)))
+            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.state_dict.get('yellow_btn', True), True))
 
         except Exception as e:
             self.logger.error(e)

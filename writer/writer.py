@@ -22,7 +22,6 @@ class Writer:
         self.writer_flag_init = False
 
         self._init_timer_writer()
-        self.timer_writer_start()
 
     def _init_timer_writer(self):
         self.timer_writer = QTimer()
