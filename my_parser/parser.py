@@ -53,7 +53,7 @@ class ParserSPG023MK:
     def movement_amount(self, data) -> float:
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
-            move = round(0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
+            move = round(-0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
 
             return move
 

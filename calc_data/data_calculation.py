@@ -1,4 +1,4 @@
-import numpy as np
+import statistics
 import crcmod
 from struct import pack
 
@@ -82,12 +82,10 @@ class CalcData:
     def middle_min_and_max_force(self, data: list):
         try:
             recoil_index = data.index(max(data))
-            recoil_list = [abs(x) for x in data[recoil_index - 5:recoil_index + 5]]
-            max_recoil = round((sum(recoil_list) / len(recoil_list)), 1)
+            max_recoil = statistics.fmean([abs(x) for x in data[recoil_index - 5:recoil_index + 5]])
 
             comp_index = data.index(min(data))
-            comp_list = [abs(x) for x in data[comp_index - 5:comp_index + 5]]
-            max_comp = round((sum(comp_list) / len(comp_list)), 1)
+            max_comp = statistics.fmean([abs(x) for x in data[comp_index - 5:comp_index + 5]])
 
             return max_recoil, max_comp
 
@@ -131,20 +129,6 @@ class CalcData:
                 return 2000
             else:
                 return (force // 100) * 100 + 100
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def offset_move_list_by_zero(self, move: list, index: int):
-        try:
-            return list(map(lambda x: round(x - move[index], 1), move))
-
-            # start_point = move[0]
-            # if start_point < 0:
-            #     return list(map(lambda x: round(x + abs(start_point), 1), move))
-            #
-            # else:
-            #     return list(map(lambda x: round(x - start_point, 1), move))
 
         except Exception as e:
             self.logger.error(e)

@@ -231,7 +231,7 @@ class Model:
                              'force': self.correct_force(force),
                              'move': self.parser.movement_amount(res[2]),
                              'count': self.parser.counter_time(res[4]),
-                             'traverse_move': round(-0.5 * self.parser.movement_amount(res[6]), 1),
+                             'traverse_move': round(0.5 * self.parser.movement_amount(res[6]), 1),
                              'temper_first': self.parser.temperature_value(res[7], res[8]),
                              'force_alarm': self.parser.emergency_force(res[10], res[11]),
                              'temper_second': self.parser.temperature_value(res[12], res[13]),

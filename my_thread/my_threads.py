@@ -263,7 +263,7 @@ class Reader(QRunnable):
             self.result['count'].append(request[ind])
             force = round(unpack('f', pack('<HH', request[ind + 2], request[ind + 1]))[0], 1)
             self.result['force'].append(force)
-            move = round(0.1 * (int.from_bytes(pack('>H', request[ind + 3]), 'big', signed=True)), 1)
+            move = round(-0.1 * (int.from_bytes(pack('>H', request[ind + 3]), 'big', signed=True)), 1)
             self.result['move'].append(move)
             self.result['state'].append(request[ind + 4])
             self.result['temper'].append(round(request[ind + 5] * 0.01, 1))
