@@ -24,7 +24,7 @@ class Steps:
         try:
             tag = 'null'
             if not self.model.set_regs.get('type_test') == 'temper':
-                if self.model.set_regs.get('max_temperature', 0) >= self.model.set_regs.get('amort').max_temper:
+                if self.model.set_regs.get('max_temperature', 0) >= self.model.amort.max_temper:
                     tag = 'excess_temperature'
 
             if self.model.state_dict.get('lost_control', False) is True:
@@ -42,7 +42,11 @@ class Steps:
 
     def step_search_hod_gear(self):
         try:
-            hod = self.model.set_regs.get('hod', 120)
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             if hod > 100:
                 speed = 0.1
             elif 50 < hod <= 100:
@@ -89,7 +93,11 @@ class Steps:
 
     def step_move_gear_set_pos(self):
         try:
-            hod = self.model.set_regs.get('hod', 120)
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             if hod > 100:
                 speed = 0.03
             elif 50 < hod <= 100:
@@ -171,7 +179,11 @@ class Steps:
 
             self.model.write_bit_force_cycle(0)
 
-            hod = self.model.set_regs.get('hod', 120)
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             if hod > 100:
                 speed = 0.03
             elif 50 < hod <= 100:
@@ -216,7 +228,11 @@ class Steps:
     def step_test_move_cycle(self):
         """Проверочный ход"""
         try:
-            hod = self.model.set_regs.get('hod', 120)
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             if hod > 100:
                 speed = 0.06
             elif 50 < hod <= 100:
@@ -233,7 +249,11 @@ class Steps:
     def step_pumping_before_test(self):
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
         try:
-            hod = self.model.set_regs.get('hod', 120)
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             if hod >= 100:
                 speed = 0.2
             elif 50 < hod <= 100:
@@ -263,7 +283,7 @@ class Steps:
 
     def stage_traverse_referent(self):
         try:
-            if self.model.set_regs.get('highest_position', False) is True:
+            if self.model.switch_dict.get('highest_position', False) is True:
                 self.model.motor_stop(2)
 
                 self.model.set_regs['traverse_referent'] = True
@@ -334,17 +354,16 @@ class Steps:
         try:
             comp = self.model.set_regs.get('max_comp', 0)
             recoil = self.model.set_regs.get('max_recoil', 0)
-            amort = self.model.set_regs.get('amort')
             min_comp, max_comp = 0, 2000
             min_recoil, max_recoil = 0, 2000
 
             if step == 'one':
-                min_comp, max_comp = amort.min_comp, amort.max_comp
-                min_recoil, max_recoil = amort.min_recoil, amort.max_recoil
+                min_comp, max_comp = self.model.amort.min_comp, self.model.amort.max_comp
+                min_recoil, max_recoil = self.model.amort.min_recoil, self.model.amort.max_recoil
 
             elif step == 'two':
-                min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
-                min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
+                min_comp, max_comp = self.model.amort.min_comp_2, self.model.amort.max_comp_2
+                min_recoil, max_recoil = self.model.amort.min_recoil_2, self.model.amort.max_recoil_2
 
             if min_comp < comp < max_comp and min_recoil < recoil < max_recoil:
                 self.model.lamp_green_switch_on()

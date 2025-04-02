@@ -42,8 +42,10 @@ class Model:
 
         self.set_regs = {}
         self.state_dict = {}
+        self.switch_dict = {}
         self.reader = None
         self.writer = None
+        self.amort = None
         self.timer_add_koef = None
         self.koef_force_list = []
         self.timer_calc_koef = None
@@ -59,7 +61,8 @@ class Model:
 
     def _start_param_model(self):
         self.client.connect_client()
-        self._init_timer_yellow_btn()
+        # FIXME таймер жёлтой кнопки
+        # self._init_timer_yellow_btn()
 
         self.update_main_dict(PrgSettings().state)
 
@@ -127,13 +130,21 @@ class Model:
     def reader_exit(self):
         self.signals.read_exit.emit()
 
-    def update_state_dict(self, data):
+    def _update_switch_dict(self, data):
+        try:
+            self.switch_dict = {**self.switch_dict, **data}
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_update_switch_dict - {e}')
+
+    def _update_state_dict(self, data):
         try:
             self.state_dict = {**self.state_dict, **data}
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/update_state_dict - {e}')
+            self.status_bar_msg(f'ERROR in model/_update_state_dict - {e}')
 
     def update_main_dict(self, data):
         try:
@@ -245,9 +256,9 @@ class Model:
                              'temper_second': self.parser.temperature_value(res[12], res[13]),
                              }
 
-                switch_dict = self.parser.switch_state(res[5])
-                command = {**data_dict, **switch_dict}
-                self.update_main_dict(command)
+                self.update_main_dict(data_dict)
+
+                self._update_switch_dict(self.parser.switch_state(res[5]))
                 self._change_state_list(res[3])
 
                 self._read_controller_finish()
@@ -297,7 +308,7 @@ class Model:
             bits = ''.join(reversed(temp))
             self.state_list = [int(x) for x in bits]
 
-            self.update_state_dict(self.parser.register_state(reg))
+            self._update_state_dict(self.parser.register_state(reg))
 
         except Exception as e:
             self.logger.error(e)
@@ -456,21 +467,20 @@ class Model:
                 self._calc_dynamic_push_force()
                 push_force = self._choice_push_force()
                 speed = self.set_regs.get('speed')
-                amort = self.set_regs.get('amort')
 
                 move_list = self.set_regs.get('move_accum_list')[:]
                 force_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(force_list)
 
-                offset_p = self.calc_data.offset_move_by_hod(amort, self.min_point)
+                offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
                            'force_graph': force_list[:],
                            'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
                            'power': self.calc_data.power_amort(move_list, force_list),
-                           'freq_piston': self.calc_data.freq_piston_amort(speed, amort.hod),
+                           'freq_piston': self.calc_data.freq_piston_amort(speed, self.amort.hod),
                            'force_accum_list': [],
                            'move_accum_list': [],
                            }
@@ -510,7 +520,7 @@ class Model:
                 if (self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and
                         min(move) <= self.min_point <= max(move)):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
-                    hod_dif = self.set_regs.get('hod', 120)
+                    hod_dif = self.amort.hod
                     if self.set_regs.get('search_hod') is False:
                         if hod > hod_dif - 5:
                             self._check_full_circle()
@@ -647,7 +657,7 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_frequency - {e}')
 
-    def write_speed_motor(self, adr: int, speed: float = None, freq: int = None):
+    def write_speed_motor(self, adr: int, speed: float = None, freq: int = None, hod: int = None):
         """
         Запись скорости вращения двигателя, если задана скорость, то она пересчитывается в частоту,
         частота записывается напрямую
@@ -655,7 +665,11 @@ class Model:
         try:
             value = 0
             if not freq:
-                hod = self.set_regs.get('hod', 120)
+                if not hod:
+                    if self.amort is None:
+                        hod = 120
+                    else:
+                        hod = self.amort.hod
                 value = self.calc_data.freq_from_speed(speed, hod)
 
             elif not speed:

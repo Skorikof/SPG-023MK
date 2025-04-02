@@ -395,8 +395,7 @@ class Controller:
             if self._check_max_temper_test():
                 self.steps_tests.step_start_test()
 
-                amort = self.model.set_regs.get('amort')
-                self.model.write_emergency_force(self.calc_data.excess_force(amort))
+                self.model.write_emergency_force(self.calc_data.excess_force(self.model.amort))
 
                 if self.model.set_regs.get('repeat', False):
                     self.stage = 'wait_buffer'
@@ -461,13 +460,12 @@ class Controller:
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
-            amort = self.model.set_regs.get('amort')
             stock_point = 760 # Константа, измереная высота у стенда
-            hod = amort.hod
-            len_min = amort.min_length
-            len_max = amort.max_length
+            hod = self.model.amort.hod
+            len_min = self.model.amort.min_length
+            len_max = self.model.amort.max_length
             mid_point = (len_max - len_min) / 2
-            adapter = amort.adapter_len
+            adapter = self.model.amort.adapter_len
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
@@ -532,7 +530,7 @@ class Controller:
         if self.model.set_regs.get('type_test', 'hand') == 'temper':
             finish_temp = self.model.set_regs.get('finish_temper', 80)
         else:
-            finish_temp = self.model.set_regs.get('amort').max_temper
+            finish_temp = self.model.amort.max_temper
 
         temp_f = self.model.set_regs.get('temper_first', 0)
         temp_s = self.model.set_regs.get('temper_second', 0)

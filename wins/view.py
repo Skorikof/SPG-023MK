@@ -563,14 +563,9 @@ class AppWindow(QMainWindow):
     def select_amort(self):
         try:
             ind = self.index_amort
-            amort = self.win_amort.amorts.struct.amorts[ind]
+            self.model.amort = self.win_amort.amorts.struct.amorts[ind]
 
-            command = {'amort': amort,
-                       'hod': amort.hod}
-
-            self.model.update_main_dict(command)
-
-            self.specif_ui_fill(amort)
+            self.specif_ui_fill(self.win_amort.amorts.struct.amorts[ind])
 
         except Exception as e:
             self.logger.error(e)
@@ -637,7 +632,12 @@ class AppWindow(QMainWindow):
                                               )
 
             speed = float(text.replace(',', '.'))
-            hod = int(self.model.set_regs.get('hod', 40))
+
+            if self.model.amort is None:
+                hod = 120
+            else:
+                hod = self.model.amort.hod
+
             max_speed = self.calc_data.max_speed(hod)
             if 0.02 <= speed <= max_speed:
                 return speed
@@ -891,25 +891,24 @@ class AppWindow(QMainWindow):
 
     def save_log_begin_test(self):
         try:
-            amort = self.model.set_regs.get('amort')
             type_test = self.model.set_regs.get('type_test')
             if type_test == 'lab_hand' or type_test == 'temper':
                 speed = self.model.set_regs.get('speed', self.ui.specif_speed_one_lineEdit.text())
             elif type_test == 'lab_cascade':
                 speed = self.model.set_regs.get('speed_cascade')
             else:
-                speed = amort.speed_one
+                speed = self.model.amort.speed_one
 
-            name = amort.name
-            dimensions = f'{amort.min_length} - {amort.max_length}'
-            hod = f'{amort.hod}'
-            speed_one = f'{amort.speed_one}'
-            speed_two = f'{amort.speed_two}'
-            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
-            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
-            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
-            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
-            temper = f'{amort.max_temper}'
+            name = self.model.amort.name
+            dimensions = f'{self.model.amort.min_length} - {self.model.amort.max_length}'
+            hod = f'{self.model.amort.hod}'
+            speed_one = f'{self.model.amort.speed_one}'
+            speed_two = f'{self.model.amort.speed_two}'
+            limit_comp_one = f'{self.model.amort.min_comp} - {self.model.amort.max_comp}'
+            limit_comp_two = f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}'
+            limit_recoil_one = f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}'
+            limit_recoil_two = f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}'
+            temper = f'{self.model.amort.max_temper}'
 
             txt_log = (f'Start {type_test} test --> name = {name}, speed = {speed}, dimensions = {dimensions}, '
                        f'hod = {hod}, speed_one = {speed_one}, speed_two = {speed_two}, '
@@ -919,23 +918,20 @@ class AppWindow(QMainWindow):
 
             self.logger.info(txt_log)
 
-            self.model.set_regs['hod'] = amort.hod
-
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/save_log_begin_test - {e}')
 
     def fill_gui_lab_test(self):
         try:
-            amort = self.model.set_regs.get('amort')
-            name = amort.name
-            hod = f'{amort.hod}'
-            speed_one = f'{amort.speed_one}'
-            speed_two = f'{amort.speed_two}'
-            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
-            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
-            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
-            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
+            name = self.model.amort.name
+            hod = f'{self.model.amort.hod}'
+            speed_one = f'{self.model.amort.speed_one}'
+            speed_two = f'{self.model.amort.speed_two}'
+            limit_comp_one = f'{self.model.amort.min_comp} - {self.model.amort.max_comp}'
+            limit_comp_two = f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}'
+            limit_recoil_one = f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}'
+            limit_recoil_two = f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}'
 
             self.ui.lab_name_le.setText(name)
             self.ui.lab_speed_set_1_le.setText(speed_one)
@@ -1036,11 +1032,10 @@ class AppWindow(QMainWindow):
 
     def conv_test_fill_template(self):
         try:
-            amort = self.model.set_regs.get('amort')
-            self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
-            self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
-            self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
-            self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+            self.ui.conv_comp_limit_le.setText(f'{self.model.amort.min_comp} - {self.model.amort.max_comp}')
+            self.ui.conv_recoil_limit_le.setText(f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}')
+            self.ui.conv_comp_limit_le_2.setText(f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}')
+            self.ui.conv_recoil_limit_le_2.setText(f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}')
 
             self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
 
@@ -1367,9 +1362,9 @@ class AppWindow(QMainWindow):
                          'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
-                         'operator': self.model.set_regs.get('operator').copy(),
+                         'operator': self.model.set_regs.get('operator')[:],
                          'serial': self.model.set_regs.get('serial_number', 0),
-                         'amort': self.model.set_regs.get('amort'),
+                         'amort': self.model.amort,
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
                          'static_push_force': self.model.set_regs.get('static_push_force'),
                          'dynamic_push_force': self.model.set_regs.get('dynamic_push_force'),

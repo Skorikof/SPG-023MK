@@ -137,10 +137,9 @@ class StepTests:
     def step_test_on_two_speed(self, ind: int):
         try:
             if ind == 1:
-                speed_one = self.model.set_regs.get('amort').speed_one
-                self.model.write_speed_motor(1, speed=speed_one)
+                self.model.write_speed_motor(1, speed=self.model.amort.speed_one)
                 self.signals.stage_from_tests.emit('test_speed_one')
-                command = {'speed': speed_one,
+                command = {'speed': self.model.amort.speed_one,
                            'force_accum_list': [],
                            'move_accum_list': [],
                            'fill_graph': True,
@@ -148,11 +147,10 @@ class StepTests:
                 self.model.update_main_dict(command)
 
             elif ind == 2:
-                speed_two = self.model.set_regs.get('amort').speed_two
                 self.signals.stage_from_tests.emit('test_speed_two')
-                self.model.set_regs['speed'] = speed_two
+                self.model.set_regs['speed'] = self.model.amort.speed_two
 
-                self.model.write_speed_motor(1, speed=speed_two)
+                self.model.write_speed_motor(1, speed=self.model.amort.speed_two)
 
             if self.model.set_regs.get('repeat', False):
                 self.model.set_regs['repeat'] = False

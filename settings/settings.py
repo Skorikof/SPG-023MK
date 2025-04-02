@@ -26,7 +26,6 @@ class PrgSettings:
             finish_temper = float(config['Settings']['FinishTemper'].replace(',', '.'))
 
             self.state = {'operator': {'name': '', 'rank': ''},
-                          'amort': None,
                           'force_koef': force_koef,
                           'finish_temper': finish_temper,
                           'buffer_state': ['null', 'null'],

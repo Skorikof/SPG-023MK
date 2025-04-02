@@ -188,9 +188,9 @@ class AlarmSteps:
     def step_alarm_traverse_position(self):
         try:
             tag = 'null'
-            if not self.model.set_regs.get('alarm_highest_position', False):
+            if not self.model.switch_dict.get('alarm_highest_position', False):
                 tag = 'up'
-            if not self.model.set_regs.get('alarm_lowest_position', False):
+            if not self.model.switch_dict.get('alarm_lowest_position', False):
                 tag = 'down'
 
             if tag != 'null':
