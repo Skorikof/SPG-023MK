@@ -242,15 +242,14 @@ class Controller:
 
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    max_temper = self.model.set_regs.get('max_temperature', None)
-                    if max_temper is not None and max_temper != self.last_max_temper:
-                        if max_temper <= self.model.finish_temper:
-                            self.last_max_temper = max_temper
+                    if self.model.temper_max is not None and self.model.temper_max != self.last_max_temper:
+                        if self.model.temper_max <= self.model.finish_temper:
+                            self.last_max_temper = self.model.temper_max
                             max_recoil = self.model.set_regs.get('max_recoil', None)
                             max_comp = self.model.set_regs.get('max_comp', None)
-                            if max_temper is not None and max_recoil is not None and max_comp is not None:
+                            if self.model.temper_max is not None and max_recoil is not None and max_comp is not None:
                                 force = f'{max_recoil}|{max_comp}'
-                                self.steps_tests.step_fill_temper_graph(max_temper, force)
+                                self.steps_tests.step_fill_temper_graph(self.model.temper_max, force)
 
                             self._full_cycle_update('0')
 
@@ -269,9 +268,10 @@ class Controller:
                     if self.count_cascade < self.max_cascade:
                         speed = self.model.set_regs.get('speed_cascade')[self.count_cascade]
                         self.model.write_speed_motor(1, speed=speed)
+
+                        self.model.clear_data_in_array_graph()
+
                         command = {'speed': speed,
-                                   'force_accum_list': [],
-                                   'move_accum_list': [],
                                    'fill_graph': True,
                                    }
                         self.model.update_main_dict(command)
@@ -403,7 +403,7 @@ class Controller:
                     self.model.write_bit_force_cycle(1)
 
                 else:
-                    if self.model.set_regs.get('traverse_move', 0) < 10:
+                    if self.model.move_traverse < 10:
                         self.signals.traverse_referent_msg.emit()
                         self.steps.step_traverse_referent_point()
 
@@ -425,7 +425,7 @@ class Controller:
         try:
             self.steps_tests.step_stop_test()
 
-            if self.model.set_regs.get('gear_referent', False):
+            if self.model.gear_referent:
                 self.steps.step_stop_gear_end_test()
             else:
                 self.model.motor_stop(1)
@@ -470,8 +470,7 @@ class Controller:
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
                 self._position_traverse()
-                pos_trav = float(self.model.set_regs.get('traverse_move'))
-                if abs(abs(pos_trav) - abs(install_point)) < 0.5:
+                if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.wait_yellow_btn.emit()
 
                 else:
@@ -532,10 +531,7 @@ class Controller:
         else:
             finish_temp = self.model.amort.max_temper
 
-        temp_f = self.model.set_regs.get('temper_first', 0)
-        temp_s = self.model.set_regs.get('temper_second', 0)
-
-        if temp_f < finish_temp and temp_s < finish_temp:
+        if self.model.temper_first < finish_temp and self.model.temper_second < finish_temp:
             return True
 
         else:

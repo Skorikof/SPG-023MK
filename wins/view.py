@@ -405,7 +405,7 @@ class AppWindow(QMainWindow):
             msg = QMessageBox.information(self,
                                           'Внимание',
                                           f'<b style="color: #f00;">Ход шатуна равен '
-                                          f'{self.model.set_regs.get("hod_measure", 0)}</b>'
+                                          f'{self.model.hod_measure}</b>'
                                           )
             self.main_ui_state(True)
             self.main_btn_state(True)
@@ -1077,9 +1077,6 @@ class AppWindow(QMainWindow):
             move_list = self.model.set_regs.get('move_graph')
             force_list = self.model.set_regs.get('force_graph')
 
-            move_list.append(move_list[0])
-            force_list.append(force_list[0])
-
             pen = pg.mkPen(color='black', width=3)
             name = self.model.set_regs.get('speed')
             self.ui.conv_GraphWidget.plot(move_list,
@@ -1119,9 +1116,6 @@ class AppWindow(QMainWindow):
 
             move_list = self.model.set_regs.get('move_graph')
             force_list = self.model.set_regs.get('force_graph')
-
-            move_list.append(move_list[0])
-            force_list.append(force_list[0])
 
             pen = pg.mkPen(color='black', width=3)
             name = str(self.model.set_regs.get('speed'))
@@ -1367,7 +1361,7 @@ class AppWindow(QMainWindow):
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
                          'static_push_force': self.model.set_regs.get('static_push_force'),
                          'dynamic_push_force': self.model.set_regs.get('dynamic_push_force'),
-                         'max_temperature': self.model.set_regs.get('max_temperature')}
+                         'max_temperature': self.model.temper_max}
 
             ReadArchive().save_test_in_archive(data_dict)
 

@@ -2,6 +2,7 @@
 import time
 import statistics
 import modbus_tk.defines as cst
+import numpy as np
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
 from logger import my_logger
@@ -41,28 +42,62 @@ class Model:
         self.calc_data = CalcData()
         self.client = Client()
 
+        self._init_varibles()
+
+        self._start_param_model()
+
+    def _init_varibles(self):
         self.set_regs = {}
         self.state_dict = {}
         self.switch_dict = {}
+
         self.reader = None
         self.writer = None
         self.operator = {'name': '', 'rank': ''}
         self.amort = None
         self.buffer_state = ['null', 'null']
+
+        self.force_graph = np.array([], 'float64')
+        self.move_graph = np.array([], 'float64')
+
         self.force_koef = PrgSettings().force_koef
+        self.force_clear = 0
+        self.force_correct = 0
+        self.force_koef_offset = 0
+        self.force_offset = 0
+
+        self.counter = 0
+        self.move_now = 0
+        self.move_traverse = 0
+
+        self.hod_measure = 0
+        self.min_pos = False
+        self.min_point = 0
+        self.max_pos = False
+        self.max_point = 0
+        self.start_direction = None
+        self.current_direction = None
+
+        self.gear_referent = False
+
+        self.force_alarm = 0
+        self.temper_first = 0
+        self.temper_second = 0
+        self.temper_max = 0
+
         self.timer_add_koef = None
         self.koef_force_list = []
         self.timer_calc_koef = None
+
         self.finish_temper = PrgSettings().finish_temper
         self.timer_yellow = None
         self.time_push_yellow = None
         self.yellow_rattle = False
+
         self.main_min_point = 100
         self.min_point = 0
         self.max_point = 0
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        self._start_param_model()
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -169,9 +204,8 @@ class Model:
         self.timer_calc_koef.start()
 
     def _add_koef_force_in_list(self):
-        force = (self.set_regs.get('force_cor_koef', 0))
-        if force != -100000.0:
-            self.koef_force_list.append(force)
+        if self.force_clear != -100000.0:
+            self.koef_force_list.append(self.force_correct)
         else:
             pass
 
@@ -181,12 +215,11 @@ class Model:
             self.timer_calc_koef.stop()
 
             if self.koef_force_list:
-                self.set_regs['force_refresh'] = round(statistics.fmean(self.koef_force_list), 1)
+                self.force_koef_offset = round(statistics.fmean(self.koef_force_list), 1)
                 self.koef_force_list.clear()
                 self.signals.save_koef_force.emit('done')
 
             else:
-                self.koef_force_list = []
                 self.signals.save_koef_force.emit('bad')
 
         except Exception as e:
@@ -195,30 +228,11 @@ class Model:
 
     def cancel_koef_force(self):
         try:
-            self.set_regs['force_refresh'] = 0
+            self.force_koef_offset = 0
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
-
-    def correct_force_with_koef(self, force):
-        try:
-            koef = self.set_regs.get('force_koef', 1)
-            return round(force * koef, 1)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/correct_force_with_koef - {e}')
-
-    def correct_force(self, force):
-        try:
-            refresh = self.set_regs.get('force_refresh', 0)
-            force_cor_koef = self.set_regs.get('force_cor_koef', 0)
-            return round(force_cor_koef - refresh, 1)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/correct_force - {e}')
 
     def reset_min_point(self):
         self.main_min_point = 100
@@ -247,19 +261,16 @@ class Model:
             if not res:
                 pass
             else:
-                force = self.parser.magnitude_effort(res[0], res[1])
-                data_dict = {'force_clear': force,
-                             'force_cor_koef': self.correct_force_with_koef(force),
-                             'force': self.correct_force(force),
-                             'move': self.parser.movement_amount(res[2]),
-                             'count': self.parser.counter_time(res[4]),
-                             'traverse_move': round(0.5 * self.parser.movement_amount(res[6]), 1),
-                             'temper_first': self.parser.temperature_value(res[7], res[8]),
-                             'force_alarm': self.parser.emergency_force(res[10], res[11]),
-                             'temper_second': self.parser.temperature_value(res[12], res[13]),
-                             }
+                self.force_clear = self.parser.magnitude_effort(res[0], res[1])
+                self.force_correct = round(self.force_clear * self.force_koef, 1)
+                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-                self.update_main_dict(data_dict)
+                self.move_now = self.parser.movement_amount(res[2])
+                self.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
+                self.counter = self.parser.counter_time(res[4])
+                self.force_alarm = self.parser.emergency_force(res[10], res[11])
+                self.temper_first = self.parser.temperature_value(res[7], res[8])
+                self.temper_second = self.parser.temperature_value(res[12], res[13])
 
                 self._update_switch_dict(self.parser.switch_state(res[5]))
                 self._change_state_list(res[3])
@@ -278,25 +289,20 @@ class Model:
                 pass # Пришла пустая посылка
 
             else:
-                data_dict = {'force_clear': data.get('force')[-1],
-                             'force_cor_koef': self.correct_force_with_koef(data.get('force')[-1]),
-                             'force': self.correct_force(data.get('force')[-1]),
-                             'move': data.get('move')[-1],
-                             'force_list': [self.correct_force(x) for x in data.get('force')],
-                             'move_list': data.get('move')[:],
-                             'temp_list': data.get('temper')[:],
-                             'temperature': data.get('temper')[-1],
-                             'max_temperature': self.calc_data.check_temperature(data.get('temper'),
-                                                                                 self.set_regs.get('max_temperature', 0)),
-                             'count': data.get('count')[-1],
-                             }
+                self.counter = data.get('count')[-1]
+                self.move_now = data.get('move')[-1]
+                self.temper_max = self.calc_data.check_temperature(data.get('temper'), self.temper_max)
 
-                self.update_main_dict(data_dict)
+                self.force_array = (np.array(data.get('force')) * self.force_koef) - self.force_koef_offset
+                self.move_array = np.array(data.get('move'))
+
+                # self.temper_array = np.array(data.get('temper'))
+
                 self._change_state_list(data.get('state')[-1])
 
                 self._read_controller_finish()
 
-                self._pars_response_on_circle(data_dict.get('force_list'), data_dict.get('move_list'))
+                self._pars_response_on_circle(self.force_array, self.move_array)
 
         except Exception as e:
             if str(e) == 'list index out of range':
@@ -366,9 +372,8 @@ class Model:
             else:
                 direction = False
 
-            command = {'start_direction': direction,
-                       'current_direction': direction}
-            self.update_main_dict(command)
+            self.start_direction = direction
+            self.current_direction = direction
 
         except Exception as e:
             self.logger.error(e)
@@ -376,28 +381,19 @@ class Model:
 
     def _find_direction_and_point(self, move):
         try:
-            direction = self.set_regs.get('current_direction', '')
-            if direction == 'up':
+            if self.current_direction == 'up':
                 if max(move) > move[-1]:
                     if not -1 < max(move) < 1:
                         self.max_point = max(move)
-                        command = {'max_point': self.max_point,
-                                   'max_pos': True,
-                                   'current_direction': 'down',
-                                   }
+                        self.max_pos = True
+                        self.current_direction = 'down'
 
-                        self.update_main_dict(command)
-
-            elif direction == 'down':
+            elif self.current_direction == 'down':
                 if min(move) < move[-1]:
                     if not -1 < min(move) < 1:
                         self.min_point = min(move)
-                        command = {'min_point': self.min_point,
-                                   'min_pos': True,
-                                   'current_direction': 'up',
-                                   }
-
-                        self.update_main_dict(command)
+                        self.min_pos = True
+                        self.current_direction = 'up'
 
                         if self.min_point < self.main_min_point:
                             self.main_min_point = self.min_point
@@ -406,27 +402,36 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_find_direction_and_point - {e}')
 
-    def _add_data_in_list_graph(self, force, move):
+    def _add_data_in_array_graph(self, force, move):
         try:
-            self.set_regs['force_accum_list'].extend(force)
-            self.set_regs['move_accum_list'].extend(move)
+            self.force_graph = np.concatenate((self.force_graph, force))
+            self.move_graph = np.concatenate((self.move_graph, move))
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_add_data_in_list_graph - {e}')
+            self.status_bar_msg(f'ERROR in model/_add_data_in_array_graph - {e}')
+
+    def clear_data_in_array_graph(self):
+        try:
+            self.force_graph = np.array([], 'float64')
+            self.move_graph = np.array([], 'float64')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/clear_data_in_array_graph - {e}')
 
     def _check_full_circle(self):
         try:
-            if self.set_regs.get('gear_referent', False) is False:
-                command = {'force_accum_list': [],
-                           'move_accum_list': [],
-                           'force_graph': [],
-                           'start_direction': False,
-                           'min_pos': False,
-                           'max_pos': False,
-                           'gear_referent': True}
+            if self.gear_referent is False:
 
-                self.update_main_dict(command)
+                self.clear_data_in_array_graph()
+
+                self.min_pos = False
+                self.max_pos = False
+                self.start_direction = False
+                self.gear_referent = True
+
+                self.set_regs['force_graph'] = []
 
             else:
                 self._full_circle_done()
@@ -439,14 +444,15 @@ class Model:
         try:
             static_push_force = self.set_regs.get('static_push_force', 0)
 
-            min_index = self.set_regs.get('move_accum_list').index(self.min_point)
-            force_min = abs(self.set_regs.get('force_accum_list')[min_index])
+            min_index = np.argmin(self.move_graph)
+            force_min = abs(self.force_graph[min_index])
 
-            max_index = self.set_regs.get('move_accum_list').index(self.max_point)
-            force_max = abs(self.set_regs.get('force_accum_list')[max_index])
+            max_index = np.argmax(self.move_graph)
+            force_max = abs(self.force_graph[max_index])
 
-            push_force_mid = round((force_min + force_max) / 2, 1)
-            self.set_regs['dynamic_push_force'] = round((push_force_mid - static_push_force) / 2 + static_push_force, 2)
+            push_force_mid = (force_min + force_max) / 2
+            self.set_regs['dynamic_push_force'] = np.round((push_force_mid - static_push_force) / 2 + static_push_force,
+                                                           decimals=2)
 
         except Exception as e:
             self.logger.error(e)
@@ -471,12 +477,14 @@ class Model:
                 push_force = self._choice_push_force()
                 speed = self.set_regs.get('speed')
 
-                move_list = self.set_regs.get('move_accum_list')[:]
-                force_list = list(map(lambda x: round(x * (-1), 1), self.set_regs.get('force_accum_list')))
+                move_list = list(self.move_graph)
+                force_list = list(self.force_graph * (-1))
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(force_list)
 
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
+
+                self.clear_data_in_array_graph()
 
                 command = {'max_comp': round(max_comp - push_force, 2),
                            'max_recoil': round(max_recoil + push_force, 2),
@@ -484,8 +492,6 @@ class Model:
                            'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
                            'power': self.calc_data.power_amort(move_list, force_list),
                            'freq_piston': self.calc_data.freq_piston_amort(speed, self.amort.hod),
-                           'force_accum_list': [],
-                           'move_accum_list': [],
                            }
 
                 self.update_main_dict(command)
@@ -494,45 +500,35 @@ class Model:
 
             self.signals.full_cycle_count.emit('+1')
 
-            command = {'min_pos': False,
-                       'max_pos': False,
-                       }
-
-            self.update_main_dict(command)
+            self.min_pos = False
+            self.max_pos = False
 
         except Exception as e:
-            command = {'min_pos': False,
-                       'max_pos': False,
-                       'force_accum_list': [],
-                       'move_accum_list': [],
-                       }
-            self.update_main_dict(command)
+            self.clear_data_in_array_graph()
+            self.min_pos = False
+            self.max_pos = False
 
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_full_circle_done - {e}')
 
-    def _pars_response_on_circle(self, force: list, move: list):
+    def _pars_response_on_circle(self, force, move):
         try:
-            if not self.set_regs.get('start_direction', False):
+            if not self.start_direction:
                 self._find_start_direction(move)
 
             else:
                 if self.set_regs.get('fill_graph', False):
-                    self._add_data_in_list_graph(force, move)
+                    self._add_data_in_array_graph(force, move)
 
-                if (self.set_regs.get('min_pos', False) and self.set_regs.get('max_pos', False) and
-                        min(move) <= self.min_point <= max(move)):
+                if self.min_pos and self.max_pos and min(move) <= self.min_point <= max(move):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
                     hod_dif = self.amort.hod
                     if self.set_regs.get('search_hod') is False:
                         if hod > hod_dif - 5:
                             self._check_full_circle()
                         else:
-                            command = {'min_pos': False,
-                                       'max_pos': False,
-                                       }
-
-                            self.update_main_dict(command)
+                            self.min_pos = False
+                            self.max_pos = False
 
                     else:
                         self._check_full_circle()

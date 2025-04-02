@@ -53,9 +53,6 @@ class CompareGraph:
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
 
-                x_list.append(x_list[0])
-                y_list.append(y_list[0])
-
                 self.widget.plot(x_list, y_list, pen=pen, name=name)
 
         except Exception as e:
@@ -71,9 +68,6 @@ class CompareGraph:
                         f'{graph.amort.name} - '
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
-
-                x_list.append(x_list[0])
-                y_list.append(y_list[0])
 
                 self.widget.plot(x_list, y_list, pen=pen, name=name)
 

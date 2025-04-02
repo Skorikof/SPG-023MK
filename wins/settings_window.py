@@ -147,8 +147,8 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _write_alarm_force(self):
         try:
-            value = float(self.lineEdit_F_alarm.text())
-            if value == float(self.model.set_regs.get('force_alarm')):
+            value = int(self.lineEdit_F_alarm.text())
+            if value == int(self.model.force_alarm):
                 pass
             else:
                 self.model.write_emergency_force(value)
@@ -219,15 +219,15 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.lbl_temp_sens.setText(txt)
 
     def _update_win(self):
-        self.lcdTime.display(self.model.set_regs.get('count'))
-        self.clear_force_lcd.display(self.model.set_regs.get('force_clear', -100))
-        self.koef_force_lcd.display(self.model.set_regs.get('force_cor_koef', -100))
-        self.correct_force_lcd.display(self.model.set_regs.get('force', -100))
-        self.lcdH.display(self.model.set_regs.get('move', -100))
-        self.lcdH_T.display(self.model.set_regs.get('traverse_move', -100))
-        self.lcdTemp_1.display(self.model.set_regs.get('temper_first', 0))
-        self.lcdTemp_2.display(self.model.set_regs.get('temper_second', 0))
-        self.lineEdit_F_alarm.setText(f'{self.model.set_regs.get("force_alarm")}')
+        self.lcdTime.display(self.model.counter)
+        self.clear_force_lcd.display(self.model.force_clear)
+        self.koef_force_lcd.display(self.model.force_correct)
+        self.correct_force_lcd.display(self.model.force_offset)
+        self.lcdH.display(self.model.move_now)
+        self.lcdH_T.display(self.model.move_traverse)
+        self.lcdTemp_1.display(self.model.temper_first)
+        self.lcdTemp_2.display(self.model.temper_second)
+        self.lineEdit_F_alarm.setText(f'{self.model.force_alarm}')
 
         self._update_color_switch()
 
@@ -275,13 +275,10 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            command = {'start_direction': False,
-                       'current_direction': '',
-                       'min_pos': False,
-                       'max_pos': False,
-                       }
-
-            self.model.update_main_dict(command)
+            self.model.min_pos = False
+            self.model.max_pos = False
+            self.model.start_direction = False
+            self.model.current_direction = False
 
             self.model.reader_start_test()
 

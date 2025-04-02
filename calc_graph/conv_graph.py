@@ -31,9 +31,6 @@ class ConvGraph:
             move_list = data.move_list
             force_list = data.force_list
 
-            move_list.append(move_list[0])
-            force_list.append(force_list[0])
-
             pen = pg.mkPen(color='black', width=3)
             self.widget.plot(move_list, force_list, pen=pen)
 

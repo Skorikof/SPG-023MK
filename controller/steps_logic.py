@@ -1,3 +1,4 @@
+import numpy as np
 from functools import reduce
 from PyQt5.QtCore import pyqtSignal, QObject
 
@@ -24,7 +25,7 @@ class Steps:
         try:
             tag = 'null'
             if not self.model.set_regs.get('type_test') == 'temper':
-                if self.model.set_regs.get('max_temperature', 0) >= self.model.amort.max_temper:
+                if self.model.temper_max >= self.model.amort.max_temper:
                     tag = 'excess_temperature'
 
             if self.model.state_dict.get('lost_control', False) is True:
@@ -56,12 +57,14 @@ class Steps:
 
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('search_hod')
+
+            self.model.min_pos = False
+            self.model.max_pos = False
+            self.model.start_direction = False
+
             command = {'search_hod': True,
                        'alarm_flag': False,
                        'alarm_tag': '',
-                       'start_direction': False,
-                       'min_pos': False,
-                       'max_pos': False,
                        }
             self.model.update_main_dict(command)
 
@@ -76,11 +79,7 @@ class Steps:
     def stage_search_hod(self, count_cycle):
         try:
             if count_cycle >= 1:
-                min_point = self.model.set_regs.get('min_point', 0)
-                max_point = self.model.set_regs.get('max_point', 0)
-                hod = round(abs(min_point) + abs(max_point), 1)
-
-                self.model.set_regs['hod_measure'] = hod
+                self.model.hod_measure = np.round(abs(self.model.min_point) + abs(self.model.max_point), decimals=2)
 
                 return True
 
@@ -107,12 +106,15 @@ class Steps:
 
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('pos_set_gear')
+
+            self.model.min_pos = False
+            self.model.max_pos = False
+            self.model.start_direction = False
+
             command = {'alarm_flag': False,
                        'alarm_tag': '',
-                       'start_direction': False,
-                       'min_pos': False,
-                       'max_pos': False,
                        }
+
             self.model.update_main_dict(command)
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_logic.emit('wait_buffer')
@@ -124,13 +126,14 @@ class Steps:
 
     def stage_pos_set_gear(self):
         try:
-            if self.model.set_regs.get('gear_referent', False):
-                if self.model.set_regs.get('max_pos', False):
-                    if abs(14 - self.model.set_regs.get('move', 200)) < 5:
+            if self.model.gear_referent:
+                if self.model.max_pos:
+                    if abs(14 - self.model.move_now) < 5:
                         self.model.motor_stop(1)
                         self.model.reader_stop_test()
                         self.model.write_bit_force_cycle(0)
-                        self.model.set_regs['max_pos'] = False
+                        self.model.min_pos = False
+                        self.model.max_pos = False
 
                         return True
 
@@ -203,19 +206,18 @@ class Steps:
 
     def stage_stop_gear_min_pos(self):
         try:
-            if self.model.set_regs.get('move') < self.model.main_min_point + 2:
+            if self.model.move_now < self.model.main_min_point + 2:
                 self.model.motor_stop(1)
 
                 self.signals.stage_from_logic.emit('wait')
-                command = {'force_accum_list': [],
-                           'move_accum_list': [],
-                           'start_direction': False,
-                           'min_pos': False,
-                           'max_pos': False,
-                           'test_flag': False,
-                           }
 
-                self.model.update_main_dict(command)
+                self.model.clear_data_in_array_graph()
+
+                self.model.min_pos = False
+                self.model.max_pos = False
+                self.model.start_direction = False
+
+                self.model.set_regs['test_flag'] = False
 
                 return True
 
@@ -316,7 +318,7 @@ class Steps:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
             self.model.write_speed_motor(2, freq=30)
-            pos_trav = self.model.set_regs.get('traverse_move')
+            pos_trav = self.model.move_traverse
 
             if pos_trav > set_point:
                 self.model.motor_up(2)
@@ -329,17 +331,17 @@ class Steps:
 
     def step_control_traverse_move(self, point) -> bool:  # Функция отслеживания траверсы, при достижении точки останов
         try:
-            if 5 < abs(point - self.model.set_regs.get('traverse_move')) <= 10:
+            if 5 < abs(point - self.model.move_traverse) <= 10:
                 if not self.flag_freq_1_step:
                     self.model.write_speed_motor(2, freq=20)
                     self.flag_freq_1_step = True
 
-            if 1 < abs(point - float(self.model.set_regs.get('traverse_move'))) <= 5:
+            if 1 < abs(point - self.model.move_traverse) <= 5:
                 if not self.flag_freq_2_step:
                     self.model.write_speed_motor(2, freq=15)
                     self.flag_freq_2_step = True
 
-            if abs(point - self.model.set_regs.get('traverse_move')) <= 0.5:
+            if abs(point - self.model.move_traverse) <= 0.5:
                 self.model.motor_stop(2)
                 return True
 

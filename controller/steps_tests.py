@@ -24,15 +24,16 @@ class StepTests:
                 if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
                     self.model.lamp_all_switch_off()
 
+                self.model.clear_data_in_array_graph()
+
+                self.model.min_pos = False
+                self.model.max_pos = False
+                self.model.start_direction = False
+
                 command = {'alarm_flag': False,
                            'alarm_tag': '',
                            'test_flag': True,
-                           'force_accum_list': [],
-                           'move_accum_list': [],
-                           'force_graph': [],
-                           'min_pos': False,
-                           'max_pos': False,
-                           'start_direction': False}
+                           'force_graph': []}
                 self.model.update_main_dict(command)
                 self.model.reset_min_point()
 
@@ -62,16 +63,15 @@ class StepTests:
 
             self.model.lamp_all_switch_off()
 
+            self.model.temper_max = 0
+
+            self.model.min_pos = False
+            self.model.max_pos = False
+            self.model.start_direction = False
+
             command = {'test_launch': True,
                        'alarm_flag': False,
                        'alarm_tag': '',
-                       # 'force_accum_list': [],
-                       # 'move_accum_list': [],
-                       # 'force_graph': [],
-                       'max_temperature': 0,
-                       'start_direction': False,
-                       'min_pos': False,
-                       'max_pos': False,
                        }
 
             self.model.update_main_dict(command)
@@ -81,51 +81,19 @@ class StepTests:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in steps_tests/step_start_test - {e}')
 
-    # def step_repeat_test(self):
-    #     try:
-    #         if self.model.set_regs.get('excess_force', False) is True:
-    #             self.model.write_bit_emergency_force()
-    #
-    #         if self.model.set_regs.get('lost_control', False) is True:
-    #             self.model.write_bit_unblock_control()
-    #
-    #         self.model.lamp_all_switch_off()
-    #
-    #         command = {'test_launch': True,
-    #                    'alarm_flag': False,
-    #                    'alarm_tag': '',
-    #                    'force_accum_list': [],
-    #                    'move_accum_list': [],
-    #                    'force_graph': [],
-    #                    'max_temperature': 0,
-    #                    'start_direction': False,
-    #                    'min_pos': False,
-    #                    'max_pos': False,
-    #                    'repeat': True,
-    #                    }
-    #
-    #         self.model.update_main_dict(command)
-    #         self.model.reset_min_point()
-    #
-    #         self.signals.stage_from_tests.emit('wait_buffer')
-    #         self.signals.next_stage_from_tests.emit('repeat_test')
-    #         self.model.write_bit_force_cycle(1)
-    #
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #         self.model.status_bar_msg(f'ERROR in steps_tests/step_repeat_test - {e}')
-
     def step_stop_test(self):
         try:
             self.signals.stage_from_tests.emit('wait')
+
+            self.model.clear_data_in_array_graph()
+
+            self.model.min_pos = False
+            self.model.max_pos = False
+            self.model.start_direction = False
+
             command = {'test_launch': False,
                        'fill_graph': False,
                        'test_flag': False,
-                       'force_accum_list': [],
-                       'move_accum_list': [],
-                       'start_direction': False,
-                       'min_pos': False,
-                       'max_pos': False,
                        }
 
             self.model.update_main_dict(command)
@@ -139,9 +107,8 @@ class StepTests:
             if ind == 1:
                 self.model.write_speed_motor(1, speed=self.model.amort.speed_one)
                 self.signals.stage_from_tests.emit('test_speed_one')
+                self.model.clear_data_in_array_graph()
                 command = {'speed': self.model.amort.speed_one,
-                           'force_accum_list': [],
-                           'move_accum_list': [],
                            'fill_graph': True,
                            }
                 self.model.update_main_dict(command)
@@ -165,11 +132,9 @@ class StepTests:
             speed = self.model.set_regs.get('speed')
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
-            command = {'force_accum_list': [],
-                       'move_accum_list': [],
-                       'fill_graph': True,
-                       }
-            self.model.update_main_dict(command)
+            self.model.clear_data_in_array_graph()
+
+            self.model.set_regs['fill_graph'] = True
 
             if self.model.set_regs.get('repeat', False):
                 self.model.set_regs['repeat'] = False
@@ -183,9 +148,9 @@ class StepTests:
         try:
             self.model.write_speed_motor(1, speed=speed_list[0])
             self.signals.stage_from_tests.emit('test_lab_cascade')
+
+            self.model.clear_data_in_array_graph()
             command = {'speed': speed_list[0],
-                       'force_accum_list': [],
-                       'move_accum_list': [],
                        'fill_graph': True,
                        }
             self.model.update_main_dict(command)
@@ -206,9 +171,9 @@ class StepTests:
             self.temper_graph = []
             self.temper_force_graph = []
 
-            command = {'force_accum_list': [],
-                       'move_accum_list': [],
-                       'temper_graph': [],
+            self.model.clear_data_in_array_graph()
+
+            command = {'temper_graph': [],
                        'temper_force_graph': [],
                        'fill_graph': True,
                        }
