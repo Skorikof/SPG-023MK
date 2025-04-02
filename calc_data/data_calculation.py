@@ -82,10 +82,10 @@ class CalcData:
     def middle_min_and_max_force(self, data: list):
         try:
             recoil_index = data.index(max(data))
-            max_recoil = statistics.fmean([abs(x) for x in data[recoil_index - 5:recoil_index + 5]])
+            max_recoil = round(statistics.fmean([abs(x) for x in data[recoil_index - 5:recoil_index + 5]]), 1)
 
             comp_index = data.index(min(data))
-            max_comp = statistics.fmean([abs(x) for x in data[comp_index - 5:comp_index + 5]])
+            max_comp = round(statistics.fmean([abs(x) for x in data[comp_index - 5:comp_index + 5]]), 1)
 
             return max_recoil, max_comp
 

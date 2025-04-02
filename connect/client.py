@@ -11,6 +11,7 @@ class Client:
         self.set_dict = PrgSettings().con_set
 
         self.client = None
+        self.flag_connect = False
 
     def _init_connect(self):
         try:
@@ -33,10 +34,10 @@ class Client:
             self._init_connect()
 
         self.client.open()
-        self.set_dict['connect'] = True
+        self.flag_connect = True
 
     def disconnect_client(self):
         if self.client:
             self.client.close()
-            self.set_dict['connect'] = False
+            self.flag_connect = False
             self.client = None

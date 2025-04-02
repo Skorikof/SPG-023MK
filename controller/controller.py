@@ -123,18 +123,18 @@ class Controller:
                 pass
 
             elif self.stage == 'wait_buffer':
-                if self.model.set_regs['buffer_state'][0] == 'OK!':
-                    if self.model.set_regs['buffer_state'][1] == 'buffer_on':
-                        self.model.set_regs['buffer_state'] = ['null', 'null']
+                if self.model.buffer_state[0] == 'OK!':
+                    if self.model.buffer_state[1] == 'buffer_on':
+                        self.model.buffer_state = ['null', 'null']
                         self.model.reader_start_test()
                         self.model.motor_up(1)
                         self.stage = self.next_stage
 
-                    elif self.model.set_regs['buffer_state'][1] == 'buffer_off':
+                    elif self.model.buffer_state[1] == 'buffer_off':
                         pass
 
-                elif self.model.set_regs['buffer_state'][0] == 'ERROR!':
-                    self.model.set_regs['buffer_state'] = ['null', 'null']
+                elif self.model.buffer_state[0] == 'ERROR!':
+                    self.model.buffer_state = ['null', 'null']
                     self.model.write_bit_force_cycle(1)
 
             elif self.stage == 'repeat_test':
@@ -244,7 +244,7 @@ class Controller:
                 if self.count_cycle >= 1:
                     max_temper = self.model.set_regs.get('max_temperature', None)
                     if max_temper is not None and max_temper != self.last_max_temper:
-                        if max_temper <= self.model.set_regs.get('finish_temper', 80):
+                        if max_temper <= self.model.finish_temper:
                             self.last_max_temper = max_temper
                             max_recoil = self.model.set_regs.get('max_recoil', None)
                             max_comp = self.model.set_regs.get('max_comp', None)
@@ -528,7 +528,7 @@ class Controller:
 
     def _check_max_temper_test(self):
         if self.model.set_regs.get('type_test', 'hand') == 'temper':
-            finish_temp = self.model.set_regs.get('finish_temper', 80)
+            finish_temp = self.model.finish_temper
         else:
             finish_temp = self.model.amort.max_temper
 

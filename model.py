@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import statistics
 import modbus_tk.defines as cst
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
 
@@ -45,10 +46,14 @@ class Model:
         self.switch_dict = {}
         self.reader = None
         self.writer = None
+        self.operator = {'name': '', 'rank': ''}
         self.amort = None
+        self.buffer_state = ['null', 'null']
+        self.force_koef = PrgSettings().force_koef
         self.timer_add_koef = None
         self.koef_force_list = []
         self.timer_calc_koef = None
+        self.finish_temper = PrgSettings().finish_temper
         self.timer_yellow = None
         self.time_push_yellow = None
         self.yellow_rattle = False
@@ -64,9 +69,7 @@ class Model:
         # FIXME таймер жёлтой кнопки
         # self._init_timer_yellow_btn()
 
-        self.update_main_dict(PrgSettings().state)
-
-        if self.client.set_dict['connect']:
+        if self.client.flag_connect:
             self.writer = Writer(self.client.client)
             self.writer.timer_writer_start()
 
@@ -96,7 +99,7 @@ class Model:
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     def check_buffer_state(self, res, state):
-        self.set_regs['buffer_state'] = [res, state]
+        self.buffer_state = [res, state]
 
     def _init_reader(self):
         self.reader = Reader(self.client.client, cst)
@@ -178,12 +181,12 @@ class Model:
             self.timer_calc_koef.stop()
 
             if self.koef_force_list:
-                sum_list = round(sum(self.koef_force_list), 1)
-                self.set_regs['force_refresh'] = round(sum_list / len(self.koef_force_list), 1)
+                self.set_regs['force_refresh'] = round(statistics.fmean(self.koef_force_list), 1)
                 self.koef_force_list.clear()
                 self.signals.save_koef_force.emit('done')
 
             else:
+                self.koef_force_list = []
                 self.signals.save_koef_force.emit('bad')
 
         except Exception as e:
@@ -543,13 +546,13 @@ class Model:
 
     def _write_reg_state(self, bit, value, command=None):
         try:
-            com_array = self.state_list[:]
-            com_array[bit] = value
+            com_list = self.state_list[:]
+            com_list[bit] = value
 
             res = 0
 
             for i in range(16):
-                res = res + com_array[i] * 2 ** i
+                res = res + com_list[i] * 2 ** i
 
             self.writer.write_out('reg',
                                   values=[res],
@@ -562,7 +565,7 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
-            self.set_regs['buffer_state'] = ['null', 'null']
+            self.buffer_state = ['null', 'null']
             if value == 1:
                 command = 'buffer_on'
             else:

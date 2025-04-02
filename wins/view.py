@@ -368,7 +368,7 @@ class AppWindow(QMainWindow):
         self.win_exec.show()
 
     def operator_select(self, name, rank):
-        self.model.set_regs['operator'] = {'name': name, 'rank': rank}
+        self.model.operator = {'name': name, 'rank': rank}
 
         self.ui.operator_name_le.setText(f'{name}')
         self.ui.operator_rank_le.setText(f'{rank}')
@@ -444,7 +444,6 @@ class AppWindow(QMainWindow):
 
         if self.model.set_regs.get('type_test', 'hand') == 'hand':
             self.win_set.setEnabled(True)
-            self.win_set.statusbar_set_ui(txt_msg)
 
         else:
             msg = QMessageBox.information(self,
@@ -587,7 +586,7 @@ class AppWindow(QMainWindow):
             self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
             self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
             if self.model.set_regs.get('type_test', None) == 'temper':
-                max_temper = self.model.set_regs.get('finish_temper', 80)
+                max_temper = self.model.finish_temper
             else:
                 max_temper = obj.max_temper
             self.ui.specif_max_temp_lineEdit.setText(str(max_temper))
@@ -777,8 +776,8 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            name = self.model.set_regs.get('operator')['name']
-            rank = self.model.set_regs.get('operator')['rank']
+            name = self.model.operator['name']
+            rank = self.model.operator['rank']
 
             if name != '' and rank != '':
                 self.flag_push_force_set()
@@ -819,7 +818,7 @@ class AppWindow(QMainWindow):
                                     self.model.set_regs['speed'] = speed
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
-                                        self.model.set_regs['finish_temper'] = temper
+                                        self.model.finish_temper = temper
                                         self.begin_test()
 
                             else:
@@ -1323,8 +1322,8 @@ class AppWindow(QMainWindow):
         self.main_btn_state(False)
         self.main_ui_state(False)
         self.model.set_regs['type_test'] = 'hand'
-        self.win_set.show()
         self.win_set.start_param_win_set()
+        self.win_set.show()
 
     def update_data_win_settings(self):
         self.win_set.update_data_win_set()
@@ -1332,7 +1331,7 @@ class AppWindow(QMainWindow):
     def close_win_settings(self):
         self.main_btn_state(True)
         self.main_ui_state(True)
-        self.win_set.hide()
+        self.win_set.close()
         self.select_type_test()
 
     def slot_save_lab_result(self, command):
@@ -1362,7 +1361,7 @@ class AppWindow(QMainWindow):
                          'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
-                         'operator': self.model.set_regs.get('operator')[:],
+                         'operator': self.model.operator[:],
                          'serial': self.model.set_regs.get('serial_number', 0),
                          'amort': self.model.amort,
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),

@@ -22,14 +22,8 @@ class PrgSettings:
                             'stopbits': int(temp_val[3]),
                             }
 
-            force_koef = self._force_koef(config['Settings']['ForceKoef'].replace(',', '.'))
-            finish_temper = float(config['Settings']['FinishTemper'].replace(',', '.'))
-
-            self.state = {'operator': {'name': '', 'rank': ''},
-                          'force_koef': force_koef,
-                          'finish_temper': finish_temper,
-                          'buffer_state': ['null', 'null'],
-                          }
+            self.force_koef = self._force_koef(config['Settings']['ForceKoef'].replace(',', '.'))
+            self.finish_temper = float(config['Settings']['FinishTemper'].replace(',', '.'))
 
         except Exception as e:
             self.logger.error(e)

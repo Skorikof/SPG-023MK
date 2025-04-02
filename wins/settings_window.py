@@ -25,8 +25,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
             self.hod = 50
 
-            self.hide()
-
         except Exception as e:
             self.logger.error(e)
 
@@ -48,7 +46,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.signals.closed.emit()
 
     def start_param_win_set(self):
-        self._create_statusbar_set()
         self._init_buttons()
         self._smap_line_edit()
         self._fill_lbl_temp_sens()
@@ -57,8 +54,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _check_operator(self):
         try:
-            name = self.model.set_regs.get('operator')['name']
-            if name == 'Скориков И.А.':
+            if self.model.operator['name'] == 'Скориков И.А.':
                 self.freq_frame.setVisible(True)
 
             else:
@@ -66,7 +62,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_check_operator - {e}')
 
     def _fill_lbl_temp_sens(self):
         channel = self.model.state_dict.get('select_temper', 0)
@@ -76,17 +71,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         elif channel == 1:
             txt = 'Контактный датчик темературы'
         self.lbl_temp_sens.setText(txt)
-
-    def _create_statusbar_set(self):
-        self.statusbar = self.statusBar()
-        self.statusbar.showMessage('Окно управления стенда в ручную')
-
-    def _statusbar_set_ui(self, txt_bar):
-        try:
-            self.statusbar.showMessage(txt_bar)
-
-        except Exception as e:
-            self.logger.error(e)
 
     def _init_buttons(self):
         self.btn_hod.clicked.connect(self._write_hod)
@@ -115,7 +99,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/update_data_win_set - {e}')
 
     def _write_hod(self):
         try:
@@ -127,7 +110,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_hod - {e}')
 
     def _write_speed_set(self):
         try:
@@ -138,7 +120,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_speed_set - {e}')
 
     def _write_frequency_set(self):
         try:
@@ -148,7 +129,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_frequency_set - {e}')
 
     def _click_btn_motor_up(self):
         self.model.motor_up(2)
@@ -181,7 +161,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_write_alarm_force - {e}')
 
     def _btn_set_doclick(self):
         try:
@@ -230,7 +209,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_btn_set_doclick - {e}')
 
     def _change_lbl_temper_channel(self, value):
         if value == 1:
@@ -277,7 +255,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/update_color_switch - {e}')
 
     def _set_color_fram(self, state, rev=False):
         try:
@@ -295,7 +272,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in settings_window/_set_color_fram - {e}')
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
