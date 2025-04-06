@@ -41,7 +41,7 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
 
-    def movement_amount(self, data) -> float:
+    def movement_amount(self, data):
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
             return round(-0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)

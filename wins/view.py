@@ -1355,7 +1355,7 @@ class AppWindow(QMainWindow):
                          'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
                          'type_test': self.model.set_regs.get('type_test'),
                          'speed': self.model.set_regs.get('speed'),
-                         'operator': self.model.operator[:],
+                         'operator': self.model.operator.copy(),
                          'serial': self.model.set_regs.get('serial_number', 0),
                          'amort': self.model.amort,
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),

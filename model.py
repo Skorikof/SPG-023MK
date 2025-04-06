@@ -286,7 +286,7 @@ class Model:
             data = self.parser.discard_left_data(response)
 
             if data is None:
-                pass # Пришла пустая посылка
+                pass  # Пришла пустая посылка
 
             else:
                 self.counter = data.get('count')[-1]
@@ -522,9 +522,8 @@ class Model:
 
                 if self.min_pos and self.max_pos and min(move) <= self.min_point <= max(move):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
-                    hod_dif = self.amort.hod
                     if self.set_regs.get('search_hod') is False:
-                        if hod > hod_dif - 5:
+                        if hod > 38:
                             self._check_full_circle()
                         else:
                             self.min_pos = False

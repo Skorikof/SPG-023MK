@@ -156,10 +156,7 @@ class Steps:
 
     def stage_stop_gear_end_test(self):
         try:
-            move_list = self.model.set_regs.get('move_list')
-            stop_point = reduce(lambda x, y: round(abs(abs(x) - abs(y)), 3), move_list)
-
-            if stop_point < 0.2 or stop_point == abs(move_list[0]):  # Перемещение перестало изменяться
+            if np.std(self.model.move_array) < 0.1:  # Перемещение перестало изменяться
                 self.count_wait_point += 1
 
             else:

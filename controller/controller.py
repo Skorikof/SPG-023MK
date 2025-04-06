@@ -365,7 +365,7 @@ class Controller:
 
         self.model.lamp_all_switch_off()
 
-        if self.model.client.set_dict['connect']:
+        if self.model.client.flag_connect:
             self.model.motor_stop(1)
             self.model.motor_stop(2)
             self.model.reader_stop_test()
