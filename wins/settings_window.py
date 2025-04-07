@@ -275,10 +275,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            self.model.min_pos = False
-            self.model.max_pos = False
-            self.model.start_direction = False
-            self.model.current_direction = False
+            self.model.reset_current_circle()
 
             self.model.reader_start_test()
 

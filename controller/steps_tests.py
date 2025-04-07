@@ -25,17 +25,14 @@ class StepTests:
                     self.model.lamp_all_switch_off()
 
                 self.model.clear_data_in_array_graph()
+                self.model.clear_circle_data_graph()
 
-                self.model.min_pos = False
-                self.model.max_pos = False
-                self.model.start_direction = False
+                self.model.reset_current_circle()
 
                 command = {'alarm_flag': False,
                            'alarm_tag': '',
-                           'test_flag': True,
-                           'force_graph': []}
+                           'test_flag': True}
                 self.model.update_main_dict(command)
-                self.model.reset_min_point()
 
                 if self.model.state_dict.get('lost_control'):
                     self.model.write_bit_unblock_control()
@@ -65,9 +62,7 @@ class StepTests:
 
             self.model.temper_max = 0
 
-            self.model.min_pos = False
-            self.model.max_pos = False
-            self.model.start_direction = False
+            self.model.reset_current_circle()
 
             command = {'test_launch': True,
                        'alarm_flag': False,
@@ -75,7 +70,6 @@ class StepTests:
                        }
 
             self.model.update_main_dict(command)
-            self.model.reset_min_point()
 
         except Exception as e:
             self.logger.error(e)
@@ -87,9 +81,7 @@ class StepTests:
 
             self.model.clear_data_in_array_graph()
 
-            self.model.min_pos = False
-            self.model.max_pos = False
-            self.model.start_direction = False
+            self.model.reset_current_circle()
 
             command = {'test_launch': False,
                        'fill_graph': False,
@@ -108,14 +100,13 @@ class StepTests:
                 self.model.write_speed_motor(1, speed=self.model.amort.speed_one)
                 self.signals.stage_from_tests.emit('test_speed_one')
                 self.model.clear_data_in_array_graph()
-                command = {'speed': self.model.amort.speed_one,
-                           'fill_graph': True,
-                           }
-                self.model.update_main_dict(command)
+                self.model.speed_test = self.model.amort.speed_one
+
+                self.model.set_regs['fill_graph'] = True
 
             elif ind == 2:
                 self.signals.stage_from_tests.emit('test_speed_two')
-                self.model.set_regs['speed'] = self.model.amort.speed_two
+                self.model.speed_test = self.model.amort.speed_two
 
                 self.model.write_speed_motor(1, speed=self.model.amort.speed_two)
 
@@ -129,8 +120,7 @@ class StepTests:
 
     def step_test_lab_hand_speed(self):
         try:
-            speed = self.model.set_regs.get('speed')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
             self.model.clear_data_in_array_graph()
 
@@ -150,10 +140,8 @@ class StepTests:
             self.signals.stage_from_tests.emit('test_lab_cascade')
 
             self.model.clear_data_in_array_graph()
-            command = {'speed': speed_list[0],
-                       'fill_graph': True,
-                       }
-            self.model.update_main_dict(command)
+            self.model.speed_test = speed_list[0]
+            self.model.set_regs['fill_graph'] = True
 
             if self.model.set_regs.get('repeat', False):
                 self.model.set_regs['repeat'] = False
@@ -165,8 +153,7 @@ class StepTests:
 
     def step_test_temper(self):
         try:
-            speed = self.model.set_regs.get('speed')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_temper')
             self.temper_graph = []
             self.temper_force_graph = []

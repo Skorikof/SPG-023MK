@@ -240,6 +240,7 @@ class Controller:
                     self.signals.save_result_test.emit('end')
                     self.steps.step_stop_gear_end_test()
 
+            # FIXME Максимальные усилия уже не в словаре
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
                     if self.model.temper_max is not None and self.model.temper_max != self.last_max_temper:
@@ -266,15 +267,12 @@ class Controller:
                 if self.count_cycle >= 5:
                     self.signals.save_result_test.emit('casc')
                     if self.count_cascade < self.max_cascade:
-                        speed = self.model.set_regs.get('speed_cascade')[self.count_cascade]
-                        self.model.write_speed_motor(1, speed=speed)
+                        self.model.write_speed_motor(1, speed=self.model.speed_cascade[self.count_cascade])
+                        self.model.speed_test = self.model.speed_cascade[self.count_cascade]
 
                         self.model.clear_data_in_array_graph()
 
-                        command = {'speed': speed,
-                                   'fill_graph': True,
-                                   }
-                        self.model.update_main_dict(command)
+                        self.model.set_regs['fill_graph'] = True
 
                         self.count_cascade += 1
 
@@ -552,11 +550,10 @@ class Controller:
     def _test_lab_cascade(self):
         try:
             self.signals.lab_win_test.emit()
-            speed_list = self.model.set_regs.get('speed_cascade')
             self.count_cascade = 1
-            self.max_cascade = len(speed_list)
+            self.max_cascade = len(self.model.speed_cascade)
 
-            self.steps_tests.step_test_lab_cascade(speed_list)
+            self.steps_tests.step_test_lab_cascade(self.model.speed_cascade)
             self._full_cycle_update('0')
 
         except Exception as e:

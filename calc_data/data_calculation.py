@@ -1,6 +1,7 @@
 import statistics
 import crcmod
 from struct import pack
+import numpy as np
 
 from logger import my_logger
 
@@ -79,38 +80,38 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def middle_min_and_max_force(self, data: list):
+    # FIXME Перевести все графики из архива на массивы, а не списки
+    def middle_min_and_max_force(self, data):
         try:
-            recoil_index = data.index(max(data))
-            max_recoil = round(statistics.fmean([abs(x) for x in data[recoil_index - 5:recoil_index + 5]]), 1)
+            rec_ind = np.argmax(data)
+            max_rec = round(statistics.fmean(abs(data[rec_ind - 5:rec_ind + 5])), 1)
 
-            comp_index = data.index(min(data))
-            max_comp = round(statistics.fmean([abs(x) for x in data[comp_index - 5:comp_index + 5]]), 1)
+            comp_ind = np.argmin(data)
+            max_comp = round(statistics.fmean(abs(data[comp_ind - 5:comp_ind + 5])), 1)
 
-            return max_recoil, max_comp
+            return max_rec, max_comp
 
         except Exception as e:
             self.logger.error(e)
 
     def offset_move_by_hod(self, amort, min_p):
         try:
-            return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 2)
+            return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 1)
 
         except Exception as e:
             self.logger.error(e)
 
-    def power_amort(self, move: list, force: list):
-        """Расчёт мощности, выталкивающая сила не учитывается"""
+    # FIXME Перевести все графики из архива на массивы, а не списки
+    def power_amort(self, move, force):
+        """Расчёт мощности"""
         try:
             temp = 0
             for i in range(1, len(move)):
                 step = abs(abs(move[i]) - abs(move[i - 1]))
-                if step != 0:
+                if step > 0:
                     temp = round(temp + step * abs(force[i - 1]), 1)
 
-            power = round((temp * 0.009807) / 1000, 3)
-
-            return power
+            return round((temp * 0.009807) / 1000, 3)
 
         except Exception as e:
             self.logger.error(e)

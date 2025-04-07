@@ -59,6 +59,8 @@ class Model:
 
         self.force_graph = np.array([], 'float64')
         self.move_graph = np.array([], 'float64')
+        self.force_circle = np.array([], 'float64')
+        self.move_circle = np.array([], 'float64')
 
         self.force_koef = PrgSettings().force_koef
         self.force_clear = 0
@@ -75,8 +77,8 @@ class Model:
         self.min_point = 0
         self.max_pos = False
         self.max_point = 0
-        self.start_direction = None
-        self.current_direction = None
+        self.start_direction = False
+        self.current_direction = False
 
         self.gear_referent = False
 
@@ -84,6 +86,7 @@ class Model:
         self.temper_first = 0
         self.temper_second = 0
         self.temper_max = 0
+        self.temper_now = 0
 
         self.timer_add_koef = None
         self.koef_force_list = []
@@ -94,10 +97,17 @@ class Model:
         self.time_push_yellow = None
         self.yellow_rattle = False
 
-        self.main_min_point = 100
-        self.min_point = 0
-        self.max_point = 0
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        self.static_push_force = 0
+        self.dynamic_push_force = 0
+        self.max_recoil = 0
+        self.max_comp = 0
+
+        self.speed_test = 0
+        self.speed_cascade = []
+        self.power_amort = 0
+        self.freq_piston = 0
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -234,9 +244,6 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
 
-    def reset_min_point(self):
-        self.main_min_point = 100
-
     def _reader_result(self, response, tag):
         try:
             if tag == 'buffer':
@@ -267,10 +274,16 @@ class Model:
 
                 self.move_now = self.parser.movement_amount(res[2])
                 self.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
+
                 self.counter = self.parser.counter_time(res[4])
                 self.force_alarm = self.parser.emergency_force(res[10], res[11])
+
                 self.temper_first = self.parser.temperature_value(res[7], res[8])
                 self.temper_second = self.parser.temperature_value(res[12], res[13])
+                if self.temper_first > self.temper_second and self.temper_first > self.temper_max:
+                    self.temper_max = self.temper_first
+                elif self.temper_second > self.temper_first and self.temper_second > self.temper_max:
+                    self.temper_max = self.temper_second
 
                 self._update_switch_dict(self.parser.switch_state(res[5]))
                 self._change_state_list(res[3])
@@ -289,12 +302,18 @@ class Model:
                 pass  # Пришла пустая посылка
 
             else:
-                self.counter = data.get('count')[-1]
-                self.move_now = data.get('move')[-1]
-                self.temper_max = self.calc_data.check_temperature(data.get('temper'), self.temper_max)
-
+                self.force_clear = data.get('force')[-1]
+                self.force_correct = round(self.force_clear * self.force_koef, 1)
+                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
                 self.force_array = (np.array(data.get('force')) * self.force_koef) - self.force_koef_offset
+
+                self.move_now = data.get('move')[-1]
                 self.move_array = np.array(data.get('move'))
+
+                self.counter = data.get('count')[-1]
+
+                self.temper_max = self.calc_data.check_temperature(data.get('temper'), self.temper_max)
+                self.temper_now = data.get('temper')[-1]
 
                 # self.temper_array = np.array(data.get('temper'))
 
@@ -361,7 +380,18 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_yellow_btn_click - {e}')
 
-    def _find_start_direction(self, move: list):
+    def reset_current_circle(self):
+        try:
+            self.min_pos = False
+            self.max_pos = False
+            self.start_direction = False
+            self.current_direction = False
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/reset_current_circle - {e}')
+
+    def _find_start_direction(self, move):
         try:
             if move[0] < move[-1]:
                 direction = 'up'
@@ -382,21 +412,20 @@ class Model:
     def _find_direction_and_point(self, move):
         try:
             if self.current_direction == 'up':
-                if max(move) > move[-1]:
-                    if not -1 < max(move) < 1:
-                        self.max_point = max(move)
+                max_point = np.max(move)
+                if max_point > move[-1]:
+                    if not -1 < max_point < 1:
+                        self.max_point = max_point
                         self.max_pos = True
                         self.current_direction = 'down'
 
             elif self.current_direction == 'down':
-                if min(move) < move[-1]:
-                    if not -1 < min(move) < 1:
-                        self.min_point = min(move)
+                min_point = np.min(move)
+                if min_point < move[-1]:
+                    if not -1 < min_point < 1:
+                        self.min_point = min_point
                         self.min_pos = True
                         self.current_direction = 'up'
-
-                        if self.min_point < self.main_min_point:
-                            self.main_min_point = self.min_point
 
         except Exception as e:
             self.logger.error(e)
@@ -420,18 +449,24 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/clear_data_in_array_graph - {e}')
 
+    def clear_circle_data_graph(self):
+        try:
+            self.force_circle = np.array([], 'float64')
+            self.move_circle = np.array([], 'float64')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/reset_circle_data_graph - {e}')
+
     def _check_full_circle(self):
         try:
             if self.gear_referent is False:
 
                 self.clear_data_in_array_graph()
 
-                self.min_pos = False
-                self.max_pos = False
-                self.start_direction = False
-                self.gear_referent = True
+                self.reset_current_circle()
 
-                self.set_regs['force_graph'] = []
+                self.gear_referent = True
 
             else:
                 self._full_circle_done()
@@ -442,8 +477,6 @@ class Model:
 
     def _calc_dynamic_push_force(self):
         try:
-            static_push_force = self.set_regs.get('static_push_force', 0)
-
             min_index = np.argmin(self.move_graph)
             force_min = abs(self.force_graph[min_index])
 
@@ -451,8 +484,8 @@ class Model:
             force_max = abs(self.force_graph[max_index])
 
             push_force_mid = (force_min + force_max) / 2
-            self.set_regs['dynamic_push_force'] = np.round((push_force_mid - static_push_force) / 2 + static_push_force,
-                                                           decimals=2)
+            self.dynamic_push_force = np.round((push_force_mid - self.static_push_force) / 2 + self.static_push_force,
+                                                decimals=2)
 
         except Exception as e:
             self.logger.error(e)
@@ -461,10 +494,10 @@ class Model:
     def _choice_push_force(self):
         try:
             if self.set_regs.get('flag_push_force', False):
-                return self.set_regs.get('dynamic_push_force', 0)
+                return self.dynamic_push_force
 
             else:
-                return self.set_regs.get('static_push_force', 0)
+                return self.static_push_force
 
         except Exception as e:
             self.logger.error(e)
@@ -475,26 +508,20 @@ class Model:
             if self.set_regs.get('fill_graph', False):
                 self._calc_dynamic_push_force()
                 push_force = self._choice_push_force()
-                speed = self.set_regs.get('speed')
-
-                move_list = list(self.move_graph)
-                force_list = list(self.force_graph * (-1))
-
-                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(force_list)
 
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
 
+                self.move_circle = np.round(self.move_graph.copy() + offset_p, decimals=2)
+                self.force_circle = np.round(self.force_graph.copy() * (-1), decimals=2)
+
                 self.clear_data_in_array_graph()
 
-                command = {'max_comp': round(max_comp - push_force, 2),
-                           'max_recoil': round(max_recoil + push_force, 2),
-                           'force_graph': force_list[:],
-                           'move_graph': list(map(lambda x: round(x + offset_p, 1), move_list)),
-                           'power': self.calc_data.power_amort(move_list, force_list),
-                           'freq_piston': self.calc_data.freq_piston_amort(speed, self.amort.hod),
-                           }
+                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force_circle)
+                self.max_recoil = round(max_recoil + push_force, 1)
+                self.max_comp = round(max_comp - push_force, 1)
 
-                self.update_main_dict(command)
+                self.power_amort = self.calc_data.power_amort(self.move_circle, self.force_circle)
+                self.freq_piston = self.calc_data.freq_piston_amort(self.speed_test, self.amort.hod)
 
                 self.signals.update_data_graph.emit()
 
@@ -513,17 +540,17 @@ class Model:
 
     def _pars_response_on_circle(self, force, move):
         try:
-            if not self.start_direction:
+            if self.start_direction is False:
                 self._find_start_direction(move)
 
             else:
                 if self.set_regs.get('fill_graph', False):
                     self._add_data_in_array_graph(force, move)
 
-                if self.min_pos and self.max_pos and min(move) <= self.min_point <= max(move):
+                if self.min_pos and self.max_pos and np.min(move) <= self.min_point <= np.max(move):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
                     if self.set_regs.get('search_hod') is False:
-                        if hod > 38:
+                        if hod > 30:
                             self._check_full_circle()
                         else:
                             self.min_pos = False

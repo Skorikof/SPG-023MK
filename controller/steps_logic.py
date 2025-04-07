@@ -1,5 +1,4 @@
 import numpy as np
-from functools import reduce
 from PyQt5.QtCore import pyqtSignal, QObject
 
 from logger import my_logger
@@ -58,9 +57,7 @@ class Steps:
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('search_hod')
 
-            self.model.min_pos = False
-            self.model.max_pos = False
-            self.model.start_direction = False
+            self.model.reset_current_circle()
 
             command = {'search_hod': True,
                        'alarm_flag': False,
@@ -107,9 +104,7 @@ class Steps:
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('pos_set_gear')
 
-            self.model.min_pos = False
-            self.model.max_pos = False
-            self.model.start_direction = False
+            self.model.reset_current_circle()
 
             command = {'alarm_flag': False,
                        'alarm_tag': '',
@@ -203,16 +198,14 @@ class Steps:
 
     def stage_stop_gear_min_pos(self):
         try:
-            if self.model.move_now < self.model.main_min_point + 2:
+            if self.model.move_now < self.model.min_point + 2:
                 self.model.motor_stop(1)
 
                 self.signals.stage_from_logic.emit('wait')
 
                 self.model.clear_data_in_array_graph()
 
-                self.model.min_pos = False
-                self.model.max_pos = False
-                self.model.start_direction = False
+                self.model.reset_current_circle()
 
                 self.model.set_regs['test_flag'] = False
 
@@ -351,8 +344,6 @@ class Steps:
     def step_result_conveyor_test(self, step):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
         try:
-            comp = self.model.set_regs.get('max_comp', 0)
-            recoil = self.model.set_regs.get('max_recoil', 0)
             min_comp, max_comp = 0, 2000
             min_recoil, max_recoil = 0, 2000
 
@@ -364,7 +355,7 @@ class Steps:
                 min_comp, max_comp = self.model.amort.min_comp_2, self.model.amort.max_comp_2
                 min_recoil, max_recoil = self.model.amort.min_recoil_2, self.model.amort.max_recoil_2
 
-            if min_comp < comp < max_comp and min_recoil < recoil < max_recoil:
+            if min_comp < self.model.max_comp < max_comp and min_recoil < self.model.max_recoil < max_recoil:
                 self.model.lamp_green_switch_on()
                 self.signals.conv_result_lamp.emit(step, 'green')
 

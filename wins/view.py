@@ -702,7 +702,7 @@ class AppWindow(QMainWindow):
                 for i in range(count_rows):
                     list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
 
-                self.model.set_regs['speed_cascade'] = list_speed[:]
+                self.model.speed_cascade = list_speed[:]
                 return True
 
         except Exception as e:
@@ -810,12 +810,12 @@ class AppWindow(QMainWindow):
                             elif type_test == 'lab_hand':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
-                                    self.model.set_regs['speed'] = speed
+                                    self.model.speed_test = speed
                                     self.begin_test()
                             elif type_test == 'temper':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
-                                    self.model.set_regs['speed'] = speed
+                                    self.model.speed_test = speed
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
                                         self.model.finish_temper = temper
@@ -859,7 +859,7 @@ class AppWindow(QMainWindow):
                 return False
 
             push_force = float(text.replace(',', '.'))
-            self.model.set_regs['static_push_force'] = push_force
+            self.model.static_push_force = push_force
 
             return True
 
@@ -892,9 +892,9 @@ class AppWindow(QMainWindow):
         try:
             type_test = self.model.set_regs.get('type_test')
             if type_test == 'lab_hand' or type_test == 'temper':
-                speed = self.model.set_regs.get('speed', self.ui.specif_speed_one_lineEdit.text())
+                speed = self.model.speed_test
             elif type_test == 'lab_cascade':
-                speed = self.model.set_regs.get('speed_cascade')
+                speed = self.model.speed_cascade
             else:
                 speed = self.model.amort.speed_one
 
@@ -1074,15 +1074,11 @@ class AppWindow(QMainWindow):
         try:
             self.ui.conv_GraphWidget.clear()
 
-            move_list = self.model.set_regs.get('move_graph')
-            force_list = self.model.set_regs.get('force_graph')
-
             pen = pg.mkPen(color='black', width=3)
-            name = self.model.set_regs.get('speed')
-            self.ui.conv_GraphWidget.plot(move_list,
-                                          force_list,
+            self.ui.conv_GraphWidget.plot(self.model.move_circle,
+                                          self.model.force_circle,
                                           pen=pen,
-                                          name=f'{name} м/с')
+                                          name=f'{self.model.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
@@ -1090,18 +1086,18 @@ class AppWindow(QMainWindow):
 
     def _update_conv_data(self):
         try:
-            self.ui.conv_temperture_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
+            self.ui.conv_temperture_le.setText(f'{self.model.temper_now}')
             self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
             if self.controller.stage == 'test_speed_one':
-                self.ui.conv_speed_one_le.setText(f'{self.model.set_regs.get("speed", 0)}')
-                self.ui.conv_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-                self.ui.conv_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+                self.ui.conv_speed_one_le.setText(f'{self.model.speed_test}')
+                self.ui.conv_comp_le.setText(f'{self.model.max_comp}')
+                self.ui.conv_recoil_le.setText(f'{self.model.max_recoil}')
 
             if self.controller.stage == 'test_speed_two':
-                self.ui.conv_speed_two_le.setText(f'{self.model.set_regs.get("speed", 0)}')
-                self.ui.conv_comp_le_2.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-                self.ui.conv_recoil_le_2.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+                self.ui.conv_speed_two_le.setText(f'{self.model.speed_test}')
+                self.ui.conv_comp_le_2.setText(f'{self.model.max_comp}')
+                self.ui.conv_recoil_le_2.setText(f'{self.model.max_recoil}')
 
             else:
                 pass
@@ -1114,15 +1110,11 @@ class AppWindow(QMainWindow):
         try:
             self.ui.lab_GraphWidget.clear()
 
-            move_list = self.model.set_regs.get('move_graph')
-            force_list = self.model.set_regs.get('force_graph')
-
             pen = pg.mkPen(color='black', width=3)
-            name = str(self.model.set_regs.get('speed'))
-            self.ui.lab_GraphWidget.plot(move_list,
-                                         force_list,
+            self.ui.lab_GraphWidget.plot(self.model.move_circle,
+                                         self.model.force_circle,
                                          pen=pen,
-                                         name=f'{name} м/с')
+                                         name=f'{self.model.speed_test} м/с')
 
             self._update_lab_data()
 
@@ -1157,21 +1149,21 @@ class AppWindow(QMainWindow):
         try:
             if self.model.set_regs.get('type_test') == 'lab':
                 if self.controller.stage == 'test_speed_one':
-                    self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-                    self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+                    self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
+                    self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
 
                 elif self.controller.stage == 'test_speed_two':
-                    self.ui.lab_comp_le_2.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-                    self.ui.lab_recoil_le_2.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+                    self.ui.lab_comp_le_2.setText(f'{self.model.max_comp}')
+                    self.ui.lab_recoil_le_2.setText(f'{self.model.max_recoil}')
             else:
-                self.ui.lab_comp_le.setText(f'{self.model.set_regs.get("max_comp", 0)}')
-                self.ui.lab_recoil_le.setText(f'{self.model.set_regs.get("max_recoil", 0)}')
+                self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
+                self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
 
-            self.ui.lab_now_temp_le.setText(f'{self.model.set_regs.get("temperature", 0)}')
-            self.ui.lab_max_temp_le.setText(f'{self.model.set_regs.get("max_temperature", 0)}')
-            self.ui.lab_speed_le.setText(f'{self.model.set_regs.get("speed", 0)}')
-            self.ui.lab_power_le.setText(f'{self.model.set_regs.get("power", 0)}')
-            self.ui.lab_freq_le.setText(f'{self.model.set_regs.get("freq_piston", 0)}')
+            self.ui.lab_now_temp_le.setText(f'{self.model.temper_now}')
+            self.ui.lab_max_temp_le.setText(f'{self.model.temper_max}')
+            self.ui.lab_speed_le.setText(f'{self.model.speed_test}')
+            self.ui.lab_power_le.setText(f'{self.model.power_amort}')
+            self.ui.lab_freq_le.setText(f'{self.model.freq_piston}')
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
 
         except Exception as e:
@@ -1181,12 +1173,10 @@ class AppWindow(QMainWindow):
     def _fill_push_force(self):
         try:
             if self.model.set_regs.get('flag_push_force', True):
-                push_force = self.model.set_regs.get('dynamic_push_force', 0)
+                return self.model.dynamic_push_force
 
             else:
-                push_force = self.model.set_regs.get('static_push_force', 0)
-
-            return push_force
+                return self.model.static_push_force
 
         except Exception as e:
             self.logger.error(e)
@@ -1232,7 +1222,7 @@ class AppWindow(QMainWindow):
         try:
             speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
             if speed:
-                self.model.set_regs['speed'] = speed
+                self.model.speed_test = speed
 
         except Exception as e:
             self.logger.error(e)
@@ -1332,9 +1322,9 @@ class AppWindow(QMainWindow):
         try:
             type_test = self.model.set_regs.get('type_test')
             if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
-                data_dict = {'speed': self.model.set_regs.get('speed'),
-                             'move': self.model.set_regs.get('move_graph')[:],
-                             'force': self.model.set_regs.get('force_graph')[:]}
+                data_dict = {'speed': self.model.speed_test,
+                             'move': self.model.move_circle.copy(),
+                             'force': self.model.force_circle.copy()}
 
                 self.list_lab.append(data_dict)
 
@@ -1349,18 +1339,18 @@ class AppWindow(QMainWindow):
 
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.model.set_regs.get('move_graph')[:],
-                         'force_graph': self.model.set_regs.get('force_graph')[:],
+            data_dict = {'move_graph': self.model.move_circle.copy(),
+                         'force_graph': self.model.force_circle.copy(),
                          'temper_graph': self.model.set_regs.get('temper_graph', [0])[:],
                          'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
                          'type_test': self.model.set_regs.get('type_test'),
-                         'speed': self.model.set_regs.get('speed'),
+                         'speed': self.model.speed_test,
                          'operator': self.model.operator.copy(),
                          'serial': self.model.set_regs.get('serial_number', 0),
                          'amort': self.model.amort,
                          'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
-                         'static_push_force': self.model.set_regs.get('static_push_force'),
-                         'dynamic_push_force': self.model.set_regs.get('dynamic_push_force'),
+                         'static_push_force': self.model.static_push_force,
+                         'dynamic_push_force': self.model.dynamic_push_force,
                          'max_temperature': self.model.temper_max}
 
             ReadArchive().save_test_in_archive(data_dict)
