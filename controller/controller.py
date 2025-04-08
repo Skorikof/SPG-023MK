@@ -114,9 +114,10 @@ class Controller:
 
     def _update_stage_on_timer(self):
         try:
+            type_test = self.model.type_test
             self.alarm_steps.step_alarm_traverse_position()
 
-            if self.model.set_regs.get('test_flag', False):
+            if self.model.flag_test:
                 self._select_alarm_state(self.steps.stage_control_alarm_state())
 
             if self.stage == 'wait':
@@ -139,7 +140,6 @@ class Controller:
 
             elif self.stage == 'repeat_test':
                 self.stage = 'wait'
-                type_test = self.model.set_regs.get('type_test')
                 if type_test == 'lab_hand':
                     self._test_lab_hand_speed()
                 elif type_test == 'temper':
@@ -155,10 +155,9 @@ class Controller:
                     self.model.write_bit_red_light(0)
                     self.alarm_steps.flag_alarm_traverse = False
                     self.stage = 'wait'
-                    command = {'alarm_flag': False,
-                               'alarm_tag': '',
-                               }
-                    self.model.update_main_dict(command)
+                    self.model.alarm_tag = ''
+                    self.model.flag_alarm = False
+
                     self.signals.reset_ui.emit()
 
             elif self.stage == 'search_hod':
@@ -197,7 +196,6 @@ class Controller:
 
             elif self.stage == 'pumping':
                 if self.count_cycle >= 3:
-                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
                         self.signals.conv_win_test.emit()
                         self._test_on_two_speed(1)
@@ -214,7 +212,6 @@ class Controller:
 
             elif self.stage == 'test_speed_one':
                 if self.count_cycle >= 5:
-                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('one')
 
@@ -223,39 +220,34 @@ class Controller:
 
             elif self.stage == 'test_speed_two':
                 if self.count_cycle >= 5:
-                    type_test = self.model.set_regs.get('type_test')
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('two')
 
                     self.signals.save_result_test.emit('end')
 
                     self.stage = 'wait'
-                    self.model.set_regs['fill_graph'] = False
+                    self.model.flag_fill_graph = False
                     self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'test_lab_hand_speed':
                 if self.count_cycle >= 5:
                     self.stage = 'wait'
-                    self.model.set_regs['fill_graph'] = False
+                    self.model.flag_fill_graph = False
                     self.signals.save_result_test.emit('end')
                     self.steps.step_stop_gear_end_test()
 
-            # FIXME Максимальные усилия уже не в словаре
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    if self.model.temper_max is not None and self.model.temper_max != self.last_max_temper:
+                    if self.model.temper_max != self.last_max_temper:
+                        self.last_max_temper = self.model.temper_max
                         if self.model.temper_max <= self.model.finish_temper:
-                            self.last_max_temper = self.model.temper_max
-                            max_recoil = self.model.set_regs.get('max_recoil', None)
-                            max_comp = self.model.set_regs.get('max_comp', None)
-                            if self.model.temper_max is not None and max_recoil is not None and max_comp is not None:
-                                force = f'{max_recoil}|{max_comp}'
-                                self.steps_tests.step_fill_temper_graph(self.model.temper_max, force)
-
+                            self.model.temper_graph.append(self.model.temper_max)
+                            self.model.temper_recoil_graph.append(self.model.max_recoil)
+                            self.model.temper_comp_graph.append(self.model.max_comp)
                             self._full_cycle_update('0')
 
                         else:
-                            self.model.set_regs['fill_graph'] = False
+                            self.model.flag_fill_graph = False
                             self.stage = 'wait'
                             self.signals.save_result_test.emit('end')
                             self.steps.step_stop_gear_end_test()
@@ -271,16 +263,14 @@ class Controller:
                         self.model.speed_test = self.model.speed_cascade[self.count_cascade]
 
                         self.model.clear_data_in_array_graph()
-
-                        self.model.set_regs['fill_graph'] = True
-
+                        self.model.flag_fill_graph = True
                         self.count_cascade += 1
 
                         self._full_cycle_update('0')
 
                     else:
                         self.stage = 'wait'
-                        self.model.set_regs['fill_graph'] = False
+                        self.model.flag_fill_graph = False
                         self.count_cascade = 1
                         self.signals.end_test.emit()
                         self.steps.step_stop_gear_end_test()
@@ -291,12 +281,12 @@ class Controller:
 
             elif self.stage == 'stop_gear_min_pos':
                 if self.steps.stage_stop_gear_min_pos():
-                    if self.model.set_regs.get('search_hod', False):
-                        self.model.set_regs['search_hod'] = False
+                    if self.model.flag_search_hod:
+                        self.model.flag_search_hod = False
                         self.signals.search_hod_msg.emit()
 
                     else:
-                        if self.model.set_regs.get('type_test') == 'conv':
+                        if type_test == 'conv':
                             self.signals.conv_test_stop.emit()
 
                         else:
@@ -306,7 +296,7 @@ class Controller:
                 flag = self.steps.step_control_traverse_move(self.set_trav_point)
                 if flag:
                     self.stage = 'wait'
-                    if not self.model.set_regs.get('alarm_flag', False):
+                    if not self.model.flag_alarm:
                         self.signals.cancel_test.emit()
 
             else:
@@ -357,9 +347,8 @@ class Controller:
 
     def work_interrupted_operator(self):
         self.stage = 'wait'
-        command = {'test_launch': False,
-                   'test_flag': False}
-        self.model.update_main_dict(command)
+        self.model.flag_test_launch = False
+        self.model.flag_test = False
 
         self.model.lamp_all_switch_off()
 
@@ -395,7 +384,7 @@ class Controller:
 
                 self.model.write_emergency_force(self.calc_data.excess_force(self.model.amort))
 
-                if self.model.set_regs.get('repeat', False):
+                if self.model.flag_repeat:
                     self.stage = 'wait_buffer'
                     self.next_stage = 'repeat_test'
                     self.model.write_bit_force_cycle(1)
@@ -484,7 +473,7 @@ class Controller:
                 self.steps.step_traverse_move_position(start_point)
 
             elif tag == 'stop_test':
-                if not self.model.set_regs.get('alarm_flag', False):
+                if not self.model.flag_alarm:
                     self._position_traverse()
 
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
@@ -499,10 +488,9 @@ class Controller:
 
     def _test_on_two_speed(self, ind):
         try:
-            type_test = self.model.set_regs.get('type_test')
-            if type_test == 'conv':
+            if self.model.type_test == 'conv':
                 self.signals.conv_win_test.emit()
-            elif type_test == 'lab':
+            elif self.model.type_test == 'lab':
                 self.signals.lab_win_test.emit()
 
             self.steps_tests.step_test_on_two_speed(ind)
@@ -524,7 +512,7 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _check_max_temper_test(self):
-        if self.model.set_regs.get('type_test', 'hand') == 'temper':
+        if self.model.type_test == 'temper':
             finish_temp = self.model.finish_temper
         else:
             finish_temp = self.model.amort.max_temper

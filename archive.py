@@ -268,7 +268,10 @@ class ReadArchive:
 
                 if obj['type_test'] == 'temper':
                     data_first = self._change_data_for_save(obj['temper_graph'])
-                    data_second = self._change_data_for_save(obj['temper_force_graph'])
+                    temper_force = []
+                    for i in range(len(obj['temper_graph'])):
+                        temper_force.append(f'{obj["temper_recoil_graph"][i]}|{obj["temper_comp_graph"][i]}')
+                    data_second = self._change_data_for_save(temper_force)
 
                 else:
                     data_first = self._change_data_for_save(obj['move_graph'])

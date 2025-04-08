@@ -14,13 +14,10 @@ class StepTests:
         self.model = model
         self.signals = StepTestsSignals()
 
-        self.temper_graph = []
-        self.temper_force_graph = []
-
     # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание
     def step_yellow_btn_push(self):
         try:
-            if self.model.set_regs.get('test_flag', False) is False:
+            if self.model.flag_test is False:
                 if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
                     self.model.lamp_all_switch_off()
 
@@ -28,11 +25,9 @@ class StepTests:
                 self.model.clear_circle_data_graph()
 
                 self.model.reset_current_circle()
-
-                command = {'alarm_flag': False,
-                           'alarm_tag': '',
-                           'test_flag': True}
-                self.model.update_main_dict(command)
+                self.model.flag_test = True
+                self.model.alarm_tag = ''
+                self.model.flag_alarm = False
 
                 if self.model.state_dict.get('lost_control'):
                     self.model.write_bit_unblock_control()
@@ -43,7 +38,7 @@ class StepTests:
                 return 'start'
 
             else:
-                self.model.set_regs['test_flag'] = False
+                self.model.flag_test = False
                 return 'stop'
 
         except Exception as e:
@@ -63,13 +58,9 @@ class StepTests:
             self.model.temper_max = 0
 
             self.model.reset_current_circle()
-
-            command = {'test_launch': True,
-                       'alarm_flag': False,
-                       'alarm_tag': '',
-                       }
-
-            self.model.update_main_dict(command)
+            self.model.flag_test_launch = True
+            self.model.alarm_tag = ''
+            self.model.flag_alarm = False
 
         except Exception as e:
             self.logger.error(e)
@@ -82,13 +73,9 @@ class StepTests:
             self.model.clear_data_in_array_graph()
 
             self.model.reset_current_circle()
-
-            command = {'test_launch': False,
-                       'fill_graph': False,
-                       'test_flag': False,
-                       }
-
-            self.model.update_main_dict(command)
+            self.model.flag_test_launch = False
+            self.model.flag_test = False
+            self.model.flag_fill_graph = False
 
         except Exception as e:
             self.logger.error(e)
@@ -102,7 +89,7 @@ class StepTests:
                 self.model.clear_data_in_array_graph()
                 self.model.speed_test = self.model.amort.speed_one
 
-                self.model.set_regs['fill_graph'] = True
+                self.model.flag_fill_graph = True
 
             elif ind == 2:
                 self.signals.stage_from_tests.emit('test_speed_two')
@@ -110,8 +97,8 @@ class StepTests:
 
                 self.model.write_speed_motor(1, speed=self.model.amort.speed_two)
 
-            if self.model.set_regs.get('repeat', False):
-                self.model.set_regs['repeat'] = False
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
                 self.model.motor_up(1)
 
         except Exception as e:
@@ -123,11 +110,10 @@ class StepTests:
             self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
             self.model.clear_data_in_array_graph()
+            self.model.flag_fill_graph = True
 
-            self.model.set_regs['fill_graph'] = True
-
-            if self.model.set_regs.get('repeat', False):
-                self.model.set_regs['repeat'] = False
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
                 self.model.motor_up(1)
 
         except Exception as e:
@@ -141,10 +127,10 @@ class StepTests:
 
             self.model.clear_data_in_array_graph()
             self.model.speed_test = speed_list[0]
-            self.model.set_regs['fill_graph'] = True
+            self.model.flag_fill_graph = True
 
-            if self.model.set_regs.get('repeat', False):
-                self.model.set_regs['repeat'] = False
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
                 self.model.motor_up(1)
 
         except Exception as e:
@@ -155,34 +141,15 @@ class StepTests:
         try:
             self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_temper')
-            self.temper_graph = []
-            self.temper_force_graph = []
 
             self.model.clear_data_in_array_graph()
+            self.model.clear_data_in_temper_graph()
+            self.model.flag_fill_graph = True
 
-            command = {'temper_graph': [],
-                       'temper_force_graph': [],
-                       'fill_graph': True,
-                       }
-            self.model.update_main_dict(command)
-
-            if self.model.set_regs.get('repeat', False):
-                self.model.set_regs['repeat'] = False
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
                 self.model.motor_up(1)
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in steps_tests/step_test_temper - {e}')
-
-    def step_fill_temper_graph(self, temper, force):
-        try:
-            self.temper_graph.append(temper)
-            self.temper_force_graph.append(force)
-
-            if len(self.temper_graph) > 1:
-                self.model.set_regs['temper_graph'] = self.temper_graph[:]
-                self.model.set_regs['temper_force_graph'] = self.temper_force_graph[:]
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in steps_tests/step_fill_temper_graph - {e}')

@@ -43,17 +43,18 @@ class Model:
         self.client = Client()
 
         self._init_varibles()
+        self._init_flags()
 
         self._start_param_model()
 
     def _init_varibles(self):
-        self.set_regs = {}
         self.state_dict = {}
         self.switch_dict = {}
 
         self.reader = None
         self.writer = None
         self.operator = {'name': '', 'rank': ''}
+        self.serial_number = ''
         self.amort = None
         self.buffer_state = ['null', 'null']
 
@@ -61,6 +62,9 @@ class Model:
         self.move_graph = np.array([], 'float64')
         self.force_circle = np.array([], 'float64')
         self.move_circle = np.array([], 'float64')
+        self.temper_graph = []
+        self.temper_recoil_graph = []
+        self.temper_comp_graph = []
 
         self.force_koef = PrgSettings().force_koef
         self.force_clear = 0
@@ -71,16 +75,11 @@ class Model:
         self.counter = 0
         self.move_now = 0
         self.move_traverse = 0
-
         self.hod_measure = 0
-        self.min_pos = False
         self.min_point = 0
-        self.max_pos = False
         self.max_point = 0
         self.start_direction = False
         self.current_direction = False
-
-        self.gear_referent = False
 
         self.force_alarm = 0
         self.temper_first = 0
@@ -88,14 +87,13 @@ class Model:
         self.temper_max = 0
         self.temper_now = 0
 
-        self.timer_add_koef = None
         self.koef_force_list = []
+        self.timer_add_koef = None
         self.timer_calc_koef = None
 
         self.finish_temper = PrgSettings().finish_temper
         self.timer_yellow = None
         self.time_push_yellow = None
-        self.yellow_rattle = False
 
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -108,6 +106,26 @@ class Model:
         self.speed_cascade = []
         self.power_amort = 0
         self.freq_piston = 0
+
+    def _init_flags(self):
+        self.flag_push_force = False
+        self.lbl_push_force = ''
+        self.min_pos = False
+        self.max_pos = False
+        self.gear_referent = False
+        self.traverse_referent = False
+
+        self.flag_fill_graph = False
+        self.type_test = 'hand'
+        self.flag_test = False
+        self.flag_test_lunch = False
+        self.yellow_rattle = False
+        self.flag_repeat = False
+        self.flag_search_hod = False
+
+        self.alarm_tag = ''
+        self.flag_alarm = False
+
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -194,14 +212,6 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_update_state_dict - {e}')
 
-    def update_main_dict(self, data):
-        try:
-            self.set_regs = {**self.set_regs, **data}
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/update_main_dict - {e}')
-
     def init_timer_koef_force(self):
         self.timer_add_koef = QTimer()
         self.timer_add_koef.setInterval(50)
@@ -253,7 +263,7 @@ class Model:
                 self._pars_regs_result(response.get('regs'))
 
             # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
-            # if self.set_regs.get('test_launch', False) is True:
+            # if self.flag_test_launch is True:
             #     if not self.timer_yellow.isActive():
             #         self.timer_yellow.start()
             #     else:
@@ -343,7 +353,7 @@ class Model:
             self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
 
     def _read_controller_finish(self):
-        if self.set_regs.get('type_test', None) == 'hand':
+        if self.type_test == 'hand':
             self.signals.win_set_update.emit()
 
     def _init_timer_yellow_btn(self):
@@ -441,22 +451,17 @@ class Model:
             self.status_bar_msg(f'ERROR in model/_add_data_in_array_graph - {e}')
 
     def clear_data_in_array_graph(self):
-        try:
-            self.force_graph = np.array([], 'float64')
-            self.move_graph = np.array([], 'float64')
+        self.force_graph = np.array([], 'float64')
+        self.move_graph = np.array([], 'float64')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/clear_data_in_array_graph - {e}')
+    def clear_data_in_temper_graph(self):
+        self.temper_graph = []
+        self.temper_recoil_graph = []
+        self.temper_comp_graph = []
 
     def clear_circle_data_graph(self):
-        try:
-            self.force_circle = np.array([], 'float64')
-            self.move_circle = np.array([], 'float64')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/reset_circle_data_graph - {e}')
+        self.force_circle = np.array([], 'float64')
+        self.move_circle = np.array([], 'float64')
 
     def _check_full_circle(self):
         try:
@@ -493,7 +498,7 @@ class Model:
 
     def _choice_push_force(self):
         try:
-            if self.set_regs.get('flag_push_force', False):
+            if self.flag_push_force:
                 return self.dynamic_push_force
 
             else:
@@ -505,8 +510,9 @@ class Model:
 
     def _full_circle_done(self):
         try:
-            if self.set_regs.get('fill_graph', False):
+            if self.flag_fill_graph:
                 self._calc_dynamic_push_force()
+
                 push_force = self._choice_push_force()
 
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
@@ -544,12 +550,12 @@ class Model:
                 self._find_start_direction(move)
 
             else:
-                if self.set_regs.get('fill_graph', False):
+                if self.flag_fill_graph:
                     self._add_data_in_array_graph(force, move)
 
                 if self.min_pos and self.max_pos and np.min(move) <= self.min_point <= np.max(move):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
-                    if self.set_regs.get('search_hod') is False:
+                    if self.flag_search_hod is False:
                         if hod > 30:
                             self._check_full_circle()
                         else:

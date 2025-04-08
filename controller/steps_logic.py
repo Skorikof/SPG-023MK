@@ -23,7 +23,7 @@ class Steps:
     def stage_control_alarm_state(self):
         try:
             tag = 'null'
-            if not self.model.set_regs.get('type_test') == 'temper':
+            if not self.model.type_test == 'temper':
                 if self.model.temper_max >= self.model.amort.max_temper:
                     tag = 'excess_temperature'
 
@@ -58,12 +58,9 @@ class Steps:
             self.signals.next_stage_from_logic.emit('search_hod')
 
             self.model.reset_current_circle()
-
-            command = {'search_hod': True,
-                       'alarm_flag': False,
-                       'alarm_tag': '',
-                       }
-            self.model.update_main_dict(command)
+            self.model.alarm_tag = ''
+            self.model.flag_alarm = False
+            self.model.flag_search_hod = True
 
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_logic.emit('wait_buffer')
@@ -105,12 +102,9 @@ class Steps:
             self.signals.next_stage_from_logic.emit('pos_set_gear')
 
             self.model.reset_current_circle()
+            self.model.alarm_tag = ''
+            self.model.flag_alarm = False
 
-            command = {'alarm_flag': False,
-                       'alarm_tag': '',
-                       }
-
-            self.model.update_main_dict(command)
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
@@ -206,8 +200,7 @@ class Steps:
                 self.model.clear_data_in_array_graph()
 
                 self.model.reset_current_circle()
-
-                self.model.set_regs['test_flag'] = False
+                self.model.flag_test = False
 
                 return True
 
@@ -278,7 +271,7 @@ class Steps:
             if self.model.switch_dict.get('highest_position', False) is True:
                 self.model.motor_stop(2)
 
-                self.model.set_regs['traverse_referent'] = True
+                self.model.traverse_referent = True
 
                 return True
             return False

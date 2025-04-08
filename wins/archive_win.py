@@ -138,7 +138,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.power_le.setText('')
             self.freq_le.setText('')
             self.push_force_le.setText('')
-            self._fill_flag_push_force('-1')
+            self._fill_lbl_push_force('-1')
 
         except Exception as e:
             self.logger.error(e)
@@ -323,7 +323,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_archive_data_gui - {e}')
 
-    def _fill_flag_push_force(self, index: str):
+    def _fill_lbl_push_force(self, index: str):
         txt = ''
         self.push_force_le.setVisible(True)
         if index == '1':
@@ -406,7 +406,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             response = self.conv_graph.data_graph(obj)
 
             self._fill_archive_data_gui(obj)
-            self._fill_flag_push_force(obj.flag_push_force)
+            self._fill_lbl_push_force(obj.flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -427,7 +427,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.move_graph.fill_graph(obj)
             response = self.move_graph.data_graph(obj)
             self._fill_archive_data_gui(obj)
-            self._fill_flag_push_force(obj.flag_push_force)
+            self._fill_lbl_push_force(obj.flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -448,7 +448,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             response = self.cascade_graph.fill_graph(data)
 
             self._fill_archive_data_gui(data[0])
-            self._fill_flag_push_force(data[0].flag_push_force)
+            self._fill_lbl_push_force(data[0].flag_push_force)
 
             speed_list = []
             for obj in data:
@@ -468,7 +468,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             response = self.triple_graph.fill_graph(self.archive.struct.tests[index])
 
             self._fill_archive_data_gui(self.archive.struct.tests[index])
-            self._fill_flag_push_force('2')
+            self._fill_lbl_push_force('2')
             self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
@@ -487,7 +487,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             self._fill_archive_data_gui(self.archive.struct.tests[index])
             self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+            self._fill_lbl_push_force(self.archive.struct.tests[index].flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -505,7 +505,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             self._fill_archive_data_gui(self.archive.struct.tests[index])
             self.speed_le.setText(f'{self.archive.struct.tests[index].speed}')
-            self._fill_flag_push_force(self.archive.struct.tests[index].flag_push_force)
+            self._fill_lbl_push_force(self.archive.struct.tests[index].flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')
@@ -523,7 +523,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
             self._fill_archive_data_gui(self.archive.struct.temper[index])
             self.speed_le.setText(f'{self.archive.struct.temper[index].speed}')
-            self._fill_flag_push_force(self.archive.struct.temper[index].flag_push_force)
+            self._fill_lbl_push_force(self.archive.struct.temper[index].flag_push_force)
 
             self.recoil_le.setText(f'{response.get("recoil", 0)}')
             self.comp_le.setText(f'{response.get("comp", 0)}')

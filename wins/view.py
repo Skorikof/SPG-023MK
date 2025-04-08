@@ -27,26 +27,6 @@ class AppWindow(QMainWindow):
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
 
-        self.list_lab = []
-        self.dict_lab_cascade = {}
-        self.index_amort = 0
-        self.index_type_test = 0
-        self.bit_temper = None
-        self.flag_repeat = False
-
-        self.color_pen = ['black',
-                          'blue',
-                          'green',
-                          'orange',
-                          'purple',
-                          'brown',
-                          'olive',
-                          'cyan',
-                          'yellow',
-                          'pink',
-                          'grey',
-                          'red']
-
         self._start_param_view()
 
     def closeEvent(self, event):
@@ -69,6 +49,7 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
 
     def _start_param_view(self):
+        self._init_start_view()
         self._create_statusbar_ui()
         self._init_buttons()
         self._init_signals()
@@ -76,6 +57,28 @@ class AppWindow(QMainWindow):
         self._init_conv_graph()
 
         self._start_page()
+
+    def _init_start_view(self):
+        self.tag_msg = 'info'
+        self.color_pen = ['black',
+                          'blue',
+                          'green',
+                          'orange',
+                          'purple',
+                          'brown',
+                          'olive',
+                          'cyan',
+                          'yellow',
+                          'pink',
+                          'grey',
+                          'red']
+        self.list_lab = []
+        self.dict_lab_cascade = {}
+        self.index_amort = 0
+        self.index_type_test = 0
+        self.bit_temper = None
+
+        self.ui.push_force_chb.setCheckState(False)
 
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
@@ -259,7 +262,7 @@ class AppWindow(QMainWindow):
             self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
                                                     "color: " + color + ";")
 
-            self.model.set_regs['tag_msg'] = tag
+            self.tag_msg = tag
 
         except Exception as e:
             self.logger.error(e)
@@ -279,13 +282,11 @@ class AppWindow(QMainWindow):
 
     def btn_ok_message_clicked(self):
         try:
-            tag = self.model.set_regs.get('tag_msg')
-            alarm_tag = self.model.set_regs.get('alarm_tag', '')
-            if tag == 'warning':
-                if alarm_tag == 'alarm_traverse_up':
+            if self.tag_msg == 'warning':
+                if self.model.alarm_tag == 'alarm_traverse_up':
                     self.controller.traverse_move_out_alarm('up')
 
-                elif alarm_tag == 'alarm_traverse_down':
+                elif self.model.alarm_tag == 'alarm_traverse_down':
                     self.controller.traverse_move_out_alarm('down')
 
                 else:
@@ -293,7 +294,7 @@ class AppWindow(QMainWindow):
                     time.sleep(0.1)
                     self._start_page()
 
-            elif tag == 'question':
+            elif self.tag_msg == 'question':
                 self.model.lamp_all_switch_off()
                 time.sleep(0.1)
                 self.main_btn_state(False)
@@ -307,7 +308,7 @@ class AppWindow(QMainWindow):
     def btn_cancel_message_clicked(self):
         try:
             self.controller.change_stage_controller('wait')
-            self.model.set_regs['test_launch'] = False
+            self.model.flag_test_launch = False
 
             self.model.lamp_all_switch_off()
             time.sleep(0.1)
@@ -442,7 +443,7 @@ class AppWindow(QMainWindow):
         if tag == 'done':
             txt_msg = 'Показания с датчика усилия обнулены'
 
-        if self.model.set_regs.get('type_test', 'hand') == 'hand':
+        if self.model.type_test == 'hand':
             self.win_set.setEnabled(True)
 
         else:
@@ -499,7 +500,7 @@ class AppWindow(QMainWindow):
 
     def update_graph_view(self):
         try:
-            type_test = self.model.set_regs.get('type_test', 'hand')
+            type_test = self.model.type_test
             if type_test == 'hand':
                 pass
 
@@ -521,23 +522,23 @@ class AppWindow(QMainWindow):
         try:
             ind = self.index_type_test
             if ind == 0:
-                self.model.set_regs['type_test'] = 'lab'
+                self.model.type_test = 'lab'
                 self.specif_enable_gui(True, True, False, True)
 
             elif ind == 1:
-                self.model.set_regs['type_test'] = 'lab_hand'
+                self.model.type_test = 'lab_hand'
                 self.specif_enable_gui(False, False, False, True)
 
             elif ind == 2:
-                self.model.set_regs['type_test'] = 'lab_cascade'
+                self.model.type_test = 'lab_cascade'
                 self.specif_enable_gui(False, False, True, True)
 
             elif ind == 3:
-                self.model.set_regs['type_test'] = 'temper'
+                self.model.type_test = 'temper'
                 self.specif_enable_gui(False, False, False, False)
 
             elif ind == 4:
-                self.model.set_regs['type_test'] = 'conv'
+                self.model.type_test = 'conv'
                 self.specif_enable_gui(True, True, False, True)
 
         except Exception as e:
@@ -585,7 +586,7 @@ class AppWindow(QMainWindow):
             self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
             self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
             self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
-            if self.model.set_regs.get('type_test', None) == 'temper':
+            if self.model.type_test == 'temper':
                 max_temper = self.model.finish_temper
             else:
                 max_temper = obj.max_temper
@@ -748,12 +749,10 @@ class AppWindow(QMainWindow):
 
     def change_temper_sensor_btn(self):
         try:
-            if self.bit_temper != self.model.state_list[6]:
-                self.bit_temper = self.model.state_list[6]
-                if self.model.state_list[6] == 0:
-                    self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
-                else:
-                    self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
+            if self.model.state_list[6] == 0:
+                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
+            else:
+                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
         except Exception as e:
             self.logger.error(e)
@@ -784,15 +783,13 @@ class AppWindow(QMainWindow):
                 self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
 
-                type_test = self.model.set_regs.get('type_test')
-
                 flag = self.static_push_force_editing()
                 if flag:
                     flag = self.serial_editing_finished()
                     if flag:
-                        self.model.set_regs['serial_number'] = self.ui.specif_serial_lineEdit.text()
+                        self.model.serial_number = self.ui.specif_serial_lineEdit.text()
                         self.lab_test_second_force_gui(False)
-                        if type_test == 'conv':
+                        if self.model.type_test == 'conv':
                             self._conv_win_clear()
                             self.conv_test_fill_template()
                             self.begin_test()
@@ -800,19 +797,19 @@ class AppWindow(QMainWindow):
                         else:
                             self._lab_win_clear()
                             self.fill_gui_lab_test()
-                            if type_test == 'lab_cascade':
+                            if self.model.type_test == 'lab_cascade':
                                 flag = self.specif_read_lab_cascade_table()
                                 if flag:
                                     self.begin_test()
                                 else:
                                     self.specif_msg_none_cascade_speed()
 
-                            elif type_test == 'lab_hand':
+                            elif self.model.type_test == 'lab_hand':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
                                     self.model.speed_test = speed
                                     self.begin_test()
-                            elif type_test == 'temper':
+                            elif self.model.type_test == 'temper':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
                                     self.model.speed_test = speed
@@ -873,16 +870,12 @@ class AppWindow(QMainWindow):
     def flag_push_force_set(self):
         try:
             if self.ui.push_force_chb.isChecked():
-                command = {'flag_push_force': True,
-                           'lbl_push_force': 'Динамическая выталкивающая сила',
-                           }
-                self.model.update_main_dict(command)
+                self.model.flag_push_force = True
+                self.model.lbl_push_force = 'Динамическая выталкивающая сила'
 
             else:
-                command = {'flag_push_force': False,
-                           'lbl_push_force': 'Статическая выталкивающая сила',
-                           }
-                self.model.update_main_dict(command)
+                self.model.flag_push_force = True
+                self.model.lbl_push_force = 'Статическая выталкивающая сила'
 
         except Exception as e:
             self.logger.error(e)
@@ -890,10 +883,9 @@ class AppWindow(QMainWindow):
 
     def save_log_begin_test(self):
         try:
-            type_test = self.model.set_regs.get('type_test')
-            if type_test == 'lab_hand' or type_test == 'temper':
+            if self.model.type_test == 'lab_hand' or self.model.type_test == 'temper':
                 speed = self.model.speed_test
-            elif type_test == 'lab_cascade':
+            elif self.model.type_test == 'lab_cascade':
                 speed = self.model.speed_cascade
             else:
                 speed = self.model.amort.speed_one
@@ -909,7 +901,7 @@ class AppWindow(QMainWindow):
             limit_recoil_two = f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}'
             temper = f'{self.model.amort.max_temper}'
 
-            txt_log = (f'Start {type_test} test --> name = {name}, speed = {speed}, dimensions = {dimensions}, '
+            txt_log = (f'Start {self.model.type_test} test --> name = {name}, speed = {speed}, dimensions = {dimensions}, '
                        f'hod = {hod}, speed_one = {speed_one}, speed_two = {speed_two}, '
                        f'limit_comp_one = {limit_comp_one}, limit_comp_two = {limit_comp_two}, '
                        f'limit_recoil_one = {limit_recoil_one}, limit_comp_two = {limit_comp_two}, '
@@ -941,8 +933,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
             self.ui.lab_hod_le.setText(hod)
 
-            self.ui.lbl_push_force_lab.setText(self.model.set_regs.get('lbl_push_force', ''))
-            self.ui.lab_serial_le.setText(f'{self.model.set_regs.get("serial_number", 0)}')
+            self.ui.lbl_push_force_lab.setText(self.model.lbl_push_force)
+            self.ui.lab_serial_le.setText(f'{self.model.serial_number}')
 
         except Exception as e:
             self.logger.error(e)
@@ -953,9 +945,7 @@ class AppWindow(QMainWindow):
             self.main_stop_state(True)
             self.main_btn_state(False)
 
-            type_test = self.model.set_regs.get('type_test')
-
-            if type_test != 'conv':
+            if self.model.type_test != 'conv':
                 self.list_lab = []
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
@@ -968,9 +958,6 @@ class AppWindow(QMainWindow):
                 self.ui.test_conv_cancel_btn.setEnabled(True)
 
             self.save_log_begin_test()
-            if self.flag_repeat:
-                self.model.set_regs['repeat'] = True
-                self.flag_repeat = False
 
             self.controller.start_test_clicked()
 
@@ -1036,7 +1023,7 @@ class AppWindow(QMainWindow):
             self.ui.conv_comp_limit_le_2.setText(f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}')
             self.ui.conv_recoil_limit_le_2.setText(f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}')
 
-            self.ui.lbl_push_force_conv.setText(self.model.set_regs.get('lbl_push_force', ''))
+            self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
 
         except Exception as e:
             self.logger.error(e)
@@ -1124,20 +1111,15 @@ class AppWindow(QMainWindow):
 
     def _update_temper_graph(self):
         try:
-            recoil_list = []
-            comp_list = []
             self.ui.lab_GraphWidget.clear()
-            pen_recoil = pg.mkPen(color='black', width=3)
-            pen_comp = pg.mkPen(color='blue', width=3)
-            x_list = [float(x) for x in self.model.set_regs.get('temper_graph')]
-            for value in self.model.set_regs.get('temper_force_graph'):
-                temp_list = value.split('|')
-                recoil, comp = temp_list[0], temp_list[1]
-                recoil_list.append(float(recoil))
-                comp_list.append(float(comp))
+            if len(self.model.temper_graph) > 1:
+                pen_recoil = pg.mkPen(color='black', width=3)
+                pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.ui.lab_GraphWidget.plot(x_list, recoil_list, pen=pen_recoil, name='Отбой')
-            self.ui.lab_GraphWidget.plot(x_list, comp_list, pen=pen_comp, name='Сжатие')
+                self.ui.lab_GraphWidget.plot(self.model.temper_graph, self.model.temper_recoil_graph,
+                                             pen=pen_recoil, name='Отбой')
+                self.ui.lab_GraphWidget.plot(self.model.temper_graph, self.model.temper_comp_graph,
+                                             pen=pen_comp, name='Сжатие')
 
             self._update_lab_data()
 
@@ -1147,7 +1129,7 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            if self.model.set_regs.get('type_test') == 'lab':
+            if self.model.type_test == 'lab':
                 if self.controller.stage == 'test_speed_one':
                     self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
                     self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
@@ -1172,7 +1154,7 @@ class AppWindow(QMainWindow):
 
     def _fill_push_force(self):
         try:
-            if self.model.set_regs.get('flag_push_force', True):
+            if self.model.flag_push_force:
                 return self.model.dynamic_push_force
 
             else:
@@ -1196,7 +1178,7 @@ class AppWindow(QMainWindow):
             self.status_bar_ui(f'ERROR in view/_update_lab_cascade_graph - {e}')
 
     def repeat_test_clicked_slot(self):
-        self.flag_repeat = True
+        self.model.flag_repeat = True
         self.begin_test()
 
     def cancel_test_clicked(self):
@@ -1210,7 +1192,7 @@ class AppWindow(QMainWindow):
 
             elif temp == 'НАЗАД':
                 self.controller.steps_tests.step_stop_test()
-                self.model.set_regs['test_launch'] = False
+                self.model.flag_test_launch = False
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1248,13 +1230,11 @@ class AppWindow(QMainWindow):
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 
-        type_test = self.model.set_regs.get('type_test')
-
-        if type_test == 'lab_hand':
+        if self.model.type_test == 'lab_hand':
             self.ui.lab_speed_le.setReadOnly(False)
             self.ui.test_change_speed_btn.setVisible(True)
 
-        elif type_test == 'lab' or type_test == 'lab_cascade':
+        elif self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade':
             self.show_compare_graph()
 
     def slot_conv_test_stop(self):
@@ -1272,8 +1252,8 @@ class AppWindow(QMainWindow):
 
             elif temp == 'НАЗАД':
                 self.controller.steps_tests.step_stop_test()
-                self.model.set_regs['test_launch'] = False
-                self.model.set_regs['serial_number'] = str(int(self.model.set_regs.get('serial_number')) + 1)
+                self.model.flag_test_launch = False
+                self.model.serial_number = str(int(self.model.serial_number) + 1)
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1305,7 +1285,7 @@ class AppWindow(QMainWindow):
     def open_win_settings(self):
         self.main_btn_state(False)
         self.main_ui_state(False)
-        self.model.set_regs['type_test'] = 'hand'
+        self.model.type_test = 'hand'
         self.win_set.start_param_win_set()
         self.win_set.show()
 
@@ -1320,8 +1300,7 @@ class AppWindow(QMainWindow):
 
     def slot_save_lab_result(self, command):
         try:
-            type_test = self.model.set_regs.get('type_test')
-            if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
+            if self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade' or self.model.type_test == 'conv':
                 data_dict = {'speed': self.model.speed_test,
                              'move': self.model.move_circle.copy(),
                              'force': self.model.force_circle.copy()}
@@ -1341,14 +1320,15 @@ class AppWindow(QMainWindow):
         try:
             data_dict = {'move_graph': self.model.move_circle.copy(),
                          'force_graph': self.model.force_circle.copy(),
-                         'temper_graph': self.model.set_regs.get('temper_graph', [0])[:],
-                         'temper_force_graph': self.model.set_regs.get('temper_force_graph', [0])[:],
-                         'type_test': self.model.set_regs.get('type_test'),
+                         'temper_graph': self.model.temper_graph[:],
+                         'temper_recoil_graph': self.model.temper_recoil_graph[:],
+                         'temper_comp_graph': self.model.temper_comp_graph[:],
+                         'type_test': self.model.type_test,
                          'speed': self.model.speed_test,
                          'operator': self.model.operator.copy(),
-                         'serial': self.model.set_regs.get('serial_number', 0),
+                         'serial': self.model.serial_number,
                          'amort': self.model.amort,
-                         'flag_push_force': int(self.model.set_regs.get('flag_push_force')),
+                         'flag_push_force': int(self.model.flag_push_force),
                          'static_push_force': self.model.static_push_force,
                          'dynamic_push_force': self.model.dynamic_push_force,
                          'max_temperature': self.model.temper_max}
