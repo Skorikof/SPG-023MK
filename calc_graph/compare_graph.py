@@ -1,9 +1,9 @@
+import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
 from calc_graph.calc_graph_values import CalcGraphValue
-from calc_graph.cascad_graph import CascadeGraph
 
 
 class CompareGraph:
@@ -12,7 +12,6 @@ class CompareGraph:
         self.widget = widget
         self.calc_data = CalcData()
         self.calc_graph_values = CalcGraphValue()
-        self.cascade_graph = CascadeGraph(widget)
 
         self.color_pen = ['black',
                           'blue',
@@ -84,7 +83,7 @@ class CompareGraph:
                     speed_list.append(float(graph.speed))
                     push_force = self.calc_graph_values.select_push_force(graph)
 
-                    recoil, comp = self.calc_data.middle_min_and_max_force(graph.force_list)
+                    recoil, comp = self.calc_data.middle_min_and_max_force(np.array(graph.force_list))
 
                     recoil_list.append(round(recoil + push_force, 2))
                     comp_list.append(round(comp * (-1) + push_force, 2))
@@ -103,7 +102,41 @@ class CompareGraph:
 
                 self.widget.plot(x_list, y_list, pen=pen, name=name)
 
-            self.cascade_graph.limit_line_graph(obj[0][0])
+            self.limit_line_graph(obj[0][0])
+
+        except Exception as e:
+            self.logger.error(e)
+
+    def limit_line_graph(self, obj):
+        try:
+            lim_speed_1 = []
+            lim_speed_2 = []
+            lim_recoil_1 = []
+            lim_recoil_2 = []
+            lim_comp_1 = []
+            lim_comp_2 = []
+
+            lim_speed_1.append(float(obj.amort.speed_one))
+            lim_speed_1.append(float(obj.amort.speed_one))
+            lim_speed_2.append(float(obj.amort.speed_two))
+            lim_speed_2.append(float(obj.amort.speed_two))
+
+            lim_recoil_1.append(float(obj.amort.min_recoil))
+            lim_recoil_1.append(float(obj.amort.max_recoil))
+            lim_recoil_2.append(float(obj.amort.max_recoil_2))
+            lim_recoil_2.append(float(obj.amort.min_recoil_2))
+
+            lim_comp_1.append(float(obj.amort.min_comp) * -1)
+            lim_comp_1.append(float(obj.amort.max_comp) * -1)
+            lim_comp_2.append(float(obj.amort.max_comp_2) * -1)
+            lim_comp_2.append(float(obj.amort.min_comp_2) * -1)
+
+            pen = pg.mkPen(color='red', width=2)
+
+            self.widget.plot(lim_speed_1, lim_recoil_1, pen=pen)
+            self.widget.plot(lim_speed_2, lim_recoil_2, pen=pen)
+            self.widget.plot(lim_speed_1, lim_comp_1, pen=pen)
+            self.widget.plot(lim_speed_2, lim_comp_2, pen=pen)
 
         except Exception as e:
             self.logger.error(e)

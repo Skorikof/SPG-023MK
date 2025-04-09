@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -70,7 +71,7 @@ class CascadeGraph:
                 speed_list.append(float(obj.speed))
                 push_force = self.calc_graph_values.select_push_force(obj)
 
-                recoil, comp = self.calc_data.middle_min_and_max_force(obj.force_list)
+                recoil, comp = self.calc_data.middle_min_and_max_force(np.array(obj.force_list))
 
                 recoil_list.append(round(recoil + push_force, 2))
                 comp_list.append(round(comp * (-1) + push_force, 2))

@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 from logger import my_logger
 
@@ -39,16 +40,16 @@ class ConvGraph:
 
     def data_graph(self, data):
         try:
-            move_list = data.move_list
-            force_list = data.force_list
+            move_array = np.array(data.move_list)
+            force_array = np.array(data.force_list)
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_array)
             push_force = self.calc_graph_values.select_push_force(data)
 
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = self.calc_data.power_amort(move_list, force_list)
+            power = self.calc_data.power_amort(move_array, force_array)
 
             speed = float(data.speed)
             freq = self.calc_data.freq_piston_amort(speed, data.amort.hod)

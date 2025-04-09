@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -28,25 +29,24 @@ class BoostGraphOne:
 
     def fill_graph(self, data):
         try:
-            move_list = data.move_list
-            force_list = data.force_list
+            move_array = np.array(data.move_list)
+            force_array = np.array(data.force_list)
             push_force = self.calc_graph_values.select_push_force(data)
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_array)
 
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            speed_coord = self.calc_graph_values.speed_coord(move_list, 'boost_one')
+            speed_coord = self.calc_graph_values.speed_coord(move_array, 'one')
             round_coord = self.calc_graph_values.rounding_coord(speed_coord, 50)
 
             # revers_force = [round(x * (-1), 1) for x in force_list]
-
-            round_coord.append(round_coord[0])
-            force_list.append(force_list[0])
+            x_coord = np.concatenate((round_coord, round_coord[:1]))
+            y_coord = np.concatenate((force_array, force_array[:1]))
 
             pen = pg.mkPen(color='blue', width=5)
-            self.widget.plot(round_coord, force_list, pen=pen, name='Скорость')
+            self.widget.plot(x_coord, y_coord, pen=pen, name='Скорость')
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

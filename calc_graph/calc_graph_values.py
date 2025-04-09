@@ -23,40 +23,27 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def rounding_coord(self, coord: list, degree: int):
+    def rounding_coord(self, coord, degree: int):
         try:
             w = np.hanning(degree)
-            list_approxy = np.convolve(w / w.sum(), coord, mode='same')
-
-            return list(map(lambda x: round(x, 3), list_approxy))
+            return np.round(np.convolve(w / w.sum(), coord, mode='same'), decimals=3)
 
         except Exception as e:
             self.logger.error(e)
 
-    def speed_coord(self, move: list, tag):
+    def speed_coord(self, move, tag):
         try:
-            speed_list = []
             y_coord = []
 
-            temp_list = move[-5:] + move + move[:5]
+            move_array = np.concatenate((move[-5:], move, move[:5]))
 
-            if tag == 'boost_one':
+            if tag == 'one':
                 for i in range(len(move)):
-                    for j in range(10):
-                        speed_list.append(round(abs(abs(temp_list[i + j + 1]) - abs(temp_list[i + j])), 3))
+                    y_coord.append(round(np.std(move_array[i:i + 10]), 3))
 
-                    mid_val = round(sum(speed_list) / 10, 3)
-                    y_coord.append(mid_val)
-                    speed_list = []
-
-            elif tag == 'boost_two':
+            elif tag == 'two':
                 for i in range(len(move)):
-                    for j in range(10):
-                        speed_list.append(round(temp_list[i + j + 1] - temp_list[i + j], 3))
-
-                    mid_val = round(sum(speed_list) / 10, 3)
-                    y_coord.append(mid_val)
-                    speed_list = []
+                    y_coord.append(round(np.std(move_array[i:i + 10]), 3))
 
             return y_coord
 
