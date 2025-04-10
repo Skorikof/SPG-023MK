@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -30,24 +31,24 @@ class TripleGraph:
         try:
             hod = int(data.amort.hod)
             speed = float(data.speed)
-            move_list = data.move_list
-            force_list = data.force_list
+            move_array = np.array(data.move_list)
+            force_array = np.array(data.force_list)
 
             self._fill_piston_graph(hod)
 
-            x_coord = self.calc_graph_values.convert_move_to_deg(move_list)
+            x_coord = np.linspace(0, 360, num=len(move_array))
+            index_zero = np.where(x_coord >= 90)[0][0]
 
-            index_zero_point = self.calc_graph_values.calc_index_zero_point_piston(x_coord)
-
-            reversed_force = self.calc_graph_values.reverse_force_coord(force_list)
-            offset_force = self.calc_graph_values.offset_force_coord(reversed_force, index_zero_point)
+            reversed_force = force_array * (-1)
+            offset_force = np.concatenate((reversed_force[index_zero:], reversed_force[:index_zero]))
             self._fill_force_graph(x_coord, offset_force)
 
             speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord)
-            offset_speed = self.calc_graph_values.offset_speed_coord(speed_coord, index_zero_point)
+            offset_speed = np.concatenate((speed_coord[index_zero:], speed_coord[:index_zero]))
+
             self._fill_speed_graph(x_coord, offset_speed)
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_list)
+            recoil, comp = self.calc_data.middle_min_and_max_force(force_array)
 
             return {'recoil': recoil,
                     'comp': comp,

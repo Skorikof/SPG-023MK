@@ -43,7 +43,10 @@ class CalcGraphValue:
 
             elif tag == 'two':
                 for i in range(len(move)):
-                    y_coord.append(round(np.std(move_array[i:i + 10]), 3))
+                    speed_coord = []
+                    for j in range(10):
+                        speed_coord.append(move_array[i + j + 1] - move_array[i + j])
+                    y_coord.append(round(sum(speed_coord) / 10, 3))
 
             return y_coord
 
@@ -63,74 +66,7 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def _offset_move_by_zero(self, move: list):
-        try:
-            koef = min(move)
-            return [round(x + abs(koef), 3) for x in move]
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _unfolding_move(self, move: list):
-        try:
-            offset_list = self._offset_move_by_zero(move)
-            way = []
-            max_val = max(offset_list)
-            max_index = offset_list.index(max_val)
-            for i in range(len(offset_list)):
-                point = offset_list[i]
-                if i < max_index:
-                    point = round(max_val - abs(offset_list[i]) + max_val, 1)
-
-                way.append(point)
-
-            return way
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def convert_move_to_deg(self, move: list):
-        try:
-            unfold_move = self._unfolding_move(move)
-            min_limit = 0
-            max_limit = 360
-            first_point = unfold_move[0]
-            last_point = unfold_move[-1]
-
-            k = round((max_limit - min_limit) / (last_point - first_point), 4)
-            b = round(max_limit - k * last_point, 4)
-
-            change_list = [round(k * x + b, 2) for x in unfold_move]
-
-            return change_list
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def calc_index_zero_point_piston(self, angle: list):
-        try:
-            for point in angle:
-                if 90 - 2 < point < 90 + 2:
-                    return angle.index(point)
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def reverse_force_coord(self, force):
-        try:
-            return [x * (-1) for x in force]
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def offset_force_coord(self, force, index):
-        try:
-            return force[index:] + force[:index]
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def calc_speed_coord(self, hod: int, speed: float, angle: list):
+    def calc_speed_coord(self, hod: int, speed: float, angle):
         try:
             x_rad = np.radians(angle)
             radius = round((hod / 1000) / 2, 3)
@@ -140,16 +76,9 @@ class CalcGraphValue:
             first_order = radius * speed * np.sin(x_rad)
             second_order = ((lam * radius * speed) / 2) * np.sin(2 * x_rad)
 
-            speed_order = list((first_order + second_order) * 10000)
+            speed_order = (first_order + second_order) * 10000
 
             return speed_order
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def offset_speed_coord(self, speed, index):
-        try:
-            return speed[index:] + speed[:index]
 
         except Exception as e:
             self.logger.error(e)

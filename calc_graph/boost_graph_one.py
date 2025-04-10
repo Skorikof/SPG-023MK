@@ -41,7 +41,6 @@ class BoostGraphOne:
             speed_coord = self.calc_graph_values.speed_coord(move_array, 'one')
             round_coord = self.calc_graph_values.rounding_coord(speed_coord, 50)
 
-            # revers_force = [round(x * (-1), 1) for x in force_list]
             x_coord = np.concatenate((round_coord, round_coord[:1]))
             y_coord = np.concatenate((force_array, force_array[:1]))
 

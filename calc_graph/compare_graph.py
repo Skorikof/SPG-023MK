@@ -44,15 +44,13 @@ class CompareGraph:
     def conv_graph(self, obj):
         try:
             for graph in obj:
-                x_list = graph.move_list
-                y_list = graph.force_list
                 pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
                 name = (f'{graph.time_test} - '
                         f'{graph.amort.name} - '
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
 
-                self.widget.plot(x_list, y_list, pen=pen, name=name)
+                self.widget.plot(np.array(graph.move_list), np.array(graph.force_list), pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)
@@ -60,15 +58,13 @@ class CompareGraph:
     def move_graph(self, obj):
         try:
             for graph in obj:
-                x_list = graph.move_list
-                y_list = graph.force_list
                 pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
                 name = (f'{graph.time_test} - '
                         f'{graph.amort.name} - '
                         f'{graph.serial_number} - '
                         f'{graph.speed}')
 
-                self.widget.plot(x_list, y_list, pen=pen, name=name)
+                self.widget.plot(np.array(graph.move_list), np.array(graph.force_list), pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)

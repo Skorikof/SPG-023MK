@@ -41,11 +41,9 @@ class BoostGraphTwo:
             speed_coord = self.calc_graph_values.speed_coord(move_array, 'two')
             round_coord = self.calc_graph_values.rounding_coord(speed_coord, 50)
 
-            # reverse_x = [x * (-1) for x in round_coord]
+            reverse_x = round_coord * (-1)
 
-            # revers_force = [round(x * (-1), 1) for x in force_list]
-
-            x_coord = np.concatenate((round_coord, round_coord[:1]))
+            x_coord = np.concatenate((reverse_x, reverse_x[:1]))
             y_coord = np.concatenate((force_array, force_array[:1]))
 
             pen = pg.mkPen(color='blue', width=5)
