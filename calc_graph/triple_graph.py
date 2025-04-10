@@ -9,8 +9,6 @@ from calc_graph.calc_graph_values import CalcGraphValue
 class TripleGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
-        self.calc_data = CalcData()
-        self.calc_graph_values = CalcGraphValue()
         self.widget = widget
 
     def gui_graph(self):
@@ -43,12 +41,12 @@ class TripleGraph:
             offset_force = np.concatenate((reversed_force[index_zero:], reversed_force[:index_zero]))
             self._fill_force_graph(x_coord, offset_force)
 
-            speed_coord = self.calc_graph_values.calc_speed_coord(hod, speed, x_coord)
+            speed_coord = CalcGraphValue().calc_speed_coord(hod, speed, x_coord)
             offset_speed = np.concatenate((speed_coord[index_zero:], speed_coord[:index_zero]))
 
             self._fill_speed_graph(x_coord, offset_speed)
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_array)
+            recoil, comp = CalcData().middle_min_and_max_force(force_array)
 
             return {'recoil': recoil,
                     'comp': comp,
@@ -60,7 +58,7 @@ class TripleGraph:
 
     def _fill_piston_graph(self, hod):
         try:
-            hod_x, hod_y = self.calc_graph_values.coord_sinus(hod, 360, 1)
+            hod_x, hod_y = CalcGraphValue().coord_sinus(hod, 360, 1)
             pen = pg.mkPen(color='black', width=3)
             self.widget.plot(hod_x, hod_y, pen=pen, name='Смещение')
 

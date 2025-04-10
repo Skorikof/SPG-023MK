@@ -9,8 +9,6 @@ from calc_graph.calc_graph_values import CalcGraphValue
 class MoveGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
-        self.calc_data = CalcData()
-        self.calc_graph_values = CalcGraphValue()
         self.widget = widget
 
     def gui_graph(self):
@@ -18,7 +16,6 @@ class MoveGraph:
             self.widget.plot(clear=True)
             self.widget.setLabel('left', 'Усилие', units='кгс', color='k')
             self.widget.setLabel('bottom', 'Перемещение', units='мм', color='k')
-            self.widget.setLabel('right', 'Усилие', units='кгс', color='k')
             self.widget.setTitle('График зависимости усилия от перемещения', color='k', size='14pt')
             self.widget.showGrid(True, True)
             self.widget.setBackground('w')
@@ -40,16 +37,16 @@ class MoveGraph:
             move_array = np.array(data.move_list)
             force_array = np.array(data.force_list)
 
-            recoil, comp = self.calc_data.middle_min_and_max_force(force_array)
-            push_force = self.calc_graph_values.select_push_force(data)
+            recoil, comp = CalcData().middle_min_and_max_force(force_array)
+            push_force = CalcGraphValue().select_push_force(data)
 
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = self.calc_data.power_amort(move_array, force_array)
+            power = CalcData().power_amort(move_array, force_array)
 
             speed = float(data.speed)
-            freq = self.calc_data.freq_piston_amort(speed, data.amort.hod)
+            freq = CalcData().freq_piston_amort(speed, data.amort.hod)
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

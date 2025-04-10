@@ -9,8 +9,6 @@ from calc_graph.calc_graph_values import CalcGraphValue
 class CascadeGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
-        self.calc_data = CalcData()
-        self.calc_graph_values = CalcGraphValue()
         self.widget = widget
 
     def gui_graph(self):
@@ -18,7 +16,6 @@ class CascadeGraph:
             self.widget.plot(clear=True)
             self.widget.setLabel('left', 'Усилие', units='кгс')
             self.widget.setLabel('bottom', 'Скорость', units='м/с')
-            self.widget.setLabel('right', 'Усилие', units='кгс')
             self.widget.setTitle('График зависимости усилия от скорости')
             self.widget.showGrid(True, True)
             self.widget.setBackground('w')
@@ -69,9 +66,9 @@ class CascadeGraph:
 
             for obj in data:
                 speed_list.append(float(obj.speed))
-                push_force = self.calc_graph_values.select_push_force(obj)
+                push_force = CalcGraphValue().select_push_force(obj)
 
-                recoil, comp = self.calc_data.middle_min_and_max_force(np.array(obj.force_list))
+                recoil, comp = CalcData().middle_min_and_max_force(np.array(obj.force_list))
 
                 recoil_list.append(round(recoil + push_force, 2))
                 comp_list.append(round(comp * (-1) + push_force, 2))
@@ -79,8 +76,8 @@ class CascadeGraph:
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            recoil_x, recoil_interp = self.calc_graph_values.interpoly_line_coord(speed_list, recoil_list)
-            comp_x, comp_interp = self.calc_graph_values.interpoly_line_coord(speed_list, comp_list)
+            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_list, recoil_list)
+            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_list, comp_list)
 
             self.widget.plot(recoil_x, recoil_interp, pen=pen_recoil, name='Отбой')
             self.widget.plot(comp_x, comp_interp, pen=pen_comp, name='Сжатие')

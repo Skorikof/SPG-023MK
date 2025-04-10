@@ -10,8 +10,6 @@ class CompareGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
-        self.calc_data = CalcData()
-        self.calc_graph_values = CalcGraphValue()
 
         self.color_pen = ['black',
                           'blue',
@@ -77,15 +75,15 @@ class CompareGraph:
                 recoil_list = [0]
                 for graph in arch_obj:
                     speed_list.append(float(graph.speed))
-                    push_force = self.calc_graph_values.select_push_force(graph)
+                    push_force = CalcGraphValue().select_push_force(graph)
 
-                    recoil, comp = self.calc_data.middle_min_and_max_force(np.array(graph.force_list))
+                    recoil, comp = CalcData().middle_min_and_max_force(np.array(graph.force_list))
 
                     recoil_list.append(round(recoil + push_force, 2))
                     comp_list.append(round(comp * (-1) + push_force, 2))
 
-                recoil_x, recoil_interp = self.calc_graph_values.interpoly_line_coord(speed_list, recoil_list)
-                comp_x, comp_interp = self.calc_graph_values.interpoly_line_coord(speed_list, comp_list)
+                recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_list, recoil_list)
+                comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_list, comp_list)
 
                 x_list = [*recoil_x[::-1], *comp_x]
                 y_list = [*recoil_interp[::-1], *comp_interp]

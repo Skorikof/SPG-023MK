@@ -1,15 +1,12 @@
 import pyqtgraph as pg
 
 from logger import my_logger
-from calc_data.data_calculation import CalcData
 from calc_graph.calc_graph_values import CalcGraphValue
 
 
 class TemperGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
-        self.calc_data = CalcData()
-        self.calc_graph_values = CalcGraphValue()
         self.widget = widget
 
     def gui_graph(self):
@@ -17,7 +14,6 @@ class TemperGraph:
             self.widget.plot(clear=True)
             self.widget.setLabel('left', 'Усилие', units='кгс')
             self.widget.setLabel('bottom', 'Температура', units='℃')
-            self.widget.setLabel('right', 'Усилие', units='кгс')
             self.widget.setTitle('График зависимости усилия от температуры')
             self.widget.showGrid(True, True)
             self.widget.setBackground('w')
@@ -40,7 +36,7 @@ class TemperGraph:
                 recoil_list.append(recoil)
                 comp_list.append(comp)
 
-            push_force = self.calc_graph_values.select_push_force(data)
+            push_force = CalcGraphValue().select_push_force(data)
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)

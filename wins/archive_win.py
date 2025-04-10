@@ -34,14 +34,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.hide()
 
             self.calc_data = CalcData()
-            self.conv_graph = ConvGraph(self.graphwidget)
-            self.move_graph = MoveGraph(self.graphwidget)
-            self.cascade_graph = CascadeGraph(self.graphwidget)
-            self.triple_graph = TripleGraph(self.graphwidget)
-            self.boost_one_graph = BoostGraphOne(self.graphwidget)
-            self.boost_two_graph = BoostGraphTwo(self.graphwidget)
-            self.temper_graph = TemperGraph(self.graphwidget)
-            self.compare_graph = CompareGraph(self.graphwidget)
+            self.move_graph = MoveGraph(self.duble_graphwidget)
+            self.conv_graph = ConvGraph(self.duble_graphwidget)
+            self.cascade_graph = CascadeGraph(self.duble_graphwidget)
+            self.triple_graph = TripleGraph(self.triple_graphwidget)
+            self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
+            self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
+            self.temper_graph = TemperGraph(self.duble_graphwidget)
+            self.compare_graph = CompareGraph(self.duble_graphwidget)
             self.screen_save = ScreenSave()
             self.archive = ReadArchive()
 
@@ -119,7 +119,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _archive_ui_clear(self):
         try:
-            self.graphwidget.clear()
+            self.duble_graphwidget.clear()
+            self.triple_graphwidget.clear()
             self.name_le.setText('')
             self.operator_le.setText('')
             self.speed_set_1_le.setText('')
@@ -353,42 +354,49 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _archive_graph(self):
         try:
             if self.type_graph == 'move':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(True)
                 self.move_graph.gui_graph()
                 self._fill_lab_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'conv':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(True)
                 self.conv_graph.gui_graph()
                 self._fill_conv_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'speed':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(False)
                 self.cascade_graph.gui_graph()
                 self._fill_lab_cascade_graph()
                 self._visible_compare_btn(True)
 
             elif self.type_graph == 'triple':
+                self.stackedWidget.setCurrentIndex(1)
                 self._gui_power_freq_visible(False)
                 self.triple_graph.gui_graph()
                 self._fill_triple_graph()
                 self._visible_compare_btn(False)
 
             elif self.type_graph == 'boost_1':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(False)
                 self.boost_one_graph.gui_graph()
                 self._fill_boost_one_graph()
                 self._visible_compare_btn(False)
 
             elif self.type_graph == 'boost_2':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(False)
                 self.boost_two_graph.gui_graph()
                 self._fill_boost_two_graph()
                 self._visible_compare_btn(False)
 
             elif self.type_graph == 'temper':
+                self.stackedWidget.setCurrentIndex(0)
                 self._gui_power_freq_visible(False)
                 self.temper_graph.gui_graph()
                 self._fill_temper_graph()
