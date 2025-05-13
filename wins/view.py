@@ -874,7 +874,7 @@ class AppWindow(QMainWindow):
                 self.model.lbl_push_force = 'Динамическая выталкивающая сила'
 
             else:
-                self.model.flag_push_force = True
+                self.model.flag_push_force = False
                 self.model.lbl_push_force = 'Статическая выталкивающая сила'
 
         except Exception as e:
@@ -1318,8 +1318,8 @@ class AppWindow(QMainWindow):
 
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.model.move_circle.copy(),
-                         'force_graph': self.model.force_circle.copy(),
+            data_dict = {'move_graph': list(self.model.move_circle),
+                         'force_graph': list(self.model.force_circle),
                          'temper_graph': self.model.temper_graph[:],
                          'temper_recoil_graph': self.model.temper_recoil_graph[:],
                          'temper_comp_graph': self.model.temper_comp_graph[:],
