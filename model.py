@@ -213,6 +213,7 @@ class Model:
             self.status_bar_msg(f'ERROR in model/_update_state_dict - {e}')
 
     def init_timer_koef_force(self):
+        self.write_bit_force_cycle(1)
         self.timer_add_koef = QTimer()
         self.timer_add_koef.setInterval(50)
         self.timer_add_koef.timeout.connect(self._add_koef_force_in_list)
@@ -231,6 +232,7 @@ class Model:
 
     def _calc_and_save_force_koef(self):
         try:
+            self.write_bit_force_cycle(0)
             self.timer_add_koef.stop()
             self.timer_calc_koef.stop()
 
