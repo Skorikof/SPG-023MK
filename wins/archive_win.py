@@ -27,39 +27,40 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def __init__(self):
         super(ArchiveWin, self).__init__()
-        try:
-            self.logger = my_logger.get_logger(__name__)
-            self.setupUi(self)
-            self.setWindowIcon(QIcon('icon/archive.png'))
-            self.hide()
+        self.logger = my_logger.get_logger(__name__)
 
-            self.calc_data = CalcData()
-            self.move_graph = MoveGraph(self.duble_graphwidget)
-            self.conv_graph = ConvGraph(self.duble_graphwidget)
-            self.cascade_graph = CascadeGraph(self.duble_graphwidget)
-            self.triple_graph = TripleGraph(self.triple_graphwidget)
-            self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
-            self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
-            self.temper_graph = TemperGraph(self.duble_graphwidget)
-            self.compare_graph = CompareGraph(self.duble_graphwidget)
-            self.screen_save = ScreenSave()
-            self.archive = ReadArchive()
+    def init_archive_win(self):
+        self.setupUi(self)
+        self.setWindowIcon(QIcon('icon/archive.png'))
+        
+        self.calc_data = CalcData()
+        self.move_graph = MoveGraph(self.duble_graphwidget)
+        self.conv_graph = ConvGraph(self.duble_graphwidget)
+        self.cascade_graph = CascadeGraph(self.duble_graphwidget)
+        self.triple_graph = TripleGraph(self.triple_graphwidget)
+        self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
+        self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
+        self.temper_graph = TemperGraph(self.duble_graphwidget)
+        self.compare_graph = CompareGraph(self.duble_graphwidget)
+        self.screen_save = ScreenSave()
+        self.archive = ReadArchive()
+        
+        self.index_date = ''
+        self.index_type_test = 0
+        self.type_test = 'lab'
+        self.index_test = 0
+        self.index_type_graph = 0
+        
+        self.compare_data = []
+        self.type_graph = 'move'
+        
+        self.index_conv = 0
+        self.index_test_cascade = 0
+        self.index_test_temper = 0
 
-            self.compare_data = []
-            self.type_graph = 'move'
-            self.index_date = ''
-            self.index_type_test = 0
-            self.index_test = 0
-            self.index_conv = 0
-            self.index_test_cascade = 0
-            self.index_test_temper = 0
-            self.ind_type_graph = 0
-
-            self._create_statusbar_set()
-            self._init_buttons()
-
-        except Exception as e:
-            self.logger.error(e)
+        self._create_statusbar_set()
+        self._init_buttons()
+        self._read_path_archive()
 
     def closeEvent(self, event):
         self.signals.closed.emit()
@@ -88,13 +89,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.combo_test.activated[int].connect(self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)
 
-    def read_path_archive(self):
+    def _read_path_archive(self):
         try:
             self.compare_data = []
             self.type_graph = 'move'
             self.ind_type_graph = 0
             self.index_date = ''
             self.index_type_test = 0
+            self.type_test = 'lab'
             self.index_test = 0
             self.index_conv = 0
             self.index_test_cascade = 0
@@ -111,12 +113,64 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.combo_dates.addItems(self.archive.files_name_sort)
                 self.combo_dates.setCurrentIndex(0)
                 self.index_date = self.archive.files_name_sort[0]
-                self._archive_selected()
+                # self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/read_path_archive - {e}')
+            self._statusbar_set_ui(f'ERROR in archive_win/_read_path_archive - {e}')
+            
+    def _change_index_date(self, date):
+        try:
+            if self.index_date != date:
+                self.index_date = date
+                # self._archive_selected()
 
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
+            
+    def _change_index_type_test(self, index):
+        try:
+            if self.index_type_test != index:
+                self.index_type_test = index
+                self.index_test = 0
+                self.combo_test.setCurrentIndex(0)
+                self.index_type_graph = 0
+                self.combo_type.setCurrentIndex(0)
+                if index == 0:
+                    self.type_test = 'lab'
+                elif index == 1:
+                    self.type_test = 'cascade'
+                elif index == 2:
+                    self.type_test = 'conv'
+                elif index == 3:
+                    self.type_test = 'temper'
+                # self._archive_selected()
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_type_test - {e}')
+            
+    def _change_index_test(self, index):
+        try:
+            if self.index_test != index:
+                self.index_test = index
+                # self._archive_graph()
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_test - {e}')
+            
+    def _change_type_graph(self, index):
+        try:
+            if self.ind_type_graph != index:
+                self.ind_type_graph = index
+                # self._archive_selected()                
+
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
+            
     def _archive_ui_clear(self):
         try:
             self.duble_graphwidget.clear()
@@ -144,80 +198,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_ui_clear - {e}')
-
-    def _change_index_date(self, date):
-        try:
-            if self.index_date != date:
-                self.index_date = date
-                self._archive_selected()
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
-
-    def _change_index_type_test(self, index):
-        try:
-            if self.index_type_test != index:
-                self.index_type_test = index
-                self._archive_selected()
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_date - {e}')
-
-    def _change_index_test(self, index):
-        try:
-            if self.type_graph == 'speed':
-                if self.index_test_cascade != index:
-                    self.index_test_cascade = index
-                    self._archive_graph()
-
-            elif self.type_graph == 'temper':
-                if self.index_test_temper != index:
-                    self.index_test_temper = index
-                    self._archive_graph()
-
-            elif self.type_graph == 'conv':
-                if self.index_conv != index:
-                    self.index_conv = index
-                    self._archive_graph()
-
-            else:
-                if self.index_test != index:
-                    self.index_test = index
-                    self._archive_graph()
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_change_index_test - {e}')
-
-    def _change_type_graph(self, index):
-        try:
-            if self.ind_type_graph != index:
-                self.ind_type_graph = index
-                if index == 0:
-                    self.type_graph = 'move'
-
-                elif index == 1:
-                    self.type_graph = 'speed'
-
-                elif index == 2:
-                    self.type_graph = 'triple'
-
-                elif index == 3:
-                    self.type_graph = 'boost_1'
-
-                elif index == 4:
-                    self.type_graph = 'boost_2'
-
-                elif index == 5:
-                    self.type_graph = 'temper'
-
-                self._archive_selected()
-
-        except Exception as e:
-            self.logger.error(e)
-            self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
 
     def _archive_selected(self):
         try:

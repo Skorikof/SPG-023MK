@@ -115,49 +115,63 @@ class ReadArchive:
 
             else:
                 if not archive_list[0] == '*':
-                    self.type_test = archive_list[3]
-                    if self.type_test == 'temper':
-                        self.ind_temp += 1
-                        self.temper.append(TempTest())
-                        self._fill_obj_archive_data(self.temper[self.ind_temp], archive_list[:24])
-                        self.temper[self.ind_temp].temper_graph = self._add_data_on_list_graph(archive_list[24:-1])
-                        
-                    elif self.type_test == 'lab':
-                        self.ind_lab += 1
-                        self.lab.append(LabTest())
-                        self._fill_obj_archive_data(self.lab[self.ind_lab], archive_list[:24])
-                        self.lab[self.ind_lab].move_list = self._add_data_on_list_graph(archive_list[24:-1])
-
-                    elif self.type_test == 'conv':
-                        self.ind_conv += 1
-                        self.conv.append(ConvTest())
-                        self._fill_obj_archive_data(self.conv[self.ind_conv], archive_list[:24])
-                        self.conv[self.ind_conv].move_list = self._add_data_on_list_graph(archive_list[24:-1])
-                        
-                    elif self.type_test == 'lab_cascade':
-                        if self.flag_new_cascade:
-                            self.flag_new_cascade = False
-                            self.cascade.append(CascTest())
-                            self._fill_obj_archive_data(self.cascade[self.ind_casc], archive_list[:24])
-                            self.cascade[self.ind_casc].speed_list.append(self.speed)
+                    self._pars_first_data(archive_list)
                             
                 elif archive_list[0] == '*':
-                    if self.type_test == 'temper':
-                        recoil, comp = self._add_data_temper_graph(archive_list[24:-1])
+                    self._pars_second_data(archive_list[24:-1])
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _pars_first_data(self, archive_list):
+        try:
+            self.type_test = archive_list[3]
+            if self.type_test == 'temper':
+                self.ind_temp += 1
+                self.temper.append(TempTest())
+                self._fill_obj_archive_data(self.temper[self.ind_temp], archive_list[:24])
+                self.temper[self.ind_temp].temper_graph = self._add_data_on_list_graph(archive_list[24:-1])
+                
+            elif self.type_test == 'lab':
+                self.ind_lab += 1
+                self.lab.append(LabTest())
+                self._fill_obj_archive_data(self.lab[self.ind_lab], archive_list[:24])
+                self.lab[self.ind_lab].move_list = self._add_data_on_list_graph(archive_list[24:-1])
+
+            elif self.type_test == 'conv':
+                self.ind_conv += 1
+                self.conv.append(ConvTest())
+                self._fill_obj_archive_data(self.conv[self.ind_conv], archive_list[:24])
+                self.conv[self.ind_conv].move_list = self._add_data_on_list_graph(archive_list[24:-1])
+                
+            elif self.type_test == 'lab_cascade':
+                if self.flag_new_cascade:
+                    self.flag_new_cascade = False
+                    self.cascade.append(CascTest())
+                    self._fill_obj_archive_data(self.cascade[self.ind_casc], archive_list[:24])
+                    self.cascade[self.ind_casc].speed_list.append(self.speed)
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _pars_second_data(self, archive_list):
+        try:
+            if self.type_test == 'temper':
+                        recoil, comp = self._add_data_temper_graph(archive_list)
                         self.temper[self.ind_temp].recoil_list = recoil
                         self.temper[self.ind_temp].comp_list = comp
                         
-                    elif self.type_test == 'lab':
-                        self.lab[self.ind_lab].force_list = self._add_data_on_list_graph(archive_list[24:-1])
+            elif self.type_test == 'lab':
+                self.lab[self.ind_lab].force_list = self._add_data_on_list_graph(archive_list)
 
-                    elif self.type_test == 'conv':
-                        self.conv[self.ind_conv].force_list = self._add_data_on_list_graph(archive_list[24:-1])
+            elif self.type_test == 'conv':
+                self.conv[self.ind_conv].force_list = self._add_data_on_list_graph(archive_list)
 
-                    elif self.type_test == 'lab_cascade':
-                        force_list = self._add_data_on_list_graph(archive_list[24:-1])
-                        self.cascade[self.ind_casc].recoil_list.append(max(force_list))
-                        self.cascade[self.ind_casc].comp_list.append(abs(min(force_list)))
-
+            elif self.type_test == 'lab_cascade':
+                force_list = self._add_data_on_list_graph(archive_list)
+                self.cascade[self.ind_casc].recoil_list.append(max(force_list))
+                self.cascade[self.ind_casc].comp_list.append(abs(min(force_list)))
+            
         except Exception as e:
             self.logger.error(e)
 
@@ -407,6 +421,11 @@ class ReadArchive:
 
 #         except Exception as e:
 #             self.logger.error(e)
+
+
+class SaveArchive:
+    def __init__(self):
+        self.logger = my_logger.get_logger(__name__)
 
     def save_test_in_archive(self, obj):
         try:

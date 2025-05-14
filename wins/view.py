@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 from settings import glob_var
 
 from logger import my_logger
-from archive import ReadArchive
+from archive import SaveArchive
 from calc_data.data_calculation import CalcData
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
@@ -26,6 +26,7 @@ class AppWindow(QMainWindow):
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
+        self.save_archive = SaveArchive()
 
         self._start_param_view()
 
@@ -1274,13 +1275,13 @@ class AppWindow(QMainWindow):
     def open_win_archive(self):
         self.main_ui_state(False)
         self.main_btn_state(False)
-        self.win_archive.read_path_archive()
+        self.win_archive.init_archive_win()
         self.win_archive.show()
 
     def close_win_archive(self):
         self.main_ui_state(True)
         self.main_btn_state(True)
-        self.win_archive.hide()
+        self.win_archive.close()
 
     def open_win_settings(self):
         self.main_btn_state(False)
@@ -1332,8 +1333,8 @@ class AppWindow(QMainWindow):
                          'static_push_force': self.model.static_push_force,
                          'dynamic_push_force': self.model.dynamic_push_force,
                          'max_temperature': self.model.temper_max}
-
-            ReadArchive().save_test_in_archive(data_dict)
+            
+            self.save_archive.save_test_in_archive(data_dict)
 
         except Exception as e:
             self.logger.error(e)
@@ -1341,7 +1342,7 @@ class AppWindow(QMainWindow):
 
     def slot_write_end_test(self):
         try:
-            ReadArchive().write_end_test_in_archive()
+            self.save_archive.write_end_test_in_archive()
 
         except Exception as e:
             self.logger.error(e)
