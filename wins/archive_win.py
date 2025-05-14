@@ -50,13 +50,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.type_test = 'lab'
         self.index_test = 0
         self.index_type_graph = 0
-        
-        self.compare_data = []
+        self.type_graph_list = []
         self.type_graph = 'move'
-        
-        self.index_conv = 0
-        self.index_test_cascade = 0
-        self.index_test_temper = 0
+
+        self.compare_data = []
 
         self._create_statusbar_set()
         self._init_buttons()
@@ -89,6 +86,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.combo_test.activated[int].connect(self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)
 
+    # FIXME
     def _read_path_archive(self):
         try:
             self.compare_data = []
@@ -113,7 +111,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.combo_dates.addItems(self.archive.files_name_sort)
                 self.combo_dates.setCurrentIndex(0)
                 self.index_date = self.archive.files_name_sort[0]
-                # self._archive_selected()
+                self._fill_combo_type_graph(self.index_type_test)
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
@@ -123,7 +122,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.index_date != date:
                 self.index_date = date
-                # self._archive_selected()
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
@@ -135,8 +134,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.index_type_test = index
                 self.index_test = 0
                 self.combo_test.setCurrentIndex(0)
-                self.index_type_graph = 0
-                self.combo_type.setCurrentIndex(0)
+                self._fill_combo_type_graph(index)
                 if index == 0:
                     self.type_test = 'lab'
                 elif index == 1:
@@ -145,7 +143,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     self.type_test = 'conv'
                 elif index == 3:
                     self.type_test = 'temper'
-                # self._archive_selected()
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
@@ -155,22 +153,87 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.index_test != index:
                 self.index_test = index
-                # self._archive_graph()
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_change_index_test - {e}')
             
+    def _fill_combo_type_graph(self, index):
+        self.combo_type.clear()
+        if index == 1:
+            temp = ['Усилие/Скорость']
+            self.type_graph_list = ['speed']
+        elif index == 3:
+            temp = ['Температура/Усилие']
+            self.type_graph_list = ['temper']
+        else:
+            temp = ['Усилие/Перемещение',
+                    'Усилие/Скорость №1',
+                    'Усилие/Скорость №2',
+                    'Усилие/Скорость/Смещение'
+                    ]
+            self.type_graph_list = ['move',
+                                    'boost_1',
+                                    'boost_2',
+                                    'triple']
+            
+        self.combo_type.addItems(temp)
+        self.index_type_graph = 0
+        self.combo_type.setCurrentIndex(0)
+            
     def _change_type_graph(self, index):
         try:
             if self.ind_type_graph != index:
                 self.ind_type_graph = index
-                # self._archive_selected()                
+                self.type_graph = self.type_graph_list[index]
+                self._archive_selected()                
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
-            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def _archive_ui_clear(self):
         try:
             self.duble_graphwidget.clear()
@@ -205,7 +268,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.combo_test.clear()
             temp_arr = []
             self.archive.select_file(date)
-
+            
+            pass
+          
             if self.index_type_test == 0:
                 if self.type_graph == 'speed':
                     index = 1
