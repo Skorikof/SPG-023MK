@@ -87,19 +87,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.combo_test.activated[int].connect(self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)
 
-    # FIXME
     def _read_path_archive(self):
         try:
-            self.compare_data = []
-            self.type_graph = 'move'
-            self.index_date = ''
-            self.index_type_test = 0
-            self.type_test = 'lab'
-            self.index_test = 0
-            self.index_conv = 0
-            self.index_test_cascade = 0
-            self.index_test_temper = 0
-
             self.combo_dates.clear()
             self.combo_test.clear()
             self.combo_type.clear()
@@ -133,8 +122,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.index_type_test != index:
                 self.index_type_test = index
-                self.index_test = 0
-                self.combo_test.setCurrentIndex(0)
                 self._fill_combo_type_graph(index)
                 if index == 0:
                     self.type_test = 'lab'
@@ -158,7 +145,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         try:
             if self.index_test != index:
                 self.index_test = index
-                self._archive_selected()
+                self._archive_graph()
 
         except Exception as e:
             self.logger.error(e)
@@ -192,19 +179,16 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             if self.index_type_graph != index:
                 self.index_type_graph = index
                 self.type_graph = self.type_graph_list[index]
-                self._archive_selected()                
+                self._archive_graph()
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_select_type_graph - {e}')
 
-# FIXME
     def _archive_selected(self):
         try:
-            date = self.index_date
             self.combo_test.clear()
-            self.archive.select_file(date)
-            arch_test_list = []
+            self.archive.select_file(self.index_date)
             
             if self.type_test == 'lab':
                 arch_test_list = self.archive.lab
@@ -212,10 +196,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 arch_test_list = self.archive.cascade
             elif self.type_test == 'conv':
                 arch_test_list = self.archive.conv
-            elif self.type_test == 'temp':
+            elif self.type_test == 'temper':
                 arch_test_list = self.archive.temper
                 
             self._archive_fill_combo_test(arch_test_list)
+            
+            self.index_test = 0
+            self.combo_test.setCurrentIndex(0)
             
             self._archive_graph()
                 
@@ -260,7 +247,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_visible_compare_btn - {e}')
 
-# FIXME
     def _archive_graph(self):
         try:
             type_graph = self.type_graph_list[self.index_type_graph]
@@ -420,7 +406,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_temper_graph(self):
         try:
-            if len(self.archive.temper) == 0:
+            if len(self.archive.temper) < 1:
                 pass
             else:
                 arch_obj = self.archive.temper[self.index_test]
