@@ -1136,7 +1136,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLineEdit" name="freq_le">
+        <widget class="QLineEdit" name="freq_base_le">
          <property name="geometry">
           <rect>
            <x>540</x>
@@ -1342,7 +1342,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLineEdit" name="hod_le">
+        <widget class="QLineEdit" name="hod_base_le">
          <property name="geometry">
           <rect>
            <x>900</x>

@@ -1,4 +1,5 @@
 import pyqtgraph as pg
+import numpy as np
 
 from logger import my_logger
 from calc_graph.calc_graph_values import CalcGraphValue
@@ -24,28 +25,19 @@ class TemperGraph:
 
     def fill_graph(self, data):
         try:
-            recoil_list = []
-            comp_list = []
-            temper_coord = data.temper_graph
-
-            for value in data.temper_force_graph:
-                value = value.strip('\'\"')
-                value = value.replace(',', '.')
-                value = value.split('|')
-                recoil, comp = float(value[0]), float(value[1])
-                recoil_list.append(recoil)
-                comp_list.append(comp)
-
             push_force = CalcGraphValue().select_push_force(data)
+            
+            recoil = np.array(data.recoil_list) + push_force
+            comp = np.array(data.comp_list) * (-1) + push_force
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.widget.plot(temper_coord, recoil_list, pen=pen_recoil, name='Отбой')
-            self.widget.plot(temper_coord, comp_list, pen=pen_comp, name='Сжатие')
+            self.widget.plot(data.temper_list, recoil, pen=pen_recoil, name='Отбой')
+            self.widget.plot(data.temper_list, comp, pen=pen_comp, name='Сжатие')
 
-            return {'recoil': recoil_list[-1],
-                    'comp': comp_list[-1],
+            return {'recoil': recoil,
+                    'comp': comp,
                     'push_force': push_force,
                     }
 

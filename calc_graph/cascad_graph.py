@@ -59,33 +59,28 @@ class CascadeGraph:
             self.logger.error(e)
 
     def fill_graph(self, data):
-        try:
-            speed_list = [0]
-            comp_list = [0]
-            recoil_list = [0]
-
-            for obj in data:
-                speed_list.append(float(obj.speed))
-                push_force = CalcGraphValue().select_push_force(obj)
-
-                recoil, comp = CalcData().middle_min_and_max_force(np.array(obj.force_list))
-
-                recoil_list.append(round(recoil + push_force, 2))
-                comp_list.append(round(comp * (-1) + push_force, 2))
+        try:            
+            push_force = CalcGraphValue().select_push_force(data)
+            
+            speed = np.array(data.speed_list)
+            recoil = np.array(data.recoil_list) + push_force
+            comp = np.array(data.comp_list) * (-1) + push_force
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_list, recoil_list)
-            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_list, comp_list)
+            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed, recoil)
+            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed, comp)
 
             self.widget.plot(recoil_x, recoil_interp, pen=pen_recoil, name='Отбой')
             self.widget.plot(comp_x, comp_interp, pen=pen_comp, name='Сжатие')
 
-            self.limit_line_graph(data[0])
+            self.limit_line_graph(data)
 
-            return {'recoil': max(recoil_list),
-                    'comp': abs(min(comp_list))}
+            return {'push_force': push_force,
+                    'speed': speed,
+                    'recoil': recoil,
+                    'comp': comp}
 
         except Exception as e:
             self.logger.error(e)
