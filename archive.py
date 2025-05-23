@@ -47,9 +47,9 @@ class TempTest(BaseTest):
 class CascTest(BaseTest):
     def __init__(self):
         super().__init__()
-        self.recoil_list = [0]
-        self.comp_list = [0]
-        self.speed_list = [0]
+        self.recoil_list = []
+        self.comp_list = []
+        self.speed_list = []
 
 
 class ReadArchive:

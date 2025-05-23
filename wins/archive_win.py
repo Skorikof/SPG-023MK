@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+import numpy as np
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 
@@ -222,7 +223,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     first = f'{ind + 1}) {obj.time_test} - {obj.amort.name} - {obj.serial_number} - '
                     
                     if type_graph == 'speed':
-                        second = f'{obj.speed_list[1]}~{obj.speed_list[-1]}'
+                        second = f'{obj.speed_list[0]}~{obj.speed_list[-1]}'
                     elif type_graph == 'temper':
                         second = f'{obj.temper_list[0]}~{obj.temper_list[-1]} °С'
                     else:
@@ -420,17 +421,15 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.archive_fill.ui_fill(arch_obj, 'casc', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'casc')
                 
-                self.hod_casc_le.setText(f'{arch_obj.amort.hod}')
                 self.push_force_casc_le.setText(f'{response.get("push_force", 0)}')
-                self.max_temp_casc_le.setText(f'{arch_obj.amort.max_temper}')
+                speed = np.round(response.get('speed'), decimals=2)
+                recoil = np.round(response.get('recoil'), decimals=2)
+                comp = np.round(response.get('comp'), decimals=2)
                 
-                # speed_list = []
-                # for obj in data:
-                #     speed_list.append(obj.speed)
-                # self.speed_le.setText(f'{speed_list[0]}~{speed_list[-1]}')
-
-                # self.recoil_le.setText(f'{response.get("recoil", 0)}')
-                # self.comp_le.setText(f'{response.get("comp", 0)}')
+                for ind, val in enumerate(speed):
+                    self.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
+                    self.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{recoil[ind]}'))
+                    self.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{comp[ind]}'))
 
         except Exception as e:
             self.logger.error(e)
@@ -624,6 +623,7 @@ class ArchiveWinFill:
             self.widget.hod_casc_le.setText('')
             self.widget.max_temp_casc_le.setText('')
             self.widget.push_force_casc_le.setText('')
+            self.widget.casc_tableWt.clear()
             
             self.fill_lbl_push_force('-1', 'casc')
             
@@ -724,6 +724,7 @@ class ArchiveWinFill:
     def ui_casc_fill(self, arch_obj):
         try:
             self.widget.hod_casc_le.setText(f'{arch_obj.amort.hod}')
+            self.widget.max_temp_casc_le.setText(f'{arch_obj.amort.max_temper}')
             
         except Exception as e:
             self.logger.error(e)

@@ -59,18 +59,23 @@ class CascadeGraph:
             self.logger.error(e)
 
     def fill_graph(self, data):
-        try:            
+        try:
             push_force = CalcGraphValue().select_push_force(data)
             
             speed = np.array(data.speed_list)
             recoil = np.array(data.recoil_list) + push_force
             comp = np.array(data.comp_list) * (-1) + push_force
+            
+            first_point = 0
+            speed_arr = np.insert(speed, 0, first_point)
+            recoil_arr = np.insert(recoil, 0, first_point)
+            comp_arr = np.insert(comp, 0, first_point)
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)
 
-            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed, recoil)
-            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed, comp)
+            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_arr, recoil_arr)
+            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_arr, comp_arr)
 
             self.widget.plot(recoil_x, recoil_interp, pen=pen_recoil, name='Отбой')
             self.widget.plot(comp_x, comp_interp, pen=pen_comp, name='Сжатие')
