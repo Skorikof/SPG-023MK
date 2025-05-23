@@ -28,7 +28,7 @@ class TemperGraph:
             push_force = CalcGraphValue().select_push_force(data)
             
             recoil = np.array(data.recoil_list) + push_force
-            comp = np.array(data.comp_list) * (-1) + push_force
+            comp = np.array(data.comp_list) + push_force
 
             pen_recoil = pg.mkPen(color='black', width=3)
             pen_comp = pg.mkPen(color='blue', width=3)

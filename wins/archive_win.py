@@ -133,7 +133,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                     self.type_test = 'conv'
                     self.data_stWd.setCurrentIndex(0)
                 elif index == 3:
-                    self.type_test = 'temp'
+                    self.type_test = 'temper'
                     self.data_stWd.setCurrentIndex(1)
                 self._archive_selected()
 
@@ -153,6 +153,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_combo_type_graph(self, index):
         self.combo_type.clear()
+        self.type_graph_list.clear()
         if index == 1:
             temp = ['Усилие/Скорость']
             self.type_graph_list = ['speed']
@@ -191,15 +192,13 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.archive.select_file(self.index_date)
             
             if self.type_test == 'lab':
-                arch_test_list = self.archive.lab
+                self._archive_fill_combo_test(self.archive.lab)
             elif self.type_test == 'casc':
-                arch_test_list = self.archive.cascade
+                self._archive_fill_combo_test(self.archive.cascade)
             elif self.type_test == 'conv':
-                arch_test_list = self.archive.conv
+                self._archive_fill_combo_test(self.archive.conv)
             elif self.type_test == 'temper':
-                arch_test_list = self.archive.temper
-                
-            self._archive_fill_combo_test(arch_test_list)
+                self._archive_fill_combo_test(self.archive.temper)
             
             self.index_test = 0
             self.combo_test.setCurrentIndex(0)
@@ -290,24 +289,54 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_archive_graph - {e}')
             
-    def _fill_lab_graph(self):
+    def _object_test_is_exists(self, obj):
+        try:
+            if len(obj) == 0:
+                return False
+            else:
+                return True
+            
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_object_is_exists')
+            
+    def _select_lab_or_conv(self):
         try:
             if self.type_test == 'lab':
-                arch_obj = self.archive.lab[self.index_test]
+                flag = self._object_test_is_exists(self.archive.lab)
+                if flag:
+                    return self.archive.lab[self.index_test]
+                
             elif self.type_test == 'conv':
-                arch_obj = self.archive.conv[self.index_test]
+                flag = self._object_test_is_exists(self.archive.conv)
+                if flag:
+                    return self.archive.conv[self.index_test]
+                
+            return None
+            
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in archive_win/_object_is_exists')
+            
+    def _fill_lab_graph(self):
+        try:
+            arch_obj = self._select_lab_or_conv()
+                
+            if arch_obj is None:
+                pass
+            
+            else:
+                self.move_graph.fill_graph(arch_obj)
+                response = self.move_graph.data_graph(arch_obj)
+                self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
+                self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
 
-            self.move_graph.fill_graph(arch_obj)
-            response = self.move_graph.data_graph(arch_obj)
-            self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
-            self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
-
-            self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
-            self.comp_base_le.setText(f'{response.get("comp", 0)}')
-            self.speed_base_le.setText(f'{response.get("speed", 0)}')
-            self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
-            self.power_base_le.setText(f'{response.get("power", 0)}')
-            self.freq_base_le.setText(f'{response.get("freq", 0)}')
+                self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
+                self.comp_base_le.setText(f'{response.get("comp", 0)}')
+                self.speed_base_le.setText(f'{response.get("speed", 0)}')
+                self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
+                self.power_base_le.setText(f'{response.get("power", 0)}')
+                self.freq_base_le.setText(f'{response.get("freq", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -315,20 +344,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
     def _fill_boost_one_graph(self):
         try:
-            if self.type_test == 'lab':
-                arch_obj = self.archive.lab[self.index_test]
-            elif self.type_test == 'conv':
-                arch_obj = self.archive.conv[self.index_test]
+            arch_obj = self._select_lab_or_conv()
+                
+            if arch_obj is None:
+                pass
+            
+            else:
+                response = self.boost_one_graph.fill_graph(arch_obj)
 
-            response = self.boost_one_graph.fill_graph(arch_obj)
+                self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
+                self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
 
-            self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
-            self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
-
-            self.speed_base_le.setText(f'{arch_obj.speed}')
-            self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
-            self.comp_base_le.setText(f'{response.get("comp", 0)}')
-            self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
+                self.speed_base_le.setText(f'{arch_obj.speed}')
+                self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
+                self.comp_base_le.setText(f'{response.get("comp", 0)}')
+                self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -336,20 +366,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
     def _fill_boost_two_graph(self):
         try:
-            if self.type_test == 'lab':
-                arch_obj = self.archive.lab[self.index_test]
-            elif self.type_test == 'conv':
-                arch_obj = self.archive.conv[self.index_test]
+            arch_obj = self._select_lab_or_conv()
+                
+            if arch_obj is None:
+                pass
+            
+            else:
+                response = self.boost_two_graph.fill_graph(arch_obj)
 
-            response = self.boost_two_graph.fill_graph(arch_obj)
+                self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
+                self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
 
-            self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
-            self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
-
-            self.speed_base_le.setText(f'{arch_obj.speed}')
-            self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
-            self.comp_base_le.setText(f'{response.get("comp", 0)}')
-            self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
+                self.speed_base_le.setText(f'{arch_obj.speed}')
+                self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
+                self.comp_base_le.setText(f'{response.get("comp", 0)}')
+                self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -357,20 +388,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
     def _fill_triple_graph(self):
         try:
-            if self.type_test == 'lab':
-                arch_obj = self.archive.lab[self.index_test]
-            elif self.type_test == 'conv':
-                arch_obj = self.archive.conv[self.index_test]
+            arch_obj = self._select_lab_or_conv()
                 
-            response = self.triple_graph.fill_graph(arch_obj)
-
-            self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
-            self.archive_fill.fill_lbl_push_force('2', 'base')
+            if arch_obj is None:
+                pass
             
-            self.speed_base_le.setText(f'{arch_obj.speed}')
-            self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
-            self.comp_base_le.setText(f'{response.get("comp", 0)}')
-            self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
+            else:
+                response = self.triple_graph.fill_graph(arch_obj)
+
+                self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
+                self.archive_fill.fill_lbl_push_force('2', 'base')
+                
+                self.speed_base_le.setText(f'{arch_obj.speed}')
+                self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
+                self.comp_base_le.setText(f'{response.get("comp", 0)}')
+                self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -406,24 +438,24 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _fill_temper_graph(self):
         try:
-            if len(self.archive.temper) < 1:
+            if len(self.archive.temper) == 0:
                 pass
             else:
                 arch_obj = self.archive.temper[self.index_test]
 
                 response = self.temper_graph.fill_graph(arch_obj)
 
-                self.archive_fill.ui_fill(arch_obj, 'temp', self.index_date)
-                self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'temp')
+                self.archive_fill.ui_fill(arch_obj, 'temper', self.index_date)
+                self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'temper')
 
                 self.speed_temp_le.setText(f'{arch_obj.speed}')
                 self.begin_temp_le.setText(f'{arch_obj.temper_list[0]}')
                 self.max_temp_le.setText(f'{arch_obj.temper_list[-1]}')
                 
-                self.recoil_begin_temp_le.setText(f'{response.get("recoil")[0], 0}')
-                self.recoil_end_temp_le.setText(f'{response.get("recoil")[-1], 0}')
-                self.comp_begin_temp_le.setText(f'{response.get("comp")[0], 0}')
-                self.comp_end_temp_le.setText(f'{response.get("comp")[-1], 0}')
+                self.recoil_begin_temp_le.setText(f'{response.get("recoil")[0]}')
+                self.recoil_end_temp_le.setText(f'{response.get("recoil")[-1]}')
+                self.comp_begin_temp_le.setText(f'{response.get("comp")[0]}')
+                self.comp_end_temp_le.setText(f'{response.get("comp")[-1]}')
                 self.push_force_temp_le.setText(f'{response.get("push_force")}')
 
         except Exception as e:
@@ -610,7 +642,7 @@ class ArchiveWinFill:
             self.widget.max_temp_le.setText('')
             self.widget.push_force_temp_le.setText('')
             
-            self.fill_lbl_push_force('-1', 'temp')
+            self.fill_lbl_push_force('-1', 'temper')
             
         except Exception as e:
             self.logger.error(e)
@@ -624,7 +656,7 @@ class ArchiveWinFill:
             elif tag == 'casc':
                 obj_lbl = self.widget.lbl_casc_push_force
                 obj_le = self.widget.push_force_casc_le
-            elif tag == 'temp':
+            elif tag == 'temper':
                 obj_lbl = self.widget.lbl_temp_push_force
                 obj_le = self.widget.push_force_temp_le
             obj_le.setVisible(True)

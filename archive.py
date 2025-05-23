@@ -129,7 +129,7 @@ class ReadArchive:
                 self.ind_temp += 1
                 self.temper.append(TempTest())
                 self._fill_obj_archive_data(self.temper[self.ind_temp], archive_list[:24])
-                self.temper[self.ind_temp].temper_graph = self._add_data_on_list_graph(archive_list[24:-1])
+                self.temper[self.ind_temp].temper_list = self._add_data_on_list_graph(archive_list[24:-1])
                 
             elif self.type_test == 'lab':
                 self.ind_lab += 1
