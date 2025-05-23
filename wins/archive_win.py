@@ -252,37 +252,31 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             type_graph = self.type_graph_list[self.index_type_graph]
             if type_graph == 'move':
                 self.stackedWidget.setCurrentIndex(0)
-                self._visible_compare_btn(True)
                 self.move_graph.gui_graph()
                 self._fill_lab_graph()
                 
             elif type_graph == 'boost_1':
                 self.stackedWidget.setCurrentIndex(0)
-                self._visible_compare_btn(False)
                 self.boost_one_graph.gui_graph()
                 self._fill_boost_one_graph()
 
             elif type_graph == 'boost_2':
                 self.stackedWidget.setCurrentIndex(0)
-                self._visible_compare_btn(False)
                 self.boost_two_graph.gui_graph()
                 self._fill_boost_two_graph()
                 
             elif type_graph == 'triple':
                 self.stackedWidget.setCurrentIndex(1)
-                self._visible_compare_btn(False)
                 self.triple_graph.gui_graph()
                 self._fill_triple_graph()
 
             elif type_graph == 'speed':
                 self.stackedWidget.setCurrentIndex(0)
-                self._visible_compare_btn(True)
                 self.cascade_graph.gui_graph()
                 self._fill_lab_cascade_graph()
 
             elif type_graph == 'temper':
                 self.stackedWidget.setCurrentIndex(0)
-                self._visible_compare_btn(False)
                 self.temper_graph.gui_graph()
                 self._fill_temper_graph()
 
@@ -324,9 +318,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             arch_obj = self._select_lab_or_conv()
                 
             if arch_obj is None:
-                pass
+                self._visible_compare_btn(False)
             
             else:
+                self._visible_compare_btn(True)
+                
                 self.move_graph.fill_graph(arch_obj)
                 response = self.move_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
@@ -348,9 +344,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             arch_obj = self._select_lab_or_conv()
                 
             if arch_obj is None:
-                pass
+                self._visible_compare_btn(False)
             
             else:
+                self._visible_compare_btn(True)
+                
                 response = self.boost_one_graph.fill_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
@@ -370,9 +368,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             arch_obj = self._select_lab_or_conv()
                 
             if arch_obj is None:
-                pass
+                self._visible_compare_btn(False)
             
             else:
+                self._visible_compare_btn(True)
+                
                 response = self.boost_two_graph.fill_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
@@ -392,9 +392,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             arch_obj = self._select_lab_or_conv()
                 
             if arch_obj is None:
-                pass
+                self._visible_compare_btn(False)
             
             else:
+                self._visible_compare_btn(True)
+                
                 response = self.triple_graph.fill_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
@@ -409,12 +411,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_fill_triple_graph - {e}')
 
-# FIXME tabe data
     def _fill_lab_cascade_graph(self):
         try:
             if len(self.archive.cascade) == 0:
-                pass
+                self._visible_compare_btn(False)
+                
             else:
+                self._visible_compare_btn(True)
+                
                 arch_obj = self.archive.cascade[self.index_test]
                 response = self.cascade_graph.fill_graph(arch_obj)
 
@@ -438,8 +442,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _fill_temper_graph(self):
         try:
             if len(self.archive.temper) == 0:
-                pass
+                self._visible_compare_btn(False)
             else:
+                self._visible_compare_btn(True)
+                
                 arch_obj = self.archive.temper[self.index_test]
 
                 response = self.temper_graph.fill_graph(arch_obj)
@@ -515,32 +521,25 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _clear_compare_data(self):
         try:
             if len(self.compare_data) > 0:
-                self.compare_data.clear()
-                self.read_path_archive()
+                self.compare_data = []
+                self._archive_selected()
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_clear_compare_data - {e}')
-
+            
     def _add_compare_data(self):
         try:
-            if self.type_graph == 'speed':
-                index = self.index_test_cascade
-                if not self.archive.struct.cascade[index + 1] in self.compare_data:
-                    self.compare_data.append(self.archive.struct.cascade[index + 1])
-
-            # elif self.type_graph == 'temper':
-            #     index = self.index_test_temper
-
-            elif self.type_graph == 'conv':
-                index = self.index_conv
-                if not self.archive.struct.conv[index] in self.compare_data:
-                    self.compare_data.append(self.archive.struct.conv[index])
-
-            else:
-                index = self.index_test
-                if not self.archive.struct.tests[index] in self.compare_data:
-                    self.compare_data.append(self.archive.struct.tests[index])
+            if self.type_test == 'lab':
+                test = self.archive.lab[self.index_test]
+            elif self.type_test == 'casc':
+                test = self.archive.cascade[self.index_test]
+            elif self.type_test == 'conv':
+                test = self.archive.conv[self.index_test]
+            elif self.type_test == 'temper':
+                test = self.archive.temper[self.index_test]
+            
+            self.compare_data.append([self.type_test, self.type_graph, test])
             self.btn_compare.setVisible(False)
 
         except Exception as e:
@@ -550,7 +549,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _show_compare_data(self):
         try:
             if 0 < len(self.compare_data) < 13:
-                self.compare_graph.show_graph(self.type_graph, self.compare_data)
+                self.compare_graph.show_graph(self.compare_data)
 
             elif len(self.compare_data) == 0:
                 pass

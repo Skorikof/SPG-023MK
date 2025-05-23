@@ -24,7 +24,8 @@ class CompareGraph:
                           'grey',
                           'red']
 
-    def show_graph(self, type_graph, obj):
+# FIXME
+    def show_graph(self, comp_list):
         try:
             self.widget.plot(clear=True)
             if type_graph == 'move':
