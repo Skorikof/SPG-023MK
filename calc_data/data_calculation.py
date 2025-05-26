@@ -80,7 +80,6 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    # FIXME Перевести все графики из архива на массивы, а не списки
     def middle_min_and_max_force(self, data):
         try:
             rec_ind = np.argmax(data)
@@ -101,7 +100,6 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    # FIXME Перевести все графики из архива на массивы, а не списки
     def power_amort(self, move, force):
         """Расчёт мощности"""
         try:

@@ -24,59 +24,80 @@ class TripleGraph:
 
         except Exception as e:
             self.logger.error(e)
-
-    def fill_graph(self, data):
+            
+    def calc_force_graph(self, data):
         try:
-            hod = int(data.amort.hod)
-            speed = float(data.speed)
             move_array = np.array(data.move_list)
             force_array = np.array(data.force_list)
-
-            self._fill_piston_graph(hod)
-
+            
             x_coord = np.linspace(0, 360, num=len(move_array))
             index_zero = np.where(x_coord >= 90)[0][0]
 
             reversed_force = force_array * (-1)
-            offset_force = np.concatenate((reversed_force[index_zero:], reversed_force[:index_zero]))
-            self._fill_force_graph(x_coord, offset_force)
+            y_coord = np.concatenate((reversed_force[index_zero:], reversed_force[:index_zero]))
+            
+            return x_coord, y_coord
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def calc_speed_graph(self, data):
+        try:
+            hod = int(data.amort.hod)
+            speed = float(data.speed)
+            move_array = np.array(data.move_list)
+            
+            x_coord = np.linspace(0, 360, num=len(move_array))
+            index_zero = np.where(x_coord >= 90)[0][0]
 
             speed_coord = CalcGraphValue().calc_speed_coord(hod, speed, x_coord)
-            offset_speed = np.concatenate((speed_coord[index_zero:], speed_coord[:index_zero]))
-
-            self._fill_speed_graph(x_coord, offset_speed)
-
+            y_coord = np.concatenate((speed_coord[index_zero:], speed_coord[:index_zero]))
+            
+            return x_coord, y_coord
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def data_graph(self, data):
+        try:
+            force_array = np.array(data.force_list)
             recoil, comp = CalcData().middle_min_and_max_force(force_array)
-
-            return {'recoil': recoil,
+            
+            return {'speed': data.speed,
+                    'recoil': recoil,
                     'comp': comp,
                     'push_force': 0,
                     }
-
+            
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_piston_graph(self, hod):
+    def fill_piston_graph(self, hod, pen=None, name='Смещение'):
         try:
+            if pen == None:
+                pen = pg.mkPen(color='black', width=3)
+                
             hod_x, hod_y = CalcGraphValue().coord_sinus(hod, 360, 1)
-            pen = pg.mkPen(color='black', width=3)
-            self.widget.plot(hod_x, hod_y, pen=pen, name='Смещение')
+            
+            self.widget.plot(hod_x, hod_y, pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_force_graph(self, move, force):
+    def fill_force_graph(self, x_coord, y_coord, pen=None, name='Усилие'):
         try:
-            pen = pg.mkPen(color='blue', width=3)
-            self.widget.plot(move, force, pen=pen, name='Усилие')
+            if pen == None:
+                pen = pg.mkPen(color='blue', width=3)
+            self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_speed_graph(self, move, speed):
+    def fill_speed_graph(self, x_coord, y_coord, pen=None, name='Скорость'):
         try:
-            pen = pg.mkPen(color='red', width=3)
-            self.widget.plot(move, speed, pen=pen, name='Скорость')
+            if pen == None:
+                pen = pg.mkPen(color='red', width=3)
+            self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)

@@ -57,8 +57,8 @@ class CascadeGraph:
 
         except Exception as e:
             self.logger.error(e)
-
-    def fill_graph(self, data):
+            
+    def calc_graph(self, data):
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
@@ -70,22 +70,40 @@ class CascadeGraph:
             speed_arr = np.insert(speed, 0, first_point)
             recoil_arr = np.insert(recoil, 0, first_point)
             comp_arr = np.insert(comp, 0, first_point)
+            
+            r_x, r_y = CalcGraphValue().interpoly_line_coord(speed_arr, recoil_arr)
+            c_x, c_y = CalcGraphValue().interpoly_line_coord(speed_arr, comp_arr)
+            
+            return r_x, r_y, c_x, c_y
+        
+        except Exception as e:
+            self.logger.error(e)
 
-            pen_recoil = pg.mkPen(color='black', width=3)
-            pen_comp = pg.mkPen(color='blue', width=3)
+    def fill_graph(self, r_x, r_y, c_x, c_y, pen_r=None, pen_c=None, name_r='Отбой', name_c='Сжатие'):
+        try:
+            if pen_r == None:
+                pen_r = pg.mkPen(color='black', width=3)
+            if pen_c == None:
+                pen_c = pg.mkPen(color='blue', width=3)
 
-            recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_arr, recoil_arr)
-            comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_arr, comp_arr)
+            self.widget.plot(r_x, r_y, pen=pen_r, name=name_r)
+            self.widget.plot(c_x, c_y, pen=pen_c, name=name_c)
 
-            self.widget.plot(recoil_x, recoil_interp, pen=pen_recoil, name='Отбой')
-            self.widget.plot(comp_x, comp_interp, pen=pen_comp, name='Сжатие')
-
-            self.limit_line_graph(data)
-
+        except Exception as e:
+            self.logger.error(e)
+            
+    def data_graph(self, data):
+        try:
+            push_force = CalcGraphValue().select_push_force(data)
+            
+            speed = np.round(np.array(data.speed_list), decimals=2)
+            recoil = np.round(np.array(data.recoil_list) + push_force, decimals=2)
+            comp = np.round(np.array(data.comp_list) * (-1) + push_force, decimals=2)
+            
             return {'push_force': push_force,
                     'speed': speed,
                     'recoil': recoil,
                     'comp': comp}
-
+            
         except Exception as e:
             self.logger.error(e)

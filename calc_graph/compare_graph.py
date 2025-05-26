@@ -1,9 +1,8 @@
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtWidgets import QTableWidgetItem
 
 from logger import my_logger
-from calc_data.data_calculation import CalcData
-from calc_graph.calc_graph_values import CalcGraphValue
 from calc_graph.move_graph import MoveGraph
 from calc_graph.boost_graph_one import BoostGraphOne
 from calc_graph.boost_graph_two import BoostGraphTwo
@@ -40,15 +39,15 @@ class CompareGraph:
             if self.type_graph == 'move':
                 self._compare_move_graph()
             elif self.type_graph == 'boost_1':
-                pass
+                self._compare_boost_one_graph()
             elif self.type_graph == 'boost_2':
-                pass
-            elif self.type_graph == 'tripe':
-                pass
+                self._compare_boost_two_graph()
+            elif self.type_graph == 'triple':
+                self._compare_triple_data()
             elif self.type_graph == 'speed':
-                pass
+                self._compare_speed_data()
             elif self.type_graph == 'temper':
-                pass
+                self._compare_temper_data()
             
         except Exception as e:
             self.logger.error(e)
@@ -62,7 +61,15 @@ class CompareGraph:
                 arch_obj = obj[2]
                 if ind == 0:
                     self._fill_compare_move_data(graph.data_graph(arch_obj))
-                self._fill_compare_move_graph(self.color_pen[ind], arch_obj)
+                    
+                x_coord, y_coord = graph.calc_graph(arch_obj)
+                
+                name = (f'{arch_obj.time_test} - '
+                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.serial_number} - '
+                        f'{arch_obj.speed}')
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                graph.fill_graph(x_coord, y_coord, pen, name)
                 
         except Exception as e:
             self.logger.error(e)
@@ -78,115 +85,189 @@ class CompareGraph:
             
         except Exception as e:
             self.logger.error(e)
+
+    def _compare_boost_one_graph(self):
+        try:
+            self.ui.stackedWidget.setCurrentIndex(0)
+            graph = BoostGraphOne(self.ui.duble_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_boost_one_data(graph.data_graph(arch_obj), arch_obj.speed)
+                
+                x_coord, y_coord = graph.calc_graph(arch_obj)
+                
+                name = (f'{arch_obj.time_test} - '
+                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.serial_number} - '
+                        f'{arch_obj.speed}')
             
-    def _fill_compare_move_graph(self, color, data):
-        try:
-            name = (f'{data.time_test} - '
-                    f'{data.amort.name} - '
-                    f'{data.serial_number} - '
-                    f'{data.speed}')
-            
-            pen = pg.mkPen(color=color, width=3)
-            self.ui.duble_graphwidget.plot(np.array(data.move_list),
-                                           np.array(data.force_list),
-                                           pen=pen,
-                                           name=name)
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                
+                graph.fill_graph(x_coord, y_coord, pen, name)
+                
             
         except Exception as e:
             self.logger.error(e)
-
-    def conv_graph(self, obj):
+            
+    def _fill_compare_boost_one_data(self, data, speed):
         try:
-            for graph in obj:
-                pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-                name = (f'{graph.time_test} - '
-                        f'{graph.amort.name} - '
-                        f'{graph.serial_number} - '
-                        f'{graph.speed}')
-
-                self.widget.plot(np.array(graph.move_list), np.array(graph.force_list), pen=pen, name=name)
-
+            self.ui.speed_base_le.setText(f'{speed}')
+            self.ui.recoil_base_le.setText(f'{data.get("recoil", 0)}')
+            self.ui.comp_base_le.setText(f'{data.get("comp", 0)}')
+            self.ui.push_force_base_le.setText(f'{data.get("push_force", 0)}')
+            
         except Exception as e:
             self.logger.error(e)
 
-    def move_graph(self, obj):
+    def _compare_boost_two_graph(self):
         try:
-            for graph in obj:
-                pen = pg.mkPen(color=self.color_pen[obj.index(graph)], width=3)
-                name = (f'{graph.time_test} - '
-                        f'{graph.amort.name} - '
-                        f'{graph.serial_number} - '
-                        f'{graph.speed}')
-
-                self.widget.plot(np.array(graph.move_list), np.array(graph.force_list), pen=pen, name=name)
-
+            self.ui.stackedWidget.setCurrentIndex(0)
+            graph = BoostGraphTwo(self.ui.duble_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_boost_one_data(graph.data_graph(arch_obj), arch_obj.speed)
+                
+                x_coord, y_coord = graph.calc_graph(arch_obj)
+                
+                name = (f'{arch_obj.time_test} - '
+                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.serial_number} - '
+                        f'{arch_obj.speed}')
+            
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                
+                graph.fill_graph(x_coord, y_coord, pen, name)
+                
+            
         except Exception as e:
             self.logger.error(e)
-
-    def speed_graph(self, obj):
+            
+    def _fill_compare_boost_one_data(self, data, speed):
         try:
-            for arch_obj in obj:
-                speed_list = [0]
-                comp_list = [0]
-                recoil_list = [0]
-                for graph in arch_obj:
-                    speed_list.append(float(graph.speed))
-                    push_force = CalcGraphValue().select_push_force(graph)
-
-                    recoil, comp = CalcData().middle_min_and_max_force(np.array(graph.force_list))
-
-                    recoil_list.append(round(recoil + push_force, 2))
-                    comp_list.append(round(comp * (-1) + push_force, 2))
-
-                recoil_x, recoil_interp = CalcGraphValue().interpoly_line_coord(speed_list, recoil_list)
-                comp_x, comp_interp = CalcGraphValue().interpoly_line_coord(speed_list, comp_list)
-
-                x_list = [*recoil_x[::-1], *comp_x]
-                y_list = [*recoil_interp[::-1], *comp_interp]
-
-                pen = pg.mkPen(color=self.color_pen[obj.index(arch_obj)], width=3)
-                name = (f'{arch_obj[0].time_test} - '
-                        f'{arch_obj[0].amort.name} - '
-                        f'{arch_obj[0].serial_number} - '
-                        f'{arch_obj[0].speed}~{arch_obj[-1].speed}')
-
-                self.widget.plot(x_list, y_list, pen=pen, name=name)
-
-            self.limit_line_graph(obj[0][0])
-
+            self.ui.speed_base_le.setText(f'{speed}')
+            self.ui.recoil_base_le.setText(f'{data.get("recoil", 0)}')
+            self.ui.comp_base_le.setText(f'{data.get("comp", 0)}')
+            self.ui.push_force_base_le.setText(f'{data.get("push_force", 0)}')
+            
         except Exception as e:
             self.logger.error(e)
-
-    def limit_line_graph(self, obj):
+            
+    def _compare_triple_data(self):
         try:
-            lim_speed_1 = []
-            lim_speed_2 = []
-            lim_recoil_1 = []
-            lim_recoil_2 = []
-            lim_comp_1 = []
-            lim_comp_2 = []
-
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_2.append(float(obj.amort.speed_two))
-            lim_speed_2.append(float(obj.amort.speed_two))
-
-            lim_recoil_1.append(float(obj.amort.min_recoil))
-            lim_recoil_1.append(float(obj.amort.max_recoil))
-            lim_recoil_2.append(float(obj.amort.max_recoil_2))
-            lim_recoil_2.append(float(obj.amort.min_recoil_2))
-
-            lim_comp_1.append(float(obj.amort.min_comp) * -1)
-            lim_comp_1.append(float(obj.amort.max_comp) * -1)
-            lim_comp_2.append(float(obj.amort.max_comp_2) * -1)
-            lim_comp_2.append(float(obj.amort.min_comp_2) * -1)
-
-            pen = pg.mkPen(color='red', width=2)
-
-            self.widget.plot(lim_speed_1, lim_recoil_1, pen=pen)
-            self.widget.plot(lim_speed_2, lim_recoil_2, pen=pen)
-            self.widget.plot(lim_speed_1, lim_comp_1, pen=pen)
-            self.widget.plot(lim_speed_2, lim_comp_2, pen=pen)
-
+            self.ui.stackedWidget.setCurrentIndex(1)
+            graph = TripleGraph(self.ui.triple_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_triple_data(graph.data_graph(arch_obj))
+                    
+                    graph.fill_piston_graph(int(arch_obj.amort.hod))
+                    
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                name_first = (f'{arch_obj.time_test} - '
+                              f'{arch_obj.amort.name} - '
+                              f'{arch_obj.serial_number} - '
+                              f'{arch_obj.speed} - ')
+                
+                name_force = name_first + f'Усилие'
+                    
+                x_f, y_f = graph.calc_force_graph(arch_obj)
+                graph.fill_force_graph(x_f, y_f, pen, name_force)
+                
+                name_speed = name_first + 'Скорость'
+                
+                x_s, y_s = graph.calc_speed_graph(arch_obj)
+                graph.fill_speed_graph(x_s, y_s, pen, name_speed)
+                
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_compare_triple_data(self, data):
+        try:
+            self.ui.speed_base_le.setText(f'{data.get("speed", 0)}')
+            self.ui.recoil_base_le.setText(f'{data.get("recoil", 0)}')
+            self.ui.comp_base_le.setText(f'{data.get("comp", 0)}')
+            self.ui.push_force_base_le.setText(f'{data.get("push_force")}')
+            
+        except Exception as e:
+            self.logger.error(e)
+    
+    def _compare_speed_data(self):
+        try:
+            self.ui.stackedWidget.setCurrentIndex(0)
+            graph = CascadeGraph(self.ui.duble_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_speed_data(graph.data_graph(arch_obj))
+                    
+                name = (f'{arch_obj.time_test} - '
+                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.serial_number} - '
+                        f'{arch_obj.speed_list[0]}~{arch_obj.speed_list[-1]}')
+                
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                
+                r_x, r_y, c_x, c_y = graph.calc_graph(arch_obj)
+                
+                graph.fill_graph(r_x, r_y, c_x, c_y, pen, pen, name, name)
+                
+                graph.limit_line_graph(arch_obj)
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_compare_speed_data(self, data):
+        try:
+            self.push_force_casc_le.setText(f'{data.get("push_force", 0)}')
+                
+            for ind, val in enumerate(data.get('speed')):
+                self.ui.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
+                self.ui.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{data.get("recoil")[ind]}'))
+                self.ui.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{data.get("comp")[ind]}'))
+            
+        except Exception as e:
+            self.logger.error(e)
+    
+    def _compare_temper_data(self):
+        try:
+            self.ui.stackedWidget.setCurrentIndex(0)
+            graph = TemperGraph(self.ui.duble_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_temper_data(graph.data_graph(arch_obj))
+            
+                name = (f'{arch_obj.time_test} - '
+                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.serial_number} - '
+                        f'{arch_obj.temper_list[0]}~{arch_obj.temper_list[-1]} °С')
+                
+                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                
+                x, y1, y2 = graph.calc_graph(arch_obj)
+                graph.fill_graph(x, y1, y2, pen, pen, name, name)
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_compare_temper_data(self, data):
+        try:
+            self.ui.speed_temp_le.setText(f'{data.get("speed", 0)}')
+            self.ui.begin_temp_le.setText(f'{data.get("start_temper", 0)}')
+            self.ui.max_temp_le.setText(f'{data.get("end_temper", 0)}')
+            self.ui.recoil_begin_temp_le.setText(f'{data.get("start_recoil", 0)}')
+            self.ui.recoil_end_temp_le.setText(f'{data.get("end_recoil", 0)}')
+            self.ui.comp_begin_temp_le.setText(f'{data.get("start_comp", 0)}')
+            self.ui.comp_end_temp_le.setText(f'{data.get("end_comp", 0)}')
+            self.ui.push_force_temp_le.setText(f'{data.get("push_force")}')
+            
         except Exception as e:
             self.logger.error(e)

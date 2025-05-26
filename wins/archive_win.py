@@ -8,7 +8,6 @@ from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
 from archive import ReadArchive
 from calc_data.data_calculation import CalcData
-from calc_graph.conv_graph import ConvGraph
 from calc_graph.move_graph import MoveGraph
 from calc_graph.cascad_graph import CascadeGraph
 from calc_graph.triple_graph import TripleGraph
@@ -36,7 +35,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         
         self.calc_data = CalcData()
         self.move_graph = MoveGraph(self.duble_graphwidget)
-        self.conv_graph = ConvGraph(self.duble_graphwidget)
         self.cascade_graph = CascadeGraph(self.duble_graphwidget)
         self.triple_graph = TripleGraph(self.triple_graphwidget)
         self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
@@ -174,6 +172,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.combo_type.addItems(temp)
         self.combo_type.setCurrentIndex(0)
         self.index_type_graph = 0
+        self.type_graph = self.type_graph_list[self.index_type_graph]
             
     def _change_type_graph(self, index):
         try:
@@ -322,7 +321,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                self.move_graph.fill_graph(arch_obj)
+                x_coord, y_coord = self.move_graph.calc_graph(arch_obj)
+                self.move_graph.fill_graph(x_coord, y_coord)
                 response = self.move_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
@@ -347,8 +347,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
             else:
                 self._visible_compare_btn(True)
-                
-                response = self.boost_one_graph.fill_graph(arch_obj)
+                x_coord, y_coord = self.boost_one_graph.calc_graph(arch_obj)
+                self.boost_one_graph.fill_graph(x_coord, y_coord)
+                response = self.boost_one_graph.data_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
@@ -371,8 +372,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
             else:
                 self._visible_compare_btn(True)
-                
-                response = self.boost_two_graph.fill_graph(arch_obj)
+                x_coord, y_coord = self.boost_two_graph.calc_graph(arch_obj)
+                self.boost_two_graph.fill_graph(x_coord, y_coord)
+                response = self.boost_two_graph.data_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
@@ -396,12 +398,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                response = self.triple_graph.fill_graph(arch_obj)
+                self.triple_graph.fill_piston_graph(int(arch_obj.amort.hod))
+                
+                x_f, y_f = self.triple_graph.calc_force_graph(arch_obj)
+                self.triple_graph.fill_force_graph(x_f, y_f)
+                
+                x_s, y_s = self.triple_graph.calc_speed_graph(arch_obj)
+                self.triple_graph.fill_speed_graph(x_s, y_s)
+                
+                response = self.triple_graph.data_graph(arch_obj)
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force('2', 'base')
                 
-                self.speed_base_le.setText(f'{arch_obj.speed}')
+                self.speed_base_le.setText(f'{response.get("speed", 0)}')
                 self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
                 self.comp_base_le.setText(f'{response.get("comp", 0)}')
                 self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
@@ -419,20 +429,20 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._visible_compare_btn(True)
                 
                 arch_obj = self.archive.cascade[self.index_test]
-                response = self.cascade_graph.fill_graph(arch_obj)
-
+                r_x, r_y, c_x, c_y = self.cascade_graph.calc_graph(arch_obj)
+                self.cascade_graph.fill_graph(r_x, r_y, c_x, c_y)
+                self.cascade_graph.limit_line_graph(arch_obj)
+                
+                response = self.cascade_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'casc', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'casc')
                 
                 self.push_force_casc_le.setText(f'{response.get("push_force", 0)}')
-                speed = np.round(response.get('speed'), decimals=2)
-                recoil = np.round(response.get('recoil'), decimals=2)
-                comp = np.round(response.get('comp'), decimals=2)
                 
-                for ind, val in enumerate(speed):
+                for ind, val in enumerate(response.get('speed')):
                     self.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
-                    self.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{recoil[ind]}'))
-                    self.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{comp[ind]}'))
+                    self.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{response.get("recoil")[ind]}'))
+                    self.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{response.get("comp")[ind]}'))
 
         except Exception as e:
             self.logger.error(e)
@@ -446,20 +456,21 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._visible_compare_btn(True)
                 
                 arch_obj = self.archive.temper[self.index_test]
+                
+                x, y1, y2 = self.temper_graph.calc_graph(arch_obj)
+                self.temper_graph.fill_graph(x, y1, y2)
 
-                response = self.temper_graph.fill_graph(arch_obj)
-
+                response = self.temper_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'temper', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'temper')
 
-                self.speed_temp_le.setText(f'{arch_obj.speed}')
-                self.begin_temp_le.setText(f'{arch_obj.temper_list[0]}')
-                self.max_temp_le.setText(f'{arch_obj.temper_list[-1]}')
-                
-                self.recoil_begin_temp_le.setText(f'{response.get("recoil")[0]}')
-                self.recoil_end_temp_le.setText(f'{response.get("recoil")[-1]}')
-                self.comp_begin_temp_le.setText(f'{response.get("comp")[0]}')
-                self.comp_end_temp_le.setText(f'{response.get("comp")[-1]}')
+                self.speed_temp_le.setText(f'{response.get("speed", 0)}')
+                self.begin_temp_le.setText(f'{response.get("start_temper", 0)}')
+                self.max_temp_le.setText(f'{response.get("end_temper", 0)}')
+                self.recoil_begin_temp_le.setText(f'{response.get("start_recoil", 0)}')
+                self.recoil_end_temp_le.setText(f'{response.get("end_recoil", 0)}')
+                self.comp_begin_temp_le.setText(f'{response.get("start_comp", 0)}')
+                self.comp_end_temp_le.setText(f'{response.get("end_comp", 0)}')
                 self.push_force_temp_le.setText(f'{response.get("push_force")}')
 
         except Exception as e:
@@ -545,7 +556,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_add_compare_data - {e}')
 
-# FIXME
     def _show_compare_data(self):
         try:
             if 0 < len(self.compare_data) < 13:

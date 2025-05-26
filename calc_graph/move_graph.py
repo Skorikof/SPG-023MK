@@ -23,11 +23,19 @@ class MoveGraph:
 
         except Exception as e:
             self.logger.error(e)
-
-    def fill_graph(self, data):
+            
+    def calc_graph(self, data):
         try:
-            pen = pg.mkPen(color='black', width=3)
-            self.widget.plot(np.array(data.move_list), np.array(data.force_list), pen=pen)
+            return np.array(data.move_list), np.array(data.force_list)
+            
+        except Exception as e:
+            self.logger.error(e)
+
+    def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
+        try:
+            if pen == None:
+                pen = pg.mkPen(color='black', width=3)
+            self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
         except Exception as e:
             self.logger.error(e)
