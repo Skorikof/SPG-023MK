@@ -480,41 +480,28 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
     def _archive_save_form(self):
         try:
             main_dir = ''
+            arch_obj = None
+            if self.type_test == 'lab':
+                main_dir = 'Лабораторное'
+                arch_obj = self.archive.lab[self.index_test]
+            elif self.type_test == 'casc':
+                main_dir = 'Каскадом'
+                arch_obj = self.archive.cascade[self.index_test]
+            elif self.type_test == 'conv':
+                main_dir = 'Конвейерное'
+                arch_obj = self.archive.conv[self.index_test]
+            elif self.type_test == 'temper':
+                main_dir = 'Температурное'
+                arch_obj = self.archive.temper[self.index_test]
+                
+            name = self.screen_save.name_for_screenshot(self.type_test, arch_obj)
+            type_graph = self.screen_save.select_type_test(self.type_graph)
+            
             date_dir = self.index_date
-            name = '1'
-            if self.type_graph == 'move':
-                index = self.index_test
-                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
-                main_dir = '1_Усилие_Перемещение'
 
-            elif self.type_graph == 'conv':
-                index = self.index_conv
-                name = self.screen_save.name_screen_for_save(self.archive.struct.conv[index])
-                main_dir = '6_Конвейер'
-
-            elif self.type_graph == 'speed':
-                index = self.index_test_cascade
-                name = self.screen_save.name_screen_for_save_speed(self.archive.struct.cascade[index + 1])
-                main_dir = '2_Усилие_Скорость'
-
-            elif self.type_graph == 'triple':
-                index = self.index_test
-                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
-                main_dir = '3_Ход_Скорость_Сопротивление'
-
-            elif self.type_graph == 'boost_1' or self.type_graph == 'boost_2':
-                index = self.index_test
-                name = self.screen_save.name_screen_for_save(self.archive.struct.tests[index])
-                main_dir = '4_Скорость_Сопротивление'
-
-            elif self.type_graph == 'temper':
-                index = self.index_test_temper
-                name = self.screen_save.name_screen_for_save_temper(self.archive.struct.temper[index])
-                main_dir = '5_Температура_Сопротвление'
-
-            self.screen_save.create_dir_for_save(main_dir, date_dir)
-
-            file_dir = f"screens/{main_dir}/{date_dir}/{name}.bmp"
+            self.screen_save.create_dir_for_save(main_dir, type_graph, date_dir)
+            
+            file_dir = f"screens/{main_dir}/{type_graph}/{date_dir}/{name}.bmp"
             image = self.screen_save.create_image_for_save(self.frameGeometry())
             image.save(file_dir, "BMP")
 
