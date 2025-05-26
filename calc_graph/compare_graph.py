@@ -4,12 +4,21 @@ import pyqtgraph as pg
 from logger import my_logger
 from calc_data.data_calculation import CalcData
 from calc_graph.calc_graph_values import CalcGraphValue
+from calc_graph.move_graph import MoveGraph
+from calc_graph.boost_graph_one import BoostGraphOne
+from calc_graph.boost_graph_two import BoostGraphTwo
+from calc_graph.triple_graph import TripleGraph
+from calc_graph.cascad_graph import CascadeGraph
+from calc_graph.temper_graph import TemperGraph
 
 
 class CompareGraph:
-    def __init__(self, widget):
+    def __init__(self, ui, compare_data):
         self.logger = my_logger.get_logger(__name__)
-        self.widget = widget
+        self.ui = ui
+        self.compare_data = compare_data
+        self.type_graph = compare_data[0][1]
+        self.type_test = compare_data[0][0]
 
         self.color_pen = ['black',
                           'blue',
@@ -23,20 +32,66 @@ class CompareGraph:
                           'pink',
                           'grey',
                           'red']
-
-# FIXME
-    def show_graph(self, comp_list):
+        
+        self.break_data_by_type_graph()
+            
+    def break_data_by_type_graph(self):
         try:
-            self.widget.plot(clear=True)
-            if type_graph == 'move':
-                self.move_graph(obj)
-
-            elif type_graph == 'conv':
-                self.conv_graph(obj)
-
-            elif type_graph == 'speed':
-                self.speed_graph(obj)
-
+            if self.type_graph == 'move':
+                self._compare_move_graph()
+            elif self.type_graph == 'boost_1':
+                pass
+            elif self.type_graph == 'boost_2':
+                pass
+            elif self.type_graph == 'tripe':
+                pass
+            elif self.type_graph == 'speed':
+                pass
+            elif self.type_graph == 'temper':
+                pass
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _compare_move_graph(self):
+        try:
+            self.ui.stackedWidget.setCurrentIndex(0)
+            graph = MoveGraph(self.ui.duble_graphwidget)
+            graph.gui_graph()
+            for ind, obj in enumerate(self.compare_data):
+                arch_obj = obj[2]
+                if ind == 0:
+                    self._fill_compare_move_data(graph.data_graph(arch_obj))
+                self._fill_compare_move_graph(self.color_pen[ind], arch_obj)
+                
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_compare_move_data(self, data):
+        try:
+            self.ui.recoil_base_le.setText(f'{data.get("recoil", 0)}')
+            self.ui.comp_base_le.setText(f'{data.get("comp", 0)}')
+            self.ui.speed_base_le.setText(f'{data.get("speed", 0)}')
+            self.ui.push_force_base_le.setText(f'{data.get("push_force", 0)}')
+            self.ui.power_base_le.setText(f'{data.get("power", 0)}')
+            self.ui.freq_base_le.setText(f'{data.get("freq", 0)}')
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_compare_move_graph(self, color, data):
+        try:
+            name = (f'{data.time_test} - '
+                    f'{data.amort.name} - '
+                    f'{data.serial_number} - '
+                    f'{data.speed}')
+            
+            pen = pg.mkPen(color=color, width=3)
+            self.ui.duble_graphwidget.plot(np.array(data.move_list),
+                                           np.array(data.force_list),
+                                           pen=pen,
+                                           name=name)
+            
         except Exception as e:
             self.logger.error(e)
 

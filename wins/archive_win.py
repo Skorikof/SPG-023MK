@@ -42,7 +42,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
         self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
         self.temper_graph = TemperGraph(self.duble_graphwidget)
-        self.compare_graph = CompareGraph(self.duble_graphwidget)
         self.screen_save = ScreenSave()
         self.archive = ReadArchive()
         self.archive_fill = ArchiveWinFill(self)
@@ -539,17 +538,18 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             elif self.type_test == 'temper':
                 test = self.archive.temper[self.index_test]
             
-            self.compare_data.append([self.type_test, self.type_graph, test])
+            self.compare_data.append((self.type_test, self.type_graph, test))
             self.btn_compare.setVisible(False)
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in archive_win/_add_compare_data - {e}')
 
+# FIXME
     def _show_compare_data(self):
         try:
             if 0 < len(self.compare_data) < 13:
-                self.compare_graph.show_graph(self.compare_data)
+                CompareGraph(self, self.compare_data)
 
             elif len(self.compare_data) == 0:
                 pass
