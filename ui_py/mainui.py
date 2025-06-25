@@ -633,9 +633,9 @@ class Ui_MainWindow(object):
         self.push_force_chb.setChecked(True)
         self.push_force_chb.setObjectName("push_force_chb")
         self.specif_lab_cascade_speed_table = QtWidgets.QTableWidget(self.specif_data_frame)
-        self.specif_lab_cascade_speed_table.setGeometry(QtCore.QRect(860, 210, 100, 235))
+        self.specif_lab_cascade_speed_table.setGeometry(QtCore.QRect(850, 210, 120, 235))
         self.specif_lab_cascade_speed_table.setMinimumSize(QtCore.QSize(100, 0))
-        self.specif_lab_cascade_speed_table.setMaximumSize(QtCore.QSize(100, 16777215))
+        self.specif_lab_cascade_speed_table.setMaximumSize(QtCore.QSize(120, 16777215))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(18)
@@ -1495,7 +1495,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.main_stackedWidget.setCurrentIndex(2)
+        self.main_stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

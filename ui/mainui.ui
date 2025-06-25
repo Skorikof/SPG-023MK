@@ -702,7 +702,7 @@ QPushButton:pressed
           <item>
            <widget class="QStackedWidget" name="main_stackedWidget">
             <property name="currentIndex">
-             <number>2</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="start_page_1">
              <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1816,9 +1816,9 @@ QPushButton:pressed
                 <widget class="QTableWidget" name="specif_lab_cascade_speed_table">
                  <property name="geometry">
                   <rect>
-                   <x>860</x>
+                   <x>850</x>
                    <y>210</y>
-                   <width>100</width>
+                   <width>120</width>
                    <height>235</height>
                   </rect>
                  </property>
@@ -1830,7 +1830,7 @@ QPushButton:pressed
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>120</width>
                    <height>16777215</height>
                   </size>
                  </property>
