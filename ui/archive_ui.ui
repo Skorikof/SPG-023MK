@@ -2272,10 +2272,13 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>50</y>
+           <y>45</y>
            <width>980</width>
-           <height>101</height>
+           <height>110</height>
           </rect>
+         </property>
+         <property name="columnCount">
+          <number>30</number>
          </property>
          <attribute name="horizontalHeaderVisible">
           <bool>false</bool>
@@ -2358,6 +2361,24 @@
            <string>12</string>
           </property>
          </column>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
         </widget>
        </widget>
       </widget>

@@ -544,7 +544,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def _show_compare_data(self):
         try:
-            if 0 < len(self.compare_data) < 13:
+            if 0 < len(self.compare_data) <= 30:
                 CompareGraph(self, self.compare_data)
 
             elif len(self.compare_data) == 0:
@@ -555,7 +555,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                                               'Внимание',
                                               f'<b style="color: #f00;">'
                                               f'Число выбранных графиков для сравнения превышает допустимое число'
-                                              f'Выбрано - {len(self.compare_data)}, допустимо - 12</b>'
+                                              f'Выбрано - {len(self.compare_data)}, допустимо - 30</b>'
                                               )
 
         except Exception as e:

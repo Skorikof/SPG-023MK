@@ -144,6 +144,11 @@ class ReadArchive:
                 self.conv[self.ind_conv].move_list = self._add_data_on_list_graph(archive_list[24:-1])
                 
             elif self.type_test == 'lab_cascade':
+                self.ind_lab += 1
+                self.lab.append(LabTest())
+                self._fill_obj_archive_data(self.lab[self.ind_lab], archive_list[:24])
+                self.lab[self.ind_lab].move_list = self._add_data_on_list_graph(archive_list[24:-1])
+                
                 if self.flag_new_cascade:
                     self.flag_new_cascade = False
                     self.cascade.append(CascTest())
@@ -168,6 +173,7 @@ class ReadArchive:
                 self.conv[self.ind_conv].force_list = self._add_data_on_list_graph(archive_list)
 
             elif self.type_test == 'lab_cascade':
+                self.lab[self.ind_lab].force_list = self._add_data_on_list_graph(archive_list)
                 force_list = self._add_data_on_list_graph(archive_list)
                 self.cascade[self.ind_casc].recoil_list.append(max(force_list))
                 self.cascade[self.ind_casc].comp_list.append(abs(min(force_list)))

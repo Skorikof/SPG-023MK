@@ -1,5 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
+from PyQt5.QtCore import Qt
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -75,7 +76,7 @@ class TripleGraph:
     def fill_piston_graph(self, hod, pen=None, name='Смещение'):
         try:
             if pen == None:
-                pen = pg.mkPen(color='black', width=3)
+                pen = pg.mkPen(color='black', width=3, style=Qt.DashDotLine)
                 
             hod_x, hod_y = CalcGraphValue().coord_sinus(hod, 360, 1)
             

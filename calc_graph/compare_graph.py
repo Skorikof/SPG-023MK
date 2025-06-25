@@ -1,6 +1,6 @@
-import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtCore import Qt
 
 from logger import my_logger
 from calc_graph.move_graph import MoveGraph
@@ -18,19 +18,6 @@ class CompareGraph:
         self.compare_data = compare_data
         self.type_graph = compare_data[0][1]
         self.type_test = compare_data[0][0]
-
-        self.color_pen = ['black',
-                          'blue',
-                          'green',
-                          'orange',
-                          'purple',
-                          'brown',
-                          'olive',
-                          'cyan',
-                          'yellow',
-                          'pink',
-                          'grey',
-                          'red']
         
         self.break_data_by_type_graph()
             
@@ -52,6 +39,43 @@ class CompareGraph:
         except Exception as e:
             self.logger.error(e)
             
+    def select_line_style(self, ind):
+        try:
+            if ind < 10:
+                return Qt.SolidLine
+            elif 9 < ind < 20:
+                return Qt.DashLine
+            else:
+                return Qt.DashDotDotLine
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def select_color_line(self, ind):
+        try:
+            color_pen = ['black',
+                         'blue',
+                         'green',
+                         'orange',
+                         'purple',
+                         'brown',
+                         'olive',
+                         'cyan',
+                         'pink',
+                         'red']
+            
+            if ind < 10:
+                ind = ind
+            elif 10 <= ind < 20:
+                ind = ind - 10
+            else:
+                ind = ind - 20
+                
+            return color_pen[ind]
+        
+        except Exception as e:
+            self.logger(e)
+            
     def _compare_move_graph(self):
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
@@ -68,7 +92,11 @@ class CompareGraph:
                         f'{arch_obj.amort.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
+                
                 graph.fill_graph(x_coord, y_coord, pen, name)
                 
         except Exception as e:
@@ -103,7 +131,9 @@ class CompareGraph:
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
             
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
                 
                 graph.fill_graph(x_coord, y_coord, pen, name)
                 
@@ -138,7 +168,9 @@ class CompareGraph:
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
             
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
                 
                 graph.fill_graph(x_coord, y_coord, pen, name)
                 
@@ -168,7 +200,10 @@ class CompareGraph:
                     
                     graph.fill_piston_graph(int(arch_obj.amort.hod))
                     
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
+                
                 name_first = (f'{arch_obj.time_test} - '
                               f'{arch_obj.amort.name} - '
                               f'{arch_obj.serial_number} - '
@@ -212,7 +247,9 @@ class CompareGraph:
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed_list[0]}~{arch_obj.speed_list[-1]}')
                 
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
                 
                 r_x, r_y, c_x, c_y = graph.calc_graph(arch_obj)
                 
@@ -250,7 +287,9 @@ class CompareGraph:
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.temper_list[0]}~{arch_obj.temper_list[-1]} °С')
                 
-                pen = pg.mkPen(color=self.color_pen[ind], width=3)
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
                 
                 x, y1, y2 = graph.calc_graph(arch_obj)
                 graph.fill_graph(x, y1, y2, pen, pen, name, name)

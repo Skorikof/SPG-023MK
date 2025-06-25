@@ -2,6 +2,7 @@
 import time
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PyQt5.QtCore import Qt
 from settings import glob_var
 
 from logger import my_logger
@@ -61,18 +62,6 @@ class AppWindow(QMainWindow):
 
     def _init_start_view(self):
         self.tag_msg = 'info'
-        self.color_pen = ['black',
-                          'blue',
-                          'green',
-                          'orange',
-                          'purple',
-                          'brown',
-                          'olive',
-                          'cyan',
-                          'yellow',
-                          'pink',
-                          'grey',
-                          'red']
         self.list_lab = []
         self.dict_lab_cascade = {}
         self.index_amort = 0
@@ -664,7 +653,7 @@ class AppWindow(QMainWindow):
     def specif_add_lab_cascade_table(self):
         try:
             count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
-            if count_rows < 12:
+            if count_rows <= 30:
                 self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                 if speed:
@@ -1210,13 +1199,53 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/change_speed_lab_test - {e}')
+            
+    def select_line_style(self, ind):
+        try:
+            if ind < 10:
+                return Qt.SolidLine
+            elif 9 < ind < 20:
+                return Qt.DashLine
+            else:
+                return Qt.DashDotDotLine
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def select_color_line(self, ind):
+        try:
+            color_pen = ['black',
+                         'blue',
+                         'green',
+                         'orange',
+                         'purple',
+                         'brown',
+                         'olive',
+                         'cyan',
+                         'pink',
+                         'red']
+            
+            if ind < 10:
+                ind = ind
+            elif 10 <= ind < 20:
+                ind = ind - 10
+            else:
+                ind = ind - 20
+                
+            return color_pen[ind]
+        
+        except Exception as e:
+            self.logger(e)
 
     def show_compare_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
-            for graph in self.list_lab:
+            for ind, graph in enumerate(self.list_lab):
                 name = f'{graph["speed"]} м/с'
-                pen = pg.mkPen(color=self.color_pen[self.list_lab.index(graph)], width=3)
+                
+                pen = pg.mkPen(color=self.select_color_line(ind),
+                               width=3,
+                               style=self.select_line_style(ind))
 
                 self.ui.lab_GraphWidget.plot(graph['move'], graph['force'], pen=pen, name=name)
 
