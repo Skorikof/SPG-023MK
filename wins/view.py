@@ -1370,7 +1370,7 @@ class AppWindow(QMainWindow):
 
     def slot_write_end_test(self):
         try:
-            self.model.write_data_in_archive('end')
+            self.model.write_data_in_archive('end_test')
 
         except Exception as e:
             self.logger.error(e)

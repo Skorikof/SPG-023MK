@@ -12,6 +12,7 @@ class Signals(QObject):
     thread_err = pyqtSignal(str)
     read_result = pyqtSignal(dict, str)
     write_result = pyqtSignal(list)
+    write_archive = pyqtSignal()
 
 
 class WriterThread(QRunnable):
@@ -169,7 +170,7 @@ class WriterArchive(QRunnable):
     def _check_exist_file(self, nam_f):
         try:
             path_file = 'archive/' + nam_f
-            if os.path.isfile(path_file):
+            if not os.path.isfile(path_file):
                 self._create_file(nam_f)
             
         except Exception as e:
@@ -257,7 +258,7 @@ class WriterArchive(QRunnable):
 
                 file_arch.write(write_name + write_str + write_data)
             
-            self.signals.write_result.emit()
+            self.signals.write_archive.emit()
             self.tag = None
 
         except Exception as e:
@@ -282,7 +283,7 @@ class WriterArchive(QRunnable):
                 str_t = f'end_test;\n'
                 file_arch.write(str_t)
                 
-            self.signals.write_result.emit()
+            self.signals.write_archive.emit()
             self.tag = None
 
         except Exception as e:

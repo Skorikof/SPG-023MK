@@ -47,7 +47,7 @@ class WriterArch:
 
             if not self.writer_arch_flag_init:
                 writer_arch.signals.thread_err.connect(self._log_error_write_arch_thread)
-                writer_arch.signals.write_result.connect(self._result_write_arch)
+                writer_arch.signals.write_archive.connect(self._result_write_arch)
                 self.writer_arch_flag_init = True
 
             return writer_arch
@@ -57,11 +57,12 @@ class WriterArch:
 
     def _log_error_write_arch_thread(self, txt_log):
         self.logger.error(txt_log)
+        self._result_write_arch()
         
     def _result_write_arch(self):
         try:
-            if self.query_write:
-                self.query_write = False
+            if self.query_write_arch:
+                self.query_write_arch = False
                 self.list_write_arch.pop(0)
 
         except Exception as e:
