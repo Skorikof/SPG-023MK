@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from PyQt5.QtCore import QTimer, QThreadPool, QObject, pyqtSignal
 import modbus_tk.defines as cst
 
@@ -76,9 +77,9 @@ class Writer:
     def _result_write(self, response):
         try:
             res = response[0]
-            tag = response[1]
-            addr = response[2]
-            value = response[3]
+            # tag = response[1]
+            # addr = response[2]
+            # value = response[3]
             command = response[4]
             if self.query_write:
                 self.query_write = False

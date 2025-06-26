@@ -6,7 +6,6 @@ from PyQt5.QtCore import Qt
 from settings import glob_var
 
 from logger import my_logger
-from archive import SaveArchive
 from calc_data.data_calculation import CalcData
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
@@ -27,13 +26,13 @@ class AppWindow(QMainWindow):
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
-        self.save_archive = SaveArchive()
 
         self._start_param_view()
 
     def closeEvent(self, event):
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
+        self.model.save_arch.timer_writer_arch_stop()
         self.model.reader_exit()
         self.model.write_bit_force_cycle(0)
         self.model.threadpool.waitForDone()
@@ -1363,7 +1362,7 @@ class AppWindow(QMainWindow):
                          'dynamic_push_force': self.model.dynamic_push_force,
                          'max_temperature': self.model.temper_max}
             
-            self.save_archive.save_test_in_archive(data_dict)
+            self.model.write_data_in_archive('data', data_dict)
 
         except Exception as e:
             self.logger.error(e)
@@ -1371,7 +1370,7 @@ class AppWindow(QMainWindow):
 
     def slot_write_end_test(self):
         try:
-            self.save_archive.write_end_test_in_archive()
+            self.model.write_data_in_archive('end')
 
         except Exception as e:
             self.logger.error(e)

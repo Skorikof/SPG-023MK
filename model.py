@@ -11,6 +11,7 @@ from settings.settings import PrgSettings
 from my_parser.parser import ParserSPG023MK
 from calc_data.data_calculation import CalcData
 from writer.writer import Writer
+from archive_saver import WriterArch
 from connect.client import Client
 
 
@@ -142,6 +143,9 @@ class Model:
             self.write_bit_force_cycle(0)
 
             self.write_max_frequency(1, 120)
+            
+            self.save_arch = WriterArch()
+            self.save_arch.timer_writer_arch_start()
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
@@ -790,3 +794,11 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_red_switch_on - {e}')
+            
+    def write_data_in_archive(self, tag, data=None):
+        try:
+            self.save_arch.write_arch_out(tag, data)
+            
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/write_data_in_archive - {e}')
