@@ -43,12 +43,12 @@ class WriterArch:
     def _init_writer(self, tag, data=None):
         try:
             writer_arch = WriterArchive(tag=tag,
-                                   data = data)
+                                        data = data)
 
-            if not self.writer_flag_init:
+            if not self.writer_arch_flag_init:
                 writer_arch.signals.thread_err.connect(self._log_error_write_arch_thread)
                 writer_arch.signals.write_result.connect(self._result_write_arch)
-                self.writer_flag_init = True
+                self.writer_arch_flag_init = True
 
             return writer_arch
 
