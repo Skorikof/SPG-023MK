@@ -144,21 +144,22 @@ class WriterThread(QRunnable):
 class WriterArchive(QRunnable):
     signals = Signals()
     
-    def __init__(self, tag, data=None):
+    def __init__(self, tag=None, data=None):
         super(WriterArchive, self).__init__()
         self.tag = tag
         self.data = data
         
-    @pyqtSlot
+    @pyqtSlot()
     def run(self):
         try:
-            nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
-            self._check_exist_file(nam_f)
-            
-            if self.tag == 'data':
-                self._save_test_in_archive(nam_f, self.data)
-            elif self.tag == 'end_test':
-                self._write_end_test_in_archive(nam_f)
+            if self.tag:
+                nam_f = f'{datetime.now().day:02}.{datetime.now().month:02}.{datetime.now().year}.csv'
+                self._check_exist_file(nam_f)
+                
+                if self.tag == 'data':
+                    self._save_test_in_archive(nam_f, self.data)
+                elif self.tag == 'end_test':
+                    self._write_end_test_in_archive(nam_f)
             else:
                 pass
             
@@ -257,6 +258,7 @@ class WriterArchive(QRunnable):
                 file_arch.write(write_name + write_str + write_data)
             
             self.signals.write_result.emit()
+            self.tag = None
 
         except Exception as e:
             self.signals.thread_err.emit(f'ERROR in thread writer archive/_save_test_in_archive --> {e}')
@@ -281,6 +283,7 @@ class WriterArchive(QRunnable):
                 file_arch.write(str_t)
                 
             self.signals.write_result.emit()
+            self.tag = None
 
         except Exception as e:
             self.signals.thread_err.emit(f'ERROR in thread writer archive/_write_end_test_in_archive --> {e}')
