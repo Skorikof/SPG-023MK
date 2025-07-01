@@ -123,7 +123,7 @@ class CalcData:
 
     def excess_force(self, amort):
         try:
-            force = int(max(amort.max_comp, amort.max_recoil) * 4)
+            force = int(max(amort.max_comp, amort.max_recoil) * 5)
             if force >= 2000:
                 return 2000
             else:
