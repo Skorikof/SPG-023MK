@@ -152,9 +152,7 @@ class Model:
     def _stand_initialisation(self):
         try:
             self.write_max_frequency(1, 120)
-            
-            self.init_timer_koef_force()
-            
+                        
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_stand_initialisation - {e}')

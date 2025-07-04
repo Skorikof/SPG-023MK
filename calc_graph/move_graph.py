@@ -3,6 +3,7 @@ import pyqtgraph as pg
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
+from calc_graph.abstract_graph import AbstractGraph
 from calc_graph.calc_graph_values import CalcGraphValue
 
 
@@ -10,17 +11,19 @@ class MoveGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
+        self.graph = AbstractGraph(widget)
 
     def gui_graph(self):
         try:
-            self.widget.plot(clear=True)
-            self.widget.setLabel('left', 'Усилие', units='кгс', color='k')
-            self.widget.setLabel('bottom', 'Перемещение', units='мм', color='k')
-            self.widget.setTitle('График зависимости усилия от перемещения', color='k', size='14pt')
-            self.widget.showGrid(True, True)
-            self.widget.setBackground('w')
-            self.widget.addLegend()
-
+            kwargs = {'title': 'График зависимости усилия от перемещения',
+                      'left': ['left', 'Усилие', 'кгс'],
+                      'bottom': ['bottom', 'Перемещение', 'мм']
+                      }
+            
+            self.graph.gui_graph(**kwargs)
+            self.graph.gui_axis('left')
+            self.graph.gui_axis('bottom')
+                        
         except Exception as e:
             self.logger.error(e)
             

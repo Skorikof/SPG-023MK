@@ -1,9 +1,11 @@
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
+from calc_graph.abstract_graph import AbstractGraph
 from calc_graph.calc_graph_values import CalcGraphValue
 
 
@@ -11,18 +13,22 @@ class TripleGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
+        self.graph = AbstractGraph(widget)
 
     def gui_graph(self):
         try:
-            self.widget.plot(clear=True)
-            self.widget.setTitle('Диаграмма хода, скорости, силы сопротивления')
-            self.widget.setLabel('bottom', 'ω * t', units='°', color='k')
-            self.widget.setLabel('left', 'Смещение или Скорость', units='мм или мм/с', color='r')
-            self.widget.setLabel('right', 'Усилие', units='кгс', color='b')
-            self.widget.showGrid(True, True)
-            self.widget.setBackground('w')
-            self.widget.addLegend()
-
+            kwargs = {'title': 'Диаграмма хода, скорости, силы сопротивления',
+                      'left': ['left', 'Смещение или Скорость', 'мм или мм/с'],
+                      'bottom': ['bottom', 'ω * t', '°'],
+                      'right': ['right', 'Усилие', 'кгс']
+                      }
+            
+            self.graph.gui_graph(**kwargs)
+            
+            self.graph.gui_axis('left')
+            self.graph.gui_axis('bottom')
+            self.graph.gui_axis('right')
+            
         except Exception as e:
             self.logger.error(e)
             

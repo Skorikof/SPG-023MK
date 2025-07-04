@@ -2,7 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
-from calc_data.data_calculation import CalcData
+from calc_graph.abstract_graph import AbstractGraph
 from calc_graph.calc_graph_values import CalcGraphValue
 
 
@@ -10,17 +10,19 @@ class CascadeGraph:
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
+        self.graph = AbstractGraph(widget)
 
     def gui_graph(self):
         try:
-            self.widget.plot(clear=True)
-            self.widget.setLabel('left', 'Усилие', units='кгс')
-            self.widget.setLabel('bottom', 'Скорость', units='м/с')
-            self.widget.setTitle('График зависимости усилия от скорости')
-            self.widget.showGrid(True, True)
-            self.widget.setBackground('w')
-            self.widget.addLegend()
-
+            kwargs = {'title': 'График зависимости усилия от скорости',
+                      'left': ['left', 'Усилие', 'кгс'],
+                      'bottom': ['bottom', 'Скорость', 'м/с']
+                      }
+            
+            self.graph.gui_graph(**kwargs)
+            self.graph.gui_axis('left')
+            self.graph.gui_axis('bottom')
+            
         except Exception as e:
             self.logger.error(e)
 
