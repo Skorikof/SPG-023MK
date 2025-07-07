@@ -92,16 +92,21 @@ class ReadArchive:
             self.index_archive = self.files_name_arr.index(data)
 
             with open(self.files_arr[self.index_archive], encoding='utf-8') as f:
-                archive_str = f.readlines()
-                for i in archive_str:
-                    archive_list = i.split(';')
+                for data_list in self._read_line_in_archive(f):
+                    self._pars_str_archive(data_list)
 
-                    if archive_list[0] == 'Время':
-                        continue
-
-                    else:
-                        self._pars_str_archive(archive_list)
-
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _read_line_in_archive(self, file):
+        try:
+            for line in file:
+                data_list = line.split(';')
+                if data_list[0] == 'Время':
+                    continue
+                else:
+                    yield data_list
+            
         except Exception as e:
             self.logger.error(e)
     

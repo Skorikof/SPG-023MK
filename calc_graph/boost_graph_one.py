@@ -21,11 +21,13 @@ class BoostGraphOne:
                       }
             
             self.graph.gui_graph(**kwargs)
-            self.graph.gui_axis('left')
-            self.graph.gui_axis('bottom')
             
         except Exception as e:
             self.logger.error(e)
+            
+    def gui_axis(self):
+        self.graph.gui_axis('left')
+        self.graph.gui_axis('bottom')
             
     def calc_graph(self, data):
         try:

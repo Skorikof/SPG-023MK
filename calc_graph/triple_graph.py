@@ -25,13 +25,14 @@ class TripleGraph:
             
             self.graph.gui_graph(**kwargs)
             
-            self.graph.gui_axis('left')
-            self.graph.gui_axis('bottom')
-            self.graph.gui_axis('right')
-            
         except Exception as e:
             self.logger.error(e)
             
+    def gui_axis(self):
+        self.graph.gui_axis('left')
+        self.graph.gui_axis('bottom')
+        self.graph.gui_axis('right')
+                
     def calc_force_graph(self, data):
         try:
             move_array = np.array(data.move_list)

@@ -250,31 +250,37 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             if type_graph == 'move':
                 self.stackedWidget.setCurrentIndex(0)
                 self.move_graph.gui_graph()
+                self.move_graph.gui_axis()
                 self._fill_lab_graph()
                 
             elif type_graph == 'boost_1':
                 self.stackedWidget.setCurrentIndex(0)
                 self.boost_one_graph.gui_graph()
+                self.boost_one_graph.gui_axis()
                 self._fill_boost_one_graph()
 
             elif type_graph == 'boost_2':
                 self.stackedWidget.setCurrentIndex(0)
                 self.boost_two_graph.gui_graph()
+                self.boost_two_graph.gui_axis()
                 self._fill_boost_two_graph()
                 
             elif type_graph == 'triple':
                 self.stackedWidget.setCurrentIndex(1)
                 self.triple_graph.gui_graph()
+                self.triple_graph.gui_axis()
                 self._fill_triple_graph()
 
             elif type_graph == 'speed':
                 self.stackedWidget.setCurrentIndex(0)
                 self.cascade_graph.gui_graph()
+                self.cascade_graph.gui_axis()
                 self._fill_lab_cascade_graph()
 
             elif type_graph == 'temper':
                 self.stackedWidget.setCurrentIndex(0)
                 self.temper_graph.gui_graph()
+                self.temper_graph.gui_axis()
                 self._fill_temper_graph()
 
         except Exception as e:
