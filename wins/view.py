@@ -2,11 +2,11 @@
 import time
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import Qt
 from settings import glob_var
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
+from calc_graph.test_graph import TestGraph
 from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
@@ -54,8 +54,6 @@ class AppWindow(QMainWindow):
         self._create_statusbar_ui()
         self._init_buttons()
         self._init_signals()
-        self._init_lab_graph()
-        self._init_conv_graph()
 
         self._start_page()
 
@@ -126,9 +124,9 @@ class AppWindow(QMainWindow):
 
     def _init_lab_graph(self):
         try:
-            self.ui.lab_GraphWidget.showGrid(True, True)
-            self.ui.lab_GraphWidget.setBackground('w')
-            self.ui.lab_GraphWidget.addLegend()
+            self.graph = TestGraph(self.ui.lab_GraphWidget)
+            self.graph.gui_graph('move')
+            self.graph.gui_axis()
 
         except Exception as e:
             self.logger.error(e)
@@ -136,13 +134,23 @@ class AppWindow(QMainWindow):
 
     def _init_conv_graph(self):
         try:
-            self.ui.conv_GraphWidget.showGrid(True, True)
-            self.ui.conv_GraphWidget.setBackground('w')
-            self.ui.conv_GraphWidget.addLegend()
+            self.graph = TestGraph(self.ui.conv_GraphWidget)
+            self.graph.gui_graph('move')
+            self.graph.gui_axis()
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_init_conv_graph - {e}')
+            
+    def _init_temp_graph(self):
+        try:
+            self.graph = TestGraph(self.ui.lab_GraphWidget)
+            self.graph.gui_graph('temper')
+            self.graph.gui_axis()
+            
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_ui(f'ERROR in view/_init_temp_graph - {e}')
 
     def controller_msg_slot(self, msg):
         try:
@@ -499,9 +507,11 @@ class AppWindow(QMainWindow):
 
             elif type_test == 'temper':
                 self._update_temper_graph()
+                self._update_lab_data()
 
             else:
                 self._update_lab_graph()
+                self._update_lab_data()
 
         except Exception as e:
             self.logger.error(e)
@@ -779,6 +789,7 @@ class AppWindow(QMainWindow):
                         self.model.serial_number = self.ui.specif_serial_lineEdit.text()
                         self.lab_test_second_force_gui(False)
                         if self.model.type_test == 'conv':
+                            self._init_conv_graph()
                             self._conv_win_clear()
                             self.conv_test_fill_template()
                             self.begin_test()
@@ -789,6 +800,7 @@ class AppWindow(QMainWindow):
                             if self.model.type_test == 'lab_cascade':
                                 flag = self.specif_read_lab_cascade_table()
                                 if flag:
+                                    self._init_lab_graph()
                                     self.begin_test()
                                 else:
                                     self.specif_msg_none_cascade_speed()
@@ -797,6 +809,7 @@ class AppWindow(QMainWindow):
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
                                     self.model.speed_test = speed
+                                    self._init_lab_graph()
                                     self.begin_test()
                             elif self.model.type_test == 'temper':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
@@ -805,10 +818,12 @@ class AppWindow(QMainWindow):
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
                                         self.model.finish_temper = temper
+                                        self._init_temp_graph()
                                         self.begin_test()
 
                             else:
                                 self.lab_test_second_force_gui(True)
+                                self._init_lab_graph()
                                 self.begin_test()
 
             else:
@@ -1048,13 +1063,9 @@ class AppWindow(QMainWindow):
 
     def _update_conv_graph(self):
         try:
-            self.ui.conv_GraphWidget.clear()
-
-            pen = pg.mkPen(color='black', width=3)
-            self.ui.conv_GraphWidget.plot(self.model.move_circle,
-                                          self.model.force_circle,
-                                          pen=pen,
-                                          name=f'{self.model.speed_test} м/с')
+            self.graph.fill_graph(self.model.move_circle,
+                                  self.model.force_circle,
+                                  name=f'{self.model.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
@@ -1084,15 +1095,9 @@ class AppWindow(QMainWindow):
 
     def _update_lab_graph(self):
         try:
-            self.ui.lab_GraphWidget.clear()
-
-            pen = pg.mkPen(color='black', width=3)
-            self.ui.lab_GraphWidget.plot(self.model.move_circle,
-                                         self.model.force_circle,
-                                         pen=pen,
-                                         name=f'{self.model.speed_test} м/с')
-
-            self._update_lab_data()
+            self.graph.fill_graph(self.model.move_circle,
+                                  self.model.force_circle,
+                                  name=f'{self.model.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
@@ -1100,17 +1105,14 @@ class AppWindow(QMainWindow):
 
     def _update_temper_graph(self):
         try:
-            self.ui.lab_GraphWidget.clear()
             if len(self.model.temper_graph) > 1:
                 pen_recoil = pg.mkPen(color='black', width=3)
                 pen_comp = pg.mkPen(color='blue', width=3)
 
-                self.ui.lab_GraphWidget.plot(self.model.temper_graph, self.model.temper_recoil_graph,
-                                             pen=pen_recoil, name='Отбой')
-                self.ui.lab_GraphWidget.plot(self.model.temper_graph, self.model.temper_comp_graph,
-                                             pen=pen_comp, name='Сжатие')
-
-            self._update_lab_data()
+                self.graph.fill_graph(self.model.temper_graph, self.model.temper_recoil_graph,
+                                      pen=pen_recoil, name='Отбой')
+                self.graph.fill_graph(self.model.temper_graph, self.model.temper_comp_graph,
+                                      pen=pen_comp, name='Сжатие')
 
         except Exception as e:
             self.logger.error(e)
@@ -1153,19 +1155,6 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_fill_push_force - {e}')
 
-    def _update_lab_cascade_graph(self):
-        try:
-            self.ui.lab_GraphWidget.clear()
-            pen = pg.mkPen(color='black', width=3)
-
-            if self.dict_lab_cascade:
-                for key, value in self.dict_lab_cascade.items():
-                    self.ui.lab_GraphWidget.plot(value.move, value.force, pen=pen)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_lab_cascade_graph - {e}')
-
     def repeat_test_clicked_slot(self):
         self.model.flag_repeat = True
         self.begin_test()
@@ -1198,61 +1187,6 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/change_speed_lab_test - {e}')
-            
-    def select_line_style(self, ind):
-        try:
-            if ind < 10:
-                return Qt.SolidLine
-            elif 9 < ind < 20:
-                return Qt.DashLine
-            else:
-                return Qt.DashDotDotLine
-            
-        except Exception as e:
-            self.logger.error(e)
-            
-    def select_color_line(self, ind):
-        try:
-            color_pen = ['black',
-                         'blue',
-                         'green',
-                         'orange',
-                         'purple',
-                         'brown',
-                         'olive',
-                         'cyan',
-                         'pink',
-                         'red']
-            
-            if ind < 10:
-                ind = ind
-            elif 10 <= ind < 20:
-                ind = ind - 10
-            else:
-                ind = ind - 20
-                
-            return color_pen[ind]
-        
-        except Exception as e:
-            self.logger(e)
-
-    def show_compare_graph(self):
-        try:
-            self.ui.lab_GraphWidget.clear()
-            for ind, graph in enumerate(self.list_lab):
-                name = f'{graph["speed"]} м/с'
-                
-                pen = pg.mkPen(color=self.select_color_line(ind),
-                               width=3,
-                               style=self.select_line_style(ind))
-
-                self.ui.lab_GraphWidget.plot(graph['move'], graph['force'], pen=pen, name=name)
-
-            self.ui.lab_GraphWidget.addLegend()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/show_compare_graph - {e}')
 
     def slot_lab_test_stop(self):
         self.ui.test_cancel_btn.setEnabled(True)
@@ -1264,12 +1198,12 @@ class AppWindow(QMainWindow):
             self.ui.test_change_speed_btn.setVisible(True)
 
         elif self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade':
-            self.show_compare_graph()
+            self.graph.fill_compare_graph(self.list_lab)
 
     def slot_conv_test_stop(self):
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
-        self.show_compare_graph()
+        self.graph.fill_compare_graph(self.list_lab)
 
     def cancel_test_conv_clicked(self):
         try:
