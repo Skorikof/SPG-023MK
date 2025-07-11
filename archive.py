@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os.path
 from pathlib import Path
 from datetime import datetime
 

@@ -82,13 +82,16 @@ class CalcData:
 
     def middle_min_and_max_force(self, data):
         try:
-            rec_ind = np.argmax(data)
-            max_rec = round(statistics.fmean(abs(data[rec_ind - 5:rec_ind + 5])), 1)
+            if not data:
+                return 0, 0
+            else:
+                rec_ind = np.argmax(data)
+                max_rec = round(statistics.fmean(abs(data[rec_ind - 5:rec_ind + 5])), 1)
 
-            comp_ind = np.argmin(data)
-            max_comp = round(statistics.fmean(abs(data[comp_ind - 5:comp_ind + 5])), 1)
+                comp_ind = np.argmin(data)
+                max_comp = round(statistics.fmean(abs(data[comp_ind - 5:comp_ind + 5])), 1)
 
-            return max_rec, max_comp
+                return max_rec, max_comp
 
         except Exception as e:
             self.logger.error(e)

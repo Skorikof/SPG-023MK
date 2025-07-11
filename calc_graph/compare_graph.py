@@ -267,7 +267,7 @@ class CompareGraph:
             
     def _fill_compare_speed_data(self, data):
         try:
-            self.push_force_casc_le.setText(f'{data.get("push_force", 0)}')
+            self.ui.push_force_casc_le.setText(f'{data.get("push_force", 0)}')
                 
             for ind, val in enumerate(data.get('speed')):
                 self.ui.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
