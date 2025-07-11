@@ -92,4 +92,3 @@ class CalcGraphValue:
 
         except Exception as e:
             self.logger.error(e)
-            return x, y
