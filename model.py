@@ -152,7 +152,7 @@ class Model:
     def _stand_initialisation(self):
         try:
             self.write_max_frequency(1, 120)
-                        
+
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_stand_initialisation - {e}')
@@ -302,15 +302,18 @@ class Model:
 
                 self.temper_first = self.parser.temperature_value(res[7], res[8])
                 self.temper_second = self.parser.temperature_value(res[12], res[13])
-                if self.temper_first > self.temper_second and self.temper_first > self.temper_max:
-                    self.temper_max = self.temper_first
-                elif self.temper_second > self.temper_first and self.temper_second > self.temper_max:
-                    self.temper_max = self.temper_second
+                if self.temper_first > self.temper_second:
+                    temp = self.temper_first
+                else:
+                    temp = self.temper_second
+                if temp > self.temper_max:
+                    self.temper_max = temp
 
                 self._update_switch_dict(self.parser.switch_state(res[5]))
                 self._change_state_list(res[3])
 
-                self._read_controller_finish()
+                if self.type_test == 'hand':
+                    self.signals.win_set_update.emit()
 
         except Exception as e:
             self.logger.error(e)
@@ -341,9 +344,10 @@ class Model:
 
                 self._change_state_list(data.get('state')[-1])
 
-                self._read_controller_finish()
-
-                self._pars_response_on_circle(self.force_array, self.move_array)
+                if self.type_test == 'hand':
+                    self.signals.win_set_update.emit()
+                else:
+                    self._pars_response_on_circle(self.force_array, self.move_array)
 
         except Exception as e:
             if str(e) == 'list index out of range':
@@ -363,10 +367,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
-
-    def _read_controller_finish(self):
-        if self.type_test == 'hand':
-            self.signals.win_set_update.emit()
 
     def _init_timer_yellow_btn(self):
         try:
@@ -808,3 +808,34 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_data_in_archive - {e}')
+            
+    def save_data_in_archive(self):
+        try:
+            data_dict = {'move_graph': list(self.move_circle),
+                         'force_graph': list(self.force_circle),
+                         'temper_graph': self.temper_graph[:],
+                         'temper_recoil_graph': self.temper_recoil_graph[:],
+                         'temper_comp_graph': self.temper_comp_graph[:],
+                         'type_test': self.type_test,
+                         'speed': self.speed_test,
+                         'operator': self.operator.copy(),
+                         'serial': self.serial_number,
+                         'amort': self.amort,
+                         'flag_push_force': int(self.flag_push_force),
+                         'static_push_force': self.static_push_force,
+                         'dynamic_push_force': self.dynamic_push_force,
+                         'max_temperature': self.temper_max}
+            
+            self.write_data_in_archive('data', data_dict)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/save_data_in_archive - {e}')
+            
+    def write_end_test_in_archive(self):
+        try:
+            self.write_data_in_archive('end_test')
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/write_end_test_in_archive - {e}')

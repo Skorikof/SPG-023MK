@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+
 from settings import glob_var
 
 from logger import my_logger
@@ -80,7 +81,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
-        self.controller.signals.end_test.connect(self.slot_write_end_test)
+        self.controller.signals.end_test.connect(self.model.write_end_test_in_archive)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
         self.controller.signals.save_result_test.connect(self.slot_save_lab_result)
@@ -1270,42 +1271,11 @@ class AppWindow(QMainWindow):
 
                 self.list_lab.append(data_dict)
 
-            self.save_data_in_archive()
+            self.model.save_data_in_archive()
 
             if command == 'end':
-                self.slot_write_end_test()
+                self.model.write_end_test_in_rchive()
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/slot_save_lab_result - {e}')
-
-    def save_data_in_archive(self):
-        try:
-            data_dict = {'move_graph': list(self.model.move_circle),
-                         'force_graph': list(self.model.force_circle),
-                         'temper_graph': self.model.temper_graph[:],
-                         'temper_recoil_graph': self.model.temper_recoil_graph[:],
-                         'temper_comp_graph': self.model.temper_comp_graph[:],
-                         'type_test': self.model.type_test,
-                         'speed': self.model.speed_test,
-                         'operator': self.model.operator.copy(),
-                         'serial': self.model.serial_number,
-                         'amort': self.model.amort,
-                         'flag_push_force': int(self.model.flag_push_force),
-                         'static_push_force': self.model.static_push_force,
-                         'dynamic_push_force': self.model.dynamic_push_force,
-                         'max_temperature': self.model.temper_max}
-            
-            self.model.write_data_in_archive('data', data_dict)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/save_data_in_archive - {e}')
-
-    def slot_write_end_test(self):
-        try:
-            self.model.write_data_in_archive('end_test')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/slot_write_end_test - {e}')
