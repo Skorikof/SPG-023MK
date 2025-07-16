@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QLineEdit
-from PyQt5.QtCore import pyqtSignal
+from PySide6.QtWidgets import QLineEdit
+from PySide6.QtCore import Signal
 
 
 class LineEdit(QLineEdit):
-    signal = pyqtSignal()
+    signal = Signal()
 
     def __init__(self, parent=None):
         super(LineEdit, self).__init__(parent)

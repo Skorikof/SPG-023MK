@@ -4,7 +4,6 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 
 from settings import glob_var
-
 from logger import my_logger
 from calc_data.data_calculation import CalcData
 from calc_graph.test_graph import TestGraph
@@ -31,14 +30,16 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
+        self.model.write_bit_force_cycle(0)
+        
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
         self.model.save_arch.timer_writer_arch_stop()
         self.model.reader_exit()
-        self.model.write_bit_force_cycle(0)
+        
         self.model.threadpool.waitForDone()
         self.model.client.disconnect_client()
-        self.close()
+        event.accept()
 
     def _create_statusbar_ui(self):
         self.statusbar = self.statusBar()
@@ -65,8 +66,6 @@ class AppWindow(QMainWindow):
         self.index_amort = 0
         self.index_type_test = 0
         self.bit_temper = None
-
-        self.ui.push_force_chb.setCheckState(False)
 
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)

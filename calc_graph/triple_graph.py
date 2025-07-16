@@ -1,7 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PySide6.QtCore import Qt
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData

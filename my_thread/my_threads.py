@@ -2,17 +2,17 @@
 import os
 import time
 from datetime import datetime
-from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 from my_parser.parser import ParserSPG023MK
 
 
 class Signals(QObject):
-    thread_log = pyqtSignal(str)
-    thread_err = pyqtSignal(str)
-    read_result = pyqtSignal(dict, str)
-    write_result = pyqtSignal(list)
-    write_archive = pyqtSignal()
+    thread_log = Signal(str)
+    thread_err = Signal(str)
+    read_result = Signal(dict, str)
+    write_result = Signal(list)
+    write_archive = Signal()
 
 
 class WriterThread(QRunnable):
@@ -33,7 +33,7 @@ class WriterThread(QRunnable):
         self.cond = True
         self.flag_next = False
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         if self.tag == 'reg':
             try:
@@ -150,7 +150,7 @@ class WriterArchive(QRunnable):
         self.tag = tag
         self.data = data
         
-    @pyqtSlot()
+    @Slot()
     def run(self):
         try:
             if self.tag:
@@ -315,7 +315,7 @@ class Reader(QRunnable):
         self.cycle = True
         self.is_run = False
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         while self.cycle:
             if not self.is_run:

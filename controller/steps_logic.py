@@ -1,13 +1,13 @@
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, QObject
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 
 
 class StepsSignal(QObject):
-    stage_from_logic = pyqtSignal(str)
-    next_stage_from_logic = pyqtSignal(str)
-    conv_result_lamp = pyqtSignal(str, str)
+    stage_from_logic = Signal(str)
+    next_stage_from_logic = Signal(str)
+    conv_result_lamp = Signal(str, str)
 
 
 class Steps:

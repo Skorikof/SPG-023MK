@@ -3,7 +3,7 @@ import time
 import statistics
 import modbus_tk.defines as cst
 import numpy as np
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, QTimer
+from PySide6.QtCore import QObject, QThreadPool, Signal, QTimer
 
 from logger import my_logger
 from my_thread.my_threads import Reader
@@ -16,21 +16,21 @@ from connect.client import Client
 
 
 class ModelSignals(QObject):
-    stbar_msg = pyqtSignal(str)
-    read_start = pyqtSignal()
-    start_test = pyqtSignal()
-    stop_test = pyqtSignal()
-    read_stop = pyqtSignal()
-    read_exit = pyqtSignal()
+    stbar_msg = Signal(str)
+    read_start = Signal()
+    start_test = Signal()
+    stop_test = Signal()
+    read_stop = Signal()
+    read_exit = Signal()
 
-    win_set_update = pyqtSignal()
-    full_cycle_count = pyqtSignal(str)
-    update_data_graph = pyqtSignal()
-    test_launch = pyqtSignal(bool)
-    save_koef_force = pyqtSignal(str)
+    win_set_update = Signal()
+    full_cycle_count = Signal(str)
+    update_data_graph = Signal()
+    test_launch = Signal(bool)
+    save_koef_force = Signal(str)
 
-    connect_ctrl = pyqtSignal()
-    read_finish = pyqtSignal()
+    connect_ctrl = Signal()
+    read_finish = Signal()
 
 
 class Model:

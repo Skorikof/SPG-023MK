@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import QObject, pyqtSignal, QSignalMapper, pyqtSlot
 import time
+from PySide6.QtWidgets import QMainWindow
+from PySide6.QtCore import QObject, Signal, QSignalMapper, Slot
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -9,7 +9,7 @@ from ui_py.settings_ui import UiSettingsWindow
 
 
 class WinSignals(QObject):
-    closed = pyqtSignal()
+    closed = Signal()
 
 
 class SetWindow(QMainWindow, UiSettingsWindow):
@@ -34,9 +34,9 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.lineEdit_F_alarm.clicked.connect(smap.map)
         smap.setMapping(self.lineEdit_F_alarm, 1)
 
-        smap.mapped.connect(self._on_click_lineedit)
+        smap.mappedInt.connect(self._on_click_lineedit)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def _on_click_lineedit(self, index):
         if index == 1:
             self.model.reader_stop()
@@ -147,8 +147,8 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _write_alarm_force(self):
         try:
-            value = int(self.lineEdit_F_alarm.text())
-            if value == int(self.model.force_alarm):
+            value = float(self.lineEdit_F_alarm.text())
+            if value == float(self.model.force_alarm):
                 pass
             else:
                 self.model.write_emergency_force(value)

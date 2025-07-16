@@ -1,5 +1,5 @@
 import pyqtgraph as pg
-from PyQt5.QtGui import QFont
+from PySide6.QtGui import QFont
 
 
 class AbstractGraph:

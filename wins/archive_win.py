@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 from ui_py.archive_ui import Ui_WindowArch
@@ -18,7 +18,7 @@ from screenshot.save_screen import ScreenSave
 
 
 class WinSignals(QObject):
-    closed = pyqtSignal()
+    closed = Signal()
 
 
 class ArchiveWin(QMainWindow, Ui_WindowArch):
@@ -79,7 +79,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.btn_clier.clicked.connect(self._clear_compare_data)
         self.btn_show.clicked.connect(self._show_compare_data)
 
-        self.combo_dates.activated[str].connect(self._change_index_date)
+        self.combo_dates.textActivated[str].connect(self._change_index_date)
         self.combo_type_test.activated[int].connect(self._change_index_type_test)
         self.combo_test.activated[int].connect(self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)

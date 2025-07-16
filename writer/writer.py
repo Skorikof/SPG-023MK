@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QTimer, QThreadPool, QObject, pyqtSignal
+from PySide6.QtCore import QTimer, QThreadPool, QObject, Signal
 import modbus_tk.defines as cst
 
 from logger import my_logger
@@ -7,7 +7,7 @@ from my_thread.my_threads import WriterThread
 
 
 class WriterSignals(QObject):
-    check_buffer = pyqtSignal(str, str)
+    check_buffer = Signal(str, str)
 
 
 class Writer:

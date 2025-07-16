@@ -1,11 +1,11 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 
 
 class StepTestsSignals(QObject):
-    stage_from_tests = pyqtSignal(str)
-    next_stage_from_tests = pyqtSignal(str)
+    stage_from_tests = Signal(str)
+    next_stage_from_tests = Signal(str)
 
 
 class StepTests:

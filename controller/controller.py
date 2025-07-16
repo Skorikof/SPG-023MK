@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QTimer, QObject, pyqtSignal
+from PySide6.QtCore import QTimer, QObject, Signal
 
 from logger import my_logger
 from calc_data.data_calculation import CalcData
@@ -9,18 +9,18 @@ from controller.steps_tests import StepTests
 
 
 class ControlSignals(QObject):
-    control_msg = pyqtSignal(str)
-    traverse_referent_msg = pyqtSignal()
-    wait_yellow_btn = pyqtSignal()
-    conv_win_test = pyqtSignal()
-    lab_win_test = pyqtSignal()
-    lab_test_stop = pyqtSignal()
-    conv_test_stop = pyqtSignal()
-    save_result_test = pyqtSignal(str)
-    cancel_test = pyqtSignal()
-    end_test = pyqtSignal()
-    search_hod_msg = pyqtSignal()
-    reset_ui = pyqtSignal()
+    control_msg = Signal(str)
+    traverse_referent_msg = Signal()
+    wait_yellow_btn = Signal()
+    conv_win_test = Signal()
+    lab_win_test = Signal()
+    lab_test_stop = Signal()
+    conv_test_stop = Signal()
+    save_result_test = Signal(str)
+    cancel_test = Signal()
+    end_test = Signal()
+    search_hod_msg = Signal()
+    reset_ui = Signal()
 
 
 class Controller:

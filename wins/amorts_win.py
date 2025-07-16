@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 from ui_py.amorts_ui import Ui_AmortsWindow
@@ -10,7 +10,7 @@ from amorts import Amort
 
 
 class WinSignals(QObject):
-    closed = pyqtSignal()
+    closed = Signal()
 
 
 class AmortWin(QMainWindow, Ui_AmortsWindow):

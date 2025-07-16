@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from tendo import singleton
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from logger import my_logger
 from wins.archive_win import ArchiveWin
@@ -18,7 +18,7 @@ def main():
         win = ArchiveWin()
         win.init_archive_win()
         win.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
     except:
         print('sys.exit(0)')

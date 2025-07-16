@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QTimer, QThreadPool
+from PySide6.QtCore import QTimer, QThreadPool
 
 from logger import my_logger
 from my_thread.my_threads import WriterArchive

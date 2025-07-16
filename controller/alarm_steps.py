@@ -1,11 +1,11 @@
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 
 
 class AlarmSignals(QObject):
-    stage_from_alarm = pyqtSignal(str)
-    alarm_traverse = pyqtSignal(str)
+    stage_from_alarm = Signal(str)
+    alarm_traverse = Signal(str)
 
 
 class AlarmSteps:

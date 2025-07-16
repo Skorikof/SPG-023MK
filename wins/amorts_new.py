@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 from ui_py.new_amort import Ui_MainWindow
@@ -9,8 +9,8 @@ from calc_data.data_calculation import CalcData
 
 
 class AmortSignals(QObject):
-    closed = pyqtSignal()
-    save_amort = pyqtSignal(dict)
+    closed = Signal()
+    save_amort = Signal(dict)
 
 
 class AmortNew(QMainWindow, Ui_MainWindow):

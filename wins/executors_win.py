@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QDialog
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow, QDialog
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
 from ui_py.executors_ui import Ui_ExecutorWindow
@@ -10,8 +10,8 @@ from ui_py.new_oper import OperatorDialog
 
 
 class WinSignals(QObject):
-    closed = pyqtSignal()
-    operator_select = pyqtSignal(str, str)
+    closed = Signal()
+    operator_select = Signal(str, str)
 
 
 class ExecWin(QMainWindow, Ui_ExecutorWindow):

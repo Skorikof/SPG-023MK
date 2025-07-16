@@ -1,6 +1,6 @@
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QTableWidgetItem
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QTableWidgetItem
+from PySide6.QtCore import Qt
 
 from logger import my_logger
 from calc_graph.move_graph import MoveGraph
