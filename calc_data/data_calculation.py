@@ -86,7 +86,7 @@ class CalcData:
             max_rec = round(statistics.fmean(abs(data[rec_ind - 5:rec_ind + 5])), 1)
 
             comp_ind = np.argmin(data)
-            max_comp = round(statistics.fmean(abs(data[comp_ind - 5:comp_ind + 5])), 1)
+            max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
 
             return max_rec, max_comp
 

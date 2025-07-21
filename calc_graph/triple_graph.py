@@ -40,8 +40,7 @@ class TripleGraph:
             x_coord = np.linspace(0, 360, num=len(move_array))
             index_zero = np.where(x_coord >= 90)[0][0]
 
-            reversed_force = force_array * (-1)
-            y_coord = np.concatenate((reversed_force[index_zero:], reversed_force[:index_zero]))
+            y_coord = np.concatenate((force_array[index_zero:], force_array[:index_zero]))
             
             return x_coord, y_coord
             

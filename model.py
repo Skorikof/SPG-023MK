@@ -536,7 +536,7 @@ class Model:
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force_circle)
                 self.max_recoil = round(max_recoil + push_force, 1)
-                self.max_comp = round(max_comp - push_force, 1)
+                self.max_comp = round(max_comp + push_force, 1)
 
                 self.power_amort = self.calc_data.power_amort(self.move_circle, self.force_circle)
                 self.freq_piston = self.calc_data.freq_piston_amort(self.speed_test, self.amort.hod)
