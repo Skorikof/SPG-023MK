@@ -262,7 +262,7 @@ class Controller:
                         self.model.write_speed_motor(1, speed=self.model.speed_cascade[self.count_cascade])
                         self.model.speed_test = self.model.speed_cascade[self.count_cascade]
 
-                        self.model.clear_data_in_array_graph()
+                        self.model.clear_data_in_graph()
                         self.model.flag_fill_graph = True
                         self.count_cascade += 1
 

@@ -87,7 +87,7 @@ class CompareGraph:
                 if ind == 0:
                     self._fill_compare_move_data(graph.data_graph(arch_obj))
                     
-                x_coord, y_coord = graph.calc_graph(arch_obj)
+                x_coord, y_coord = arch_obj.move_list, arch_obj.force_list
                 
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.amort.name} - '

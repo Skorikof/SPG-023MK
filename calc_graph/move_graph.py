@@ -1,4 +1,3 @@
-import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -28,13 +27,6 @@ class MoveGraph:
     def gui_axis(self):
         self.graph.gui_axis('left')
         self.graph.gui_axis('bottom')
-            
-    def calc_graph(self, data):
-        try:
-            return np.array(data.move_list), np.array(data.force_list)
-            
-        except Exception as e:
-            self.logger.error(e)
 
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
@@ -47,16 +39,13 @@ class MoveGraph:
 
     def data_graph(self, data):
         try:
-            move_array = np.array(data.move_list)
-            force_array = np.array(data.force_list)
-
-            recoil, comp = CalcData().middle_min_and_max_force(force_array)
+            recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
             push_force = CalcGraphValue().select_push_force(data)
 
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = CalcData().power_amort(move_array, force_array)
+            power = CalcData().power_amort(data.move_list, data.force_list)
 
             speed = float(data.speed)
             freq = CalcData().freq_piston_amort(speed, data.amort.hod)

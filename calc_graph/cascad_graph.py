@@ -1,4 +1,3 @@
-import numpy as np
 import pyqtgraph as pg
 
 from logger import my_logger
@@ -66,17 +65,15 @@ class CascadeGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            speed = np.array(data.speed_list)
-            recoil = np.array(data.recoil_list) + push_force
-            comp = np.array(data.comp_list) * (-1) + push_force
+            recoil = [x + push_force for x in data.recoil_list]
+            comp = [(x + push_force) * 1 for x in data.comp_List]
             
-            first_point = 0
-            speed_arr = np.insert(speed, 0, first_point)
-            recoil_arr = np.insert(recoil, 0, first_point)
-            comp_arr = np.insert(comp, 0, first_point)
+            data.speed_list.insert(0, 0)
+            recoil.insert(0, 0)
+            comp.insert(0, 0)
             
-            r_x, r_y = CalcGraphValue().interpoly_line_coord(speed_arr, recoil_arr)
-            c_x, c_y = CalcGraphValue().interpoly_line_coord(speed_arr, comp_arr)
+            r_x, r_y = CalcGraphValue().interpoly_line_coord(data.speed_list, recoil)
+            c_x, c_y = CalcGraphValue().interpoly_line_coord(data.speed_list, comp)
             
             return r_x, r_y, c_x, c_y
         
@@ -100,12 +97,11 @@ class CascadeGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            speed = np.round(np.array(data.speed_list), decimals=2)
-            recoil = np.round(np.array(data.recoil_list) + push_force, decimals=2)
-            comp = np.round(np.array(data.comp_list) * (-1) + push_force, decimals=2)
+            recoil = [x + push_force for x in data.recoil_list]
+            comp = [(x + push_force) * 1 for x in data.comp_list]
             
             return {'push_force': push_force,
-                    'speed': speed,
+                    'speed': data.speed_list,
                     'recoil': recoil,
                     'comp': comp}
             

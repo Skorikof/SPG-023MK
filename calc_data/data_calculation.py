@@ -1,7 +1,6 @@
 import statistics
 import crcmod
 from struct import pack
-import numpy as np
 
 from logger import my_logger
 
@@ -82,10 +81,10 @@ class CalcData:
 
     def middle_min_and_max_force(self, data):
         try:
-            rec_ind = np.argmax(data)
-            max_rec = round(statistics.fmean(abs(data[rec_ind - 5:rec_ind + 5])), 1)
+            rec_ind = data.index(max(data))
+            max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
 
-            comp_ind = np.argmin(data)
+            comp_ind = data.index(min(data))
             max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
 
             return max_rec, max_comp
@@ -106,6 +105,7 @@ class CalcData:
             temp = 0
             for i in range(1, len(move)):
                 step = abs(abs(move[i]) - abs(move[i - 1]))
+                
                 if step > 0:
                     temp = round(temp + step * abs(force[i - 1]), 1)
 

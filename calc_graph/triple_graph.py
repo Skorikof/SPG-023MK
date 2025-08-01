@@ -66,8 +66,7 @@ class TripleGraph:
             
     def data_graph(self, data):
         try:
-            force_array = np.array(data.force_list)
-            recoil, comp = CalcData().middle_min_and_max_force(force_array)
+            recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
             
             return {'speed': data.speed,
                     'recoil': recoil,

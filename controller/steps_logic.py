@@ -1,4 +1,4 @@
-import numpy as np
+import statistics
 from PySide6.QtCore import QObject, Signal
 
 from logger import my_logger
@@ -73,7 +73,7 @@ class Steps:
     def stage_search_hod(self, count_cycle):
         try:
             if count_cycle >= 1:
-                self.model.hod_measure = np.round(abs(self.model.min_point) + abs(self.model.max_point), decimals=2)
+                self.model.hod_measure = round(abs(self.model.min_point) + abs(self.model.max_point), 1)
 
                 return True
 
@@ -145,7 +145,7 @@ class Steps:
 
     def stage_stop_gear_end_test(self):
         try:
-            if np.std(self.model.move_array) < 0.1:  # Перемещение перестало изменяться
+            if statistics.stdev(self.model.move_buf) < 0.1: # Перемещение перестало изменяться
                 self.count_wait_point += 1
 
             else:
@@ -197,7 +197,7 @@ class Steps:
 
                 self.signals.stage_from_logic.emit('wait')
 
-                self.model.clear_data_in_array_graph()
+                self.model.clear_data_in_graph()
 
                 self.model.reset_current_circle()
                 self.model.flag_test = False

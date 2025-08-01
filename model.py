@@ -2,7 +2,6 @@
 import time
 import statistics
 import modbus_tk.defines as cst
-import numpy as np
 from PySide6.QtCore import QObject, QThreadPool, Signal, QTimer
 
 from logger import my_logger
@@ -59,10 +58,10 @@ class Model:
         self.amort = None
         self.buffer_state = ['null', 'null']
 
-        self.force_graph = np.array([], 'float64')
-        self.move_graph = np.array([], 'float64')
-        self.force_circle = np.array([], 'float64')
-        self.move_circle = np.array([], 'float64')
+        self.force_list = []
+        self.move_list = []
+        self.force = []
+        self.move = []
         self.temper_graph = []
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
@@ -330,24 +329,22 @@ class Model:
                 self.force_clear = data.get('force')[-1]
                 self.force_correct = round(self.force_clear * self.force_koef, 1)
                 self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
-                self.force_array = (np.array(data.get('force')) * self.force_koef) - self.force_koef_offset
+                self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
 
                 self.move_now = data.get('move')[-1]
-                self.move_array = np.array(data.get('move'))
+                self.move_buf = data.get('move')
 
                 self.counter = data.get('count')[-1]
 
                 self.temper_max = self.calc_data.check_temperature(data.get('temper'), self.temper_max)
                 self.temper_now = data.get('temper')[-1]
 
-                # self.temper_array = np.array(data.get('temper'))
-
                 self._change_state_list(data.get('state')[-1])
 
                 if self.type_test == 'hand':
                     self.signals.win_set_update.emit()
                 else:
-                    self._pars_response_on_circle(self.force_array, self.move_array)
+                    self._pars_response_on_circle(self.force_buf, self.move_buf)
 
         except Exception as e:
             if str(e) == 'list index out of range':
@@ -434,7 +431,7 @@ class Model:
     def _find_direction_and_point(self, move):
         try:
             if self.current_direction == 'up':
-                max_point = np.max(move)
+                max_point = max(move)
                 if max_point > move[-1]:
                     if not -1 < max_point < 1:
                         self.max_point = max_point
@@ -442,7 +439,7 @@ class Model:
                         self.current_direction = 'down'
 
             elif self.current_direction == 'down':
-                min_point = np.min(move)
+                min_point = min(move)
                 if min_point < move[-1]:
                     if not -1 < min_point < 1:
                         self.min_point = min_point
@@ -452,34 +449,33 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_find_direction_and_point - {e}')
-
-    def _add_data_in_array_graph(self, force, move):
+            
+    def _add_data_in_graph(self, force, move):
         try:
-            self.force_graph = np.concatenate((self.force_graph, force))
-            self.move_graph = np.concatenate((self.move_graph, move))
-
+            self.force_list.extend(force)
+            self.move_list.extend(move)
+            
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_add_data_in_array_graph - {e}')
-
-    def clear_data_in_array_graph(self):
-        self.force_graph = np.array([], 'float64')
-        self.move_graph = np.array([], 'float64')
+            self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
+            
+    def clear_data_in_graph(self):
+        self.force_list = []
+        self.move_list = []
+        
+    def clear_data_in_circle_graph(self):
+        self.force = []
+        self.move = []
 
     def clear_data_in_temper_graph(self):
         self.temper_graph = []
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
 
-    def clear_circle_data_graph(self):
-        self.force_circle = np.array([], 'float64')
-        self.move_circle = np.array([], 'float64')
-
     def _check_full_circle(self):
         try:
             if self.gear_referent is False:
-
-                self.clear_data_in_array_graph()
+                self.clear_data_in_graph()
 
                 self.reset_current_circle()
 
@@ -491,19 +487,17 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_check_full_circle - {e}')
-
+            
     def _calc_dynamic_push_force(self):
         try:
-            min_index = np.argmin(self.move_graph)
-            force_min = abs(self.force_graph[min_index])
-
-            max_index = np.argmax(self.move_graph)
-            force_max = abs(self.force_graph[max_index])
-
-            push_force_mid = (force_min + force_max) / 2
-            self.dynamic_push_force = np.round((push_force_mid - self.static_push_force) / 2 + self.static_push_force,
-                                                decimals=2)
-
+            force_min = self.force[self.move.index(min(self.move))]
+            
+            force_max = self.force[self.move.index(max(self.move))]
+            
+            force_mid = (force_min + force_max) / 2
+            
+            self.dynamic_push_force = round((force_mid - self.static_push_force) / 2 + self.static_push_force, 2)
+            
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_calc_dynamic_push_force - {e}')
@@ -511,6 +505,7 @@ class Model:
     def _choice_push_force(self):
         try:
             if self.flag_push_force:
+                
                 return self.dynamic_push_force
 
             else:
@@ -528,17 +523,17 @@ class Model:
                 push_force = self._choice_push_force()
 
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
+                
+                self.force = [x * (-1) for x in self.force_list]
+                self.move = [x + offset_p for x in self.move_list]
 
-                self.move_circle = np.round(self.move_graph.copy() + offset_p, decimals=2)
-                self.force_circle = np.round(self.force_graph.copy() * (-1), decimals=2)
+                self.clear_data_in_graph()
 
-                self.clear_data_in_array_graph()
-
-                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force_circle)
+                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
                 self.max_recoil = round(max_recoil + push_force, 1)
                 self.max_comp = round(max_comp + push_force, 1)
 
-                self.power_amort = self.calc_data.power_amort(self.move_circle, self.force_circle)
+                self.power_amort = self.calc_data.power_amort(self.force, self.move)
                 self.freq_piston = self.calc_data.freq_piston_amort(self.speed_test, self.amort.hod)
 
                 self.signals.update_data_graph.emit()
@@ -549,7 +544,7 @@ class Model:
             self.max_pos = False
 
         except Exception as e:
-            self.clear_data_in_array_graph()
+            self.clear_data_in_graph()
             self.min_pos = False
             self.max_pos = False
 
@@ -563,9 +558,9 @@ class Model:
 
             else:
                 if self.flag_fill_graph:
-                    self._add_data_in_array_graph(force, move)
+                    self._add_data_in_graph(force, move)
 
-                if self.min_pos and self.max_pos and np.min(move) <= self.min_point <= np.max(move):
+                if self.min_pos and self.max_pos and min(move) <= self.min_point <= max(move):
                     hod = round(abs(self.min_point) + abs(self.max_point), 1)
                     if self.flag_search_hod is False:
                         if hod > 30:
@@ -811,8 +806,8 @@ class Model:
             
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': list(self.move_circle),
-                         'force_graph': list(self.force_circle),
+            data_dict = {'move_graph': self.move[:],
+                         'force_graph': self.force[:],
                          'temper_graph': self.temper_graph[:],
                          'temper_recoil_graph': self.temper_recoil_graph[:],
                          'temper_comp_graph': self.temper_comp_graph[:],
@@ -825,6 +820,8 @@ class Model:
                          'static_push_force': self.static_push_force,
                          'dynamic_push_force': self.dynamic_push_force,
                          'max_temperature': self.temper_max}
+            
+            self.clear_data_in_circle_graph()
             
             self.write_data_in_archive('data', data_dict)
 

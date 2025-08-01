@@ -21,8 +21,8 @@ class StepTests:
                 if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
                     self.model.lamp_all_switch_off()
 
-                self.model.clear_data_in_array_graph()
-                self.model.clear_circle_data_graph()
+                self.model.clear_data_in_graph()
+                self.model.clear_data_in_circle_graph()
 
                 self.model.reset_current_circle()
                 self.model.flag_test = True
@@ -70,7 +70,7 @@ class StepTests:
         try:
             self.signals.stage_from_tests.emit('wait')
 
-            self.model.clear_data_in_array_graph()
+            self.model.clear_data_in_graph()
 
             self.model.reset_current_circle()
             self.model.flag_test_launch = False
@@ -86,7 +86,7 @@ class StepTests:
             if ind == 1:
                 self.model.write_speed_motor(1, speed=self.model.amort.speed_one)
                 self.signals.stage_from_tests.emit('test_speed_one')
-                self.model.clear_data_in_array_graph()
+                self.model.clear_data_in_graph()
                 self.model.speed_test = self.model.amort.speed_one
 
                 self.model.flag_fill_graph = True
@@ -109,7 +109,7 @@ class StepTests:
         try:
             self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
-            self.model.clear_data_in_array_graph()
+            self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
 
             if self.model.flag_repeat:
@@ -125,7 +125,7 @@ class StepTests:
             self.model.write_speed_motor(1, speed=speed_list[0])
             self.signals.stage_from_tests.emit('test_lab_cascade')
 
-            self.model.clear_data_in_array_graph()
+            self.model.clear_data_in_graph()
             self.model.speed_test = speed_list[0]
             self.model.flag_fill_graph = True
 
@@ -142,7 +142,7 @@ class StepTests:
             self.model.write_speed_motor(1, speed=self.model.speed_test)
             self.signals.stage_from_tests.emit('test_temper')
 
-            self.model.clear_data_in_array_graph()
+            self.model.clear_data_in_graph()
             self.model.clear_data_in_temper_graph()
             self.model.flag_fill_graph = True
 

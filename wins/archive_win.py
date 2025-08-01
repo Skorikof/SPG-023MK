@@ -326,7 +326,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                x_coord, y_coord = self.move_graph.calc_graph(arch_obj)
+                x_coord, y_coord = arch_obj.move_list, arch_obj.force_list
                 self.move_graph.fill_graph(x_coord, y_coord)
                 response = self.move_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)

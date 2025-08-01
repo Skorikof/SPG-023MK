@@ -1064,8 +1064,8 @@ class AppWindow(QMainWindow):
     def _update_conv_graph(self):
         try:
             self.ui.conv_GraphWidget.clear()
-            self.graph.fill_graph(self.model.move_circle,
-                                  self.model.force_circle,
+            self.graph.fill_graph(self.model.move,
+                                  self.model.force,
                                   name=f'{self.model.speed_test} м/с')
 
         except Exception as e:
@@ -1097,8 +1097,8 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self):
         try:
             self.ui.lab_GraphWidget.clear()
-            self.graph.fill_graph(self.model.move_circle,
-                                  self.model.force_circle,
+            self.graph.fill_graph(self.model.move,
+                                  self.model.force,
                                   name=f'{self.model.speed_test} м/с')
 
         except Exception as e:
@@ -1270,8 +1270,8 @@ class AppWindow(QMainWindow):
         try:
             if self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade' or self.model.type_test == 'conv':
                 data_dict = {'speed': self.model.speed_test,
-                             'move': self.model.move_circle.copy(),
-                             'force': self.model.force_circle.copy()}
+                             'move': self.model.move[:],
+                             'force': self.model.force[:]}
 
                 self.list_lab.append(data_dict)
 

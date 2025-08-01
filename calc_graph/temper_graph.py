@@ -1,5 +1,4 @@
 import pyqtgraph as pg
-import numpy as np
 
 from logger import my_logger
 from calc_graph.abstract_graph import AbstractGraph
@@ -32,8 +31,8 @@ class TemperGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            y_coord_recoil = np.array(data.recoil_list) + push_force
-            y_coord_comp = np.array(data.comp_list) + push_force
+            y_coord_recoil = [x + push_force for x in data.recoil_list]
+            y_coord_comp = [x + push_force for x in data.comp_list]
                         
             return data.temper_list, y_coord_recoil, y_coord_comp
             
@@ -57,9 +56,8 @@ class TemperGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            recoil = np.array(data.recoil_list) + push_force
-            comp = np.array(data.comp_list) + push_force
-            
+            recoil = [x + push_force for x in data.recoil_list]
+            comp = [x + push_force for x in data.comp_list]
             
             return {'start_recoil': recoil[0],
                     'end_recoil': recoil[-1],
