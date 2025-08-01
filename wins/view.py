@@ -1063,6 +1063,7 @@ class AppWindow(QMainWindow):
 
     def _update_conv_graph(self):
         try:
+            self.ui.conv_GraphWidget.clear()
             self.graph.fill_graph(self.model.move_circle,
                                   self.model.force_circle,
                                   name=f'{self.model.speed_test} м/с')
@@ -1095,6 +1096,7 @@ class AppWindow(QMainWindow):
 
     def _update_lab_graph(self):
         try:
+            self.ui.lab_GraphWidget.clear()
             self.graph.fill_graph(self.model.move_circle,
                                   self.model.force_circle,
                                   name=f'{self.model.speed_test} м/с')
@@ -1105,6 +1107,7 @@ class AppWindow(QMainWindow):
 
     def _update_temper_graph(self):
         try:
+            self.ui.lab_GraphWidget.clear()
             if len(self.model.temper_graph) > 1:
                 pen_recoil = pg.mkPen(color='black', width=3)
                 pen_comp = pg.mkPen(color='blue', width=3)
@@ -1198,11 +1201,13 @@ class AppWindow(QMainWindow):
             self.ui.test_change_speed_btn.setVisible(True)
 
         elif self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade':
+            self.ui.lab_GraphWidget.clear()
             self.graph.fill_compare_graph(self.list_lab)
 
     def slot_conv_test_stop(self):
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
+        self.ui.conv_GraphWidget.clear()
         self.graph.fill_compare_graph(self.list_lab)
 
     def cancel_test_conv_clicked(self):
