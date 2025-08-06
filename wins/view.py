@@ -366,7 +366,8 @@ class AppWindow(QMainWindow):
         self.win_exec.show()
 
     def operator_select(self, name, rank):
-        self.model.operator = {'name': name, 'rank': rank}
+        self.model.operator.name = name
+        self.model.operator.rank = rank
 
         self.ui.operator_name_le.setText(f'{name}')
         self.ui.operator_rank_le.setText(f'{rank}')
@@ -774,10 +775,7 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            name = self.model.operator['name']
-            rank = self.model.operator['rank']
-
-            if name != '' and rank != '':
+            if self.model.operator.name != '' and self.model.operator.rank != '':
                 self.flag_push_force_set()
                 self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)

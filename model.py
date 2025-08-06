@@ -5,6 +5,7 @@ import modbus_tk.defines as cst
 from PySide6.QtCore import QObject, QThreadPool, Signal, QTimer
 
 from logger import my_logger
+from test_obj import OperatorSchema
 from my_thread.my_threads import Reader
 from settings.settings import PrgSettings
 from my_parser.parser import ParserSPG023MK
@@ -48,12 +49,12 @@ class Model:
         self._start_param_model()
 
     def _init_varibles(self):
+        self.operator = OperatorSchema(name='', rank='')
         self.state_dict = {}
         self.switch_dict = {}
 
         self.reader = None
         self.writer = None
-        self.operator = {'name': '', 'rank': ''}
         self.serial_number = ''
         self.amort = None
         self.buffer_state = ['null', 'null']
@@ -813,7 +814,8 @@ class Model:
                          'temper_comp_graph': self.temper_comp_graph[:],
                          'type_test': self.type_test,
                          'speed': self.speed_test,
-                         'operator': self.operator.copy(),
+                         'operator_name': self.operator.name,
+                         'operator_rank': self.operator.rank,
                          'serial': self.serial_number,
                          'amort': self.amort,
                          'flag_push_force': int(self.flag_push_force),

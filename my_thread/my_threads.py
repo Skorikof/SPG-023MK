@@ -214,8 +214,8 @@ class WriterArchive(QRunnable):
             time_t = datetime.now().strftime('%H:%M:%S')
             with open('archive/' + nam_f, 'a', encoding='utf-8') as file_arch:
                 write_name = (f'{time_t};'
-                              f'{obj["operator"]["name"]};'
-                              f'{obj["operator"]["rank"]};'
+                              f'{obj["operator_name"]};'
+                              f'{obj["operator_rank"]};'
                               f'{obj["type_test"]};'
                               f'{obj["amort"].name};'
                               f'{obj["serial"]};')

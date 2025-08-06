@@ -54,7 +54,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _check_operator(self):
         try:
-            if self.model.operator['name'] == 'Скориков И.А.':
+            if self.model.operator.name == 'Скориков И.А.':
                 self.freq_frame.setVisible(True)
 
             else:
