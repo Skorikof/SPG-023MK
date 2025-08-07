@@ -258,7 +258,7 @@ class CompareGraph:
                 
                 r_x, r_y, c_x, c_y = graph.calc_graph(arch_obj)
                 
-                graph.fill_graph(r_x, r_y, c_x, c_y, pen, pen, name, name)
+                graph.fill_graph(r_x, r_y, c_x, c_y, pen, pen, name, None)
                 
                 graph.limit_line_graph(arch_obj)
             

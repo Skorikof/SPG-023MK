@@ -65,15 +65,16 @@ class CascadeGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
+            speed = data.speed_list[:]
             recoil = [x + push_force for x in data.recoil_list]
-            comp = [(x + push_force) * 1 for x in data.comp_List]
+            comp = [(x + push_force) * -1 for x in data.comp_list]
             
-            data.speed_list.insert(0, 0)
+            speed.insert(0, 0)
             recoil.insert(0, 0)
             comp.insert(0, 0)
             
-            r_x, r_y = CalcGraphValue().interpoly_line_coord(data.speed_list, recoil)
-            c_x, c_y = CalcGraphValue().interpoly_line_coord(data.speed_list, comp)
+            r_x, r_y = CalcGraphValue().interpoly_line_coord(speed, recoil)
+            c_x, c_y = CalcGraphValue().interpoly_line_coord(speed, comp)
             
             return r_x, r_y, c_x, c_y
         
@@ -98,7 +99,7 @@ class CascadeGraph:
             push_force = CalcGraphValue().select_push_force(data)
             
             recoil = [x + push_force for x in data.recoil_list]
-            comp = [(x + push_force) * 1 for x in data.comp_list]
+            comp = [(x + push_force) * -1 for x in data.comp_list]
             
             return {'push_force': push_force,
                     'speed': data.speed_list,
