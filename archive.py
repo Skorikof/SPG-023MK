@@ -3,52 +3,40 @@ from pathlib import Path
 from datetime import datetime
 
 from logger import my_logger
-from amorts import DataAmort
+from amorts import AmortSchema
 
 
-class BaseTest:
-    def __init__(self):
-        self.amort = DataAmort()
-        self.index = -1
-        self.time_test = ''
-        self.operator_name = ''
-        self.operator_rank = ''
-        self.type_test = ''
-        self.serial_number = ''
-        self.flag_push_force = ''
-        self.static_push_force = ''
-        self.dynamic_push_force = ''
-        self.speed = ''
+class BaseSchema(AmortSchema):
+    time_test: str
+    operator_name: str
+    operator_rank: str
+    type_test: str
+    serial_number: str
+    flag_push_force: str
+    static_push_force: float
+    dynamic_push_force: float
+    speed: float
 
+class LabSchema(BaseSchema):
+    move_list: list
+    force_list: list
+    
 
-class LabTest(BaseTest):
-    def __init__(self):
-        super().__init__()
-        self.move_list = []
-        self.force_list = []
-        
-        
-class ConvTest(BaseTest):
-    def __init__(self):
-        super().__init__()
-        self.move_list = []
-        self.force_list = []
-        
-        
-class TempTest(BaseTest):
-    def __init__(self):
-        super().__init__()
-        self.temper_list = []
-        self.recoil_list = []
-        self.comp_list = []
-        
-        
-class CascTest(BaseTest):
-    def __init__(self):
-        super().__init__()
-        self.recoil_list = []
-        self.comp_list = []
-        self.speed_list = []
+class ConvSchema(BaseSchema):
+    move_list: list
+    force_list: list
+    
+    
+class TempSchema(BaseSchema):
+    temper_list: list
+    recoil_list: list
+    comp_list: list
+    
+    
+class CascSchema(BaseSchema):
+    recoil_list: list
+    comp_list: list
+    speed_list: list
 
 
 class ReadArchive:
@@ -77,16 +65,17 @@ class ReadArchive:
             
     def select_file(self, data):
         try:
+            self.data_one = {}
+            self.data_two = {}
             self.type_test = ''
-            self.ind_lab = -1
-            self.ind_conv = -1
-            self.ind_temp = -1
-            self.ind_casc = 0
             self.lab = []
             self.conv = []
             self.temper = []
             self.cascade = []
             self.flag_new_cascade = True
+            self.speed_list = []
+            self.recoil_list = []
+            self.comp_list = []
         
             self.index_archive = self.files_name_arr.index(data)
 
@@ -113,104 +102,124 @@ class ReadArchive:
         try:
             if archive_list[0] == 'end_test':
                 if self.type_test == 'lab_cascade':
-                    self.ind_casc += 1
                     self.flag_new_cascade = True
+                    self.speed_list = []
+                    self.recoil_list = []
+                    self.comp_list = []
 
             else:
                 if not archive_list[0] == '*':
-                    self._pars_first_data(archive_list)
+                    self.data_one = self._pars_first_data(archive_list)
                             
                 elif archive_list[0] == '*':
-                    self._pars_second_data(archive_list[24:-1])
+                    self.data_two = self._pars_second_data(archive_list[24:-1])
+                    
+            if self.data_one and self.data_two:
+                self._create_object_archive(self.data_one, self.data_two)
 
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _create_object_archive(self, data_one, data_two):
+        try:
+            data = {**data_one, **data_two}
+            if self.type_test == 'lab_cascade':
+                self.lab.append(LabSchema(**data))
+                self.data_one['move_list'] = []
+                self.data_two['force_list'] = []
+                
+                if self.flag_new_cascade:
+                    data['speed_list'] = self.speed_list[:]
+                    data['recoil_list'] = self.recoil_list[:]
+                    data['comp_list'] = self.comp_list[:]
+                    self.cascade.append(CascSchema(**data))
+                    
+            else:
+                if self.type_test == 'temper':
+                    self.temper.append(TempSchema(**data))
+                
+                elif self.type_test == 'lab':
+                    self.lab.append(LabSchema(**data))
+                
+                elif self.type_test == 'conv':
+                    self.conv.append(ConvSchema(**data))
+                    
+                self.data_one = {}
+                self.data_two = {}
+            
         except Exception as e:
             self.logger.error(e)
             
     def _pars_first_data(self, archive_list):
         try:
+            key = 'move_list'
+            data = self._fill_obj_archive_data(archive_list[:24])
             self.type_test = archive_list[3]
             if self.type_test == 'temper':
-                self.ind_temp += 1
-                self.temper.append(TempTest())
-                self._fill_obj_archive_data(self.temper[self.ind_temp], archive_list[:24])
-                self.temper[self.ind_temp].temper_list = self._add_data_on_list_graph(archive_list[24:-1])
-                
-            elif self.type_test == 'lab':
-                self.ind_lab += 1
-                self.lab.append(LabTest())
-                self._fill_obj_archive_data(self.lab[self.ind_lab], archive_list[:24])
-                self.lab[self.ind_lab].move_list = self._add_data_on_list_graph(archive_list[24:-1])
-
-            elif self.type_test == 'conv':
-                self.ind_conv += 1
-                self.conv.append(ConvTest())
-                self._fill_obj_archive_data(self.conv[self.ind_conv], archive_list[:24])
-                self.conv[self.ind_conv].move_list = self._add_data_on_list_graph(archive_list[24:-1])
+                key = 'temper_list'
                 
             elif self.type_test == 'lab_cascade':
-                self.ind_lab += 1
-                self.lab.append(LabTest())
-                self._fill_obj_archive_data(self.lab[self.ind_lab], archive_list[:24])
-                self.lab[self.ind_lab].move_list = self._add_data_on_list_graph(archive_list[24:-1])
-                
                 if self.flag_new_cascade:
                     self.flag_new_cascade = False
-                    self.cascade.append(CascTest())
-                    self._fill_obj_archive_data(self.cascade[self.ind_casc], archive_list[:24])
-                speed = float(archive_list[23].replace(',', '.'))
-                self.cascade[self.ind_casc].speed_list.append(speed)
+                self.speed_list.append(float(archive_list[23].replace(',', '.')))
+                
+            data[key] = self._add_data_on_list_graph(archive_list[24:-1])
+            
+            return data
             
         except Exception as e:
             self.logger.error(e)
             
     def _pars_second_data(self, archive_list):
         try:
+            data = {}
             if self.type_test == 'temper':
-                        recoil, comp = self._add_data_temper_graph(archive_list)
-                        self.temper[self.ind_temp].recoil_list = recoil
-                        self.temper[self.ind_temp].comp_list = comp
+                data['recoil_list'], self.data['comp_list'] = self._add_data_temper_graph(archive_list)
                         
             elif self.type_test == 'lab':
-                self.lab[self.ind_lab].force_list = self._add_data_on_list_graph(archive_list)
+                data['force_list'] = self._add_data_on_list_graph(archive_list)
 
             elif self.type_test == 'conv':
-                self.conv[self.ind_conv].force_list = self._add_data_on_list_graph(archive_list)
+                data['force_list'] = self._add_data_on_list_graph(archive_list)
 
             elif self.type_test == 'lab_cascade':
-                self.lab[self.ind_lab].force_list = self._add_data_on_list_graph(archive_list)
                 force_list = self._add_data_on_list_graph(archive_list)
-                self.cascade[self.ind_casc].recoil_list.append(max(force_list))
-                self.cascade[self.ind_casc].comp_list.append(abs(min(force_list)))
+                data['force_list'] = force_list[:]
+                self.recoil_list.append(max(force_list))
+                self.comp_list.append(abs(min(force_list)))
             
+            return data
+        
         except Exception as e:
             self.logger.error(e)
 
-    def _fill_obj_archive_data(self, obj, data):
+    def _fill_obj_archive_data(self, data):
         try:
-            obj.time_test = data[0]
-            obj.operator_name = data[1]
-            obj.operator_rank = data[2]
-            obj.type_test = data[3]
-            obj.amort.name = data[4]
-            obj.serial_number = data[5]
-            obj.amort.min_length = data[6].replace(',', '.')
-            obj.amort.max_length = data[7].replace(',', '.')
-            obj.amort.hod = data[8]
-            obj.amort.speed_one = data[9].replace(',', '.')
-            obj.amort.min_recoil = data[10].replace(',', '.')
-            obj.amort.max_recoil = data[11].replace(',', '.')
-            obj.amort.min_comp = data[12].replace(',', '.')
-            obj.amort.max_comp = data[13].replace(',', '.')
-            obj.amort.speed_two = data[14].replace(',', '.')
-            obj.amort.min_recoil_2 = data[15].replace(',', '.')
-            obj.amort.max_recoil_2 = data[16].replace(',', '.')
-            obj.amort.min_comp_2 = data[17].replace(',', '.')
-            obj.amort.max_comp_2 = data[18].replace(',', '.')
-            obj.flag_push_force = data[19]
-            obj.static_push_force = data[20].replace(',', '.')
-            obj.dynamic_push_force = data[21].replace(',', '.')
-            obj.amort.max_temper = data[22].replace(',', '.')
-            obj.speed = data[23].replace(',', '.')
+            return {'time_test': data[0],
+                    'operator_name': data[1],
+                    'operator_rank': data[2],
+                    'type_test': data[3],
+                    'name': data[4],
+                    'serial_number': data[5],
+                    'min_length': float(data[6].replace(',', '.')),
+                    'max_length': float(data[7].replace(',', '.')),
+                    'hod': int(data[8]),
+                    'speed_one': float(data[9].replace(',', '.')),
+                    'min_recoil': float(data[10].replace(',', '.')),
+                    'max_recoil': float(data[11].replace(',', '.')),
+                    'min_comp': float(data[12].replace(',', '.')),
+                    'max_comp': float(data[13].replace(',', '.')),
+                    'speed_two': float(data[14].replace(',', '.')),
+                    'min_recoil_2': float(data[15].replace(',', '.')),
+                    'max_recoil_2': float(data[16].replace(',', '.')),
+                    'min_comp_2': float(data[17].replace(',', '.')),
+                    'max_comp_2': float(data[18].replace(',', '.')),
+                    'flag_push_force': data[19],
+                    'static_push_force': float(data[20].replace(',', '.')),
+                    'dynamic_push_force': float(data[21].replace(',', '.')),
+                    'max_temper': float(data[22].replace(',', '.')),
+                    'speed': float(data[23].replace(',', '.'))
+                    }
 
         except Exception as e:
             self.logger.error(e)

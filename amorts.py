@@ -36,8 +36,6 @@ class AmortSchema(BaseModel):
     min_length: float
     max_length: float
     hod: int
-    adapter: str
-    adapter_len: int
     speed_one: float
     speed_two: float
     min_comp: float
@@ -49,6 +47,10 @@ class AmortSchema(BaseModel):
     max_recoil: float
     max_recoil_2: float
     max_temper: float
+    
+class ArchiveSchema(AmortSchema):
+    adapter: str
+    adapter_len: int
 
 
 class Amort:
@@ -101,7 +103,7 @@ class Amort:
                         else:
                             data[key] = float(val)
                             
-                    self.struct.amorts.append(AmortSchema(**data))
+                    self.struct.amorts.append(ArchiveSchema(**data))
 
                 except Exception as e:
                     self.logger.error(e)
@@ -137,7 +139,7 @@ class Amort:
 
     def change_amort(self, ind, obj):
         try:
-            self.struct.amorts[ind] = AmortSchema(**obj)
+            self.struct.amorts[ind] = ArchiveSchema(**obj)
             self._write_struct_in_file()
 
         except Exception as e:
