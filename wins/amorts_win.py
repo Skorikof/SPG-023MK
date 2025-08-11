@@ -232,60 +232,47 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             if obj.get('tag') == 'new':
                 flag_add = self._check_concurrence_name(obj.get('name'))
                 if flag_add:
-                    name = obj.get('name')
-                    dimensions = f'{obj.get("len_min")} - {obj.get("len_max")}'
-                    hod = f'{obj.get("hod")}'
-                    adapter = f'{obj.get("adapter")}'
-                    speed_one = f'{obj.get("speed_one")}'
-                    limit_comp_one = f'{obj.get("comp_min")} - {obj.get("comp_max")}'
-                    limit_recoil_one = f'{obj.get("recoil_min")} - {obj.get("recoil_max")}'
-                    speed_two = f'{obj.get("speed_two")}'
-                    limit_comp_two = f'{obj.get("comp_min_2")} - {obj.get("comp_max_2")}'
-                    limit_recoil_two = f'{obj.get("recoil_min_2")} - {obj.get("recoil_max_2")}'
-                    temper = f'{obj.get("temper")}'
-
-                    txt_log = f'Amort is added --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                              f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
-                              f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
-                              f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
-                              f'max_temper = {temper}'
-
-                    self.logger.info(txt_log[:-1])
                     self.amorts.add_amort(obj)
+                    obj['tag'] = 'Amort is added'
+                    self._save_amort_in_log(obj)
 
                 else:
                     self.txt_warning.setText('Такой амортизатор<BR>уже имеется в списке')
                     self._set_frame_warning(True)
 
             elif obj.get('tag') == 'change':
-                name = obj.get('name')
-                dimensions = f'{obj.get("len_min")} - {obj.get("len_max")}'
-                hod = f'{obj.get("hod")}'
-                adapter = f'{obj.get("adapter")}'
-                speed_one = f'{obj.get("speed_one")}'
-                limit_comp_one = f'{obj.get("comp_min")} - {obj.get("comp_max")}'
-                limit_recoil_one = f'{obj.get("recoil_min")} - {obj.get("recoil_max")}'
-                speed_two = f'{obj.get("speed_two")}'
-                limit_comp_two = f'{obj.get("comp_min_2")} - {obj.get("comp_max_2")}'
-                limit_recoil_two = f'{obj.get("recoil_min_2")} - {obj.get("recoil_max_2")}'
-                temper = f'{obj.get("temper")}'
-
-                txt_log = f'Amort is changed --> name = {name}, dimensions = {dimensions}, hod = {hod}, ' \
-                          f'adapter = {adapter}, speed_one = {speed_one}, limit_comp_one = {limit_comp_one}, ' \
-                          f'limit_recoil_one = {limit_recoil_one}, speed_two = {speed_two}, ' \
-                          f'limit_comp_two = {limit_comp_two}, limit_recoil_two = {limit_recoil_two}, ' \
-                          f'max_temper = {temper}'
-
-                self.logger.info(txt_log[:-1])
-
                 ind = self.amorts.current_index
                 self.amorts.change_amort(ind, obj)
+                
+                obj['tag'] = 'Amort is changed'
+                
+                self._save_amort_in_log(obj)
 
             self._amorts_update()
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in amorts_win/_amort_add - {e}')
+            
+    def _save_amort_in_log(self, obj):
+        try:
+            txt_log = f'{obj.get("tag")} --> name = {obj.get("name")}, ' \
+                      f'dimensions = {obj.get("min_length")} - {obj.get("max_length")}, '\
+                      f'hod = {obj.get("hod")}, '\
+                      f'adapter = {obj.get("adapter")}, '\
+                      f'speed_one = {obj.get("speed_one")}, '\
+                      f'limit_comp_one = {obj.get("min_comp")} - {obj.get("max_comp")}, ' \
+                      f'limit_recoil_one = {obj.get("min_recoil")} - {obj.get("max_recoil")}, '\
+                      f'speed_two = {obj.get("speed_two")}, ' \
+                      f'limit_comp_two = {obj.get("min_comp_2")} - {obj.get("max_comp_2")}, '\
+                      f'limit_recoil_two = {obj.get("min_recoil_2")} - {obj.get("max_recoil_2")}, ' \
+                      f'max_temper = {obj.get("max_temper")}'
+
+            self.logger.info(txt_log[:-1])
+            
+        except Exception as e:
+            self.logger.error(e)
+            self._statusbar_set_ui(f'ERROR in amorts_win/_save_amort_in_log - {e}')
 
     def _set_frame_question(self, bool_val):
         self.frame_quest.setVisible(bool_val)

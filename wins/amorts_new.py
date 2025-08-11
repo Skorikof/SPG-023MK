@@ -34,20 +34,20 @@ class AmortNew(QMainWindow, Ui_MainWindow):
     def start_param_new_amort(self, tag, amort=None):
         self.response = {'tag': 'new',
                          'name': '',
-                         'len_min': '',
-                         'len_max': '',
+                         'min_length': '',
+                         'max_length': '',
                          'hod': '',
                          'speed_one': '',
                          'speed_two': '',
-                         'comp_min': '',
-                         'comp_min_2': '',
-                         'comp_max': '',
-                         'comp_max_2': '',
-                         'recoil_min': '',
-                         'recoil_min_2': '',
-                         'recoil_max': '',
-                         'recoil_max_2': '',
-                         'temper': '',
+                         'min_comp': '',
+                         'min_comp_2': '',
+                         'max_comp': '',
+                         'max_comp_2': '',
+                         'min_recoil': '',
+                         'min_recoil_2': '',
+                         'max_recoil': '',
+                         'max_recoil_2': '',
+                         'max_temper': '',
                          }
 
         if tag == 'change':
@@ -93,17 +93,17 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле длины в сжатом состоянии'
                                               )
-                self.response['len_min'] = ''
+                self.response['min_length'] = ''
 
             temp = float(text.replace(',', '.'))
             if 100 <= temp <= 1000:
-                self.response['len_min'] = str(temp)
+                self.response['min_length'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
                                               )
-                self.response['len_min'] = ''
+                self.response['min_length'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -111,7 +111,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
                                           f'длина в сжатом состоянии</b>'
                                           )
-            self.response['len_min'] = ''
+            self.response['min_length'] = ''
 
         except Exception as e:
             pass
@@ -124,17 +124,17 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле длины в разжатом состоянии'
                                               )
-                self.response['len_max'] = ''
+                self.response['max_length'] = ''
 
             temp = float(text.replace(',', '.'))
             if 100 <= temp <= 1000:
-                self.response['len_max'] = str(temp)
+                self.response['max_length'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
                                               )
-                self.response['len_max'] = ''
+                self.response['max_length'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -142,7 +142,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Длина в разжатом состоянии</b>'
                                           )
-            self.response['len_max'] = ''
+            self.response['max_length'] = ''
 
         except Exception as e:
             pass
@@ -159,7 +159,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
 
             hod = int(text)
             if 40 <= hod <= 120:
-                self.response['hod'] = str(hod)
+                self.response['hod'] = hod
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
@@ -193,7 +193,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             max_speed = self.calc_data.max_speed(hod)
 
             if 0.02 <= temp <= max_speed:
-                self.response['speed_one'] = str(temp)
+                self.response['speed_one'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
@@ -229,7 +229,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
             max_speed = self.calc_data.max_speed(hod)
 
             if 0.02 <= temp <= max_speed:
-                self.response['speed_two'] = str(temp)
+                self.response['speed_two'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
@@ -257,18 +257,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия сжатия'
                                               )
-                self.response['comp_min'] = ''
+                self.response['min_comp'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['comp_min'] = str(temp)
+                self.response['min_comp'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Минимальное усилие сжатия --> (<b style="color: #f00;">{temp}</b>) '
                                               f'введено неверное значение'
                                               )
-                self.response['comp_min'] = ''
+                self.response['min_comp'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -276,7 +276,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия</b>'
                                           )
-            self.response['comp_min'] = ''
+            self.response['min_comp'] = ''
 
         except Exception as e:
             pass
@@ -289,18 +289,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия сжатия для второй скорости'
                                               )
-                self.response['comp_min_2'] = ''
+                self.response['min_comp_2'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['comp_min_2'] = str(temp)
+                self.response['min_comp_2'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Минимальное усилие сжатия для второй скорости --> (<b style="color: #f00;">{temp}</b>)'
                                               f'введено неверное значение'
                                               )
-                self.response['comp_min_2'] = ''
+                self.response['min_comp_2'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -308,7 +308,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие сжатия для второй скорости</b>'
                                           )
-            self.response['comp_min_2'] = ''
+            self.response['min_comp_2'] = ''
 
         except Exception as e:
             pass
@@ -321,18 +321,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия сжатия'
                                               )
-                self.response['comp_max'] = ''
+                self.response['max_comp'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['comp_max'] = str(temp)
+                self.response['max_comp'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Максимальное усилие сжатия (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неверное число'
                                               )
-                self.response['comp_max'] = ''
+                self.response['max_comp'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -340,7 +340,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия</b>'
                                           )
-            self.response['comp_max'] = ''
+            self.response['max_comp'] = ''
 
         except Exception as e:
             pass
@@ -353,18 +353,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия сжатия для второй скорости'
                                               )
-                self.response['comp_max_2'] = ''
+                self.response['max_comp_2'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['comp_max_2'] = str(temp)
+                self.response['max_comp_2'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Максимальное усилие сжатия для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неверное число'
                                               )
-                self.response['comp_max_2'] = ''
+                self.response['max_comp_2'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -372,7 +372,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие сжатия для второй скорости</b>'
                                           )
-            self.response['comp_max_2'] = ''
+            self.response['max_comp_2'] = ''
 
         except Exception as e:
             pass
@@ -385,18 +385,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия отбоя'
                                               )
-                self.response['recoil_min'] = ''
+                self.response['min_recoil'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['recoil_min'] = str(temp)
+                self.response['min_recoil'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Минимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное число'
                                               )
-                self.response['recoil_min'] = ''
+                self.response['min_recoil'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -404,7 +404,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя</b>'
                                           )
-            self.response['recoil_min'] = ''
+            self.response['min_recoil'] = ''
 
         except Exception as e:
             pass
@@ -417,18 +417,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле минимального усилия отбоя для второй скорости'
                                               )
-                self.response['recoil_min_2'] = ''
+                self.response['min_recoil_2'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['recoil_min_2'] = str(temp)
+                self.response['min_recoil_2'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Минимальное усилие отбоя для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное число'
                                               )
-                self.response['recoil_min_2'] = ''
+                self.response['min_recoil_2'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -436,7 +436,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Минимальное усилие отбоя для второй скорости</b>'
                                           )
-            self.response['recoil_min_2'] = ''
+            self.response['min_recoil_2'] = ''
 
         except Exception as e:
             pass
@@ -449,18 +449,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия отбоя'
                                               )
-                self.response['recoil_max'] = ''
+                self.response['max_recoil'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['recoil_max'] = str(temp)
+                self.response['max_recoil'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное значение'
                                               )
-                self.response['recoil_max'] = ''
+                self.response['max_recoil'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -468,7 +468,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
-            self.response['recoil_max'] = ''
+            self.response['max_recoil'] = ''
 
         except Exception as e:
             pass
@@ -481,18 +481,18 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимального усилия отбоя'
                                               )
-                self.response['recoil_max_2'] = ''
+                self.response['max_recoil_2'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 2000:
-                self.response['recoil_max_2'] = str(temp)
+                self.response['max_recoil_2'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
                                               f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
                                               f'введено неправильное значение'
                                               )
-                self.response['recoil_max_2'] = ''
+                self.response['max_recoil_2'] = ''
 
         except ValueError:
             msg = QMessageBox.information(self,
@@ -500,7 +500,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальное усилие отбоя</b>'
                                           )
-            self.response['recoil_max_2'] = ''
+            self.response['max_recoil_2'] = ''
 
         except Exception as e:
             pass
@@ -513,11 +513,11 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                               'Внимание',
                                               'Заполните поле максимальной температуры'
                                               )
-                self.response['temper'] = ''
+                self.response['max_temper'] = ''
 
             temp = float(text.replace(',', '.'))
             if 0 <= temp <= 120:
-                self.response['temper'] = str(temp)
+                self.response['max_temper'] = temp
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
@@ -531,10 +531,28 @@ class AmortNew(QMainWindow, Ui_MainWindow):
                                           f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
                                           f'Максимальная температура</b>'
                                           )
-            self.response['temper'] = ''
+            self.response['max_temper'] = ''
 
         except Exception as e:
             pass
+        
+    def _convert_adapter(self, name: str):
+        """Перевод номера адаптера в его длинну"""
+        try:
+            if name == '069' or name == '069-01':
+                return 25
+
+            elif name == '069-02' or name == '069-03' or name == '069-04':
+                return 34
+
+            elif name == '072':
+                return 41
+
+            else:
+                return 0
+
+        except Exception as e:
+            self.logger.error(e)
 
     def closeEvent(self, event):
         self.signals.closed.emit()
