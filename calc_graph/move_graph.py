@@ -48,7 +48,7 @@ class MoveGraph:
             power = CalcData().power_amort(data.move_list, data.force_list)
 
             speed = float(data.speed)
-            freq = CalcData().freq_piston_amort(speed, data.amort.hod)
+            freq = CalcData().freq_piston_amort(speed, data.hod)
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

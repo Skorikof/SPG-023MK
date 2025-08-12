@@ -30,7 +30,7 @@ class ScreenSave:
         try:
             time = arch_obj.time_test.replace(':', '.')
             first = (f'{time}_'
-                     f'{arch_obj.amort.name}_'
+                     f'{arch_obj.name}_'
                      f'{arch_obj.serial_number}_')
             
             if type_test == 'casc':

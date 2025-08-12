@@ -36,20 +36,20 @@ class CascadeGraph:
             lim_comp_1 = []
             lim_comp_2 = []
 
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_1.append(float(obj.amort.speed_one))
-            lim_speed_2.append(float(obj.amort.speed_two))
-            lim_speed_2.append(float(obj.amort.speed_two))
+            lim_speed_1.append(float(obj.speed_one))
+            lim_speed_1.append(float(obj.speed_one))
+            lim_speed_2.append(float(obj.speed_two))
+            lim_speed_2.append(float(obj.speed_two))
 
-            lim_recoil_1.append(float(obj.amort.min_recoil))
-            lim_recoil_1.append(float(obj.amort.max_recoil))
-            lim_recoil_2.append(float(obj.amort.max_recoil_2))
-            lim_recoil_2.append(float(obj.amort.min_recoil_2))
+            lim_recoil_1.append(float(obj.min_recoil))
+            lim_recoil_1.append(float(obj.max_recoil))
+            lim_recoil_2.append(float(obj.max_recoil_2))
+            lim_recoil_2.append(float(obj.min_recoil_2))
 
-            lim_comp_1.append(float(obj.amort.min_comp) * -1)
-            lim_comp_1.append(float(obj.amort.max_comp) * -1)
-            lim_comp_2.append(float(obj.amort.max_comp_2) * -1)
-            lim_comp_2.append(float(obj.amort.min_comp_2) * -1)
+            lim_comp_1.append(float(obj.min_comp) * -1)
+            lim_comp_1.append(float(obj.max_comp) * -1)
+            lim_comp_2.append(float(obj.max_comp_2) * -1)
+            lim_comp_2.append(float(obj.min_comp_2) * -1)
 
             pen = pg.mkPen(color='red', width=2)
 

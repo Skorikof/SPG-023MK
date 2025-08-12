@@ -39,8 +39,8 @@ class Steps:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_control_alarm_state - {e}')
-
-    def step_search_hod_gear(self):
+            
+    def _definition_speed_by_hod(self, tag):
         try:
             if self.model.amort is None:
                 hod = 120
@@ -48,12 +48,37 @@ class Steps:
                 hod = self.model.amort.hod
 
             if hod > 100:
-                speed = 0.1
+                if tag == 'slow':
+                    speed = 0.03
+                elif tag == 'medium':
+                    speed = 0.1
+                elif tag == 'fast':
+                    speed = 0.2
+                    
             elif 50 < hod <= 100:
-                speed = 0.06
+                if tag == 'slow':
+                    speed = 0.02
+                elif tag == 'medium':
+                    speed = 0.06
+                elif tag == 'fast':
+                    speed = 0.1
+                    
             else:
-                speed = 0.03
+                if tag == 'slow':
+                    speed = 0.01
+                elif tag == 'medium':
+                    speed = 0.03
+                elif tag == 'fast':
+                    speed = 0.03
+            
+            return speed
 
+        except Exception as e:
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in Steps/_definition_speed_by_hod - {e}')
+
+    def step_search_hod_gear(self):
+        try:
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('search_hod')
 
@@ -62,6 +87,7 @@ class Steps:
             self.model.flag_alarm = False
             self.model.flag_search_hod = True
 
+            speed = self._definition_speed_by_hod('medium')
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
@@ -86,18 +112,6 @@ class Steps:
 
     def step_move_gear_set_pos(self):
         try:
-            if self.model.amort is None:
-                hod = 120
-            else:
-                hod = self.model.amort.hod
-
-            if hod > 100:
-                speed = 0.03
-            elif 50 < hod <= 100:
-                speed = 0.02
-            else:
-                speed = 0.01
-
             self.signals.stage_from_logic.emit('wait')
             self.signals.next_stage_from_logic.emit('pos_set_gear')
 
@@ -105,6 +119,7 @@ class Steps:
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
 
+            speed = self._definition_speed_by_hod('slow')
             self.model.write_speed_motor(1, speed=speed)
             self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
@@ -168,18 +183,7 @@ class Steps:
 
             self.model.write_bit_force_cycle(0)
 
-            if self.model.amort is None:
-                hod = 120
-            else:
-                hod = self.model.amort.hod
-
-            if hod > 100:
-                speed = 0.03
-            elif 50 < hod <= 100:
-                speed = 0.02
-            else:
-                speed = 0.01
-
+            speed = self._definition_speed_by_hod('slow')
             self.model.write_speed_motor(1, speed=speed)
 
             self.model.motor_up(1)
@@ -213,17 +217,7 @@ class Steps:
     def step_test_move_cycle(self):
         """Проверочный ход"""
         try:
-            if self.model.amort is None:
-                hod = 120
-            else:
-                hod = self.model.amort.hod
-
-            if hod > 100:
-                speed = 0.06
-            elif 50 < hod <= 100:
-                speed = 0.03
-            else:
-                speed = 0.01
+            speed = self._definition_speed_by_hod('medium')
             self.model.write_speed_motor(1, speed=speed)
             self.model.write_bit_force_cycle(1)
 
@@ -234,18 +228,7 @@ class Steps:
     def step_pumping_before_test(self):
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
         try:
-            if self.model.amort is None:
-                hod = 120
-            else:
-                hod = self.model.amort.hod
-
-            if hod >= 100:
-                speed = 0.2
-            elif 50 < hod <= 100:
-                speed = 0.1
-            else:
-                speed = 0.03
-
+            speed = self._definition_speed_by_hod('fast')
             self.model.write_speed_motor(1, speed=speed)
 
             self.signals.stage_from_logic.emit('pumping')

@@ -90,7 +90,7 @@ class CompareGraph:
                 x_coord, y_coord = arch_obj.move_list, arch_obj.force_list
                 
                 name = (f'{arch_obj.time_test} - '
-                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
                 
@@ -129,7 +129,7 @@ class CompareGraph:
                 x_coord, y_coord = graph.calc_graph(arch_obj)
                 
                 name = (f'{arch_obj.time_test} - '
-                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
             
@@ -167,7 +167,7 @@ class CompareGraph:
                 x_coord, y_coord = graph.calc_graph(arch_obj)
                 
                 name = (f'{arch_obj.time_test} - '
-                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed}')
             
@@ -202,14 +202,14 @@ class CompareGraph:
                 if ind == 0:
                     self._fill_compare_triple_data(graph.data_graph(arch_obj))
                     
-                    graph.fill_piston_graph(int(arch_obj.amort.hod))
+                    graph.fill_piston_graph(int(arch_obj.hod))
                     
                 pen = pg.mkPen(color=self.select_color_line(ind),
                                width=3,
                                style=self.select_line_style(ind))
                 
                 name_first = (f'{arch_obj.time_test} - '
-                              f'{arch_obj.amort.name} - '
+                              f'{arch_obj.name} - '
                               f'{arch_obj.serial_number} - '
                               f'{arch_obj.speed} - ')
                 
@@ -248,7 +248,7 @@ class CompareGraph:
                     self._fill_compare_speed_data(graph.data_graph(arch_obj))
                     
                 name = (f'{arch_obj.time_test} - '
-                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.speed_list[0]}~{arch_obj.speed_list[-1]}')
                 
@@ -289,7 +289,7 @@ class CompareGraph:
                     self._fill_compare_temper_data(graph.data_graph(arch_obj))
             
                 name = (f'{arch_obj.time_test} - '
-                        f'{arch_obj.amort.name} - '
+                        f'{arch_obj.name} - '
                         f'{arch_obj.serial_number} - '
                         f'{arch_obj.temper_list[0]}~{arch_obj.temper_list[-1]} °С')
                 

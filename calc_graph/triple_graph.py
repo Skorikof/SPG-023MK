@@ -49,7 +49,7 @@ class TripleGraph:
             
     def calc_speed_graph(self, data):
         try:
-            hod = int(data.amort.hod)
+            hod = int(data.hod)
             speed = float(data.speed)
             move_array = np.array(data.move_list)
             

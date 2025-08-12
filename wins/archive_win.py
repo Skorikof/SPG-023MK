@@ -217,7 +217,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 type_graph = self.type_graph_list[self.index_type_graph]
                 
                 for ind, obj in enumerate(arch_list):
-                    first = f'{ind + 1}) {obj.time_test} - {obj.amort.name} - {obj.serial_number} - '
+                    first = f'{ind + 1}) {obj.time_test} - {obj.name} - {obj.serial_number} - '
                     
                     if type_graph == 'speed':
                         second = f'{obj.speed_list[0]}~{obj.speed_list[-1]}'
@@ -403,7 +403,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                self.triple_graph.fill_piston_graph(int(arch_obj.amort.hod))
+                self.triple_graph.fill_piston_graph(int(arch_obj.hod))
                 
                 x_f, y_f = self.triple_graph.calc_force_graph(arch_obj)
                 self.triple_graph.fill_force_graph(x_f, y_f)
@@ -695,7 +695,7 @@ class ArchiveWinFill:
             
     def ui_base_frame_fill(self, arch_obj, date):
         try:
-            self.widget.name_le.setText(f'{arch_obj.amort.name}')
+            self.widget.name_le.setText(f'{arch_obj.name}')
             self.widget.operator_le.setText(f'{arch_obj.operator_rank} {arch_obj.operator_name}')
             self.widget.serial_le.setText(f'{arch_obj.serial_number}')
             self.widget.date_le.setText(f'{date} - {arch_obj.time_test}')
@@ -705,34 +705,34 @@ class ArchiveWinFill:
             
     def ui_base_fill(self, arch_obj):
         try:
-            limit_recoil = f'{arch_obj.amort.min_recoil} - {arch_obj.amort.max_recoil}'
-            limit_recoil_2 = f'{arch_obj.amort.min_recoil_2} - {arch_obj.amort.max_recoil_2}'
-            limit_comp = f'{arch_obj.amort.min_comp} - {arch_obj.amort.max_comp}'
-            limit_comp_2 = f'{arch_obj.amort.min_comp_2} - {arch_obj.amort.max_comp_2}'
+            limit_recoil = f'{arch_obj.min_recoil} - {arch_obj.max_recoil}'
+            limit_recoil_2 = f'{arch_obj.min_recoil_2} - {arch_obj.max_recoil_2}'
+            limit_comp = f'{arch_obj.min_comp} - {arch_obj.max_comp}'
+            limit_comp_2 = f'{arch_obj.min_comp_2} - {arch_obj.max_comp_2}'
             
-            self.widget.speed_set_1_base_le.setText(f'{arch_obj.amort.speed_one}')
-            self.widget.speed_set_2_base_le.setText(f'{arch_obj.amort.speed_two}')
+            self.widget.speed_set_1_base_le.setText(f'{arch_obj.speed_one}')
+            self.widget.speed_set_2_base_le.setText(f'{arch_obj.speed_two}')
             self.widget.limit_recoil_1_base_le.setText(limit_recoil)
             self.widget.limit_recoil_2_base_le.setText(limit_recoil_2)
             self.widget.limit_comp_1_base_le.setText(limit_comp)
             self.widget.limit_comp_2_base_le.setText(limit_comp_2)
-            self.widget.max_temp_base_le.setText(f'{arch_obj.amort.max_temper}')
-            self.widget.hod_base_le.setText(f'{arch_obj.amort.hod}')
+            self.widget.max_temp_base_le.setText(f'{arch_obj.max_temper}')
+            self.widget.hod_base_le.setText(f'{arch_obj.hod}')
             
         except Exception as e:
             self.logger.error(e)
             
     def ui_casc_fill(self, arch_obj):
         try:
-            self.widget.hod_casc_le.setText(f'{arch_obj.amort.hod}')
-            self.widget.max_temp_casc_le.setText(f'{arch_obj.amort.max_temper}')
+            self.widget.hod_casc_le.setText(f'{arch_obj.hod}')
+            self.widget.max_temp_casc_le.setText(f'{arch_obj.max_temper}')
             
         except Exception as e:
             self.logger.error(e)
             
     def ui_temp_fill(self, arch_obj):
         try:
-            self.widget.hod_temp_le.setText(f'{arch_obj.amort.hod}')
+            self.widget.hod_temp_le.setText(f'{arch_obj.hod}')
             
         except Exception as e:
             self.logger.error(e)
