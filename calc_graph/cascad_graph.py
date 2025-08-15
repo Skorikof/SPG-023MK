@@ -66,8 +66,8 @@ class CascadeGraph:
             push_force = CalcGraphValue().select_push_force(data)
             
             speed = data.speed_list[:]
-            recoil = [x + push_force for x in data.recoil_list]
-            comp = [(x + push_force) * -1 for x in data.comp_list]
+            recoil = [round(x + push_force, 2) for x in data.recoil_list]
+            comp = [round(x + push_force, 2) for x in data.comp_list]
             
             speed.insert(0, 0)
             recoil.insert(0, 0)
@@ -98,8 +98,8 @@ class CascadeGraph:
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            recoil = [x + push_force for x in data.recoil_list]
-            comp = [(x + push_force) * -1 for x in data.comp_list]
+            recoil = [round(x + push_force, 2) for x in data.recoil_list]
+            comp = [round(x + push_force, 2) for x in data.comp_list]
             
             return {'push_force': push_force,
                     'speed': data.speed_list,

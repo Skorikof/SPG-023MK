@@ -72,7 +72,6 @@ class ReadArchive:
             self.conv = []
             self.temper = []
             self.cascade = []
-            self.flag_new_cascade = True
             self.speed_list = []
             self.recoil_list = []
             self.comp_list = []
@@ -102,13 +101,10 @@ class ReadArchive:
         try:
             if archive_list[0] == 'end_test':
                 if self.type_test == 'lab_cascade':
-                    self.flag_new_cascade = True
-                    self.speed_list = []
-                    self.recoil_list = []
-                    self.comp_list = []
+                    self._create_cascade_object()
 
             else:
-                if not archive_list[0] == '*':
+                if archive_list[0] != '*':
                     self.data_one = self._pars_first_data(archive_list)
                             
                 elif archive_list[0] == '*':
@@ -125,27 +121,34 @@ class ReadArchive:
             data = {**data_one, **data_two}
             if self.type_test == 'lab_cascade':
                 self.lab.append(LabSchema(**data))
-                self.data_one['move_list'] = []
-                self.data_two['force_list'] = []
+                self.data_two = []
                 
-                if self.flag_new_cascade:
-                    data['speed_list'] = self.speed_list[:]
-                    data['recoil_list'] = self.recoil_list[:]
-                    data['comp_list'] = self.comp_list[:]
-                    self.cascade.append(CascSchema(**data))
-                    
             else:
                 if self.type_test == 'temper':
                     self.temper.append(TempSchema(**data))
-                
+                    
                 elif self.type_test == 'lab':
                     self.lab.append(LabSchema(**data))
-                
+                    
                 elif self.type_test == 'conv':
                     self.conv.append(ConvSchema(**data))
-                    
                 self.data_one = {}
                 self.data_two = {}
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _create_cascade_object(self):
+        try:
+            self.data_one['speed_list'] = self.speed_list[:]
+            self.data_one['recoil_list'] = self.recoil_list[:]
+            self.data_one['comp_list'] = self.comp_list[:]
+            
+            self.cascade.append(CascSchema(**self.data_one))
+            self.speed_list = []
+            self.recoil_list = []
+            self.comp_list = []
+            self.data_one = {}
             
         except Exception as e:
             self.logger.error(e)
@@ -159,9 +162,7 @@ class ReadArchive:
                 key = 'temper_list'
                 
             elif self.type_test == 'lab_cascade':
-                if self.flag_new_cascade:
-                    self.flag_new_cascade = False
-                self.speed_list.append(float(archive_list[23].replace(',', '.')))
+                self._add_data_cascade_graph(speed=float(archive_list[23].replace(',', '.')))
                 
             data[key] = self._add_data_on_list_graph(archive_list[24:-1])
             
@@ -176,17 +177,13 @@ class ReadArchive:
             if self.type_test == 'temper':
                 data['recoil_list'], self.data['comp_list'] = self._add_data_temper_graph(archive_list)
                         
-            elif self.type_test == 'lab':
-                data['force_list'] = self._add_data_on_list_graph(archive_list)
-
-            elif self.type_test == 'conv':
+            elif self.type_test == 'lab' or self.type_test == 'conv':
                 data['force_list'] = self._add_data_on_list_graph(archive_list)
 
             elif self.type_test == 'lab_cascade':
                 force_list = self._add_data_on_list_graph(archive_list)
                 data['force_list'] = force_list[:]
-                self.recoil_list.append(max(force_list))
-                self.comp_list.append(abs(min(force_list)))
+                self._add_data_cascade_graph(recoil=max(force_list), comp=min(force_list))
             
             return data
         
@@ -228,6 +225,18 @@ class ReadArchive:
         try:
             return [float(x.replace(',', '.')) for x in data_list]
 
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _add_data_cascade_graph(self, speed=None, recoil=None, comp=None):
+        try:
+            if speed:
+                self.speed_list.append(speed)
+            if recoil:
+                self.recoil_list.append(recoil)
+            if comp:
+                self.comp_list.append(comp)
+                            
         except Exception as e:
             self.logger.error(e)
             

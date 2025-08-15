@@ -64,7 +64,7 @@ class BoostGraphTwo:
             recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
 
             max_recoil = round(recoil + push_force, 2)
-            max_comp = round(comp - push_force, 2)
+            max_comp = round(comp + push_force, 2)
 
             return {'recoil': max_recoil,
                     'comp': max_comp,
