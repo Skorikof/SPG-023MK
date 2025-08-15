@@ -8,27 +8,6 @@ from logger import my_logger
 class StructAmort(object):
     def __init__(self):
         self.amorts = []
-
-
-class DataAmort(object):
-    def __init__(self):
-        self.name = ''
-        self.min_length = 0
-        self.max_length = 0
-        self.hod = 0
-        self.adapter = ''
-        self.adapter_len = 0
-        self.speed_one = 0
-        self.speed_two = 0
-        self.min_comp = 0
-        self.min_comp_2 = 0
-        self.max_comp = 0
-        self.max_comp_2 = 0
-        self.min_recoil = 0
-        self.min_recoil_2 = 0
-        self.max_recoil = 0
-        self.max_recoil_2 = 0
-        self.max_temper = 0
         
 
 class AmortSchema(BaseModel):
