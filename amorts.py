@@ -26,6 +26,7 @@ class AmortSchema(BaseModel):
     max_recoil: float
     max_recoil_2: float
     max_temper: float
+
     
 class ArchiveSchema(AmortSchema):
     adapter: str

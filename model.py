@@ -525,8 +525,8 @@ class Model:
 
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
                 
-                self.force = [x * (-1) for x in self.force_list]
-                self.move = [x + offset_p for x in self.move_list]
+                self.force = [round(x * (-1), 2) for x in self.force_list]
+                self.move = [round(x + offset_p, 2) for x in self.move_list]
 
                 self.clear_data_in_graph()
 

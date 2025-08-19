@@ -608,6 +608,7 @@ class AmortNew(QMainWindow, Ui_MainWindow):
 
             if flag:
                 self.response['adapter'] = self.adapter_cb.currentText()
+                self.response['adapter_len'] = self._convert_adapter(self.adapter_cb.currentText())
                 self._clear_data_on_gui()
                 self.signals.save_amort.emit(self.response)
 
