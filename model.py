@@ -521,8 +521,6 @@ class Model:
             if self.flag_fill_graph:
                 self._calc_dynamic_push_force()
 
-                push_force = self._choice_push_force()
-
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
                 
                 self.force = [round(x * (-1), 2) for x in self.force_list]
@@ -531,6 +529,7 @@ class Model:
                 self.clear_data_in_graph()
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
+                push_force = self._choice_push_force()
                 self.max_recoil = round(max_recoil + push_force, 1)
                 self.max_comp = round(max_comp + push_force, 1)
 

@@ -87,10 +87,13 @@ class CalcData:
             comp_ind = data.index(min(data))
             max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
 
-            return max_rec, max_comp
-
         except Exception as e:
+            max_rec = 0
+            max_comp = 0
             self.logger.error(e)
+            
+        finally:
+            return max_rec, max_comp
 
     def offset_move_by_hod(self, amort, min_p):
         try:
