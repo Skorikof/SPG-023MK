@@ -13,6 +13,7 @@ from calc_data.data_calculation import CalcData
 from writer.writer import Writer
 from archive_saver import WriterArch
 from connect.client import Client
+from freq_control.freq_control import FreqControl
 
 
 class ModelSignals(QObject):
@@ -39,6 +40,7 @@ class Model:
         self.threadpool = QThreadPool()
 
         self.logger = my_logger.get_logger(__name__)
+        self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
         self.client = Client()
@@ -155,8 +157,7 @@ class Model:
             
     def _stand_initialisation(self):
         try:
-            self.write_max_frequency(1, 120)
-            self.logger.debug('Write in FC max 120 Hz')
+            self.fc_control(**{'tag':'max', 'adr':1, 'freq':120})
 
         except Exception as e:
             self.logger.error(e)
@@ -682,87 +683,21 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_emergency_force - {e}')
-
-    def _motor_command(self, command):
+            
+    def fc_control(self, tag: str, adr: int, speed: float=None, freq: int=None, hod: int=None):
         try:
             if self.state_dict.get('lost_control'):
                 self.write_bit_unblock_control()
 
             if self.state_dict.get('excess_force'):
                 self.write_bit_emergency_force()
-
-            command = command + self.calc_data.calc_crc(command)
-            values = self.calc_data.values_freq_command(command)
-
+                
+            values = self.fc.freq_command(tag, adr, speed, freq, hod)
             self.writer.write_out('FC', freq_command=values)
-
+            
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_motor_command - {e}')
-
-    def write_max_frequency(self, adr_freq, freq):
-        try:
-            freq = freq * 100
-            freq_hex = hex(freq)[2:].zfill(4)
-            freq_hex = f'0{adr_freq}06010B{freq_hex}'
-            self._motor_command(freq_hex)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_frequency - {e}')
-
-    def write_speed_motor(self, adr: int, speed: float = None, freq: int = None, hod: int = None):
-        """
-        Запись скорости вращения двигателя, если задана скорость, то она пересчитывается в частоту,
-        частота записывается напрямую
-        """
-        try:
-            value = 0
-            if not freq:
-                if not hod:
-                    if self.amort is None:
-                        hod = 120
-                    else:
-                        hod = self.amort.hod
-                value = self.calc_data.freq_from_speed(speed, hod)
-
-            elif not speed:
-                value = 100 * freq
-
-            freq_hex = hex(value)[2:].zfill(4)
-            freq_hex = f'0{adr}06010D{freq_hex}'
-            self._motor_command(freq_hex)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_speed_motor - {e}')
-
-    def motor_up(self, adr_freq):
-        try:
-            com_hex = f'0{adr_freq}0620000002'
-            self._motor_command(com_hex)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/motor_up - {e}')
-
-    def motor_down(self, adr_freq):
-        try:
-            com_hex = f'0{adr_freq}0620000001'
-            self._motor_command(com_hex)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/motor_down - {e}')
-
-    def motor_stop(self, adr_freq):
-        try:
-            com_hex = f'0{adr_freq}0620000003'
-            self._motor_command(com_hex)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/motor_stop - {e}')
+            self.status_bar_msg(f'ERROR in model/fc_control - {e}')
 
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""

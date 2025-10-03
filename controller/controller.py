@@ -126,7 +126,7 @@ class Controller:
                     if self.model.buffer_state[1] == 'buffer_on':
                         self.model.buffer_state = ['null', 'null']
                         self.model.reader_start_test()
-                        self.model.motor_up(1)
+                        self.model.fc_control(**{'tag': 'up', 'adr': 1})
                         self.stage = self.next_stage
 
                     elif self.model.buffer_state[1] == 'buffer_off':
@@ -149,7 +149,7 @@ class Controller:
 
             elif self.stage == 'alarm_traverse':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
-                    self.model.motor_stop(2)
+                    self.model.fc_control(**{'tag': 'stop', 'adr': 2})
                     self.model.write_bit_red_light(0)
                     self.alarm_steps.flag_alarm_traverse = False
                     self.stage = 'wait'
@@ -257,7 +257,8 @@ class Controller:
                 if self.count_cycle >= 5:
                     self.signals.save_result_test.emit('casc')
                     if self.count_cascade < self.max_cascade:
-                        self.model.write_speed_motor(1, speed=self.model.speed_cascade[self.count_cascade])
+                        self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                                 'speed':self.model.speed_cascade[self.count_cascade]})
                         self.model.speed_test = self.model.speed_cascade[self.count_cascade]
 
                         self.model.clear_data_in_graph()
@@ -348,8 +349,8 @@ class Controller:
         self.model.lamp_all_switch_off()
 
         if self.model.client.flag_connect:
-            self.model.motor_stop(1)
-            self.model.motor_stop(2)
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+            self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.reader_stop_test()
             self.model.write_bit_force_cycle(0)
 
@@ -410,8 +411,8 @@ class Controller:
             if self.model.gear_referent:
                 self.steps.step_stop_gear_end_test()
             else:
-                self.model.motor_stop(1)
-                self.model.motor_stop(2)
+                self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+                self.model.fc_control(**{'tag': 'stop', 'adr': 2})
 
                 self.signals.cancel_test.emit()
 

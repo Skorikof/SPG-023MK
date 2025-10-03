@@ -84,7 +84,8 @@ class StepTests:
     def step_test_on_two_speed(self, ind: int):
         try:
             if ind == 1:
-                self.model.write_speed_motor(1, speed=self.model.amort.speed_one)
+                self.model.fc_control(**{'tag':'speed', 'adr':1,
+                                         'speed':self.model.amort.speed_one})
                 self.signals.stage_from_tests.emit('test_speed_one')
                 self.model.clear_data_in_graph()
                 self.model.speed_test = self.model.amort.speed_one
@@ -94,12 +95,12 @@ class StepTests:
             elif ind == 2:
                 self.signals.stage_from_tests.emit('test_speed_two')
                 self.model.speed_test = self.model.amort.speed_two
-
-                self.model.write_speed_motor(1, speed=self.model.amort.speed_two)
+                self.model.fc_control(**{'tag':'speed', 'adr':1,
+                                         'speed':self.model.amort.speed_two})
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
-                self.model.motor_up(1)
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)
@@ -107,14 +108,15 @@ class StepTests:
 
     def step_test_lab_hand_speed(self):
         try:
-            self.model.write_speed_motor(1, speed=self.model.speed_test)
+            self.model.fc_control(**{'tag':'speed', 'adr':1,
+                                     'speed':self.model.speed_test})
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
             self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
-                self.model.motor_up(1)
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)
@@ -122,7 +124,8 @@ class StepTests:
 
     def step_test_lab_cascade(self, speed_list: list):
         try:
-            self.model.write_speed_motor(1, speed=speed_list[0])
+            self.model.fc_control(**{'tag':'speed', 'adr':1,
+                                     'speed':speed_list[0]})
             self.signals.stage_from_tests.emit('test_lab_cascade')
 
             self.model.clear_data_in_graph()
@@ -131,7 +134,7 @@ class StepTests:
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
-                self.model.motor_up(1)
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)
@@ -139,7 +142,8 @@ class StepTests:
 
     def step_test_temper(self):
         try:
-            self.model.write_speed_motor(1, speed=self.model.speed_test)
+            self.model.fc_control(**{'tag':'speed', 'adr':1,
+                                     'speed':self.model.speed_test})
             self.signals.stage_from_tests.emit('test_temper')
 
             self.model.clear_data_in_graph()
@@ -148,7 +152,7 @@ class StepTests:
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
-                self.model.motor_up(1)
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)

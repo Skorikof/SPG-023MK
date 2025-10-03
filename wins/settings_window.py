@@ -116,7 +116,11 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             value = self.lineEdit_speed_main.text()
             value = float(value.replace(',', '.'))
 
-            self.model.write_speed_motor(1, speed=value, hod=self.hod)
+            command = {'tag': 'speed',
+                       'adr': 1,
+                       'speed': value,
+                       'hod': self.hod}
+            self.model.fc_control(**command)
 
         except Exception as e:
             self.logger.error(e)
@@ -124,26 +128,28 @@ class SetWindow(QMainWindow, UiSettingsWindow):
     def _write_frequency_set(self):
         try:
             value = int(self.lineEdit_freq_traverse.text())
-
-            self.model.write_speed_motor(2, freq=value)
+            command = {'tag': 'speed',
+                       'adr': 2,
+                       'freq': value}
+            self.model.fc_control(**command)
 
         except Exception as e:
             self.logger.error(e)
 
     def _click_btn_motor_up(self):
-        self.model.motor_up(2)
+        self.model.fc_control(**{'tag': 'up', 'adr': 2})
 
     def _click_btn_motor_down(self):
-        self.model.motor_down(2)
+        self.model.fc_control(**{'tag': 'down', 'adr': 2})
 
     def _click_btn_motor_start(self):
-        self.model.motor_up(1)
+        self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
     def _click_btn_motor_main_stop(self):
-        self.model.motor_stop(1)
+        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
     def _click_btn_motor_traverse_stop(self):
-        self.model.motor_stop(2)
+        self.model.fc_control(**{'tag': 'stop', 'adr': 2})
 
     def _write_alarm_force(self):
         try:

@@ -88,7 +88,7 @@ class Steps:
             self.model.flag_search_hod = True
 
             speed = self._definition_speed_by_hod('medium')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
 
@@ -120,7 +120,7 @@ class Steps:
             self.model.flag_alarm = False
 
             speed = self._definition_speed_by_hod('slow')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.signals.stage_from_logic.emit('wait_buffer')
             self.model.write_bit_force_cycle(1)
 
@@ -133,7 +133,7 @@ class Steps:
             if self.model.gear_referent:
                 if self.model.max_pos:
                     if abs(14 - self.model.move_now) < 5:
-                        self.model.motor_stop(1)
+                        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
                         self.model.reader_stop_test()
                         self.model.write_bit_force_cycle(0)
                         self.model.min_pos = False
@@ -150,7 +150,7 @@ class Steps:
     def step_stop_gear_end_test(self):
         """Остановка двигателя после испытания и перед исходным положением"""
         try:
-            self.model.motor_stop(1)
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
             self.signals.stage_from_logic.emit('stop_gear_end_test')
 
@@ -184,9 +184,8 @@ class Steps:
             self.model.write_bit_force_cycle(0)
 
             speed = self._definition_speed_by_hod('slow')
-            self.model.write_speed_motor(1, speed=speed)
-
-            self.model.motor_up(1)
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+            self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
             self.signals.stage_from_logic.emit('stop_gear_min_pos')
 
@@ -197,7 +196,7 @@ class Steps:
     def stage_stop_gear_min_pos(self):
         try:
             if self.model.move_now < self.model.min_point + 2:
-                self.model.motor_stop(1)
+                self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
                 self.signals.stage_from_logic.emit('wait')
 
@@ -218,7 +217,7 @@ class Steps:
         """Проверочный ход"""
         try:
             speed = self._definition_speed_by_hod('medium')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -229,7 +228,7 @@ class Steps:
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
         try:
             speed = self._definition_speed_by_hod('fast')
-            self.model.write_speed_motor(1, speed=speed)
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
 
             self.signals.stage_from_logic.emit('pumping')
 
@@ -240,10 +239,9 @@ class Steps:
     def step_traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
-            self.model.write_speed_motor(2, freq=30)
+            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
             self.signals.stage_from_logic.emit('traverse_referent')
-
-            self.model.motor_up(2)
+            self.model.fc_control(**{'tag': 'up', 'adr': 2})
 
         except Exception as e:
             self.logger.error(e)
@@ -252,7 +250,7 @@ class Steps:
     def stage_traverse_referent(self):
         try:
             if self.model.switch_dict.get('highest_position', False) is True:
-                self.model.motor_stop(2)
+                self.model.fc_control(**{'tag': 'stop', 'adr': 2})
 
                 self.model.traverse_referent = True
 
@@ -267,12 +265,12 @@ class Steps:
         try:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.write_speed_motor(2, freq=30)
+            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
             if pos == 'up':
-                self.model.motor_down(2)
-
+                tag = 'down'
             elif pos == 'down':
-                self.model.motor_up(2)
+                tag = 'up'
+            self.model.fc_control(**{'tag':tag, 'adr':2})
 
         except Exception as e:
             self.logger.error(e)
@@ -283,13 +281,14 @@ class Steps:
         try:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.write_speed_motor(2, freq=30)
+            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
             pos_trav = self.model.move_traverse
 
             if pos_trav > set_point:
-                self.model.motor_up(2)
+                tag = 'up'
             else:
-                self.model.motor_down(2)
+                tag = 'down'
+            self.model.fc_control(**{'tag':tag, 'adr':2})
 
         except Exception as e:
             self.logger.error(e)
@@ -299,16 +298,16 @@ class Steps:
         try:
             if 5 < abs(point - self.model.move_traverse) <= 10:
                 if not self.flag_freq_1_step:
-                    self.model.write_speed_motor(2, freq=20)
+                    self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':20})
                     self.flag_freq_1_step = True
 
             if 1 < abs(point - self.model.move_traverse) <= 5:
                 if not self.flag_freq_2_step:
-                    self.model.write_speed_motor(2, freq=15)
+                    self.model.f_control(**{'tag':'speed', 'adr':2, 'freq':15})
                     self.flag_freq_2_step = True
 
             if abs(point - self.model.move_traverse) <= 0.5:
-                self.model.motor_stop(2)
+                self.model.fc_control(**{'tag': 'stop', 'adr': 2})
                 return True
 
             return False

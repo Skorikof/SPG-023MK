@@ -77,17 +77,20 @@ class Writer:
     def _result_write(self, response):
         try:
             res = response[0]
-            # tag = response[1]
+            tag = response[1]
             # addr = response[2]
             # value = response[3]
             command = response[4]
             if self.query_write:
                 self.query_write = False
                 self.list_write.pop(0)
+                if tag == 'FC':
+                    self.logger.debug(f'FC command write --> {res}')
+                
+                else:
+                    if command == 'buffer_on' or command == 'buffer_off':
+                        self._pars_result_write_force(res, command)
 
-                if command == 'buffer_on' or command == 'buffer_off':
-                    self._pars_result_write_force(res, command)
-                #
                 # if res == 'OK!':
                 #     pass
 

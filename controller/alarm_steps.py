@@ -79,8 +79,9 @@ class AlarmSteps:
             self.model.alarm_tag = 'safety_fence'
             self.model.flag_alarm = True
 
-            self.model.motor_stop(1)
-            self.model.motor_stop(2)
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+            self.model.fc_control(**{'tag': 'stop', 'adr': 2})
+            
             self.model.write_bit_red_light(1)
 
             self.model.reader_stop_test()
