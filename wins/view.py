@@ -79,7 +79,6 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
-        self.controller.signals.end_test.connect(self.model.write_end_test_in_archive)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
         self.controller.signals.save_result_test.connect(self.slot_save_lab_result)

@@ -135,13 +135,17 @@ class Model:
 
         if self.client.flag_connect:
             self.writer = Writer(self.client.client)
+            self.logger.debug('Writer is initialized')
             self.writer.timer_writer_start()
+            self.logger.debug('Timer Writer started')
 
             self._init_signals()
             self._init_reader()
+            self.logger.debug('Reader is initialized and started')
 
             self.save_arch = WriterArch()
             self.save_arch.timer_writer_arch_start()
+            self.logger.debug('Writer Archive is initialized and started')
             
             self._stand_initialisation()
 
@@ -152,6 +156,7 @@ class Model:
     def _stand_initialisation(self):
         try:
             self.write_max_frequency(1, 120)
+            self.logger.debug('Write in FC max 120 Hz')
 
         except Exception as e:
             self.logger.error(e)
@@ -324,6 +329,7 @@ class Model:
             data = self.parser.discard_left_data(response)
 
             if data is None:
+                self.logger.debug('Response from buffer controller is None')
                 pass  # Пришла пустая посылка
 
             else:
@@ -422,8 +428,10 @@ class Model:
             else:
                 direction = False
 
-            self.start_direction = direction
-            self.current_direction = direction
+            if direction:
+                self.start_direction = direction
+                self.current_direction = direction
+                self.logger.debug(f'Start direction --> {direction}')
 
         except Exception as e:
             self.logger.error(e)
@@ -438,6 +446,7 @@ class Model:
                         self.max_point = max_point
                         self.max_pos = True
                         self.current_direction = 'down'
+                        self.logger.debug(f'Max point --> {max_point}')
 
             elif self.current_direction == 'down':
                 min_point = min(move)
@@ -446,6 +455,7 @@ class Model:
                         self.min_point = min_point
                         self.min_pos = True
                         self.current_direction = 'up'
+                        self.logger.debug(f'Min point --> {min_point}')
 
         except Exception as e:
             self.logger.error(e)
@@ -481,6 +491,7 @@ class Model:
                 self.reset_current_circle()
 
                 self.gear_referent = True
+                self.logger.debug('Gear referent is True')
 
             else:
                 self._full_circle_done()
@@ -519,6 +530,7 @@ class Model:
 
     def _full_circle_done(self):
         try:
+            self.logger.debug('Full circle is done')
             if self.flag_fill_graph:
                 offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
                 
@@ -528,13 +540,17 @@ class Model:
                 self.clear_data_in_graph()
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
+                self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
                 
                 push_force = self._choice_push_force()
                 self.max_recoil = round(max_recoil + push_force, 1)
                 self.max_comp = round(max_comp + push_force, 1)
+                self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
 
                 self.power_amort = self.calc_data.power_amort(self.force, self.move)
                 self.freq_piston = self.calc_data.freq_piston_amort(self.speed_test, self.amort.hod)
+                
+                self.logger.debug('Full circle response parsing is done')
 
                 self.signals.update_data_graph.emit()
 

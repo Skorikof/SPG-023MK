@@ -29,27 +29,19 @@ def get_info_handler():
     return info_handler
 
 def get_debug_handler():
-    info_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    info_handler.setLevel(logging.DEBUG)
-    info_handler.setFormatter(logging.Formatter(_log_format))
-    return info_handler
-
-
-def get_handler():
-    info_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    info_handler.setLevel(logging.INFO)
-    info_handler.setFormatter(logging.Formatter(_log_format))
-    return info_handler
-
+    debug_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
+    debug_handler.setLevel(logging.DEBUG)
+    debug_handler.setFormatter(logging.Formatter(_log_format))
+    return debug_handler
 
 def get_logger(name):
     directory = _path_logs
     os.makedirs(directory, exist_ok=True)
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(get_handler())
-    # logger.addHandler(get_debug_handler())
+    logger.setLevel(logging.DEBUG)
+    # logger.addHandler(get_handler())
+    logger.addHandler(get_debug_handler())
     # logger.addHandler(get_info_handler())
     # logger.addHandler(get_err_handler())
     # logger.addHandler(get_warn_handler())

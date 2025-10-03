@@ -27,8 +27,12 @@ class ParserSPG023MK:
                         response['move'].append(request.get('move')[ind])
                         response['state'].append(request.get('state')[ind])
                         response['temper'].append(request.get('temper')[ind])
-
-                return response
+                        
+                if len(response['force']) > 0:
+                    return response
+                
+                else:
+                    return None
 
         except Exception as e:
             self.logger.error(e)

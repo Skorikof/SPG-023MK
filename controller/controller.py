@@ -83,6 +83,7 @@ class Controller:
 
     def change_stage_controller(self, stage: str):
         self.stage = stage
+        self.logger.debug(f'Stage --> {stage}')
 
     def change_next_stage_controller(self, stage: str):
         self.next_stage = stage

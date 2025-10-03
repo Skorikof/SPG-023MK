@@ -14,7 +14,7 @@ from wins.settings_window import SetWindow
 def main():
     try:
         log = my_logger.get_logger(__name__)
-        log.info('Starting program')
+        log.debug('Starting program')
 
         me = singleton.SingleInstance()
         app = QApplication(sys.argv)
