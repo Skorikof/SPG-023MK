@@ -10,15 +10,12 @@ from controller.steps_tests import StepTests
 
 class ControlSignals(QObject):
     control_msg = Signal(str)
-    traverse_referent_msg = Signal()
-    wait_yellow_btn = Signal()
     conv_win_test = Signal()
     lab_win_test = Signal()
     lab_test_stop = Signal()
     conv_test_stop = Signal()
     save_result_test = Signal(str)
     cancel_test = Signal()
-    end_test = Signal()
     search_hod_msg = Signal()
     reset_ui = Signal()
 
@@ -178,7 +175,7 @@ class Controller:
             elif self.stage == 'install_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
                     self.stage = 'wait'
-                    self.signals.wait_yellow_btn.emit()
+                    self.signals.control_msg.emit('yellow_btn')
 
             elif self.stage == 'start_point_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
@@ -272,7 +269,7 @@ class Controller:
                         self.stage = 'wait'
                         self.model.flag_fill_graph = False
                         self.count_cascade = 1
-                        self.signals.end_test.emit()
+                        self.signals.save_result_test.emit('end')
                         self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'stop_gear_end_test':
@@ -308,21 +305,18 @@ class Controller:
 
     def _select_alarm_state(self, tag):
         try:
+            self.signals.control_msg.emit(tag)
             if tag == 'lost_control':
-                self.signals.control_msg.emit('lost_control')
                 self.alarm_steps.step_lost_control()
 
             elif tag == 'excess_force':
-                self.signals.control_msg.emit('excess_force')
                 self.alarm_steps.step_excess_force()
 
             elif tag == 'safety_fence':
-                self.signals.control_msg.emit('safety_fence')
                 self.alarm_steps.step_safety_fence()
 
             elif tag == 'excess_temperature':
                 self.steps.step_stop_gear_end_test()
-                self.signals.control_msg.emit('excess_temperature')
                 self.alarm_steps.step_excess_temperature()
             else:
                 pass
@@ -391,7 +385,7 @@ class Controller:
 
                 else:
                     if self.model.move_traverse < 10:
-                        self.signals.traverse_referent_msg.emit()
+                        self.signals.control_msg.emit('traverse_referent')
                         self.steps.step_traverse_referent_point()
 
                     else:
@@ -458,7 +452,7 @@ class Controller:
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
                 self._position_traverse()
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
-                    self.signals.wait_yellow_btn.emit()
+                    self.signals.control_msg.emit('yellow_btn')
 
                 else:
                     self.stage = 'install_amort'
@@ -488,11 +482,10 @@ class Controller:
 
     def _test_on_two_speed(self, ind):
         try:
-            if self.model.type_test == 'conv':
-                self.signals.conv_win_test.emit()
-            elif self.model.type_test == 'lab':
-                self.signals.lab_win_test.emit()
-
+            # if self.model.type_test == 'conv':
+            #     self.signals.conv_win_test.emit()
+            # elif self.model.type_test == 'lab':
+            #     self.signals.lab_win_test.emit()
             self.steps_tests.step_test_on_two_speed(ind)
             self._full_cycle_update('0')
 

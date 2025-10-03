@@ -11,6 +11,7 @@ from ui_py.mainui import Ui_MainWindow
 from wins.executors_win import ExecWin
 from wins.amorts_win import AmortWin
 from wins.archive_win import ArchiveWin
+from wins.txt_msg import TextMsg
 
 
 class AppWindow(QMainWindow):
@@ -75,8 +76,6 @@ class AppWindow(QMainWindow):
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
-        self.controller.signals.traverse_referent_msg.connect(self.msg_traverse_referent)
-        self.controller.signals.wait_yellow_btn.connect(self.msg_yellow_btn)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
         self.controller.signals.lab_win_test.connect(self.lab_test_win)
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
@@ -85,7 +84,7 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
         self.controller.signals.save_result_test.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
-        self.controller.signals.reset_ui.connect(self.slot_start_page)
+        self.controller.signals.reset_ui.connect(self._start_page)
         self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
@@ -154,80 +153,22 @@ class AppWindow(QMainWindow):
 
     def controller_msg_slot(self, msg):
         try:
-            self.ui.ok_message_btn.setText('OK')
-            txt = ''
-            tag = 'warning'
-            if msg == 'pos_traverse':
-                txt = 'ПОЗИЦИОНИРОВАНИЕ\nТРАВЕРСЫ'
-                tag = 'attention'
-
-            elif msg == 'move_detection':
-                txt = 'ВНИМАНИЕ!\nБудет произведено\nопределение хода'
-                tag = 'attention'
-
-            elif msg == 'gear_set_pos':
-                txt = 'ВНИМАНИЕ!\nПРОВОРОТ ПРИВОДА\nВ ПОЛОЖЕНИЕ\nДЛЯ РЕГУЛИРОВКИ ХОДА'
-                tag = 'attention'
-
-            elif msg == 'pumping':
-                txt = 'ПРОКАЧКА\nАМОРТИЗАТОРА'
-                tag = 'attention'
-
-            elif msg == 'lost_control':
-                txt = 'ПОТЕРЯНО\nУПРАВЛЕНИЕ'
-
-            elif msg == 'excess_force':
-                txt = 'ПРЕВЫШЕНИЕ\nУСИЛИЯ'
-
-            elif msg == 'excess_temperature':
-                txt = 'ПРЕВЫШЕНА\nМАКСИМАЛЬНО\nДОПУСТИМАЯ\nТЕМПЕРАТУРА'
-
-            elif msg == 'safety_fence':
-                txt = 'ОТКРЫТО\nЗАЩИТНОЕ\nОГРАЖДЕНИЕ'
-
+            if msg == 'yellow_btn':
+                txt_btn = 'ЗАПУСК'
             elif msg == 'alarm_traverse_up':
-                txt = 'ТРАВЕРСА\nВ ВЕРХНЕМ\nПОЛОЖЕНИИ!\nНАЖМИТЕ\nКНОПКУ РАЗБЛОКИРОВКИ\nИ УДЕРЖИВАЯ ЕЁ\nНАЖМИТЕ КНОПКУ\nНА ЭКРАНЕ'
-                self.ui.ok_message_btn.setText('ОПУСТИТЬ')
-
+                txt_btn = 'ОПУСТИТЬ'
             elif msg == 'alarm_traverse_down':
-                txt = 'ТРАВЕРСА\nВ НИЖНЕМ\nПОЛОЖЕНИИ!\nНАЖМИТЕ\nКНОПКУ РАЗБЛОКИРОВКИ\nИ УДЕРЖИВАЯ ЕЁ\nНАЖМИТЕ КНОПКУ\nНА ЭКРАНЕ'
-                self.ui.ok_message_btn.setText('ПОДНЯТЬ')
-
-            elif msg == 'traverse_block':
-                txt = 'ТРАВЕРСА\nНЕ РАЗБЛОКИРОВАНА'
-
-            elif msg == 'traverse_unblock':
-                txt = 'ТРАВЕРСА\nНЕ ЗАБЛОКИРОВАНА'
-
+                txt_btn = 'ПОДНЯТЬ'
             else:
-                print(msg)
-
-            self.main_ui_msg(txt, tag)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/slot_controller_msg - {e}')
-
-    def msg_traverse_referent(self):
-        try:
-            txt = 'ОПРЕДЕЛЕНИЕ\nРЕФЕРЕНТНОЙ ТОЧКИ\nТРАВЕРСЫ'
-            self.main_ui_msg(txt, 'attention')
+                txt_btn = 'OK'
+            self.ui.ok_message_btn.setText(txt_btn)
+            self.main_ui_msg(*TextMsg.msg_from_controller(msg))
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/msg_traverse_referent - {e}')
+            self.status_bar_ui(f'ERROR in view/controller_msg_slot - {e}')
 
-    def msg_yellow_btn(self):
-        try:
-            self.ui.ok_message_btn.setText('ЗАПУСК')
-            txt = 'НАЖМИТЕ\nЖЁЛТУЮ\nКНОПКУ\nДЛЯ ЗАПУСКА\nИСПЫТАНИЯ'
-            self.main_ui_msg(txt, 'question')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/msg_yellow_btn - {e}')
-
-    def main_ui_msg(self, txt, tag):
+    def main_ui_msg(self, tag, txt):
         try:
             backcolor = ''
             color = glob_var.COLOR_BLACK
@@ -267,9 +208,7 @@ class AppWindow(QMainWindow):
 
     def btn_main_stop_clicked(self):
         try:
-            txt = 'РАБОТА ПРЕРВАНА\nПО КОМАНДЕ\nОПЕРАТОРА'
-            tag = 'warning'
-            self.main_ui_msg(txt, tag)
+            self.main_ui_msg(*TextMsg.msg_from_controller('red_btn'))
             self.controller.work_interrupted_operator()
             self.logger.info(f'PUSH BIG RED BUTTON')
 
@@ -332,28 +271,16 @@ class AppWindow(QMainWindow):
     def main_stop_state(self, state):
         self.ui.main_STOP_btn.setEnabled(state)
 
-    def slot_start_page(self):
-        try:
-            self._start_page()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/slot_start_page - {e}')
-
     def _start_page(self):
         try:
             self.main_stop_state(False)
             if self.model.client:
-                txt = "Здравствуйте.\nДобро пожаловать\nв\nпрограмму.\nВыберите необходимый\nпункт меню."
-                tag = 'info'
-                self.main_ui_msg(txt, tag)
+                self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
                 self.main_btn_state(True)
                 self.main_ui_state(True)
 
             else:
-                txt = "ОТСУТСТВУЕТ\nПОДКЛЮЧЕНИЕ\nК\nКОНТРОЛЛЕРУ."
-                tag = 'attention'
-                self.main_ui_msg(txt, tag)
+                self.main_ui_msg(*TextMsg.msg_from_controller('connect_lost'))
                 self.main_ui_state(False)
 
         except Exception as e:
@@ -893,21 +820,22 @@ class AppWindow(QMainWindow):
                 speed = self.model.amort.speed_one
 
             name = self.model.amort.name
-            dimensions = f'{self.model.amort.min_length} - {self.model.amort.max_length}'
+            dimensions = f'{self.model.amort.min_length}~{self.model.amort.max_length}'
             hod = f'{self.model.amort.hod}'
             speed_one = f'{self.model.amort.speed_one}'
             speed_two = f'{self.model.amort.speed_two}'
-            limit_comp_one = f'{self.model.amort.min_comp} - {self.model.amort.max_comp}'
-            limit_comp_two = f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}'
-            limit_recoil_one = f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}'
-            limit_recoil_two = f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}'
+            limit_comp_one = f'{self.model.amort.min_comp}~{self.model.amort.max_comp}'
+            limit_comp_two = f'{self.model.amort.min_comp_2}~{self.model.amort.max_comp_2}'
+            limit_recoil_one = f'{self.model.amort.min_recoil}~{self.model.amort.max_recoil}'
+            limit_recoil_two = f'{self.model.amort.min_recoil_2}~{self.model.amort.max_recoil_2}'
             temper = f'{self.model.amort.max_temper}'
 
-            txt_log = (f'Start {self.model.type_test} test --> name = {name}, speed = {speed}, dimensions = {dimensions}, '
-                       f'hod = {hod}, speed_one = {speed_one}, speed_two = {speed_two}, '
-                       f'limit_comp_one = {limit_comp_one}, limit_comp_two = {limit_comp_two}, '
-                       f'limit_recoil_one = {limit_recoil_one}, limit_comp_two = {limit_comp_two}, '
-                       f'limit_recoil_two = {limit_recoil_two}, max_temper = {temper}')
+            txt_log = (f'Start {self.model.type_test} --> n={name}, s={speed}, '
+                       f'dim={dimensions}, h={hod}, '
+                       f's_o={speed_one}, s_t={speed_two}, '
+                       f'l_c_o={limit_comp_one}, l_c_t={limit_comp_two}, '
+                       f'l_r_o={limit_recoil_one}, l_r_t={limit_recoil_two}, '
+                       f'm_t={temper}')
 
             self.logger.info(txt_log)
 

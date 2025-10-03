@@ -506,10 +506,11 @@ class Model:
     def _choice_push_force(self):
         try:
             if self.flag_push_force:
-                
+                self._calc_dynamic_push_force()
                 return self.dynamic_push_force
 
             else:
+                self.dynamic_push_force = 0
                 return self.static_push_force
 
         except Exception as e:
@@ -527,7 +528,7 @@ class Model:
                 self.clear_data_in_graph()
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
-                self._calc_dynamic_push_force()
+                
                 push_force = self._choice_push_force()
                 self.max_recoil = round(max_recoil + push_force, 1)
                 self.max_comp = round(max_comp + push_force, 1)
