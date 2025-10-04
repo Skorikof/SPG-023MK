@@ -2,7 +2,7 @@
 from PySide6.QtCore import QTimer, QThreadPool
 
 from logger import my_logger
-from my_thread.my_threads import WriterArchive
+from my_thread.writer_archive import WriterArchive
 
 
 class WriterArch:

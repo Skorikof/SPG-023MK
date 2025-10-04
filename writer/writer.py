@@ -3,7 +3,7 @@ from PySide6.QtCore import QTimer, QThreadPool, QObject, Signal
 import modbus_tk.defines as cst
 
 from logger import my_logger
-from my_thread.my_threads import WriterThread
+from my_thread.thread_writer import WriterThread
 
 
 class WriterSignals(QObject):

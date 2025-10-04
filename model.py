@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QThreadPool, Signal, QTimer
 
 from logger import my_logger
 from test_obj import OperatorSchema
-from my_thread.my_threads import Reader
+from my_thread.thread_reader import Reader
 from settings.settings import PrgSettings
 from my_parser.parser import ParserSPG023MK
 from calc_data.data_calculation import CalcData
