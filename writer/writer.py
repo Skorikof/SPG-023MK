@@ -58,7 +58,6 @@ class Writer:
                                   command=command)
 
             if not self.writer_flag_init:
-                writer.signals.thread_log.connect(self._log_info_write_thread)
                 writer.signals.thread_err.connect(self._log_error_write_thread)
                 writer.signals.write_result.connect(self._result_write)
                 self.writer_flag_init = True
@@ -68,31 +67,26 @@ class Writer:
         except Exception as e:
             self.logger.error(e)
 
-    def _log_info_write_thread(self, txt_log):
-        self.logger.info(txt_log)
-
     def _log_error_write_thread(self, txt_log):
         self.logger.error(txt_log)
 
     def _result_write(self, response):
         try:
-            res = response[0]
-            tag = response[1]
-            # addr = response[2]
-            # value = response[3]
-            command = response[4]
+            self.logger.debug(f'Write result --> {response[1]}, {response[0]}, '
+                              f'addr={response[2]:x}, val={response[3]}, '
+                              f'com={response[4]}')
             if self.query_write:
                 self.query_write = False
                 self.list_write.pop(0)
-                if tag == 'FC':
-                    self.logger.debug(f'FC command write --> {res}')
+                if response[1] == 'FC':
+                    pass
                 
-                else:
-                    if command == 'buffer_on' or command == 'buffer_off':
-                        self._pars_result_write_force(res, command)
+                elif response[1] == 'reg':
+                    if response[4] == 'buffer_on' or response[4] == 'buffer_off':
+                        self._pars_result_write_force(response[0], response[4])
 
-                # if res == 'OK!':
-                #     pass
+                else:
+                    pass
 
         except Exception as e:
             self.logger.error(e)

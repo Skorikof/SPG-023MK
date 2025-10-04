@@ -147,7 +147,7 @@ class Model:
 
             self.save_arch = WriterArch()
             self.save_arch.timer_writer_arch_start()
-            self.logger.debug('Writer Archive is initialized and started')
+            self.logger.debug('Writer Archive is initialized and timer started')
             
             self._stand_initialisation()
 
@@ -170,10 +170,6 @@ class Model:
         self.logger.error(txt_log)
         self.status_bar_msg(txt_log)
 
-    def log_info_thread(self, txt_log):
-        self.logger.info(txt_log)
-        self.status_bar_msg(txt_log)
-
     def _init_signals(self):
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
@@ -182,7 +178,6 @@ class Model:
 
     def _init_reader(self):
         self.reader = Reader(self.client.client, cst)
-        self.reader.signals.thread_log.connect(self.log_info_thread)
         self.reader.signals.thread_err.connect(self.log_error_thread)
         self.reader.signals.read_result.connect(self._reader_result)
         self.signals.read_start.connect(self.reader.start_read)

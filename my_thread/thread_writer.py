@@ -4,7 +4,7 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 class Signals(QObject):
     thread_err = Signal(str)
-    write_result = Signal(list)
+    write_result = Signal(tuple)
 
 
 class WriterThread(QRunnable):
@@ -34,16 +34,18 @@ class WriterThread(QRunnable):
                         rw = self.client.execute(1, self.cst.WRITE_MULTIPLE_REGISTERS,
                                                  self.reg_write, output_value=tuple(self.values))
                         self.number_attempts = 10
-                        response = ['OK!', self.tag, self.reg_write, self.values, self.command]
-                        self.signals.write_result.emit(response)
+                        self.signals.write_result.emit(('OK!', self.tag,
+                                                        self.reg_write,
+                                                        self.values, self.command,))
 
                     except:
                         self.number_attempts += 1
                         time.sleep(0.02)
 
                 if not self.number_attempts == 10:
-                    response = ['ERROR!', self.tag, self.reg_write, self.values, self.command]
-                    self.signals.write_result.emit(response)
+                    self.signals.write_result.emit(('ERROR!', self.tag,
+                                                    self.reg_write, self.values,
+                                                    self.command,))
 
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread_writer reg --> {e}')
@@ -112,12 +114,13 @@ class WriterThread(QRunnable):
                         except Exception as e:
                             self.number_attempts += 1
                             if self.number_attempts >= self.max_attempts:
-                                response = ['ERROR!', self.tag, 0x2061, self.freq_command, self.command]
-                                self.signals.write_result.emit(response)
+                                self.signals.write_result.emit(('ERROR!', self.tag,
+                                                                0x2061, self.freq_command,
+                                                                self.command,))
 
                 if self.flag_next:
-                    response = ['OK!', self.tag, 0x2061, self.freq_command, self.command]
-                    self.signals.write_result.emit(response)
+                    self.signals.write_result.emit(('OK!', self.tag, 0x2061,
+                                                    self.freq_command, self.command,))
 
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread_writer FC --> {e}')

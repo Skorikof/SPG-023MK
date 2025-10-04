@@ -26,9 +26,11 @@ def main():
         win.setWindowIcon(QIcon('icon/shock-absorber.png'))
         win.show()
         sys.exit(app.exec())
+        log.debug('Exit program')
 
     except:
-        print('sys.exit(0)')
+        log.debug('sys.exit(0)')
+        sys.exit(0)
 
 
 if __name__ == '__main__':
