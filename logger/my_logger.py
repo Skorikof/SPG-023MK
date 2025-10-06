@@ -1,6 +1,7 @@
+import os
 import logging
 from datetime import datetime
-import os
+
 
 _log_format = "%(asctime)s - [%(levelname)s] - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
 _date_log = str(datetime.now().day).zfill(2) + '_' + str(datetime.now().month).zfill(2) + \
