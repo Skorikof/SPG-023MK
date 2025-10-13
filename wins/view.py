@@ -152,6 +152,7 @@ class AppWindow(QMainWindow):
 
     def controller_msg_slot(self, msg):
         try:
+            txt_btn = ''
             if msg == 'yellow_btn':
                 txt_btn = 'ЗАПУСК'
             elif msg == 'alarm_traverse_up':
@@ -169,37 +170,41 @@ class AppWindow(QMainWindow):
 
     def main_ui_msg(self, tag, txt):
         try:
-            backcolor = ''
-            color = glob_var.COLOR_BLACK
+            if tag != None or txt != None:
+                backcolor = ''
+                color = glob_var.COLOR_BLACK
 
-            if tag == 'info':
-                self.ui.message_btn_frame.setVisible(False)
+                if tag == 'info':
+                    self.ui.message_btn_frame.setVisible(False)
 
-            if tag == 'question':
-                backcolor = glob_var.COLOR_ORANGE
-                self.ui.message_btn_frame.setVisible(True)
-                self.ui.ok_message_btn.setVisible(True)
-                self.ui.cancel_message_btn.setVisible(True)
+                if tag == 'question':
+                    backcolor = glob_var.COLOR_ORANGE
+                    self.ui.message_btn_frame.setVisible(True)
+                    self.ui.ok_message_btn.setVisible(True)
+                    self.ui.cancel_message_btn.setVisible(True)
 
-            elif tag == 'attention':
-                backcolor = glob_var.COLOR_ORANGE
-                self.ui.message_btn_frame.setVisible(False)
+                elif tag == 'attention':
+                    backcolor = glob_var.COLOR_ORANGE
+                    self.ui.message_btn_frame.setVisible(False)
 
-            elif tag == 'warning':
-                backcolor = glob_var.COLOR_RED
-                color = glob_var.COLOR_LYELLOW
-                self.ui.message_btn_frame.setVisible(True)
-                self.main_ui_state(True)
-                self.ui.ok_message_btn.setVisible(True)
-                self.ui.ok_message_btn.setEnabled(True)
-                self.ui.cancel_message_btn.setVisible(False)
-                self.main_btn_state(False)
-            self.ui.main_stackedWidget.setCurrentIndex(0)
-            self.ui.stack_start_label.setText(txt)
-            self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
-                                                    "color: " + color + ";")
+                elif tag == 'warning':
+                    backcolor = glob_var.COLOR_RED
+                    color = glob_var.COLOR_LYELLOW
+                    self.ui.message_btn_frame.setVisible(True)
+                    self.main_ui_state(True)
+                    self.ui.ok_message_btn.setVisible(True)
+                    self.ui.ok_message_btn.setEnabled(True)
+                    self.ui.cancel_message_btn.setVisible(False)
+                    self.main_btn_state(False)
+                self.ui.main_stackedWidget.setCurrentIndex(0)
+                self.ui.stack_start_label.setText(txt)
+                self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
+                                                        "color: " + color + ";")
 
-            self.tag_msg = tag
+                self.tag_msg = tag
+                
+            else:
+                pass
 
         except Exception as e:
             self.logger.error(e)

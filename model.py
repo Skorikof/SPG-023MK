@@ -137,17 +137,17 @@ class Model:
 
         if self.client.flag_connect:
             self.writer = Writer(self.client.client)
-            self.logger.debug('Writer is initialized')
+            # self.logger.debug('Writer is initialized')
             self.writer.timer_writer_start()
-            self.logger.debug('Timer Writer started')
+            # self.logger.debug('Timer Writer started')
 
             self._init_signals()
             self._init_reader()
-            self.logger.debug('Reader is initialized and started')
+            # self.logger.debug('Reader is initialized and started')
 
             self.save_arch = WriterArch()
             self.save_arch.timer_writer_arch_start()
-            self.logger.debug('Writer Archive is initialized and timer started')
+            # self.logger.debug('Writer Archive is initialized and timer started')
             
             self._stand_initialisation()
 
@@ -686,6 +686,12 @@ class Model:
 
             if self.state_dict.get('excess_force'):
                 self.write_bit_emergency_force()
+                
+            if hod is None:
+                if self.amort is None:
+                    hod = 120
+                else:
+                    hod = self.amort.hod
                 
             values = self.fc.freq_command(tag, adr, speed, freq, hod)
             self.writer.write_out('FC', freq_command=values)

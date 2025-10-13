@@ -303,7 +303,7 @@ class Steps:
 
             if 1 < abs(point - self.model.move_traverse) <= 5:
                 if not self.flag_freq_2_step:
-                    self.model.f_control(**{'tag':'speed', 'adr':2, 'freq':15})
+                    self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':15})
                     self.flag_freq_2_step = True
 
             if abs(point - self.model.move_traverse) <= 0.5:

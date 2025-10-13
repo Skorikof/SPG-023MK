@@ -42,7 +42,7 @@ class TextMsg:
                                          'ТРАВЕРСА\nНЕ ЗАБЛОКИРОВАНА')
                     }      
 
-        find_msg = msg_dict.get(msg)
+        find_msg = msg_dict.get(msg, (None, None))
         tag, txt = find_msg[0], find_msg[1]
 
         return tag, txt

@@ -66,20 +66,8 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_init_signals - {e}')
 
-    def _position_traverse(self):
-        self.signals.control_msg.emit(f'pos_traverse')
-
     def _alarm_traverse_position(self, pos):
         self.signals.control_msg.emit(f'alarm_traverse_{pos}')
-
-    def _move_detection(self):
-        self.signals.control_msg.emit(f'move_detection')
-
-    def _gear_set_pos(self):
-        self.signals.control_msg.emit('gear_set_pos')
-
-    def _pumping_msg(self):
-        self.signals.control_msg.emit('pumping')
 
     def change_stage_controller(self, stage: str):
         self.stage = stage
@@ -87,6 +75,7 @@ class Controller:
 
     def change_next_stage_controller(self, stage: str):
         self.next_stage = stage
+        self.logger.debug(f'Next Stage --> {stage}')
 
     def _full_cycle_update(self, command: str):
         try:
@@ -181,14 +170,14 @@ class Controller:
             elif self.stage == 'start_point_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
                     self.next_stage = 'test_move_cycle'
-                    self._move_detection()
+                    self.signals.control_msg.emit(f'move_detection')
                     self._full_cycle_update('0')
                     self.steps.step_test_move_cycle()
                     self.stage = 'wait_buffer'
 
             elif self.stage == 'test_move_cycle':
                 if self.count_cycle >= 1:
-                    self._pumping_msg()
+                    self.signals.control_msg.emit('pumping')
                     self._full_cycle_update('0')
                     self.steps.step_pumping_before_test()
 
@@ -422,7 +411,7 @@ class Controller:
 
     def search_hod_gear(self):
         try:
-            self._move_detection()
+            self.signals.control_msg.emit(f'move_detection')
             self._full_cycle_update('0')
             self.steps.step_search_hod_gear()
 
@@ -432,7 +421,7 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
-            self._gear_set_pos()
+            self.signals.control_msg.emit('gear_set_pos')
             self._full_cycle_update('0')
             self.steps.step_move_gear_set_pos()
 
@@ -452,7 +441,7 @@ class Controller:
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
-                self._position_traverse()
+                self.signals.control_msg.emit(f'pos_traverse')
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
 
@@ -463,14 +452,14 @@ class Controller:
 
             elif tag == 'start_test':
                 start_point = int(stock_point - len_max - adapter + mid_point)
-                self._position_traverse()
+                self.signals.control_msg.emit(f'pos_traverse')
                 self.stage = 'start_point_amort'
                 self.set_trav_point = start_point
                 self.steps.step_traverse_move_position(start_point)
 
             elif tag == 'stop_test':
                 if not self.model.flag_alarm:
-                    self._position_traverse()
+                    self.signals.control_msg.emit(f'pos_traverse')
 
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
 
