@@ -33,12 +33,12 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.setWindowIcon(QIcon('icon/archive.png'))
         
         self.calc_data = CalcData()
-        self.move_graph = MoveGraph(self.duble_graphwidget)
-        self.cascade_graph = CascadeGraph(self.duble_graphwidget)
-        self.triple_graph = TripleGraph(self.triple_graphwidget)
-        self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
-        self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
-        self.temper_graph = TemperGraph(self.duble_graphwidget)
+        
+        
+        
+        
+        
+        
         self.screen_save = ScreenSave()
         self.archive = ReadArchive()
         self.archive_fill = ArchiveWinFill(self)
@@ -249,38 +249,32 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             type_graph = self.type_graph_list[self.index_type_graph]
             if type_graph == 'move':
                 self.stackedWidget.setCurrentIndex(0)
-                self.move_graph.gui_graph()
-                self.move_graph.gui_axis()
+                self.move_graph = MoveGraph(self.duble_graphwidget)
                 self._fill_lab_graph()
                 
             elif type_graph == 'boost_1':
                 self.stackedWidget.setCurrentIndex(0)
-                self.boost_one_graph.gui_graph()
-                self.boost_one_graph.gui_axis()
+                self.boost_one_graph = BoostGraphOne(self.duble_graphwidget)
                 self._fill_boost_one_graph()
 
             elif type_graph == 'boost_2':
                 self.stackedWidget.setCurrentIndex(0)
-                self.boost_two_graph.gui_graph()
-                self.boost_two_graph.gui_axis()
+                self.boost_two_graph = BoostGraphTwo(self.duble_graphwidget)
                 self._fill_boost_two_graph()
                 
             elif type_graph == 'triple':
                 self.stackedWidget.setCurrentIndex(1)
-                self.triple_graph.gui_graph()
-                self.triple_graph.gui_axis()
+                self.triple_graph = TripleGraph(self.triple_graphwidget)
                 self._fill_triple_graph()
 
             elif type_graph == 'speed':
                 self.stackedWidget.setCurrentIndex(0)
-                self.cascade_graph.gui_graph()
-                self.cascade_graph.gui_axis()
+                self.cascade_graph = CascadeGraph(self.duble_graphwidget)
                 self._fill_lab_cascade_graph()
 
             elif type_graph == 'temper':
                 self.stackedWidget.setCurrentIndex(0)
-                self.temper_graph.gui_graph()
-                self.temper_graph.gui_axis()
+                self.temper_graph = TemperGraph(self.duble_graphwidget)
                 self._fill_temper_graph()
 
         except Exception as e:

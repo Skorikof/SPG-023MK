@@ -28,9 +28,9 @@ class AbstractGraph:
             
         self.widget.setTitle(title, color='k', size='16pt')
         
-    def _line_label(self, data: list) -> None:
+    def _line_label(self, data: tuple) -> None:
         if not data:
-            data = ['left', '', '']
+            data = ('left', '', '')
             
         line = data[0]
         name = data[1]

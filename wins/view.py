@@ -31,7 +31,8 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
-        self.model.write_bit_force_cycle(0)
+        if self.model.buffer_state[1] == 'buffer_on':
+            self.model.write_bit_force_cycle(0)
         
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
@@ -122,9 +123,7 @@ class AppWindow(QMainWindow):
 
     def _init_lab_graph(self):
         try:
-            self.graph = TestGraph(self.ui.lab_GraphWidget)
-            self.graph.gui_graph('move')
-            self.graph.gui_axis()
+            self.graph = TestGraph(self.ui.lab_GraphWidget, 'move')
 
         except Exception as e:
             self.logger.error(e)
@@ -132,9 +131,7 @@ class AppWindow(QMainWindow):
 
     def _init_conv_graph(self):
         try:
-            self.graph = TestGraph(self.ui.conv_GraphWidget)
-            self.graph.gui_graph('move')
-            self.graph.gui_axis()
+            self.graph = TestGraph(self.ui.conv_GraphWidget, 'move')
 
         except Exception as e:
             self.logger.error(e)
@@ -142,9 +139,7 @@ class AppWindow(QMainWindow):
             
     def _init_temp_graph(self):
         try:
-            self.graph = TestGraph(self.ui.lab_GraphWidget)
-            self.graph.gui_graph('temper')
-            self.graph.gui_axis()
+            self.graph = TestGraph(self.ui.lab_GraphWidget, 'temper')
             
         except Exception as e:
             self.logger.error(e)

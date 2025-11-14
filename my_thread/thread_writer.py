@@ -36,7 +36,7 @@ class WriterThread(QRunnable):
                         self.number_attempts = 10
                         self.signals.write_result.emit(('OK!', self.tag,
                                                         self.reg_write,
-                                                        self.values, self.command,))
+                                                        self.values, self.command))
 
                     except:
                         self.number_attempts += 1
@@ -45,7 +45,7 @@ class WriterThread(QRunnable):
                 if not self.number_attempts == 10:
                     self.signals.write_result.emit(('ERROR!', self.tag,
                                                     self.reg_write, self.values,
-                                                    self.command,))
+                                                    self.command))
 
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread_writer reg --> {e}')
@@ -116,11 +116,11 @@ class WriterThread(QRunnable):
                             if self.number_attempts >= self.max_attempts:
                                 self.signals.write_result.emit(('ERROR!', self.tag,
                                                                 0x2061, self.freq_command,
-                                                                self.command,))
+                                                                self.command))
 
                 if self.flag_next:
                     self.signals.write_result.emit(('OK!', self.tag, 0x2061,
-                                                    self.freq_command, self.command,))
+                                                    self.freq_command, self.command))
 
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread_writer FC --> {e}')

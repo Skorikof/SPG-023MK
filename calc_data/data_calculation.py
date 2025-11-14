@@ -1,5 +1,4 @@
 import statistics
-import crcmod
 from struct import pack
 
 from logger import my_logger

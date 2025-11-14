@@ -8,29 +8,20 @@ from calc_graph.abstract_graph import AbstractGraph
 from calc_graph.calc_graph_values import CalcGraphValue
 
 
-class TripleGraph:
+class TripleGraph(AbstractGraph):
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
-        self.graph = AbstractGraph(widget)
-
-    def gui_graph(self):
-        try:
-            kwargs = {'title': 'Диаграмма хода, скорости, силы сопротивления',
-                      'left': ['left', 'Смещение или Скорость', 'мм или мм/с'],
-                      'bottom': ['bottom', 'ω * t', '°'],
-                      'right': ['right', 'Усилие', 'кгс']
-                      }
+        kwargs = {'title': 'Диаграмма хода, скорости, силы сопротивления',
+                  'left': ('left', 'Смещение или Скорость', 'мм или мм/с'),
+                  'bottom': ('bottom', 'ω * t', '°'),
+                  'right': ('right', 'Усилие', 'кгс')
+                  }
             
-            self.graph.gui_graph(**kwargs)
-            
-        except Exception as e:
-            self.logger.error(e)
-            
-    def gui_axis(self):
-        self.graph.gui_axis('left')
-        self.graph.gui_axis('bottom')
-        self.graph.gui_axis('right')
+        self.gui_graph(**kwargs)
+        self.gui_axis('left')
+        self.gui_axis('bottom')
+        self.gui_axis('right')
                 
     def calc_force_graph(self, data):
         try:

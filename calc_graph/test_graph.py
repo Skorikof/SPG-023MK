@@ -5,32 +5,24 @@ from logger import my_logger
 from calc_graph.abstract_graph import AbstractGraph
 
 
-class TestGraph:
-    def __init__(self, widget):
+class TestGraph(AbstractGraph):
+    def __init__(self, widget, tag):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
-        self.graph = AbstractGraph(widget)
-
-    def gui_graph(self, tag):
-        try:
-            if tag == 'move':
-                kwargs = {'title': 'График зависимости усилия от перемещения',
-                        'left': ['left', 'Усилие', 'кгс'],
-                        'bottom': ['bottom', 'Перемещение', 'мм']
-                      }
-            else:
-                kwargs = {'title': 'График зависимости усилия от температуры',
-                          'left': ['left', 'Усилие', 'кгс'],
-                          'bottom': ['bottom', 'Температура', '℃']
-                      }
-            self.graph.gui_graph(**kwargs)
-                        
-        except Exception as e:
-            self.logger.error(e)
-            
-    def gui_axis(self):
-        self.graph.gui_axis('left')
-        self.graph.gui_axis('bottom')
+        
+        if tag == 'move':
+            kwargs = {'title': 'График зависимости усилия от перемещения',
+                    'left': ('left', 'Усилие', 'кгс'),
+                    'bottom': ('bottom', 'Перемещение', 'мм')
+                    }
+        else:
+            kwargs = {'title': 'График зависимости усилия от температуры',
+                        'left': ('left', 'Усилие', 'кгс'),
+                        'bottom': ('bottom', 'Температура', '℃')
+                    }
+        self.gui_graph(**kwargs)
+        self.gui_axis('left')
+        self.gui_axis('bottom')
 
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
@@ -43,7 +35,7 @@ class TestGraph:
             
     def _select_color_line(self, ind):
         try:
-            color_pen = ['black',
+            color_pen = ('black',
                          'blue',
                          'green',
                          'orange',
@@ -52,7 +44,7 @@ class TestGraph:
                          'olive',
                          'cyan',
                          'pink',
-                         'red']
+                         'red')
             
             if ind < 10:
                 ind = ind

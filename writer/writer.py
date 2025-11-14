@@ -28,6 +28,7 @@ class Writer:
         self.timer_writer = QTimer()
         self.timer_writer.setInterval(50)
         self.timer_writer.timeout.connect(self._control_write)
+        self.logger.debug('timer_writer is create')
 
     def _control_write(self):
         try:
@@ -35,17 +36,21 @@ class Writer:
                 if self.list_write:
                     obj_wr = self.list_write[0]
                     self.query_write = True
+                    self.logger.debug('query on write is locked')
 
                     self.threadpool.start(obj_wr)
+                    self.logger.debug('thread writer started')
 
         except Exception as e:
             self.logger.error(e)
 
     def timer_writer_start(self):
         self.timer_writer.start()
+        self.logger.debug('timer_writer started')
 
     def timer_writer_stop(self):
         self.timer_writer.stop()
+        self.logger.debug('timer_writer stopped')
 
     def _init_writer(self, tag, values=None, reg_write=None, freq_command=None, command=None):
         try:
@@ -72,11 +77,11 @@ class Writer:
 
     def _result_write(self, response):
         try:
-            self.logger.debug(f'Write result --> {response[1]}, {response[0]}, '
-                              f'addr={response[2]:x}, val={response[3]}, '
-                              f'com={response[4]}')
             if self.query_write:
-                self.query_write = False
+                self.logger.debug(f'Write result --> {response[1]}, {response[0]}, '
+                              f'addr={hex(response[2])}, val={response[3]}, '
+                              f'com={response[4]}')
+                
                 self.list_write.pop(0)
                 if response[1] == 'FC':
                     pass
@@ -87,6 +92,9 @@ class Writer:
 
                 else:
                     pass
+                
+                self.logger.debug('query on write is not locked')
+                self.query_write = False
 
         except Exception as e:
             self.logger.error(e)
@@ -97,6 +105,10 @@ class Writer:
     def write_out(self, tag, values=None, reg_write=None, freq_command=None, command=None):
         try:
             self.list_write.append(self._init_writer(tag, values, reg_write, freq_command, command))
+            if reg_write:
+                reg_write = hex(reg_write)
+            self.logger.debug(f'Write queny append --> addr={reg_write}, val={values}, '
+                              f'freq_command={freq_command}, com={command}')
 
         except Exception as e:
             self.logger.error(e)

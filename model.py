@@ -628,7 +628,7 @@ class Model:
         try:
             bit = self.state_dict.get('red_light', 0)
             if int(bit) != value:
-                self._write_reg_state(1, value)
+                self._write_reg_state(1, value, command='red_light')
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_bit_red_light - {e}')
@@ -637,7 +637,7 @@ class Model:
         try:
             bit = self.state_dict.get('green_light', 0)
             if int(bit) != value:
-                self._write_reg_state(2, value)
+                self._write_reg_state(2, value, command='green_light')
 
         except Exception as e:
             self.logger.error(e)
@@ -645,7 +645,7 @@ class Model:
 
     def write_bit_unblock_control(self):
         try:
-            self._write_reg_state(3, 1)
+            self._write_reg_state(3, 1, command='unblock_control')
 
         except Exception as e:
             self.logger.error(e)
@@ -653,7 +653,7 @@ class Model:
 
     def write_bit_emergency_force(self):
         try:
-            self._write_reg_state(4, 1)
+            self._write_reg_state(4, 1, command='reset_emergency_force')
 
         except Exception as e:
             self.logger.error(e)
@@ -663,7 +663,7 @@ class Model:
         try:
             bit = self.state_dict.get('select_temper', 0)
             if int(bit) != value:
-                self._write_reg_state(6, value)
+                self._write_reg_state(6, value, command='select_temper')
 
         except Exception as e:
             self.logger.error(e)

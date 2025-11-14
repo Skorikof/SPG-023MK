@@ -53,7 +53,7 @@ class CompareGraph:
             
     def select_color_line(self, ind):
         try:
-            color_pen = ['black',
+            color_pen = ('black',
                          'blue',
                          'green',
                          'orange',
@@ -62,7 +62,7 @@ class CompareGraph:
                          'olive',
                          'cyan',
                          'pink',
-                         'red']
+                         'red')
             
             if ind < 10:
                 ind = ind
@@ -80,8 +80,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
             graph = MoveGraph(self.ui.duble_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
@@ -119,8 +117,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
             graph = BoostGraphOne(self.ui.duble_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
@@ -157,8 +153,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
             graph = BoostGraphTwo(self.ui.duble_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
@@ -195,8 +189,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(1)
             graph = TripleGraph(self.ui.triple_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
@@ -240,8 +232,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
             graph = CascadeGraph(self.ui.duble_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
@@ -281,8 +271,6 @@ class CompareGraph:
         try:
             self.ui.stackedWidget.setCurrentIndex(0)
             graph = TemperGraph(self.ui.duble_graphwidget)
-            graph.gui_graph()
-            graph.gui_axis()
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
                 if ind == 0:
