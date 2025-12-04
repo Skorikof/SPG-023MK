@@ -346,9 +346,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
             else:
                 self._visible_compare_btn(True)
-                x_coord, y_coord = self.boost_one_graph.calc_graph(arch_obj)
-                self.boost_one_graph.fill_graph(x_coord, y_coord)
-                response = self.boost_one_graph.data_graph(arch_obj)
+                response = self.boost_one_graph.calc_graph(arch_obj)
+                self.boost_one_graph.fill_graph(response.get('x_coord'), response.get('y_coord'))
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
@@ -371,9 +370,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             
             else:
                 self._visible_compare_btn(True)
-                x_coord, y_coord = self.boost_two_graph.calc_graph(arch_obj)
-                self.boost_two_graph.fill_graph(x_coord, y_coord)
-                response = self.boost_two_graph.data_graph(arch_obj)
+                response = self.boost_two_graph.calc_graph(arch_obj)
+                self.boost_two_graph.fill_graph(response.get('x_coord'), response.get('y_coord'))
 
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'base')
@@ -428,11 +426,14 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._visible_compare_btn(True)
                 
                 arch_obj = self.archive.cascade[self.index_test]
-                r_x, r_y, c_x, c_y = self.cascade_graph.calc_graph(arch_obj)
-                self.cascade_graph.fill_graph(r_x, r_y, c_x, c_y)
+                response = self.cascade_graph.calc_graph(arch_obj)
+                
+                self.cascade_graph.fill_graph(response.get('r_x'),
+                                              response.get('r_y'),
+                                              response.get('c_x'),
+                                              response.get('c_y'))
                 self.cascade_graph.limit_line_graph(arch_obj)
                 
-                response = self.cascade_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'casc', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'casc')
                 
@@ -456,10 +457,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 
                 arch_obj = self.archive.temper[self.index_test]
                 
-                x, y1, y2 = self.temper_graph.calc_graph(arch_obj)
-                self.temper_graph.fill_graph(x, y1, y2)
+                response = self.temper_graph.calc_graph(arch_obj)
+                self.temper_graph.fill_graph(response.get('x_temp'),
+                                             response.get('y_rec'),
+                                             response.get('y_comp'))
 
-                response = self.temper_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'temper', self.index_date)
                 self.archive_fill.fill_lbl_push_force(arch_obj.flag_push_force, 'temper')
 

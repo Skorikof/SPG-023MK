@@ -13,9 +13,9 @@ class BoostGraphOne(AbstractGraph):
         self.widget = widget
         
         kwargs = {'title': 'График зависимости усилия от скорости',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Скорость', 'м/с')
-                      }
+                  'left': ('left', 'Усилие', 'кгс'),
+                  'bottom': ('bottom', 'Скорость', 'м/с'),
+                 }
         
         self.gui_graph(**kwargs)
         
@@ -24,16 +24,23 @@ class BoostGraphOne(AbstractGraph):
             
     def calc_graph(self, data):
         try:
+            push_force = CalcGraphValue().select_push_force(data)
+            recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
+            max_recoil = round(recoil + push_force, 2)
+            max_comp = round(comp + push_force, 2)
+            
             move_array = np.array(data.move_list)
             force_array = np.array(data.force_list)
-            
             speed_coord = CalcGraphValue().speed_coord(move_array, 'one')
             round_coord = CalcGraphValue().rounding_coord(speed_coord, 50)
-            
             x_coord = np.concatenate((round_coord, round_coord[:1]))
             y_coord = np.concatenate((force_array, force_array[:1]))
             
-            return x_coord, y_coord
+            return {'x_coord': x_coord,
+                    'y_coord': y_coord,
+                    'recoil': max_recoil,
+                    'comp': max_comp,
+                    'push_force': push_force}
         
         except Exception as e:
             self.logger.error(e)
@@ -45,21 +52,5 @@ class BoostGraphOne(AbstractGraph):
 
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
-        except Exception as e:
-            self.logger.error(e)
-            
-    def data_graph(self, data):
-        try:
-            push_force = CalcGraphValue().select_push_force(data)
-
-            recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
-
-            max_recoil = round(recoil + push_force, 2)
-            max_comp = round(comp + push_force, 2)
-            
-            return {'recoil': max_recoil,
-                    'comp': max_comp,
-                    'push_force': push_force}
-            
         except Exception as e:
             self.logger.error(e)

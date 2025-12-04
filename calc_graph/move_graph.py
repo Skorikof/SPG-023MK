@@ -11,9 +11,9 @@ class MoveGraph(AbstractGraph):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
         kwargs = {'title': 'График зависимости усилия от перемещения',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Перемещение', 'мм')
-                      }
+                  'left': ('left', 'Усилие', 'кгс'),
+                  'bottom': ('bottom', 'Перемещение', 'мм')
+                  }
             
         self.gui_graph(**kwargs)
         self.gui_axis('left')

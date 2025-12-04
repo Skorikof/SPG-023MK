@@ -17,8 +17,8 @@ class TestGraph(AbstractGraph):
                     }
         else:
             kwargs = {'title': 'График зависимости усилия от температуры',
-                        'left': ('left', 'Усилие', 'кгс'),
-                        'bottom': ('bottom', 'Температура', '℃')
+                      'left': ('left', 'Усилие', 'кгс'),
+                      'bottom': ('bottom', 'Температура', '℃')
                     }
         self.gui_graph(**kwargs)
         self.gui_axis('left')

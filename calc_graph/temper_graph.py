@@ -22,10 +22,22 @@ class TemperGraph(AbstractGraph):
         try:
             push_force = CalcGraphValue().select_push_force(data)
             
-            y_coord_recoil = [x + push_force for x in data.recoil_list]
-            y_coord_comp = [x + push_force for x in data.comp_list]
-                        
-            return data.temper_list, y_coord_recoil, y_coord_comp
+            recoil = [x + push_force for x in data.recoil_list]
+            comp = [x + push_force for x in data.comp_list]
+            
+            return {'y_rec': recoil,
+                    'y_comp': comp,
+                    'x_temp': data.temper_list,
+                    'start_recoil': recoil[0],
+                    'end_recoil': recoil[-1],
+                    'start_comp': comp[0],
+                    'end_comp': comp[-1],
+                    'start_temper': data.temper_list[0],
+                    'end_temper': data.temper_list[-1],
+                    'push_force': push_force,
+                    'speed': data.speed,
+                    }
+            
             
         except Exception as e:
             self.logger.error(e)
@@ -39,26 +51,6 @@ class TemperGraph(AbstractGraph):
 
             self.widget.plot(x_coord, y_r, pen=pen_r, name=name_r)
             self.widget.plot(x_coord, y_c, pen=pen_c, name=name_c)
-
-        except Exception as e:
-            self.logger.error(e)
-            
-    def data_graph(self, data):
-        try:
-            push_force = CalcGraphValue().select_push_force(data)
-            
-            recoil = [x + push_force for x in data.recoil_list]
-            comp = [x + push_force for x in data.comp_list]
-            
-            return {'start_recoil': recoil[0],
-                    'end_recoil': recoil[-1],
-                    'start_comp': comp[0],
-                    'end_comp': comp[-1],
-                    'start_temper': data.temper_list[0],
-                    'end_temper': data.temper_list[-1],
-                    'push_force': push_force,
-                    'speed': data.speed,
-                    }
 
         except Exception as e:
             self.logger.error(e)

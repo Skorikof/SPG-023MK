@@ -119,10 +119,9 @@ class CompareGraph:
             graph = BoostGraphOne(self.ui.duble_graphwidget)
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
+                response = graph.calc_graph(arch_obj)
                 if ind == 0:
-                    self._fill_compare_boost_one_data(graph.data_graph(arch_obj), arch_obj.speed)
-                
-                x_coord, y_coord = graph.calc_graph(arch_obj)
+                    self._fill_compare_boost_one_data(response, arch_obj.speed)
                 
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.name} - '
@@ -133,7 +132,7 @@ class CompareGraph:
                                width=3,
                                style=self.select_line_style(ind))
                 
-                graph.fill_graph(x_coord, y_coord, pen, name)
+                graph.fill_graph(response.get('x_coord'), response.get('y_coord'), pen, name)
                 
             
         except Exception as e:
@@ -155,10 +154,9 @@ class CompareGraph:
             graph = BoostGraphTwo(self.ui.duble_graphwidget)
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
+                response = graph.calc_graph(arch_obj)
                 if ind == 0:
-                    self._fill_compare_boost_one_data(graph.data_graph(arch_obj), arch_obj.speed)
-                
-                x_coord, y_coord = graph.calc_graph(arch_obj)
+                    self._fill_compare_boost_one_data(response, arch_obj.speed)
                 
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.name} - '
@@ -169,7 +167,7 @@ class CompareGraph:
                                width=3,
                                style=self.select_line_style(ind))
                 
-                graph.fill_graph(x_coord, y_coord, pen, name)
+                graph.fill_graph(response.get('x_coord'), response.get('y_coord'), pen, name)
                 
             
         except Exception as e:
@@ -234,8 +232,9 @@ class CompareGraph:
             graph = CascadeGraph(self.ui.duble_graphwidget)
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
+                response = graph.calc_graph(arch_obj)
                 if ind == 0:
-                    self._fill_compare_speed_data(graph.data_graph(arch_obj))
+                    self._fill_compare_speed_data(response)
                     
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.name} - '
@@ -246,9 +245,11 @@ class CompareGraph:
                                width=3,
                                style=self.select_line_style(ind))
                 
-                r_x, r_y, c_x, c_y = graph.calc_graph(arch_obj)
-                
-                graph.fill_graph(r_x, r_y, c_x, c_y, pen, pen, name, None)
+                graph.fill_graph(response.get('r_x'),
+                                 response.get('r_y'),
+                                 response.get('c_x'),
+                                 response.get('c_y'),
+                                 pen, pen, name, None)
                 
                 graph.limit_line_graph(arch_obj)
             
@@ -273,8 +274,9 @@ class CompareGraph:
             graph = TemperGraph(self.ui.duble_graphwidget)
             for ind, obj in enumerate(self.compare_data):
                 arch_obj = obj[2]
+                response = graph.calc_graph(arch_obj)
                 if ind == 0:
-                    self._fill_compare_temper_data(graph.data_graph(arch_obj))
+                    self._fill_compare_temper_data(response)
             
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.name} - '
@@ -285,8 +287,10 @@ class CompareGraph:
                                width=3,
                                style=self.select_line_style(ind))
                 
-                x, y1, y2 = graph.calc_graph(arch_obj)
-                graph.fill_graph(x, y1, y2, pen, pen, name, name)
+                graph.fill_graph(response.get('x_temp'),
+                                 response.get('y_rec'),
+                                 response.get('y_comp'),
+                                 pen, pen, name, name)
             
         except Exception as e:
             self.logger.error(e)

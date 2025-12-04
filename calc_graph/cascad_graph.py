@@ -11,9 +11,9 @@ class CascadeGraph(AbstractGraph):
         self.widget = widget
         
         kwargs = {'title': 'График зависимости усилия от скорости',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Скорость', 'м/с')
-                      }
+                  'left': ('left', 'Усилие', 'кгс'),
+                  'bottom': ('bottom', 'Скорость', 'м/с')
+                  }
             
         self.gui_graph(**kwargs)
         self.gui_axis('left')
@@ -56,10 +56,10 @@ class CascadeGraph(AbstractGraph):
     def calc_graph(self, data):
         try:
             push_force = CalcGraphValue().select_push_force(data)
+            recoil = [round(x + push_force, 2) for x in data.recoil_list]
+            comp = [round(x + push_force, 2) for x in data.comp_list]            
             
             speed = data.speed_list[:]
-            recoil = [round(x + push_force, 2) for x in data.recoil_list]
-            comp = [round(x + push_force, 2) for x in data.comp_list]
             
             speed.insert(0, 0)
             recoil.insert(0, 0)
@@ -68,7 +68,14 @@ class CascadeGraph(AbstractGraph):
             r_x, r_y = CalcGraphValue().interpoly_line_coord(speed, recoil)
             c_x, c_y = CalcGraphValue().interpoly_line_coord(speed, comp)
             
-            return r_x, r_y, c_x, c_y
+            return {'r_x': r_x,
+                    'r_y': r_y,
+                    'c_x': c_x,
+                    'c_y': c_y,
+                    'push_force': push_force,
+                    'speed': speed,
+                    'recoil': recoil,
+                    'comp': comp}
         
         except Exception as e:
             self.logger.error(e)
@@ -83,20 +90,5 @@ class CascadeGraph(AbstractGraph):
             self.widget.plot(r_x, r_y, pen=pen_r, name=name_r)
             self.widget.plot(c_x, c_y, pen=pen_c, name=name_c)
 
-        except Exception as e:
-            self.logger.error(e)
-            
-    def data_graph(self, data):
-        try:
-            push_force = CalcGraphValue().select_push_force(data)
-            
-            recoil = [round(x + push_force, 2) for x in data.recoil_list]
-            comp = [round(x + push_force, 2) for x in data.comp_list]
-            
-            return {'push_force': push_force,
-                    'speed': data.speed_list,
-                    'recoil': recoil,
-                    'comp': comp}
-            
         except Exception as e:
             self.logger.error(e)
