@@ -82,7 +82,6 @@ class AppWindow(QMainWindow):
         self.controller.signals.cancel_test.connect(self.cancel_test_slot)
         self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
         self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
-        self.controller.signals.save_result_test.connect(self.slot_save_lab_result)
         self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self._start_page)
         self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
@@ -875,7 +874,7 @@ class AppWindow(QMainWindow):
             self.main_btn_state(False)
 
             if self.model.type_test != 'conv':
-                self.list_lab = []
+                self.model.list_lab_result = []
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
                 self.ui.test_change_speed_btn.setVisible(False)
@@ -1127,13 +1126,13 @@ class AppWindow(QMainWindow):
 
         elif self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade':
             self.ui.lab_GraphWidget.clear()
-            self.graph.fill_compare_graph(self.list_lab)
+            self.graph.fill_compare_graph(self.model.list_lab_result)
 
     def slot_conv_test_stop(self):
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
         self.ui.conv_GraphWidget.clear()
-        self.graph.fill_compare_graph(self.list_lab)
+        self.graph.fill_compare_graph(self.model.list_lab_result)
 
     def cancel_test_conv_clicked(self):
         try:
@@ -1190,21 +1189,3 @@ class AppWindow(QMainWindow):
         self.main_ui_state(True)
         self.win_set.close()
         self.select_type_test()
-
-    def slot_save_lab_result(self, command):
-        try:
-            if self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade' or self.model.type_test == 'conv':
-                data_dict = {'speed': self.model.speed_test,
-                             'move': self.model.move[:],
-                             'force': self.model.force[:]}
-
-                self.list_lab.append(data_dict)
-
-            self.model.save_data_in_archive()
-
-            if command == 'end':
-                self.model.write_end_test_in_rchive()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/slot_save_lab_result - {e}')

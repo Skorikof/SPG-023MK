@@ -28,7 +28,6 @@ class Writer:
         self.timer_writer = QTimer()
         self.timer_writer.setInterval(50)
         self.timer_writer.timeout.connect(self._control_write)
-        self.logger.debug('timer_writer is create')
 
     def _control_write(self):
         try:
@@ -36,21 +35,17 @@ class Writer:
                 if self.list_write:
                     obj_wr = self.list_write[0]
                     self.query_write = True
-                    self.logger.debug('query on write is locked')
 
                     self.threadpool.start(obj_wr)
-                    self.logger.debug('thread writer started')
 
         except Exception as e:
             self.logger.error(e)
 
     def timer_writer_start(self):
         self.timer_writer.start()
-        self.logger.debug('timer_writer started')
 
     def timer_writer_stop(self):
         self.timer_writer.stop()
-        self.logger.debug('timer_writer stopped')
 
     def _init_writer(self, tag, values=None, reg_write=None, freq_command=None, command=None):
         try:
@@ -93,7 +88,6 @@ class Writer:
                 else:
                     pass
                 
-                self.logger.debug('query on write is not locked')
                 self.query_write = False
 
         except Exception as e:

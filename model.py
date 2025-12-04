@@ -109,6 +109,8 @@ class Model:
         self.speed_cascade = []
         self.power_amort = 0
         self.freq_piston = 0
+        
+        self.list_lab_result = []
 
     def _init_flags(self):
         self.flag_push_force = False
@@ -137,17 +139,13 @@ class Model:
 
         if self.client.flag_connect:
             self.writer = Writer(self.client.client)
-            # self.logger.debug('Writer is initialized')
             self.writer.timer_writer_start()
-            # self.logger.debug('Timer Writer started')
 
             self._init_signals()
             self._init_reader()
-            # self.logger.debug('Reader is initialized and started')
 
             self.save_arch = WriterArch()
             self.save_arch.timer_writer_arch_start()
-            # self.logger.debug('Writer Archive is initialized and timer started')
             
             self._stand_initialisation()
 
@@ -747,6 +745,23 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_red_switch_on - {e}')
+            
+    def save_result_cycle(self):
+        try:
+            if not self.move or not self.force:
+                pass
+            else:
+                if self.type_test == 'lab' or self.type_test == 'lab_cascade' or self.type_test == 'conv':
+                        data_dict = {'speed': self.speed_test,
+                                     'move': self.move[:],
+                                     'force': self.force[:]}
+
+                        self.list_lab_result.append(data_dict)
+                        
+                self.save_data_in_archive()
+                    
+        except Exception as e:
+            self.logger.error(e)
             
     def write_data_in_archive(self, tag, data=None):
         try:

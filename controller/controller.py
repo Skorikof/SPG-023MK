@@ -14,7 +14,6 @@ class ControlSignals(QObject):
     lab_win_test = Signal()
     lab_test_stop = Signal()
     conv_test_stop = Signal()
-    save_result_test = Signal(str)
     cancel_test = Signal()
     search_hod_msg = Signal()
     reset_ui = Signal()
@@ -202,16 +201,15 @@ class Controller:
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('one')
 
-                    self.signals.save_result_test.emit('end')
+                    self.model.write_end_test_in_archive()
                     self._test_on_two_speed(2)
 
             elif self.stage == 'test_speed_two':
                 if self.count_cycle >= 5:
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('two')
-
-                    self.signals.save_result_test.emit('end')
-
+                        
+                    self.model.write_end_test_in_archive()
                     self.stage = 'wait'
                     self.model.flag_fill_graph = False
                     self.steps.step_stop_gear_end_test()
@@ -220,7 +218,7 @@ class Controller:
                 if self.count_cycle >= 5:
                     self.stage = 'wait'
                     self.model.flag_fill_graph = False
-                    self.signals.save_result_test.emit('end')
+                    self.model.write_end_test_in_archive()
                     self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'test_temper':
@@ -236,7 +234,7 @@ class Controller:
                         else:
                             self.model.flag_fill_graph = False
                             self.stage = 'wait'
-                            self.signals.save_result_test.emit('end')
+                            self.model.write_end_test_in_archive()
                             self.steps.step_stop_gear_end_test()
 
                     else:
@@ -244,7 +242,7 @@ class Controller:
 
             elif self.stage == 'test_lab_cascade':
                 if self.count_cycle >= 5:
-                    self.signals.save_result_test.emit('casc')
+                    self.model.save_result_cycle()
                     if self.count_cascade < self.max_cascade:
                         self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                                  'speed':self.model.speed_cascade[self.count_cascade]})
@@ -260,8 +258,9 @@ class Controller:
                         self.stage = 'wait'
                         self.model.flag_fill_graph = False
                         self.count_cascade = 1
-                        self.signals.save_result_test.emit('end')
+                        self.model.write_end_test_in_archive()
                         self.steps.step_stop_gear_end_test()
+
 
             elif self.stage == 'stop_gear_end_test':
                 if self.steps.stage_stop_gear_end_test():

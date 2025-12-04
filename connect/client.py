@@ -24,11 +24,9 @@ class Client:
 
             self.client.set_timeout(1.0)
             self.client.set_verbose(True)
-            self.logger.debug('client has been created')
 
         except Exception as e:
             self.client = None
-            self.logger.debug('client has not been created')
             self.logger.error(e)
 
     def connect_client(self):
@@ -37,11 +35,9 @@ class Client:
 
         self.client.open()
         self.flag_connect = True
-        self.logger.debug('client connected')
 
     def disconnect_client(self):
         if self.client:
             self.client.close()
             self.flag_connect = False
             self.client = None
-            self.logger.debug('client disconnected')

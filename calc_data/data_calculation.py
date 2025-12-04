@@ -39,7 +39,7 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def middle_min_and_max_force(self, data):
+    def middle_min_and_max_force(self, data: list):
         try:
             rec_ind = data.index(max(data))
             max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
