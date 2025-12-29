@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 import time
 import statistics
-import modbus_tk.defines as cst
-from PySide6.QtCore import QObject, QThreadPool, Signal, QTimer
+from PySide6.QtCore import QObject, Signal, QTimer
 
 from logger import my_logger
 from test_obj import OperatorSchema
-from my_thread.thread_reader import Reader
 from settings.settings import PrgSettings
 from my_parser.parser import ParserSPG023MK
 from calc_data.data_calculation import CalcData
+from reader.reader import Reader
 from writer.writer import Writer
 from archive_saver import WriterArch
 from connect.client import Client
@@ -18,11 +17,6 @@ from freq_control.freq_control import FreqControl
 
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
-    read_start = Signal()
-    start_test = Signal()
-    stop_test = Signal()
-    read_stop = Signal()
-    read_exit = Signal()
 
     win_set_update = Signal()
     full_cycle_count = Signal(str)
@@ -37,13 +31,13 @@ class ModelSignals(QObject):
 class Model:
     def __init__(self):
         self.signals = ModelSignals()
-        self.threadpool = QThreadPool()
 
         self.logger = my_logger.get_logger(__name__)
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
         self.client = Client()
+        self.reader = Reader()
 
         self._init_varibles()
         self._init_flags()
@@ -55,7 +49,6 @@ class Model:
         self.state_dict = {}
         self.switch_dict = {}
 
-        self.reader = None
         self.writer = None
         self.serial_number = ''
         self.amort = None
@@ -142,10 +135,11 @@ class Model:
             self.writer.timer_writer_start()
 
             self._init_signals()
-            self._init_reader()
+            self.reader.init_reader(self.client.client)
+            self.reader_start()
 
-            self.save_arch = WriterArch()
-            self.save_arch.timer_writer_arch_start()
+            # self.save_arch = WriterArch()
+            # self.save_arch.timer_writer_arch_start()
             
             self._stand_initialisation()
 
@@ -169,42 +163,32 @@ class Model:
         self.status_bar_msg(txt_log)
 
     def _init_signals(self):
+        self.reader.signals.result.connect(self._reader_result)
+        self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
 
-    def _init_reader(self):
-        self.reader = Reader(self.client.client, cst)
-        self.reader.signals.thread_err.connect(self.log_error_thread)
-        self.reader.signals.read_result.connect(self._reader_result)
-        self.signals.read_start.connect(self.reader.start_read)
-        self.signals.start_test.connect(self.reader.start_test)
-        self.signals.read_stop.connect(self.reader.stop_read)
-        self.signals.stop_test.connect(self.reader.stop_test)
-        self.signals.read_exit.connect(self.reader.exit_read)
-        self.threadpool.start(self.reader)
-        self.reader_start()
-
     def reader_start(self):
-        self.signals.read_start.emit()
+        self.reader.reader_start()
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
-        self.signals.start_test.emit()
+        self.reader.reader_start_test()
         self.status_bar_msg(f'Чтение буффура контроллера запущено')
 
     def reader_stop(self):
-        self.signals.read_stop.emit()
+        self.reader.reader_stop()
         self.status_bar_msg(f'Чтение контроллера остановлено')
 
     def reader_stop_test(self):
-        self.signals.stop_test.emit()
+        self.reader.reader_stop_test()
         self.status_bar_msg(f'Чтение буффера контроллера остановлено')
 
     def reader_exit(self):
-        self.signals.read_exit.emit()
-
+        self.reader.reader_exit()
+        
     def _update_switch_dict(self, data):
         try:
             self.switch_dict = {**self.switch_dict, **data}
@@ -765,6 +749,8 @@ class Model:
             
     def write_data_in_archive(self, tag, data=None):
         try:
+            self.save_arch = WriterArch()
+            self.save_arch.timer_writer_arch_start()
             self.save_arch.write_arch_out(tag, data)
             
         except Exception as e:

@@ -10,11 +10,11 @@ class Signals(QObject):
     read_result = Signal(dict, str)
 
 
-class Reader(QRunnable):
+class ReaderThread(QRunnable):
     signals = Signals()
 
     def __init__(self, client, cst):
-        super(Reader, self).__init__()
+        super(ReaderThread, self).__init__()
         self.client = client
         self.cst = cst
 

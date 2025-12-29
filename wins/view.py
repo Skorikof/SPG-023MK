@@ -34,12 +34,11 @@ class AppWindow(QMainWindow):
         if self.model.buffer_state[1] == 'buffer_on':
             self.model.write_bit_force_cycle(0)
         
+        self.model.reader_exit()
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
-        self.model.save_arch.timer_writer_arch_stop()
-        self.model.reader_exit()
-        
-        self.model.threadpool.waitForDone()
+        # self.model.save_arch.timer_writer_arch_stop()
+        self.model.reader.threadpool.waitForDone()
         self.model.client.disconnect_client()
         event.accept()
 

@@ -64,6 +64,9 @@ class WriterArch:
             if self.query_write_arch:
                 self.query_write_arch = False
                 self.list_write_arch.pop(0)
+                
+            if not self.list_write_arch:
+                self.timer_writer_arch_stop()
 
         except Exception as e:
             self.logger.error(e)
