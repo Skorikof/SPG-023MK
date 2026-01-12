@@ -6,13 +6,13 @@ from PySide6.QtCore import QObject, Signal
 from app.screenshot.save_screen import ScreenSave
 from app.ui_py.archive_ui import Ui_WindowArch
 from scripts.data_calculation import CalcData
-from calc_graph.move_graph import MoveGraph
-from calc_graph.cascad_graph import CascadeGraph
-from calc_graph.triple_graph import TripleGraph
-from calc_graph.boost_graph_one import BoostGraphOne
-from calc_graph.boost_graph_two import BoostGraphTwo
-from calc_graph.temper_graph import TemperGraph
-from calc_graph.compare_graph import CompareGraph
+from scripts.calc_graph.move_graph import MoveGraph
+from scripts.calc_graph.cascad_graph import CascadeGraph
+from scripts.calc_graph.triple_graph import TripleGraph
+from scripts.calc_graph.boost_graph_one import BoostGraphOne
+from scripts.calc_graph.boost_graph_two import BoostGraphTwo
+from scripts.calc_graph.temper_graph import TemperGraph
+from scripts.calc_graph.compare_graph import CompareGraph
 from scripts.archive import ReadArchive
 from scripts.logger import my_logger
 

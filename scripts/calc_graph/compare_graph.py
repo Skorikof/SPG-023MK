@@ -3,12 +3,12 @@ from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtCore import Qt
 
 from scripts.logger import my_logger
-from calc_graph.move_graph import MoveGraph
-from calc_graph.boost_graph_one import BoostGraphOne
-from calc_graph.boost_graph_two import BoostGraphTwo
-from calc_graph.triple_graph import TripleGraph
-from calc_graph.cascad_graph import CascadeGraph
-from calc_graph.temper_graph import TemperGraph
+from scripts.calc_graph.move_graph import MoveGraph
+from scripts.calc_graph.boost_graph_one import BoostGraphOne
+from scripts.calc_graph.boost_graph_two import BoostGraphTwo
+from scripts.calc_graph.triple_graph import TripleGraph
+from scripts.calc_graph.cascad_graph import CascadeGraph
+from scripts.calc_graph.temper_graph import TemperGraph
 
 
 class CompareGraph:

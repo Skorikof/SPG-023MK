@@ -10,7 +10,7 @@ from app.wins.amorts_win import AmortWin
 from app.wins.archive_win import ArchiveWin
 from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
-from calc_graph.test_graph import TestGraph
+from scripts.calc_graph.test_graph import TestGraph
 from scripts.logger import my_logger
 
 
