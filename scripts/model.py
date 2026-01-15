@@ -123,7 +123,11 @@ class Model:
 
         self.alarm_tag = ''
         self.flag_alarm = False
-
+        
+    def _init_signals(self):
+        self.reader.signals.result.connect(self._reader_result)
+        self.reader.signals.error.connect(self.log_error_thread)
+        self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -161,11 +165,6 @@ class Model:
     def log_error_thread(self, txt_log):
         self.logger.error(txt_log)
         self.status_bar_msg(txt_log)
-
-    def _init_signals(self):
-        self.reader.signals.result.connect(self._reader_result)
-        self.reader.signals.error.connect(self.log_error_thread)
-        self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
@@ -448,6 +447,14 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
             
+    def _add_terminator_in_graph(self):
+        try:
+            self.force_list.append('end')
+            self.move_list.append('end')
+            
+        except Exception as e:
+            self.logger.error(e)
+            
     def clear_data_in_graph(self):
         self.force_list = []
         self.move_list = []
@@ -675,8 +682,8 @@ class Model:
                 else:
                     hod = self.amort.hod
                 
-            values = self.fc.freq_command(tag, adr, speed, freq, hod)
-            self.writer.write_out('FC', freq_command=values)
+            values, comm = self.fc.freq_command(tag, adr, speed, freq, hod)
+            self.writer.write_out('FC', freq_command=values, command=comm)
             
         except Exception as e:
             self.logger.error(e)
@@ -685,10 +692,8 @@ class Model:
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
         try:
-            if not self.state_dict.get('green_light'):
-                self.write_bit_green_light(1)
-            if not self.state_dict.get('red_light'):
-                self.write_bit_red_light(1)
+            self.write_bit_green_light(1)
+            self.write_bit_red_light(1)
 
         except Exception as e:
             self.logger.error(e)
@@ -697,34 +702,28 @@ class Model:
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
         try:
-            if self.state_dict.get('green_light'):
-                self.write_bit_green_light(0)
-            if self.state_dict.get('red_light'):
-                self.write_bit_red_light(0)
+            self.write_bit_green_light(0)
+            self.write_bit_red_light(0)
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_all_switch_off - {e}')
 
     def lamp_green_switch_on(self):
-        """Выключение зелёного индикатора"""
+        """Включение зелёного индикатора"""
         try:
-            if not self.state_dict.get('green_light'):
-                self.write_bit_green_light(1)
-            if self.state_dict.get('red_light'):
-                self.write_bit_red_light(0)
+            self.write_bit_green_light(1)
+            self.write_bit_red_light(0)
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_green_switch_on - {e}')
 
     def lamp_red_switch_on(self):
-        """Выключение красного индикатора"""
+        """Включение красного индикатора"""
         try:
-            if self.state_dict.get('green_light'):
-                self.write_bit_green_light(0)
-            if not self.state_dict.get('red_light'):
-                self.write_bit_red_light(1)
+            self.write_bit_green_light(0)
+            self.write_bit_red_light(1)
 
         except Exception as e:
             self.logger.error(e)

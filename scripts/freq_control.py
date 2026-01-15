@@ -10,19 +10,19 @@ class FreqControl:
         try:
             self.logger.debug(f'FC command: {tag=}, {adr=}, {speed=}, {freq=}, {hod=}')
             if tag == 'up':
-                return self._motor_up(adr)
+                return self._motor_up(adr), tag
                 
             elif tag == 'down':
-                return self._motor_down(adr)
+                return self._motor_down(adr), tag
             
             elif tag == 'stop':
-                return self._motor_stop(adr)
+                return self._motor_stop(adr), tag
                 
             elif tag == 'speed':
-                return self._get_speed_motor(adr, speed, freq, hod)
+                return self._get_speed_motor(adr, speed, freq, hod), tag
                 
             elif tag == 'max':
-                return self._get_max_frequency(adr, freq)
+                return self._get_max_frequency(adr, freq), tag
 
         except Exception as e:
             self.logger.error(e)

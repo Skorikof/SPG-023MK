@@ -9,6 +9,7 @@ class CalcData:
         self.logger = my_logger.get_logger(__name__)
 
     def max_speed(self, hod, freq=119):
+        """Расчёт максимальной скорости от хода поршня"""
         try:
             koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
             radius = round((hod / 1000) / 2, 3)
@@ -18,6 +19,7 @@ class CalcData:
             self.logger.error(e)
 
     def emergency_force(self, value):
+        """Конвертация задаваемого максимального усилия"""
         try:
             arr = []
             val = pack('>f', value)
@@ -30,6 +32,7 @@ class CalcData:
             self.logger.error(e)
 
     def check_temperature(self, temp_list: list, max_temper: float):
+        """Фиксация максимальной температуры"""
         try:
             if max(temp_list) > max_temper:
                 return max(temp_list)
@@ -40,6 +43,7 @@ class CalcData:
             self.logger.error(e)
 
     def middle_min_and_max_force(self, data: list):
+        """Усреднение максимального и инимального усилия"""
         try:
             rec_ind = data.index(max(data))
             max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
@@ -56,6 +60,7 @@ class CalcData:
             return max_rec, max_comp
 
     def offset_move_by_hod(self, amort, min_p):
+        """Смещение хода на графике от хода поршня"""
         try:
             return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 1)
 
@@ -78,6 +83,7 @@ class CalcData:
             self.logger.error(e)
 
     def freq_piston_amort(self, speed, hod):
+        """Частота поршня"""
         try:
             return round(speed / (int(hod) * 0.002 * 3.14), 3)
 
@@ -85,6 +91,7 @@ class CalcData:
             self.logger.error(e)
 
     def excess_force(self, amort):
+        """Максимально допустимое усилие по усилию аморта"""
         try:
             force = int(max(amort.max_comp, amort.max_recoil) * 5)
             if force >= 1900:

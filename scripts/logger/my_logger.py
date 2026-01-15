@@ -10,32 +10,6 @@ _date_log = str(datetime.now().day).zfill(2) + '_' + str(datetime.now().month).z
 _path_logs = 'logs'
 
 
-def get_warn_handler():
-    warn_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    warn_handler.setLevel(logging.WARNING)
-    warn_handler.setFormatter(logging.Formatter(_log_format))
-    return warn_handler
-
-
-def get_err_handler():
-    err_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    err_handler.setLevel(logging.ERROR)
-    err_handler.setFormatter(logging.Formatter(_log_format))
-    return err_handler
-
-
-def get_info_handler():
-    info_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    info_handler.setLevel(logging.INFO)
-    info_handler.setFormatter(logging.Formatter(_log_format))
-    return info_handler
-
-def get_debug_handler():
-    debug_handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
-    debug_handler.setLevel(logging.DEBUG)
-    debug_handler.setFormatter(logging.Formatter(_log_format))
-    return debug_handler
-
 def convert_level(level: int):
     if level == 1:
         return logging.DEBUG
@@ -45,6 +19,12 @@ def convert_level(level: int):
         return logging.WARNING
     else:
         return logging.INFO
+    
+def get_handler(level):
+    handler = logging.FileHandler(f'{_path_logs}/{_date_log}.log', encoding='utf-8')
+    handler.setLevel(convert_level(level))
+    handler.setFormatter(logging.Formatter(_log_format))
+    return handler
 
 def get_logger(name):
     directory = _path_logs
@@ -54,11 +34,7 @@ def get_logger(name):
     log_level = int(config['Settings']['LogLevel'])
     logger = logging.getLogger(name)
     logger.setLevel(convert_level(log_level))
-    # logger.addHandler(get_handler())
-    logger.addHandler(get_debug_handler())
-    # logger.addHandler(get_info_handler())
-    # logger.addHandler(get_err_handler())
-    # logger.addHandler(get_warn_handler())
+    logger.addHandler(get_handler(log_level))
     logger.propagate = False
 
     return logger

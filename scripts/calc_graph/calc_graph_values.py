@@ -10,11 +10,10 @@ class CalcGraphValue:
 
     def select_push_force(self, data):
         try:
-            flag_push_force = data.flag_push_force
-            if flag_push_force == '1':
+            if data.flag_push_force == '1':
                 return float(data.dynamic_push_force)
 
-            elif flag_push_force == '0':
+            elif data.flag_push_force == '0':
                 return float(data.static_push_force)
 
             else:
