@@ -4,7 +4,7 @@ import statistics
 from PySide6.QtCore import QObject, Signal, QTimer
 
 from scripts.logger import my_logger
-from scripts.test_obj import OperatorSchema
+from scripts.test_obj import OperatorSchema, DataMoveGraph, DataTemprGraph, DataSpeeds, DataTest
 from scripts.settings import PrgSettings
 from scripts.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
@@ -30,29 +30,43 @@ class ModelSignals(QObject):
 
 class Model:
     def __init__(self):
-        self.signals = ModelSignals()
-
-        self.logger = my_logger.get_logger(__name__)
-        self.fc = FreqControl()
-        self.parser = ParserSPG023MK()
-        self.calc_data = CalcData()
-        self.client = Client()
-        self.reader = Reader()
-
-        self._init_varibles()
+        self._init_variables()
         self._init_flags()
 
         self._start_param_model()
 
-    def _init_varibles(self):
+    def _init_variables(self):
+        self.logger = my_logger.get_logger(__name__)
+        self.signals = ModelSignals()
+        self.client = Client()
+        self.writer = None
+        self.reader = Reader()
+        self.fc = FreqControl()
+        self.parser = ParserSPG023MK()
+        self.calc_data = CalcData()
+        
         self.operator = OperatorSchema(name='', rank='')
+        
+        
+        
+        self.data_test = DataTest()
+        self.data_speeds = DataSpeeds()
+        self.data_move = DataMoveGraph()
+        self.data_temper = DataTemprGraph()
         self.state_dict = {}
         self.switch_dict = {}
-
-        self.writer = None
+        
+        self.buffer_state = ['null', 'null']
+        
+        self.force_koef = PrgSettings().force_koef
+        self.force_clear = 0
+        self.force_correct = 0
+        self.force_koef_offset = 0
+        self.force_offset = 0
+        
         self.serial_number = ''
         self.amort = None
-        self.buffer_state = ['null', 'null']
+        
 
         self.force_list = []
         self.move_list = []
@@ -61,12 +75,6 @@ class Model:
         self.temper_graph = []
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
-
-        self.force_koef = PrgSettings().force_koef
-        self.force_clear = 0
-        self.force_correct = 0
-        self.force_koef_offset = 0
-        self.force_offset = 0
 
         self.counter = 0
         self.move_now = 0

@@ -42,19 +42,8 @@ class AppWindow(QMainWindow):
         self.model.client.disconnect_client()
         event.accept()
 
-    def _create_statusbar_ui(self):
-        self.statusbar = self.statusBar()
-
-    def status_bar_ui(self, txt_bar):
-        try:
-            self.ui.statusbar.showMessage(txt_bar)
-
-        except Exception as e:
-            self.logger.error(e)
-
     def _start_param_view(self):
         self._init_start_view()
-        self._create_statusbar_ui()
         self._init_buttons()
         self._init_signals()
 
@@ -67,30 +56,7 @@ class AppWindow(QMainWindow):
         self.index_amort = 0
         self.index_type_test = 0
         self.bit_temper = None
-
-    def _init_signals(self):
-        self.model.signals.connect_ctrl.connect(self._start_page)
-        self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.win_set_update.connect(self.update_data_win_settings)
-        self.model.signals.update_data_graph.connect(self.update_graph_view)
-        self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
-
-        self.controller.signals.control_msg.connect(self.controller_msg_slot)
-        self.controller.signals.conv_win_test.connect(self.conv_test_win)
-        self.controller.signals.lab_win_test.connect(self.lab_test_win)
-        self.controller.signals.cancel_test.connect(self.cancel_test_slot)
-        self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
-        self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
-        self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
-        self.controller.signals.reset_ui.connect(self._start_page)
-        self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
-
-        self.win_exec.signals.closed.connect(self.close_win_operator)
-        self.win_exec.signals.operator_select.connect(self.operator_select)
-
-        self.win_amort.signals.closed.connect(self.close_win_amort)
-        self.win_set.signals.closed.connect(self.close_win_settings)
-        self.win_archive.signals.closed.connect(self.close_win_archive)
+        self.statusbar = self.statusBar()
 
     def _init_buttons(self):
         self.ui.test_save_btn.setVisible(False)
@@ -119,6 +85,30 @@ class AppWindow(QMainWindow):
         self.ui.specif_type_test_comboBox.activated[int].connect(self.change_index_type_test)
         self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
 
+    def _init_signals(self):
+        self.model.signals.connect_ctrl.connect(self._start_page)
+        self.model.signals.stbar_msg.connect(self.status_bar_ui)
+        self.model.signals.win_set_update.connect(self.update_data_win_settings)
+        self.model.signals.update_data_graph.connect(self.update_graph_view)
+        self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
+
+        self.controller.signals.control_msg.connect(self.controller_msg_slot)
+        self.controller.signals.conv_win_test.connect(self.conv_test_win)
+        self.controller.signals.lab_win_test.connect(self.lab_test_win)
+        self.controller.signals.cancel_test.connect(self.cancel_test_slot)
+        self.controller.signals.lab_test_stop.connect(self.slot_lab_test_stop)
+        self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
+        self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
+        self.controller.signals.reset_ui.connect(self._start_page)
+        self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
+
+        self.win_exec.signals.closed.connect(self.close_win_operator)
+        self.win_exec.signals.operator_select.connect(self.operator_select)
+
+        self.win_amort.signals.closed.connect(self.close_win_amort)
+        self.win_set.signals.closed.connect(self.close_win_settings)
+        self.win_archive.signals.closed.connect(self.close_win_archive)
+
     def _init_lab_graph(self):
         try:
             self.graph = TestGraph(self.ui.lab_GraphWidget, 'move')
@@ -142,6 +132,13 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_init_temp_graph - {e}')
+            
+    def status_bar_ui(self, txt_bar):
+        try:
+            self.ui.statusbar.showMessage(txt_bar)
+
+        except Exception as e:
+            self.logger.error(e)
 
     def controller_msg_slot(self, msg):
         try:
