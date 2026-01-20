@@ -62,48 +62,52 @@ class ReaderThread(QRunnable):
                                                  self.reg_buffer, self.buffer_count * 6)
 
                         if len(rr) == self.buffer_count * 6:  # 120
-                            for i in range(0, self.buffer_count):  # 20
-                                flag_add = False
-                                ind = 6 * i
-                                if self.flag_start_test:
-                                    flag_add = True
-                                    self.flag_start_test = False
-                                else:
-                                    if abs(rr[ind] - self.current_rec) < 2 or abs(rr[ind] - self.current_rec) > 65530:
+                            if rr[0] != 0:
+                                for i in range(0, self.buffer_count):  # 20
+                                    flag_add = False
+                                    ind = 6 * i
+                                    if self.flag_start_test:
                                         flag_add = True
+                                        self.flag_start_test = False
+                                    else:
+                                        if abs(rr[ind] - self.current_rec) < 2 or abs(rr[ind] - self.current_rec) > 65530:
+                                            flag_add = True
 
-                                if flag_add:
-                                    self.current_rec = rr[ind]
-                                    self.reg_buffer += 6
-                                    self.num_rec += 1
-                                    self.count_rec += 1
+                                    if flag_add:
+                                        self.current_rec = rr[ind]
+                                        self.reg_buffer += 6
+                                        self.num_rec += 1
+                                        self.count_rec += 1
 
-                                    self.result['count'].append(rr[ind])
-                                    self.result['force'].append(self.parser.magnitude_effort(rr[ind+1], rr[ind+2]))
-                                    self.result['move'].append(self.parser.movement_amount(rr[ind+3]))
-                                    self.result['state'].append(rr[ind + 4])
-                                    self.result['temper'].append(round(rr[ind + 5] * 0.01, 1))
+                                        self.result['count'].append(rr[ind])
+                                        self.result['force'].append(self.parser.magnitude_effort(rr[ind+1], rr[ind+2]))
+                                        self.result['move'].append(self.parser.movement_amount(rr[ind+3]))
+                                        self.result['state'].append(rr[ind + 4])
+                                        self.result['temper'].append(round(rr[ind + 5] * 0.01, 1))
 
-                                else:
-                                    # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
-                                    break
+                                    else:
+                                        # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
+                                        break
 
-                            delta_r = 16384 + 18000 - self.reg_buffer
+                                delta_r = 16384 + 18000 - self.reg_buffer
 
-                            if delta_r <= 0:
-                                if delta_r < 0:
-                                    self.signals.thread_err.emit('Выход за пределы буфера')
-                                self.num_rec = 0
-                                self.buffer_count = 20
-                                self.reg_buffer = 0x4000
-                            else:
-                                if delta_r >= 6 * self.buffer_count:
+                                if delta_r <= 0:
+                                    if delta_r < 0:
+                                        self.signals.thread_err.emit('Выход за пределы буфера')
+                                    self.num_rec = 0
                                     self.buffer_count = 20
-
+                                    self.reg_buffer = 0x4000
                                 else:
-                                    self.buffer_count = int(delta_r / 6)
+                                    if delta_r >= 6 * self.buffer_count:
+                                        self.buffer_count = 20
 
-                            self.signals.read_result.emit(self.result, self.read_tag)
+                                    else:
+                                        self.buffer_count = int(delta_r / 6)
+
+                                self.signals.read_result.emit(self.result, self.read_tag)
+
+                            else:
+                                pass
 
                         else:
                             self.signals.thread_err.emit(str(rr))

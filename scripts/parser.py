@@ -29,6 +29,11 @@ class ParserSPG023MK:
                         response['temper'].append(request.get('temper')[ind])
                         
                 if len(response['force']) > 0:
+                    # print(f'count ==> {response["count"]}')
+                    # print(f'force ==> {response["force"]}')
+                    # print(f'move ==> {response["move"]}')
+                    # print(f'state ==> {response["state"]}')
+                    # print(f'temper ==> {response["temper"]}')
                     return response
                 
                 else:

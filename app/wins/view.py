@@ -160,7 +160,7 @@ class AppWindow(QMainWindow):
 
     def main_ui_msg(self, tag, txt):
         try:
-            if tag != None or txt != None:
+            if tag is not None or txt is not None:
                 backcolor = ''
                 color = glob_var.COLOR_BLACK
 
