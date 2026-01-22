@@ -2,6 +2,7 @@ import crcmod
 
 from scripts.logger import my_logger
 
+
 class FreqControl:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
@@ -48,11 +49,6 @@ class FreqControl:
         try:
             value = 0
             if not freq:
-                if not hod:
-                    if self.amort is None:
-                        hod = 120
-                    else:
-                        hod = self.amort.hod
                 value = self._freq_from_speed(speed, hod)
 
             elif not speed:

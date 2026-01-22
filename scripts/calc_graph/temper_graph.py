@@ -10,9 +10,9 @@ class TemperGraph(AbstractGraph):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
         kwargs = {'title': 'График зависимости усилия от температуры',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Температура', '℃')
-                      }
+                  'left': ('left', 'Усилие', 'кгс'),
+                  'bottom': ('bottom', 'Температура', '℃')
+                  }
             
         self.gui_graph(**kwargs)
         self.gui_axis('left')
@@ -37,16 +37,15 @@ class TemperGraph(AbstractGraph):
                     'push_force': push_force,
                     'speed': data.speed,
                     }
-            
-            
+
         except Exception as e:
             self.logger.error(e)
 
     def fill_graph(self, x_coord, y_r, y_c, pen_r=None, pen_c=None, name_r='Отбой', name_c='Сжатие'):
         try:
-            if pen_r == None:
+            if pen_r is None:
                 pen_r = pg.mkPen(color='black', width=3)
-            if pen_c == None:
+            if pen_c is None:
                 pen_c = pg.mkPen(color='blue', width=3)
 
             self.widget.plot(x_coord, y_r, pen=pen_r, name=name_r)

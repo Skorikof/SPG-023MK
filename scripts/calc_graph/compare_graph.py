@@ -133,8 +133,7 @@ class CompareGraph:
                                style=self.select_line_style(ind))
                 
                 graph.fill_graph(response.get('x_coord'), response.get('y_coord'), pen, name)
-                
-            
+
         except Exception as e:
             self.logger.error(e)
             
@@ -168,8 +167,7 @@ class CompareGraph:
                                style=self.select_line_style(ind))
                 
                 graph.fill_graph(response.get('x_coord'), response.get('y_coord'), pen, name)
-                
-            
+
         except Exception as e:
             self.logger.error(e)
             

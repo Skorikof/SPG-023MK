@@ -100,7 +100,7 @@ class Controller:
 
     def _update_stage_on_timer(self):
         try:
-            type_test = self.model.type_test
+            type_test = self.model.data_test.type_test
             self.alarm_steps.step_alarm_traverse_position()
 
             if self.model.flag_test:
@@ -223,10 +223,10 @@ class Controller:
 
             elif self.stage == 'test_temper':
                 if self.count_cycle >= 1:
-                    if self.model.temper_max != self.last_max_temper:
-                        self.last_max_temper = self.model.temper_max
-                        if self.model.temper_max <= self.model.finish_temper:
-                            self.model.temper_graph.append(self.model.temper_max)
+                    if self.model.data_test.max_temperature != self.last_max_temper:
+                        self.last_max_temper = self.model.data_test.max_temperature
+                        if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
+                            self.model.temper_graph.append(self.model.data_test.max_temperature)
                             self.model.temper_recoil_graph.append(self.model.max_recoil)
                             self.model.temper_comp_graph.append(self.model.max_comp)
                             self._full_cycle_update('0')
@@ -245,8 +245,8 @@ class Controller:
                     self.model.save_result_cycle()
                     if self.count_cascade < self.max_cascade:
                         self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                                 'speed':self.model.speed_cascade[self.count_cascade]})
-                        self.model.speed_test = self.model.speed_cascade[self.count_cascade]
+                                                 'speed':self.model.data_test.speed_list[self.count_cascade]})
+                        self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
 
                         self.model.clear_data_in_graph()
                         self.model.flag_fill_graph = True
@@ -260,7 +260,6 @@ class Controller:
                         self.count_cascade = 1
                         self.model.write_end_test_in_archive()
                         self.steps.step_stop_gear_end_test()
-
 
             elif self.stage == 'stop_gear_end_test':
                 if self.steps.stage_stop_gear_end_test():
@@ -366,7 +365,7 @@ class Controller:
             if self._check_max_temper_test():
                 self.steps_tests.step_start_test()
 
-                self.model.write_emergency_force(self.calc_data.excess_force(self.model.amort))
+                self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
 
                 if self.model.flag_repeat:
                     self.stage = 'wait_buffer'
@@ -431,12 +430,13 @@ class Controller:
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
+            amort = self.model.data_test.amort
             stock_point = 760 # Константа, измереная высота у стенда
-            hod = self.model.amort.hod
-            len_min = self.model.amort.min_length
-            len_max = self.model.amort.max_length
+            hod = amort.hod
+            len_min = amort.min_length
+            len_max = amort.max_length
             mid_point = (len_max - len_min) / 2
-            adapter = self.model.amort.adapter_len
+            adapter = amort.adapter_len
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
@@ -472,9 +472,9 @@ class Controller:
 
     def _test_on_two_speed(self, ind):
         try:
-            # if self.model.type_test == 'conv':
+            # if self.model.data_test.type_test == 'conv':
             #     self.signals.conv_win_test.emit()
-            # elif self.model.type_test == 'lab':
+            # elif self.model.data_test.type_test == 'lab':
             #     self.signals.lab_win_test.emit()
             self.steps_tests.step_test_on_two_speed(ind)
             self._full_cycle_update('0')
@@ -495,12 +495,13 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _check_max_temper_test(self):
-        if self.model.type_test == 'temper':
-            finish_temp = self.model.finish_temper
+        if self.model.data_test.type_test == 'temper':
+            finish_temp = self.model.data_test.finish_temperature
         else:
-            finish_temp = self.model.amort.max_temper
+            finish_temp = self.model.data_test.amort.max_temper
 
-        if self.model.temper_first < finish_temp and self.model.temper_second < finish_temp:
+        if (self.model.data_test.first_temperature < finish_temp
+                and self.model.data_test.second_temperature < finish_temp):
             return True
 
         else:
@@ -522,9 +523,9 @@ class Controller:
         try:
             self.signals.lab_win_test.emit()
             self.count_cascade = 1
-            self.max_cascade = len(self.model.speed_cascade)
+            self.max_cascade = len(self.model.data_test.speed_list)
 
-            self.steps_tests.step_test_lab_cascade(self.model.speed_cascade)
+            self.steps_tests.step_test_lab_cascade(self.model.data_test.speed_list)
             self._full_cycle_update('0')
 
         except Exception as e:

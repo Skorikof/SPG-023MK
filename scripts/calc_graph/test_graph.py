@@ -12,21 +12,21 @@ class TestGraph(AbstractGraph):
         
         if tag == 'move':
             kwargs = {'title': 'График зависимости усилия от перемещения',
-                    'left': ('left', 'Усилие', 'кгс'),
-                    'bottom': ('bottom', 'Перемещение', 'мм')
-                    }
+                      'left': ('left', 'Усилие', 'кгс'),
+                      'bottom': ('bottom', 'Перемещение', 'мм')
+                      }
         else:
             kwargs = {'title': 'График зависимости усилия от температуры',
                       'left': ('left', 'Усилие', 'кгс'),
                       'bottom': ('bottom', 'Температура', '℃')
-                    }
+                      }
         self.gui_graph(**kwargs)
         self.gui_axis('left')
         self.gui_axis('bottom')
 
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
-            if pen == None:
+            if pen is None:
                 pen = pg.mkPen(color='black', width=3)
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 

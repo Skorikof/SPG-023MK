@@ -74,8 +74,8 @@ class Writer:
         try:
             if self.query_write:
                 self.logger.debug(f'Write result --> {response[1]}, {response[0]}, '
-                              f'addr={hex(response[2])}, val={response[3]}, '
-                              f'com={response[4]}')
+                                  f'addr={hex(response[2])}, val={response[3]}, '
+                                  f'com={response[4]}')
                 
                 self.list_write.pop(0)
                 if response[1] == 'FC':
@@ -101,7 +101,7 @@ class Writer:
             self.list_write.append(self._init_writer(tag, values, reg_write, freq_command, command))
             if reg_write:
                 reg_write = hex(reg_write)
-            self.logger.debug(f'Write queny append --> addr={reg_write}, val={values}, '
+            self.logger.debug(f'Write queue append --> addr={reg_write}, val={values}, '
                               f'freq_command={freq_command}, com={command}')
 
         except Exception as e:

@@ -20,6 +20,7 @@ class Reader:
         self.signals = ReaderSignals()
         self.threadpool = QThreadPool()
         self.logger = my_logger.get_logger(__name__)
+        self.reader = None
 
     def init_reader(self, client):
         self.reader = ReaderThread(client, cst)

@@ -17,6 +17,7 @@ class BaseSchema(AmortSchema):
     dynamic_push_force: float
     speed: float
 
+
 class LabSchema(BaseSchema):
     move_list: list
     force_list: list

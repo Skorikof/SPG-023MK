@@ -44,6 +44,8 @@ class AppWindow(QMainWindow):
 
     def _start_param_view(self):
         self._init_start_view()
+
+        self._init_variables()
         self._init_buttons()
         self._init_signals()
 
@@ -51,12 +53,11 @@ class AppWindow(QMainWindow):
 
     def _init_start_view(self):
         self.tag_msg = 'info'
-        self.list_lab = []
-        self.dict_lab_cascade = {}
+        self.statusbar = self.statusBar()
+
+    def _init_variables(self):
         self.index_amort = 0
         self.index_type_test = 0
-        self.bit_temper = None
-        self.statusbar = self.statusBar()
 
     def _init_buttons(self):
         self.ui.test_save_btn.setVisible(False)
@@ -287,8 +288,8 @@ class AppWindow(QMainWindow):
         self.win_exec.show()
 
     def operator_select(self, name, rank):
-        self.model.operator.name = name
-        self.model.operator.rank = rank
+        self.model.data_test.operator.name = name
+        self.model.data_test.operator.rank = rank
 
         self.ui.operator_name_le.setText(f'{name}')
         self.ui.operator_rank_le.setText(f'{rank}')
@@ -362,7 +363,7 @@ class AppWindow(QMainWindow):
         if tag == 'done':
             txt_msg = 'Показания с датчика усилия обнулены'
 
-        if self.model.type_test == 'hand':
+        if self.model.data_test.type_test == 'hand':
             self.win_set.setEnabled(True)
 
         else:
@@ -419,7 +420,7 @@ class AppWindow(QMainWindow):
 
     def update_graph_view(self):
         try:
-            type_test = self.model.type_test
+            type_test = self.model.data_test.type_test
             if type_test == 'hand':
                 pass
 
@@ -443,23 +444,23 @@ class AppWindow(QMainWindow):
         try:
             ind = self.index_type_test
             if ind == 0:
-                self.model.type_test = 'lab'
+                self.model.data_test.type_test = 'lab'
                 self.specif_enable_gui(True, True, False, True)
 
             elif ind == 1:
-                self.model.type_test = 'lab_hand'
+                self.model.data_test.type_test = 'lab_hand'
                 self.specif_enable_gui(False, False, False, True)
 
             elif ind == 2:
-                self.model.type_test = 'lab_cascade'
+                self.model.data_test.type_test = 'lab_cascade'
                 self.specif_enable_gui(False, False, True, True)
 
             elif ind == 3:
-                self.model.type_test = 'temper'
+                self.model.data_test.type_test = 'temper'
                 self.specif_enable_gui(False, False, False, False)
 
             elif ind == 4:
-                self.model.type_test = 'conv'
+                self.model.data_test.type_test = 'conv'
                 self.specif_enable_gui(True, True, False, True)
 
         except Exception as e:
@@ -483,10 +484,9 @@ class AppWindow(QMainWindow):
 
     def select_amort(self):
         try:
-            ind = self.index_amort
-            self.model.amort = self.win_amort.amorts.struct.amorts[ind]
-
-            self.specif_ui_fill(self.win_amort.amorts.struct.amorts[ind])
+            amort = self.win_amort.amorts.struct.amorts[self.index_amort]
+            self.model.data_test.amort = amort
+            self.specif_ui_fill(amort)
 
         except Exception as e:
             self.logger.error(e)
@@ -507,8 +507,8 @@ class AppWindow(QMainWindow):
             self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
             self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
             self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
-            if self.model.type_test == 'temper':
-                max_temper = self.model.finish_temper
+            if self.model.data_test.type_test == 'temper':
+                max_temper = self.model.data_test.finish_temperature
             else:
                 max_temper = obj.max_temper
             self.ui.specif_max_temp_lineEdit.setText(str(max_temper))
@@ -554,10 +554,10 @@ class AppWindow(QMainWindow):
 
             speed = float(text.replace(',', '.'))
 
-            if self.model.amort is None:
+            if self.model.data_test.amort is None:
                 hod = 120
             else:
-                hod = self.model.amort.hod
+                hod = self.model.data_test.amort.hod
 
             max_speed = self.calc_data.max_speed(hod)
             if 0.02 <= speed <= max_speed:
@@ -603,6 +603,7 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/specif_add_lab_cascade_table - {e}')
 
+
     def specif_reduce_lab_cascade_table(self):
         try:
             count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
@@ -624,7 +625,7 @@ class AppWindow(QMainWindow):
                 for i in range(count_rows):
                     list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
 
-                self.model.speed_cascade = list_speed[:]
+                self.model.data_test.speed_list = list_speed[:]
                 return True
 
         except Exception as e:
@@ -696,7 +697,7 @@ class AppWindow(QMainWindow):
 
     def specif_continue_btn_click(self):
         try:
-            if self.model.operator.name != '' and self.model.operator.rank != '':
+            if self.model.data_test.operator.name != '' and self.model.data_test.operator.rank != '':
                 self.flag_push_force_set()
                 self.ui.test_change_speed_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
@@ -705,9 +706,9 @@ class AppWindow(QMainWindow):
                 if flag:
                     flag = self.serial_editing_finished()
                     if flag:
-                        self.model.serial_number = self.ui.specif_serial_lineEdit.text()
+                        self.model.data_test.serial = self.ui.specif_serial_lineEdit.text()
                         self.lab_test_second_force_gui(False)
-                        if self.model.type_test == 'conv':
+                        if self.model.data_test.type_test == 'conv':
                             self._init_conv_graph()
                             self._conv_win_clear()
                             self.conv_test_fill_template()
@@ -716,7 +717,7 @@ class AppWindow(QMainWindow):
                         else:
                             self._lab_win_clear()
                             self.fill_gui_lab_test()
-                            if self.model.type_test == 'lab_cascade':
+                            if self.model.data_test.type_test == 'lab_cascade':
                                 flag = self.specif_read_lab_cascade_table()
                                 if flag:
                                     self._init_lab_graph()
@@ -724,19 +725,19 @@ class AppWindow(QMainWindow):
                                 else:
                                     self.specif_msg_none_cascade_speed()
 
-                            elif self.model.type_test == 'lab_hand':
+                            elif self.model.data_test.type_test == 'lab_hand':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
-                                    self.model.speed_test = speed
+                                    self.model.data_test.speed_test = speed
                                     self._init_lab_graph()
                                     self.begin_test()
-                            elif self.model.type_test == 'temper':
+                            elif self.model.data_test.type_test == 'temper':
                                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                                 if speed:
-                                    self.model.speed_test = speed
+                                    self.model.data_test.speed_test = speed
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
-                                        self.model.finish_temper = temper
+                                        self.model.data_test.finish_temperature = temper
                                         self._init_temp_graph()
                                         self.begin_test()
 
@@ -779,7 +780,7 @@ class AppWindow(QMainWindow):
                 return False
 
             push_force = float(text.replace(',', '.'))
-            self.model.static_push_force = push_force
+            self.model.data_test.static_push_force = push_force
 
             return True
 
@@ -793,11 +794,11 @@ class AppWindow(QMainWindow):
     def flag_push_force_set(self):
         try:
             if self.ui.push_force_chb.isChecked():
-                self.model.flag_push_force = True
+                self.model.data_test.flag_push_force = True
                 self.model.lbl_push_force = 'Динамическая выталкивающая сила'
 
             else:
-                self.model.flag_push_force = False
+                self.model.data_test.flag_push_force = False
                 self.model.lbl_push_force = 'Статическая выталкивающая сила'
 
         except Exception as e:
@@ -806,30 +807,27 @@ class AppWindow(QMainWindow):
 
     def save_log_begin_test(self):
         try:
-            if self.model.type_test == 'lab_hand' or self.model.type_test == 'temper':
-                speed = self.model.speed_test
-            elif self.model.type_test == 'lab_cascade':
-                speed = self.model.speed_cascade
+            type_test = self.model.data_test.type_test
+            amort = self.model.data_test.amort
+            if type_test == 'lab_hand' or type_test == 'temper':
+                speed = self.model.data_test.speed_test
+            elif type_test == 'lab_cascade':
+                speed = self.model.data_test.speed_list
             else:
-                speed = self.model.amort.speed_one
+                speed = amort.speed_one
 
-            name = self.model.amort.name
-            dimensions = f'{self.model.amort.min_length}~{self.model.amort.max_length}'
-            hod = f'{self.model.amort.hod}'
-            speed_one = f'{self.model.amort.speed_one}'
-            speed_two = f'{self.model.amort.speed_two}'
-            limit_comp_one = f'{self.model.amort.min_comp}~{self.model.amort.max_comp}'
-            limit_comp_two = f'{self.model.amort.min_comp_2}~{self.model.amort.max_comp_2}'
-            limit_recoil_one = f'{self.model.amort.min_recoil}~{self.model.amort.max_recoil}'
-            limit_recoil_two = f'{self.model.amort.min_recoil_2}~{self.model.amort.max_recoil_2}'
-            temper = f'{self.model.amort.max_temper}'
+            dimensions = f'{amort.min_length}~{amort.max_length}'
+            limit_comp_one = f'{amort.min_comp}~{amort.max_comp}'
+            limit_comp_two = f'{amort.min_comp_2}~{amort.max_comp_2}'
+            limit_recoil_one = f'{amort.min_recoil}~{amort.max_recoil}'
+            limit_recoil_two = f'{amort.min_recoil_2}~{amort.max_recoil_2}'
 
-            txt_log = (f'Start {self.model.type_test} --> n={name}, s={speed}, '
-                       f'dim={dimensions}, h={hod}, '
-                       f's_o={speed_one}, s_t={speed_two}, '
+            txt_log = (f'Start {type_test} --> n={amort.name}, s={speed}, '
+                       f'dim={dimensions}, h={amort.hod}, '
+                       f's_o={amort.speed_one}, s_t={amort.speed_two}, '
                        f'l_c_o={limit_comp_one}, l_c_t={limit_comp_two}, '
                        f'l_r_o={limit_recoil_one}, l_r_t={limit_recoil_two}, '
-                       f'm_t={temper}')
+                       f'm_t={amort.max_temper}')
 
             self.logger.info(txt_log)
 
@@ -839,26 +837,23 @@ class AppWindow(QMainWindow):
 
     def fill_gui_lab_test(self):
         try:
-            name = self.model.amort.name
-            hod = f'{self.model.amort.hod}'
-            speed_one = f'{self.model.amort.speed_one}'
-            speed_two = f'{self.model.amort.speed_two}'
-            limit_comp_one = f'{self.model.amort.min_comp} - {self.model.amort.max_comp}'
-            limit_comp_two = f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}'
-            limit_recoil_one = f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}'
-            limit_recoil_two = f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}'
+            amort = self.model.data_test.amort
+            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
+            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
+            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
+            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
 
-            self.ui.lab_name_le.setText(name)
-            self.ui.lab_speed_set_1_le.setText(speed_one)
+            self.ui.lab_name_le.setText(amort.name)
+            self.ui.lab_speed_set_1_le.setText(f'{amort.speed_one}')
             self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
             self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
-            self.ui.lab_speed_set_2_le.setText(speed_two)
+            self.ui.lab_speed_set_2_le.setText(f'{amort.speed_two}')
             self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
             self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
-            self.ui.lab_hod_le.setText(hod)
+            self.ui.lab_hod_le.setText(f'{amort.hod}')
 
             self.ui.lbl_push_force_lab.setText(self.model.lbl_push_force)
-            self.ui.lab_serial_le.setText(f'{self.model.serial_number}')
+            self.ui.lab_serial_le.setText(f'{self.model.data_test.serial}')
 
         except Exception as e:
             self.logger.error(e)
@@ -869,7 +864,7 @@ class AppWindow(QMainWindow):
             self.main_stop_state(True)
             self.main_btn_state(False)
 
-            if self.model.type_test != 'conv':
+            if self.model.data_test.type_test != 'conv':
                 self.model.list_lab_result = []
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
@@ -942,10 +937,11 @@ class AppWindow(QMainWindow):
 
     def conv_test_fill_template(self):
         try:
-            self.ui.conv_comp_limit_le.setText(f'{self.model.amort.min_comp} - {self.model.amort.max_comp}')
-            self.ui.conv_recoil_limit_le.setText(f'{self.model.amort.min_recoil} - {self.model.amort.max_recoil}')
-            self.ui.conv_comp_limit_le_2.setText(f'{self.model.amort.min_comp_2} - {self.model.amort.max_comp_2}')
-            self.ui.conv_recoil_limit_le_2.setText(f'{self.model.amort.min_recoil_2} - {self.model.amort.max_recoil_2}')
+            amort = self.model.data_test.amort
+            self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
+            self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
+            self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
+            self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
 
             self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
 
@@ -986,7 +982,7 @@ class AppWindow(QMainWindow):
             self.ui.conv_GraphWidget.clear()
             self.graph.fill_graph(self.model.move,
                                   self.model.force,
-                                  name=f'{self.model.speed_test} м/с')
+                                  name=f'{self.model.data_test.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
@@ -994,16 +990,16 @@ class AppWindow(QMainWindow):
 
     def _update_conv_data(self):
         try:
-            self.ui.conv_temperture_le.setText(f'{self.model.temper_now}')
+            self.ui.conv_temperture_le.setText(f'{self.model.data_test.temperature}')
             self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
             if self.controller.stage == 'test_speed_one':
-                self.ui.conv_speed_one_le.setText(f'{self.model.speed_test}')
+                self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
                 self.ui.conv_comp_le.setText(f'{self.model.max_comp}')
                 self.ui.conv_recoil_le.setText(f'{self.model.max_recoil}')
 
             if self.controller.stage == 'test_speed_two':
-                self.ui.conv_speed_two_le.setText(f'{self.model.speed_test}')
+                self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
                 self.ui.conv_comp_le_2.setText(f'{self.model.max_comp}')
                 self.ui.conv_recoil_le_2.setText(f'{self.model.max_recoil}')
 
@@ -1019,7 +1015,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.clear()
             self.graph.fill_graph(self.model.move,
                                   self.model.force,
-                                  name=f'{self.model.speed_test} м/с')
+                                  name=f'{self.model.data_test.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
@@ -1043,7 +1039,7 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            if self.model.type_test == 'lab':
+            if self.model.data_test.type_test == 'lab':
                 if self.controller.stage == 'test_speed_one':
                     self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
                     self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
@@ -1055,9 +1051,9 @@ class AppWindow(QMainWindow):
                 self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
                 self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
 
-            self.ui.lab_now_temp_le.setText(f'{self.model.temper_now}')
-            self.ui.lab_max_temp_le.setText(f'{self.model.temper_max}')
-            self.ui.lab_speed_le.setText(f'{self.model.speed_test}')
+            self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
+            self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
+            self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
             self.ui.lab_power_le.setText(f'{self.model.power_amort}')
             self.ui.lab_freq_le.setText(f'{self.model.freq_piston}')
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
@@ -1068,11 +1064,11 @@ class AppWindow(QMainWindow):
 
     def _fill_push_force(self):
         try:
-            if self.model.flag_push_force:
+            if self.model.data_test.flag_push_force:
                 return self.model.dynamic_push_force
 
             else:
-                return self.model.static_push_force
+                return self.model.data_test.static_push_force
 
         except Exception as e:
             self.logger.error(e)
@@ -1105,22 +1101,23 @@ class AppWindow(QMainWindow):
         try:
             speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
             if speed:
-                self.model.speed_test = speed
+                self.model.data_test.speed_test = speed
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/change_speed_lab_test - {e}')
 
     def slot_lab_test_stop(self):
+        type_test = self.model.data_test.type_test
         self.ui.test_cancel_btn.setEnabled(True)
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
 
-        if self.model.type_test == 'lab_hand':
+        if type_test == 'lab_hand':
             self.ui.lab_speed_le.setReadOnly(False)
             self.ui.test_change_speed_btn.setVisible(True)
 
-        elif self.model.type_test == 'lab' or self.model.type_test == 'lab_cascade':
+        elif type_test == 'lab' or type_test == 'lab_cascade':
             self.ui.lab_GraphWidget.clear()
             self.graph.fill_compare_graph(self.model.list_lab_result)
 
@@ -1141,7 +1138,7 @@ class AppWindow(QMainWindow):
             elif temp == 'НАЗАД':
                 self.controller.steps_tests.step_stop_test()
                 self.model.flag_test_launch = False
-                self.model.serial_number = str(int(self.model.serial_number) + 1)
+                self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
@@ -1173,7 +1170,7 @@ class AppWindow(QMainWindow):
     def open_win_settings(self):
         self.main_btn_state(False)
         self.main_ui_state(False)
-        self.model.type_test = 'hand'
+        self.model.data_test.type_test = 'hand'
         self.win_set.start_param_win_set()
         self.win_set.show()
 
