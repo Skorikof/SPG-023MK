@@ -35,7 +35,8 @@ class AppWindow(QMainWindow):
             self.model.write_bit_force_cycle(0)
         
         self.model.reader_exit()
-        self.controller.timer_process.stop()
+        if self.controller.timer_process is not None:
+            self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
         # self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
