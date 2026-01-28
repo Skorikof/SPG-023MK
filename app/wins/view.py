@@ -584,7 +584,7 @@ class AppWindow(QMainWindow):
     def specif_add_lab_cascade_table(self):
         try:
             count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
-            if count_rows <= 30:
+            if count_rows <= 9:
                 self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
                 speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                 if speed:
@@ -595,8 +595,8 @@ class AppWindow(QMainWindow):
             else:
                 msg = QMessageBox.information(self,
                                               'Внимание',
-                                              f'<b style="color: #f00;">Введено максимальное количество скоростей '
-                                              f'для испытания</b>'
+                                              f'<b style="color: #f00;">Максимальное количество скоростей '
+                                              f'для испытания = 10</b>'
                                               )
 
         except Exception as e:
