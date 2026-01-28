@@ -264,7 +264,9 @@ class HardwareController:
     def update_switch_dict(self, data):
         """Обновление словаря переключателей."""
         try:
-            self.switch_dict = {**self.switch_dict, **data}
+            if data is not None:
+                self.switch_dict = {**self.switch_dict, **data}
+                
         except Exception as e:
             self.logger.error(e)
             self.signals.stbar_msg.emit(f'ERROR in HardwareController/update_switch_dict - {e}')
@@ -272,7 +274,9 @@ class HardwareController:
     def update_state_dict(self, data):
         """Обновление словаря состояния."""
         try:
-            self.state_dict = {**self.state_dict, **data}
+            if data is not None:
+                self.state_dict = {**self.state_dict, **data}
+                
         except Exception as e:
             self.logger.error(e)
             self.signals.stbar_msg.emit(f'ERROR in HardwareController/update_state_dict - {e}')
@@ -280,10 +284,10 @@ class HardwareController:
     def change_state_list(self, reg, parser):
         """Обновление списка состояния из регистра."""
         try:
-            temp = bin(reg)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
+            bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
             self.state_list = [int(x) for x in bits]
             self.update_state_dict(parser.register_state(reg))
+            
         except Exception as e:
             self.logger.error(e)
             self.signals.stbar_msg.emit(f'ERROR in HardwareController/change_state_list - {e}')
