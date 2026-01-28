@@ -708,7 +708,7 @@ class Model:
 
     def _add_koef_force_in_list(self):
         """Добавление коэффициента в список."""
-        self.force_mgr.add_koef_to_list(self.force_data.force_clear, self.force_data.force_correct)
+        self.force_mgr.add_koef_to_list(self.force_clear, self.force_correct)
 
     def _calc_and_save_force_koef(self):
         """Расчёт и сохранение коэффициента."""
@@ -733,12 +733,12 @@ class Model:
             if not res:
                 return
             
-            self.force_data.force_clear = self.parser.magnitude_effort(res[0], res[1])
-            self.force_data.force_correct = round(self.force_data.force_clear * self.force_data.force_koef, 1)
-            self.force_data.force_offset = round(self.force_data.force_correct - self.force_data.force_koef_offset, 1)
+            self.force_clear = self.parser.magnitude_effort(res[0], res[1])
+            self.force_correct = round(self.force_clear * self.force_data.force_koef, 1)
+            self.force_offset = round(self.force_correct - self.force_data.force_koef_offset, 1)
 
-            self.movement_data.move_now = self.parser.movement_amount(res[2])
-            self.movement_data.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
+            self.move_now = self.parser.movement_amount(res[2])
+            self.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
 
             self.counter = self.parser.counter_time(res[4])
             self.data_test.force_alarm = self.parser.emergency_force(res[10], res[11])
@@ -767,12 +767,12 @@ class Model:
                 self.logger.debug('Response from buffer controller is None')
                 return
 
-            self.force_data.force_clear = data.get('force')[-1]
-            self.force_data.force_correct = round(self.force_data.force_clear * self.force_data.force_koef, 1)
-            self.force_data.force_offset = round(self.force_data.force_correct - self.force_data.force_koef_offset, 1)
+            self.force_clear = data.get('force')[-1]
+            self.force_correct = round(self.force_clear * self.force_data.force_koef, 1)
+            self.force_offset = round(self.force_correct - self.force_data.force_koef_offset, 1)
             force_buf = [x * self.force_data.force_koef - self.force_data.force_koef_offset for x in data.get('force')]
 
-            self.movement_data.move_now = data.get('move')[-1]
+            self.move_now = data.get('move')[-1]
             move_buf = data.get('move')
 
             self.counter = data.get('count')[-1]
@@ -917,14 +917,26 @@ class Model:
     @property
     def force_clear(self):
         return self.force_data.force_clear
+    
+    @force_clear.setter
+    def force_clear(self, value):
+        self.force_data.force_clear = value
 
     @property
     def force_correct(self):
         return self.force_data.force_correct
+    
+    @force_correct.setter
+    def force_correct(self, value):
+        self.force_data.force_correct = value
 
     @property
     def force_offset(self):
         return self.force_data.force_offset
+    
+    @force_offset.setter
+    def force_offset(self, value):
+        self.force_data.force_offset = value
 
     @property
     def force_koef_offset(self):
@@ -933,26 +945,50 @@ class Model:
     @property
     def move_now(self):
         return self.movement_data.move_now
+    
+    @move_now.setter
+    def move_now(self, value):
+        self.movement_data.move_now = value
 
     @property
     def move_traverse(self):
         return self.movement_data.move_traverse
+    
+    @move_traverse.setter
+    def move_traverse(self, value):
+        self.movement_data.move_traverse = value
 
     @property
     def min_point(self):
         return self.movement_data.min_point
+    
+    @min_point.setter
+    def min_point(self, value):
+        self.movement_data.min_point = value
 
     @property
     def max_point(self):
         return self.movement_data.max_point
+    
+    @max_point.setter
+    def max_point(self, value):
+        self.movement_data.max_point = value
 
     @property
     def min_pos(self):
         return self.movement_data.min_pos
+    
+    @min_pos.setter
+    def min_pos(self, value):
+        self.movement_data.min_pos = value
 
     @property
     def max_pos(self):
         return self.movement_data.max_pos
+    
+    @max_pos.setter
+    def max_pos(self, value):
+        self.movement_data.max_pos = value
 
     @property
     def force_list(self):
