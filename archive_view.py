@@ -21,7 +21,6 @@ def main():
         sys.exit(app.exec())
 
     except:
-        print('sys.exit(0)')
         sys.exit(0)
 
 
