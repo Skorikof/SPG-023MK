@@ -19,7 +19,7 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
         try:
             self.logger = my_logger.get_logger(__name__)
             self.setupUi(self)
-            self.setWindowIcon(QIcon('app/icon/shock-absorber.png'))
+            self.setWindowIcon(QIcon('icon/shock-absorber.png'))
             self.signals = AmortSignals()
             self.calc_data = CalcData()
             self._init_buttons()

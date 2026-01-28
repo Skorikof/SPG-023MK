@@ -24,7 +24,7 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
             self.amorts = None
             self.new_amort_win = AmortNew()
             self.setupUi(self)
-            self.setWindowIcon(QIcon('app/icon/shock-absorber.png'))
+            self.setWindowIcon(QIcon('icon/shock-absorber.png'))
             self.hide()
             self._create_statusbar_set()
             self._init_ui()
