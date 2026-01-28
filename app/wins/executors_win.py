@@ -85,18 +85,20 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
         try:
             self.operators.update_list()
             self.combo_Names.clear()
-            if len(self.operators.config.sections()) == 0:
+            
+            names = self.operators.get_names()
+            
+            if len(names) == 0:
                 self.btn_ok_select.setEnabled(False)
                 self.btn_del.setEnabled(False)
                 self.lbl_name.setText('')
                 self.lbl_rank.setText('')
                 self.name = ''
                 self.rank = ''
-
-                self.signals.operator_select(self.name, self.rank)
+                self.signals.operator_select.emit(self.name, self.rank)
 
             else:
-                self.combo_Names.addItems(self.operators.names)
+                self.combo_Names.addItems(names)
                 self.combo_Names.setCurrentIndex(0)
                 self.operators.current_index = 0
                 self.combo_Names.activated[int].connect(self._operator_select)
@@ -110,12 +112,16 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
 
     def _operator_select(self, ind):
         try:
-            self.operators.current_index = ind
-            self.name = self.operators.names[ind]
-            self.rank = self.operators.ranks[ind]
+            operator = self.operators.get_operator(ind)
+            if operator:
+                self.operators.current_index = ind
+                self.name = operator.name
+                self.rank = operator.rank
 
-            self.lbl_name.setText(self.name)
-            self.lbl_rank.setText(self.rank)
+                self.lbl_name.setText(self.name)
+                self.lbl_rank.setText(self.rank)
+            else:
+                self.logger.warning(f"Оператор с индексом {ind} не найден")
 
         except Exception as e:
             self.logger.error(e)
@@ -125,10 +131,16 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
         try:
             self.action = 'del'
             ind = self.operators.current_index
-            self.txt_quest.setText('Вы действительно хотите<BR>удалить исполнителя<BR>' +
-                                      self.operators.names[ind] + ' ' + self.operators.ranks[ind] +
-                                      '<BR>из списка?')
-            self._set_frame_question(True)
+            operator = self.operators.get_operator(ind)
+            
+            if operator:
+                self.txt_quest.setText(
+                    f'Вы действительно хотите<BR>удалить исполнителя<BR>'
+                    f'{operator.name} {operator.rank}<BR>из списка?'
+                )
+                self._set_frame_question(True)
+            else:
+                self.logger.warning(f"Оператор с индексом {ind} не найден")
 
         except Exception as e:
             self.logger.error(e)
@@ -137,20 +149,23 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
     def _operator_delete(self):
         try:
             ind = self.operators.current_index
+            operator = self.operators.get_operator(ind)
+            
+            if operator:
+                txt_log = f'Operator is delete - {operator.rank}, {operator.name}'
+                self.logger.info(txt_log)
 
-            name = self.operators.names[ind]
-            rank = self.operators.ranks[ind]
-            txt_log = 'Operator is delete - {}, {}'.format(rank, name)
-            self.logger.info(txt_log)
+                if operator.name == self.name:
+                    self.name = ''
+                    self.rank = ''
+                    self.signals.operator_select.emit(self.name, self.rank)
 
-            if name == self.name:
-                self.name = ''
-                self.rank = ''
-                self.signals.operator_select.emit(self.name, self.rank)
-
-            self.operators.delete_operator(ind)
-
-            self._operator_update()
+                if self.operators.delete_operator(ind):
+                    self._operator_update()
+                else:
+                    self._statusbar_set_ui('Ошибка при удалении оператора')
+            else:
+                self.logger.warning(f"Оператор с индексом {ind} не найден")
 
         except Exception as e:
             self.logger.error(e)
@@ -162,25 +177,25 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             dialog = QDialog()
             win_diag = OperatorDialog()
             win_diag.setupUi(dialog)
+            
             if dialog.exec_():
-                name = win_diag.name_le.text()
-                rank = win_diag.rank_le.text()
-                if len(name) > 0 and len(rank) > 0:
+                name = win_diag.name_le.text().strip()
+                rank = win_diag.rank_le.text().strip()
+                
+                if name and rank:
                     self.new_operator['name'] = name
                     self.new_operator['rank'] = rank
-                    flag_add = self._check_concurrence_name()
-                    if flag_add:
-                        txt_log = 'Operator is added - {}, {}'.format(rank, name)
-                        self.logger.info(txt_log)
-                        self.operators.add_operator(name, rank)
-                        self._operator_update()
+                    
+                    if self._check_concurrence_name():
+                        if self.operators.add_operator(name, rank):
+                            txt_log = f'Operator is added - {rank}, {name}'
+                            self.logger.info(txt_log)
+                            self._operator_update()
+                        else:
+                            self._statusbar_set_ui('Ошибка при добавлении оператора')
                     else:
                         self.txt_warning.setText('Такой оператор<BR>уже имеется в списке')
                         self._set_frame_warning(True)
-                else:
-                    pass
-            else:
-                pass
 
         except Exception as e:
             self.logger.error(e)
@@ -188,12 +203,9 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
 
     def _operator_ok(self):
         try:
-            self.name = self.lbl_name.text()
-            self.rank = self.lbl_rank.text()
-
             self.signals.operator_select.emit(self.name, self.rank)
 
-            txt_log = 'Operator is select - {}, {}'.format(self.rank, self.name)
+            txt_log = f'Operator is select - {self.rank}, {self.name}'
             self.logger.info(txt_log)
 
             self.close()
@@ -233,13 +245,13 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
 
     def _check_concurrence_name(self):
         try:
-            flag_add = True
-            for name in self.operators.names:
-                if name.upper() == self.new_operator.get('name').upper():
-                    flag_add = False
-
-            return flag_add
+            new_name = self.new_operator.get('name', '').upper()
+            for name in self.operators.get_names():
+                if name.upper() == new_name:
+                    return False
+            return True
 
         except Exception as e:
             self.logger.error(e)
             self._statusbar_set_ui(f'ERROR in executors_win/_check_concurrence_name - {e}')
+            return False

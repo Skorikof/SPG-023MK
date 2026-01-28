@@ -867,7 +867,7 @@ class AppWindow(QMainWindow):
             self.main_btn_state(False)
 
             if self.model.data_test.type_test != 'conv':
-                self.model.list_lab_result = []
+                self.model.storage.list_lab_result = []
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
                 self.ui.test_change_speed_btn.setVisible(False)
