@@ -258,7 +258,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
                 self.model.switch_dict.get('alarm_highest_position', True), True))
             self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('green_light', False)))
             self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('red_light', False)))
-            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.state_dict.get('yellow_btn', True), True))
+            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.state_dict.get('yellow_btn', True)))
 
         except Exception as e:
             self.logger.error(e)
