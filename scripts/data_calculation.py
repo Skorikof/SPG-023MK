@@ -45,15 +45,18 @@ class CalcData:
     def middle_min_and_max_force(self, data: list):
         """Усреднение максимального и инимального усилия"""
         try:
-            rec_ind = data.index(max(data))
-            max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
+            if data is not None:
+                rec_ind = data.index(max(data))
+                max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
 
-            comp_ind = data.index(min(data))
-            max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
+                comp_ind = data.index(min(data))
+                max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
+            
+            else:
+                max_rec = max_comp = 0
 
         except Exception as e:
-            max_rec = 0
-            max_comp = 0
+            max_rec = max_comp = 0
             self.logger.error(e)
             
         finally:
