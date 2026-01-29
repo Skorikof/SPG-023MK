@@ -30,7 +30,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
 
     def init_archive_win(self):
         self.setupUi(self)
-        self.setWindowIcon(QIcon('app/icon/archive.png'))
+        self.setWindowIcon(QIcon('icon/archive.png'))
         
         self.calc_data = CalcData()
         

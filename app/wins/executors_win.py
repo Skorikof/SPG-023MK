@@ -28,7 +28,7 @@ class ExecWin(QMainWindow, Ui_ExecutorWindow):
             self.operators = None
             self.win_diag = None
             self.setupUi(self)
-            self.setWindowIcon(QIcon('app/icon/user.png'))
+            self.setWindowIcon(QIcon('icon/user.png'))
             self.hide()
             self._init_ui()
             self._create_statusbar_set()
