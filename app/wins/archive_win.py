@@ -33,12 +33,6 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.setWindowIcon(QIcon('icon/archive.png'))
         
         self.calc_data = CalcData()
-        
-        
-        
-        
-        
-        
         self.screen_save = ScreenSave()
         self.archive = ReadArchive()
         self.archive_fill = ArchiveWinFill(self)
@@ -440,9 +434,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.push_force_casc_le.setText(f'{response.get("push_force", 0)}')
                 
                 for ind, val in enumerate(response.get('speed')):
-                    self.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
-                    self.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{response.get("recoil")[ind]}'))
-                    self.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{response.get("comp")[ind]}'))
+                    if ind != 0:
+                        self.casc_tableWt.setItem(0, ind - 1, QTableWidgetItem(f'{val}'))
+                        self.casc_tableWt.setItem(1, ind - 1, QTableWidgetItem(f'{response.get("recoil")[ind]}'))
+                        self.casc_tableWt.setItem(2, ind - 1, QTableWidgetItem(f'{response.get("comp")[ind]}'))
 
         except Exception as e:
             self.logger.error(e)
