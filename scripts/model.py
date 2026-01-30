@@ -4,7 +4,7 @@ import statistics
 from PySide6.QtCore import QObject, Signal, QTimer
 
 from scripts.logger import my_logger
-from scripts.test_obj import OperatorSchema
+from scripts.test_obj import DataTest
 from scripts.settings import PrgSettings
 from scripts.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
@@ -30,29 +30,33 @@ class ModelSignals(QObject):
 
 class Model:
     def __init__(self):
-        self.signals = ModelSignals()
-
-        self.logger = my_logger.get_logger(__name__)
-        self.fc = FreqControl()
-        self.parser = ParserSPG023MK()
-        self.calc_data = CalcData()
-        self.client = Client()
-        self.reader = Reader()
-
-        self._init_varibles()
+        self._init_variables()
         self._init_flags()
 
         self._start_param_model()
 
-    def _init_varibles(self):
-        self.operator = OperatorSchema(name='', rank='')
+    def _init_variables(self):
+        self.logger = my_logger.get_logger(__name__)
+        self.signals = ModelSignals()
+        self.client = Client()
+        self.writer = None
+        self.reader = Reader()
+        self.fc = FreqControl()
+        self.parser = ParserSPG023MK()
+        self.calc_data = CalcData()
+
+        self.data_test = DataTest()
+
         self.state_dict = {}
         self.switch_dict = {}
-
-        self.writer = None
-        self.serial_number = ''
-        self.amort = None
+        
         self.buffer_state = ['null', 'null']
+        
+        self.force_koef = PrgSettings().force_koef
+        self.force_clear = 0
+        self.force_correct = 0
+        self.force_koef_offset = 0
+        self.force_offset = 0
 
         self.force_list = []
         self.move_list = []
@@ -61,12 +65,6 @@ class Model:
         self.temper_graph = []
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
-
-        self.force_koef = PrgSettings().force_koef
-        self.force_clear = 0
-        self.force_correct = 0
-        self.force_koef_offset = 0
-        self.force_offset = 0
 
         self.counter = 0
         self.move_now = 0
@@ -77,36 +75,25 @@ class Model:
         self.start_direction = False
         self.current_direction = False
 
-        self.force_alarm = 0
-        self.temper_first = 0
-        self.temper_second = 0
-        self.temper_max = 0
-        self.temper_now = 0
-
         self.koef_force_list = []
         self.timer_add_koef = None
         self.timer_calc_koef = None
 
-        self.finish_temper = PrgSettings().finish_temper
         self.timer_yellow = None
         self.time_push_yellow = None
 
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-        self.static_push_force = 0
         self.dynamic_push_force = 0
         self.max_recoil = 0
         self.max_comp = 0
 
-        self.speed_test = 0
-        self.speed_cascade = []
         self.power_amort = 0
         self.freq_piston = 0
         
         self.list_lab_result = []
 
     def _init_flags(self):
-        self.flag_push_force = False
         self.lbl_push_force = ''
         self.min_pos = False
         self.max_pos = False
@@ -114,7 +101,6 @@ class Model:
         self.traverse_referent = False
 
         self.flag_fill_graph = False
-        self.type_test = 'hand'
         self.flag_test = False
         self.flag_test_lunch = False
         self.yellow_rattle = False
@@ -280,21 +266,21 @@ class Model:
                 self.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
 
                 self.counter = self.parser.counter_time(res[4])
-                self.force_alarm = self.parser.emergency_force(res[10], res[11])
+                self.data_test.force_alarm = self.parser.emergency_force(res[10], res[11])
 
-                self.temper_first = self.parser.temperature_value(res[7], res[8])
-                self.temper_second = self.parser.temperature_value(res[12], res[13])
-                if self.temper_first > self.temper_second:
-                    temp = self.temper_first
+                self.data_test.first_temperature = self.parser.temperature_value(res[7], res[8])
+                self.data_test.second_temperature = self.parser.temperature_value(res[12], res[13])
+                if self.data_test.first_temperature > self.data_test.second_temperature:
+                    temp = self.data_test.first_temperature
                 else:
-                    temp = self.temper_second
-                if temp > self.temper_max:
-                    self.temper_max = temp
+                    temp = self.data_test.second_temperature
+                if temp > self.data_test.max_temperature:
+                    self.data_test.max_temperature = temp
 
                 self._update_switch_dict(self.parser.switch_state(res[5]))
                 self._change_state_list(res[3])
 
-                if self.type_test == 'hand':
+                if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
 
         except Exception as e:
@@ -320,12 +306,13 @@ class Model:
 
                 self.counter = data.get('count')[-1]
 
-                self.temper_max = self.calc_data.check_temperature(data.get('temper'), self.temper_max)
-                self.temper_now = data.get('temper')[-1]
+                self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
+                                                                                  self.data_test.max_temperature)
+                self.data_test.temperature = data.get('temper')[-1]
 
                 self._change_state_list(data.get('state')[-1])
 
-                if self.type_test == 'hand':
+                if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
                 else:
                     self._pars_response_on_circle(self.force_buf, self.move_buf)
@@ -488,12 +475,10 @@ class Model:
     def _calc_dynamic_push_force(self):
         try:
             force_min = self.force[self.move.index(min(self.move))]
-            
             force_max = self.force[self.move.index(max(self.move))]
-            
             force_mid = (force_min + force_max) / 2
-            
-            self.dynamic_push_force = round((force_mid - self.static_push_force) / 2 + self.static_push_force, 2)
+            static = self.data_test.static_push_force
+            self.dynamic_push_force = round((force_mid - static) / 2 + static, 2)
             
         except Exception as e:
             self.logger.error(e)
@@ -501,13 +486,13 @@ class Model:
 
     def _choice_push_force(self):
         try:
-            if self.flag_push_force:
+            if self.data_test.flag_push_force:
                 self._calc_dynamic_push_force()
                 return self.dynamic_push_force
 
             else:
                 self.dynamic_push_force = 0
-                return self.static_push_force
+                return self.data_test.static_push_force
 
         except Exception as e:
             self.logger.error(e)
@@ -517,7 +502,7 @@ class Model:
         try:
             self.logger.debug('Full circle is done')
             if self.flag_fill_graph:
-                offset_p = self.calc_data.offset_move_by_hod(self.amort, self.min_point)
+                offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
                 
                 self.force = [round(x * (-1), 2) for x in self.force_list]
                 self.move = [round(x + offset_p, 2) for x in self.move_list]
@@ -533,7 +518,7 @@ class Model:
                 self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
 
                 self.power_amort = self.calc_data.power_amort(self.force, self.move)
-                self.freq_piston = self.calc_data.freq_piston_amort(self.speed_test, self.amort.hod)
+                self.freq_piston = self.calc_data.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
                 
                 self.logger.debug('Full circle response parsing is done')
 
@@ -668,7 +653,7 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_emergency_force - {e}')
             
-    def fc_control(self, tag: str, adr: int, speed: float=None, freq: int=None, hod: int=None):
+    def fc_control(self, tag: str, adr: int, speed: float = None, freq: int = None, hod: int = None):
         try:
             if self.state_dict.get('lost_control'):
                 self.write_bit_unblock_control()
@@ -677,10 +662,10 @@ class Model:
                 self.write_bit_emergency_force()
                 
             if hod is None:
-                if self.amort is None:
+                if self.data_test.amort is None:
                     hod = 120
                 else:
-                    hod = self.amort.hod
+                    hod = self.data_test.amort.hod
                 
             values, comm = self.fc.freq_command(tag, adr, speed, freq, hod)
             self.writer.write_out('FC', freq_command=values, command=comm)
@@ -734,12 +719,13 @@ class Model:
             if not self.move or not self.force:
                 pass
             else:
-                if self.type_test == 'lab' or self.type_test == 'lab_cascade' or self.type_test == 'conv':
-                        data_dict = {'speed': self.speed_test,
-                                     'move': self.move[:],
-                                     'force': self.force[:]}
+                type_test = self.data_test.type_test
+                if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
+                    data_dict = {'speed': self.data_test.speed_test,
+                                 'move': self.move[:],
+                                 'force': self.force[:]}
 
-                        self.list_lab_result.append(data_dict)
+                    self.list_lab_result.append(data_dict)
                         
                 self.save_data_in_archive()
                     
@@ -763,16 +749,16 @@ class Model:
                          'temper_graph': self.temper_graph[:],
                          'temper_recoil_graph': self.temper_recoil_graph[:],
                          'temper_comp_graph': self.temper_comp_graph[:],
-                         'type_test': self.type_test,
-                         'speed': self.speed_test,
-                         'operator_name': self.operator.name,
-                         'operator_rank': self.operator.rank,
-                         'serial': self.serial_number,
-                         'amort': self.amort,
-                         'flag_push_force': int(self.flag_push_force),
-                         'static_push_force': self.static_push_force,
+                         'type_test': self.data_test.type_test,
+                         'speed': self.data_test.speed_test,
+                         'operator_name': self.data_test.operator.name,
+                         'operator_rank': self.data_test.operator.rank,
+                         'serial': self.data_test.serial,
+                         'amort': self.data_test.amort,
+                         'flag_push_force': int(self.data_test.flag_push_force),
+                         'static_push_force': self.data_test.static_push_force,
                          'dynamic_push_force': self.dynamic_push_force,
-                         'max_temperature': self.temper_max}
+                         'max_temperature': self.data_test.max_temperature}
             
             self.clear_data_in_circle_graph()
             

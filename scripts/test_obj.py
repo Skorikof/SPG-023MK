@@ -8,61 +8,90 @@ class OperatorSchema(BaseModel):
     rank: str
 
 
-class TestObj:
+class DataMoveGraph:
     def __init__(self):
-        self._state_dict = {}
-        self._switch_dict = {}
+        self.force = []
+        self.move = []
+        self.dynamic_push_force = 0
         
-        self._serial_number = ''
-        self._amort = None
-        self._buffer_state = ['null', 'null']
-
-        self._force_list = []
-        self._move_list = []
-        self._force = []
-        self._move = []
-        self._temper_graph = []
-        self._temper_recoil_graph = []
-        self._temper_comp_graph = []
+    @classmethod
+    def validate(cls, arg):
+        return type(arg) is list
+    
+    def set_data(self, force: list, move: list):
+        if self.validate(force) and self.validate(move):
+            self.force.extend(force)
+            self.move.extend(move)
         
-        self._force_koef = PrgSettings().force_koef
-        self._force_clear = 0
-        self._force_correct = 0
-        self._force_koef_offset = 0
-        self._force_offset = 0
+    def set_terminator(self):
+        self.force.append('end')
+        self.move.append('end')
 
-        self._counter = 0
-        self._move_now = 0
-        self._move_traverse = 0
-        self._hod_measure = 0
-        self._min_point = 0
-        self._max_point = 0
-        self._start_direction = False
-        self._current_direction = False
-
-        self._force_alarm = 0
-        self._temper_first = 0
-        self._temper_second = 0
-        self._temper_max = 0
-        self._temper_now = 0
-
-        self._koef_force_list = []
-        self._timer_add_koef = None
-        self._timer_calc_koef = None
-
-        self._finish_temper = PrgSettings().finish_temper
-        self._timer_yellow = None
-        self._time_push_yellow = None
-
-        self._state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        self._static_push_force = 0
-        self._dynamic_push_force = 0
-        self._max_recoil = 0
-        self._max_comp = 0
-
-        self._speed_test = 0
-        self._speed_cascade = []
-        self._power_amort = 0
-        self._freq_piston = 0
+    def set_dynamic_push_force(self, force):
+        self.dynamic_push_force = force
         
+    def clear_data(self):
+        self.force = []
+        self.move = []
+        
+    def get_data(self):
+        return self.force, self.move
+
+    def get_dynamic_push_force(self):
+        return self.dynamic_push_force
+    
+    
+class DataTemprGraph:
+    def __init__(self):
+        self.recoil = []
+        self.comp = []
+        self.temper = []
+        self.dynamic_push_force = 0
+        
+    @classmethod
+    def validate(cls, arg):
+        return type(arg) in (int, float)
+    
+    def set_data(self, recoil: float, comp: float, temper: float):
+        if self.validate(recoil) and self.validate(comp) and self.validate(temper):
+            self.recoil.append(recoil)
+            self.comp.append(comp)
+            self.temper.append(temper)
+        
+    def set_terminator(self):
+        self.recoil.append('end')
+        self.comp.append('end')
+        self.temper.append('end')
+        
+    def clear_data(self):
+        self.recoil = []
+        self.comp = []
+        self.temper = []
+        
+    def get_data(self):
+        return self.recoil, self.comp, self.temper
+    
+
+class DataSpeeds:
+    def __init__(self):
+        self.speeds = {}
+    
+
+class DataTest:
+    def __init__(self):
+        self.amort = None
+        self.type_test = 'hand'
+        self.operator = OperatorSchema(name='', rank='')
+        self.serial = ''
+        self.speed_test = 0
+        self.speed_list = []
+        self.force_alarm = 0
+        self.flag_push_force = False
+        self.static_push_force = 0
+        self.temperature = 0
+        self.first_temperature = 0
+        self.second_temperature = 0
+        self.max_temperature = 0
+        self.finish_temperature = PrgSettings().finish_temper
+
+        self.data_test = {}

@@ -75,7 +75,7 @@ class TripleGraph(AbstractGraph):
 
     def fill_piston_graph(self, hod, pen=None, name='Смещение'):
         try:
-            if pen == None:
+            if pen is None:
                 pen = pg.mkPen(color='black', width=3, style=Qt.DashDotLine)
                 
             hod_x, hod_y = CalcGraphValue().coord_sinus(hod, 360, 1)
@@ -87,7 +87,7 @@ class TripleGraph(AbstractGraph):
 
     def fill_force_graph(self, x_coord, y_coord, pen=None, name='Усилие'):
         try:
-            if pen == None:
+            if pen is None:
                 pen = pg.mkPen(color='blue', width=3)
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
@@ -96,7 +96,7 @@ class TripleGraph(AbstractGraph):
 
     def fill_speed_graph(self, x_coord, y_coord, pen=None, name='Скорость'):
         try:
-            if pen == None:
+            if pen is None:
                 pen = pg.mkPen(color='red', width=3)
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 

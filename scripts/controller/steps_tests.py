@@ -55,7 +55,7 @@ class StepTests:
 
             self.model.lamp_all_switch_off()
 
-            self.model.temper_max = 0
+            self.model.data_test.max_temperature = 0
 
             self.model.reset_current_circle()
             self.model.flag_test_launch = True
@@ -84,19 +84,19 @@ class StepTests:
     def step_test_on_two_speed(self, ind: int):
         try:
             if ind == 1:
-                self.model.fc_control(**{'tag':'speed', 'adr':1,
-                                         'speed':self.model.amort.speed_one})
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                         'speed': self.model.data_test.amort.speed_one})
                 self.signals.stage_from_tests.emit('test_speed_one')
                 self.model.clear_data_in_graph()
-                self.model.speed_test = self.model.amort.speed_one
+                self.model.data_test.speed_test = self.model.data_test.amort.speed_one
 
                 self.model.flag_fill_graph = True
 
             elif ind == 2:
                 self.signals.stage_from_tests.emit('test_speed_two')
-                self.model.speed_test = self.model.amort.speed_two
-                self.model.fc_control(**{'tag':'speed', 'adr':1,
-                                         'speed':self.model.amort.speed_two})
+                self.model.data_test.speed_test = self.model.data_test.amort.speed_two
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                         'speed': self.model.data_test.amort.speed_two})
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
@@ -108,8 +108,8 @@ class StepTests:
 
     def step_test_lab_hand_speed(self):
         try:
-            self.model.fc_control(**{'tag':'speed', 'adr':1,
-                                     'speed':self.model.speed_test})
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                     'speed': self.model.data_test.speed_test})
             self.signals.stage_from_tests.emit('test_lab_hand_speed')
             self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
@@ -124,12 +124,12 @@ class StepTests:
 
     def step_test_lab_cascade(self, speed_list: list):
         try:
-            self.model.fc_control(**{'tag':'speed', 'adr':1,
-                                     'speed':speed_list[0]})
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                     'speed': speed_list[0]})
             self.signals.stage_from_tests.emit('test_lab_cascade')
 
             self.model.clear_data_in_graph()
-            self.model.speed_test = speed_list[0]
+            self.model.data_test.speed_test = speed_list[0]
             self.model.flag_fill_graph = True
 
             if self.model.flag_repeat:
@@ -142,8 +142,8 @@ class StepTests:
 
     def step_test_temper(self):
         try:
-            self.model.fc_control(**{'tag':'speed', 'adr':1,
-                                     'speed':self.model.speed_test})
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                     'speed': self.model.data_test.speed_test})
             self.signals.stage_from_tests.emit('test_temper')
 
             self.model.clear_data_in_graph()

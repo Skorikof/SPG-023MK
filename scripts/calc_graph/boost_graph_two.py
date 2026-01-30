@@ -52,7 +52,7 @@ class BoostGraphTwo(AbstractGraph):
 
     def fill_graph(self, x_coord, y_coord, pen=None, name='Скорость'):
         try:
-            if pen == None:
+            if pen is None:
                 pen = pg.mkPen(color='blue', width=5)
 
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)

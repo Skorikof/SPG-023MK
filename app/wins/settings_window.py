@@ -55,7 +55,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _check_operator(self):
         try:
-            if self.model.operator.name == 'Скориков И.А.':
+            if self.model.data_test.operator.name == 'Скориков И.А.':
                 self.freq_frame.setVisible(True)
 
             else:
@@ -155,7 +155,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
     def _write_alarm_force(self):
         try:
             value = float(self.lineEdit_F_alarm.text())
-            if value == float(self.model.force_alarm):
+            if value == float(self.model.data_test.force_alarm):
                 pass
             else:
                 self.model.write_emergency_force(value)
@@ -232,9 +232,9 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.correct_force_lcd.display(self.model.force_offset)
         self.lcdH.display(self.model.move_now)
         self.lcdH_T.display(self.model.move_traverse)
-        self.lcdTemp_1.display(self.model.temper_first)
-        self.lcdTemp_2.display(self.model.temper_second)
-        self.lineEdit_F_alarm.setText(f'{self.model.force_alarm}')
+        self.lcdTemp_1.display(self.model.data_test.first_temperature)
+        self.lcdTemp_2.display(self.model.data_test.second_temperature)
+        self.lineEdit_F_alarm.setText(f'{self.model.data_test.force_alarm}')
 
         self._update_color_switch()
 

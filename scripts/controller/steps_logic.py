@@ -23,8 +23,8 @@ class Steps:
     def stage_control_alarm_state(self):
         try:
             tag = 'null'
-            if not self.model.type_test == 'temper':
-                if self.model.temper_max >= self.model.amort.max_temper:
+            if not self.model.data_test.type_test == 'temper':
+                if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
                     tag = 'excess_temperature'
 
             if self.model.state_dict.get('lost_control', False) is True:
@@ -42,36 +42,43 @@ class Steps:
             
     def _definition_speed_by_hod(self, tag):
         try:
-            if self.model.amort is None:
-                hod = 120
+            if self.model.data_test.amort is None:
+                hod = 50
             else:
-                hod = self.model.amort.hod
+                hod = self.model.data_test.amort.hod
 
             if hod > 100:
+                speed = 0.03
                 if tag == 'slow':
                     speed = 0.03
                 elif tag == 'medium':
                     speed = 0.1
                 elif tag == 'fast':
                     speed = 0.2
+
+                return speed
                     
             elif 50 < hod <= 100:
+                speed = 0.02
                 if tag == 'slow':
                     speed = 0.02
                 elif tag == 'medium':
                     speed = 0.06
                 elif tag == 'fast':
                     speed = 0.1
+
+                return speed
                     
             else:
+                speed = 0.01
                 if tag == 'slow':
                     speed = 0.01
                 elif tag == 'medium':
                     speed = 0.03
                 elif tag == 'fast':
                     speed = 0.03
-            
-            return speed
+
+                return speed
 
         except Exception as e:
             self.logger.error(e)
@@ -263,14 +270,15 @@ class Steps:
 
     def step_move_traverse_out_alarm(self, pos):
         try:
+            tag = 'down'
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
+            self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 30})
             if pos == 'up':
                 tag = 'down'
             elif pos == 'down':
                 tag = 'up'
-            self.model.fc_control(**{'tag':tag, 'adr':2})
+            self.model.fc_control(**{'tag': tag, 'adr': 2})
 
         except Exception as e:
             self.logger.error(e)
@@ -281,14 +289,14 @@ class Steps:
         try:
             self.flag_freq_1_step = False
             self.flag_freq_2_step = False
-            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
+            self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 30})
             pos_trav = self.model.move_traverse
 
             if pos_trav > set_point:
                 tag = 'up'
             else:
                 tag = 'down'
-            self.model.fc_control(**{'tag':tag, 'adr':2})
+            self.model.fc_control(**{'tag': tag, 'adr': 2})
 
         except Exception as e:
             self.logger.error(e)
@@ -298,12 +306,12 @@ class Steps:
         try:
             if 5 < abs(point - self.model.move_traverse) <= 10:
                 if not self.flag_freq_1_step:
-                    self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':20})
+                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 20})
                     self.flag_freq_1_step = True
 
             if 1 < abs(point - self.model.move_traverse) <= 5:
                 if not self.flag_freq_2_step:
-                    self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':15})
+                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 15})
                     self.flag_freq_2_step = True
 
             if abs(point - self.model.move_traverse) <= 0.5:
@@ -319,16 +327,17 @@ class Steps:
     def step_result_conveyor_test(self, step):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
         try:
+            amort = self.model.data_test.amort
             min_comp, max_comp = 0, 2000
             min_recoil, max_recoil = 0, 2000
 
             if step == 'one':
-                min_comp, max_comp = self.model.amort.min_comp, self.model.amort.max_comp
-                min_recoil, max_recoil = self.model.amort.min_recoil, self.model.amort.max_recoil
+                min_comp, max_comp = amort.min_comp, amort.max_comp
+                min_recoil, max_recoil = amort.min_recoil, amort.max_recoil
 
             elif step == 'two':
-                min_comp, max_comp = self.model.amort.min_comp_2, self.model.amort.max_comp_2
-                min_recoil, max_recoil = self.model.amort.min_recoil_2, self.model.amort.max_recoil_2
+                min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
+                min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
 
             if min_comp < self.model.max_comp < max_comp and min_recoil < self.model.max_recoil < max_recoil:
                 self.model.lamp_green_switch_on()
