@@ -11,6 +11,13 @@ class StepsSignal(QObject):
 
 
 class Steps:
+    # Speed configuration: {hod_range: {speed_tag: speed_value}}
+    SPEED_CONFIG = {
+        (100, float('inf')): {'slow': 0.03, 'medium': 0.1, 'fast': 0.2},
+        (50, 100): {'slow': 0.02, 'medium': 0.06, 'fast': 0.1},
+        (0, 50): {'slow': 0.01, 'medium': 0.03, 'fast': 0.03},
+    }
+
     def __init__(self, model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
@@ -21,68 +28,47 @@ class Steps:
         self.count_wait_point = 0
 
     def stage_control_alarm_state(self):
+        """Check for alarm conditions and return alarm tag or None."""
         try:
-            tag = 'null'
-            if not self.model.data_test.type_test == 'temper':
+            # Check state_dict alarms first (higher priority)
+            alarm_checks = [
+                ('lost_control', self.model.state_dict.get('lost_control', False)),
+                ('excess_force', self.model.state_dict.get('excess_force', False)),
+                ('safety_fence', self.model.state_dict.get('safety_fence', False)),
+            ]
+            
+            for alarm_tag, is_triggered in alarm_checks:
+                if is_triggered:
+                    return alarm_tag
+            
+            # Check temperature alarm (only if not in temperature test)
+            if self.model.data_test.type_test != 'temper':
                 if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
-                    tag = 'excess_temperature'
-
-            if self.model.state_dict.get('lost_control', False) is True:
-                tag = 'lost_control'
-            if self.model.state_dict.get('excess_force', False) is True:
-                tag = 'excess_force'
-            if self.model.state_dict.get('safety_fence', False) is True:
-                tag = 'safety_fence'
-
-            return tag
+                    return 'excess_temperature'
+            
+            return None
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_control_alarm_state - {e}')
             
-    def _definition_speed_by_hod(self, tag):
+    def _definition_speed_by_hod(self, tag: str) -> float:
+        """Get speed based on hod value and speed tag."""
         try:
-            if self.model.data_test.amort is None:
-                hod = 50
-            else:
-                hod = self.model.data_test.amort.hod
-
-            if hod > 100:
-                speed = 0.03
-                if tag == 'slow':
-                    speed = 0.03
-                elif tag == 'medium':
-                    speed = 0.1
-                elif tag == 'fast':
-                    speed = 0.2
-
-                return speed
-                    
-            elif 50 < hod <= 100:
-                speed = 0.02
-                if tag == 'slow':
-                    speed = 0.02
-                elif tag == 'medium':
-                    speed = 0.06
-                elif tag == 'fast':
-                    speed = 0.1
-
-                return speed
-                    
-            else:
-                speed = 0.01
-                if tag == 'slow':
-                    speed = 0.01
-                elif tag == 'medium':
-                    speed = 0.03
-                elif tag == 'fast':
-                    speed = 0.03
-
-                return speed
+            # Get hod value (default 120 if None)
+            hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+            
+            # Find matching range and get speed
+            for (min_hod, max_hod), speeds in self.SPEED_CONFIG.items():
+                if min_hod < hod <= max_hod:
+                    return speeds.get(tag, 0.03)
+            
+            return 0.03  # Safe default
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/_definition_speed_by_hod - {e}')
+            return 0.03  # Safe default on error
 
     def step_search_hod_gear(self):
         try:
@@ -107,7 +93,6 @@ class Steps:
         try:
             if count_cycle >= 1:
                 self.model.hod_measure = round(abs(self.model.min_point) + abs(self.model.max_point), 1)
-
                 return True
 
             else:
