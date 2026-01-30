@@ -20,9 +20,10 @@ class Client:
                                                              bytesize=self.set_dict.get('bytesize'),
                                                              parity=self.set_dict.get('parity'),
                                                              stopbits=self.set_dict.get('stopbits'),
-                                                             timeout=0.000001))
+                                                             timeout=0.000001,
+                                                             xonxoff=0))
 
-            self.client.set_timeout(1.0)
+            self.client.set_timeout(0.1)
             self.client.set_verbose(True)
 
         except Exception as e:

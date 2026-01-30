@@ -9,20 +9,25 @@ from scripts.calc_graph.calc_graph_values import CalcGraphValue
 
 
 class TripleGraph(AbstractGraph):
+    AXES_CONFIG = {
+        'title': 'Диаграмма хода, скорости, силы сопротивления',
+        'left': ('left', 'Смещение или Скорость', 'мм или мм/с'),
+        'bottom': ('bottom', 'ω * t', '°'),
+        'right': ('right', 'Усилие', 'кгс')
+    }
+
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
-        kwargs = {'title': 'Диаграмма хода, скорости, силы сопротивления',
-                  'left': ('left', 'Смещение или Скорость', 'мм или мм/с'),
-                  'bottom': ('bottom', 'ω * t', '°'),
-                  'right': ('right', 'Усилие', 'кгс')
-                  }
-            
-        self.gui_graph(**kwargs)
-        self.gui_axis('left')
-        self.gui_axis('bottom')
-        self.gui_axis('right')
-                
+        
+        self.gui_graph(**self.AXES_CONFIG)
+        self._initialize_axes()
+    
+    def _initialize_axes(self):
+        """Initialize graph axes from configuration."""
+        for axis_key in ('left', 'bottom', 'right'):
+            self.gui_axis(axis_key)
+
     def calc_force_graph(self, data):
         try:
             move_array = np.array(data.move_list)

@@ -6,17 +6,23 @@ from scripts.calc_graph.calc_graph_values import CalcGraphValue
 
 
 class TemperGraph(AbstractGraph):
+    AXES_CONFIG = {
+        'title': 'График зависимости усилия от температуры',
+        'left': ('left', 'Усилие', 'кгс'),
+        'bottom': ('bottom', 'Температура', '℃')
+    }
+
     def __init__(self, widget):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
-        kwargs = {'title': 'График зависимости усилия от температуры',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Температура', '℃')
-                      }
-            
-        self.gui_graph(**kwargs)
-        self.gui_axis('left')
-        self.gui_axis('bottom')
+        
+        self.gui_graph(**self.AXES_CONFIG)
+        self._initialize_axes()
+    
+    def _initialize_axes(self):
+        """Initialize graph axes from configuration."""
+        for axis_key in ('left', 'bottom'):
+            self.gui_axis(axis_key)
             
     def calc_graph(self, data):
         try:

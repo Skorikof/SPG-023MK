@@ -40,6 +40,7 @@ class AppWindow(QMainWindow):
         # self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
         self.model.client.disconnect_client()
+        self.logger.debug('Exit program')
         event.accept()
 
     def _create_statusbar_ui(self):

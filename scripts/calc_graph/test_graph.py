@@ -6,23 +6,31 @@ from scripts.calc_graph.abstract_graph import AbstractGraph
 
 
 class TestGraph(AbstractGraph):
+    AXES_CONFIGS = {
+        'move': {
+            'title': 'График зависимости усилия от перемещения',
+            'left': ('left', 'Усилие', 'кгс'),
+            'bottom': ('bottom', 'Перемещение', 'мм')
+        },
+        'temperature': {
+            'title': 'График зависимости усилия от температуры',
+            'left': ('left', 'Усилие', 'кгс'),
+            'bottom': ('bottom', 'Температура', '℃')
+        }
+    }
+
     def __init__(self, widget, tag):
         self.logger = my_logger.get_logger(__name__)
         self.widget = widget
         
-        if tag == 'move':
-            kwargs = {'title': 'График зависимости усилия от перемещения',
-                    'left': ('left', 'Усилие', 'кгс'),
-                    'bottom': ('bottom', 'Перемещение', 'мм')
-                    }
-        else:
-            kwargs = {'title': 'График зависимости усилия от температуры',
-                      'left': ('left', 'Усилие', 'кгс'),
-                      'bottom': ('bottom', 'Температура', '℃')
-                    }
-        self.gui_graph(**kwargs)
-        self.gui_axis('left')
-        self.gui_axis('bottom')
+        config = self.AXES_CONFIGS.get(tag, self.AXES_CONFIGS['temperature'])
+        self.gui_graph(**config)
+        self._initialize_axes()
+    
+    def _initialize_axes(self):
+        """Initialize graph axes from configuration."""
+        for axis_key in ('left', 'bottom'):
+            self.gui_axis(axis_key)
 
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
