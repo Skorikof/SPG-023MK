@@ -236,13 +236,13 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
 
-    def _reader_result(self, response, tag):
+    def _reader_result(self, tag, response):
         try:
             if tag == 'buffer':
                 self._pars_buffer_result(response)
 
             if tag == 'reg':
-                self._pars_regs_result(response.get('regs'))
+                self._pars_regs_result(response)
 
             # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
             # if self.flag_test_launch is True:
@@ -289,35 +289,36 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
-    def _pars_buffer_result(self, response):
+    def _pars_buffer_result(self, res):
         try:
-            data = self.parser.discard_left_data(response)
+            print(res)
+            # data = self.parser.discard_left_data(res)
 
-            if data is None:
-                self.logger.debug('Response from buffer controller is None')
-                pass  # Пришла пустая посылка
+            # if data is None:
+            #     self.logger.debug('Response from buffer controller is None')
+            #     pass  # Пришла пустая посылка
 
-            else:
-                self.force_clear = data.get('force')[-1]
-                self.force_correct = round(self.force_clear * self.force_koef, 1)
-                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
-                self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
+            # else:
+            #     self.force_clear = data.get('force')[-1]
+            #     self.force_correct = round(self.force_clear * self.force_koef, 1)
+            #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+            #     self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
 
-                self.move_now = data.get('move')[-1]
-                self.move_buf = data.get('move')
+            #     self.move_now = data.get('move')[-1]
+            #     self.move_buf = data.get('move')
 
-                self.counter = data.get('count')[-1]
+            #     self.counter = data.get('count')[-1]
 
-                self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
-                                                                                  self.data_test.max_temperature)
-                self.data_test.temperature = data.get('temper')[-1]
+            #     self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
+            #                                                                       self.data_test.max_temperature)
+            #     self.data_test.temperature = data.get('temper')[-1]
 
-                self._change_state_list(data.get('state')[-1])
+            #     self._change_state_list(data.get('state')[-1])
 
-                if self.data_test.type_test == 'hand':
-                    self.signals.win_set_update.emit()
-                else:
-                    self._pars_response_on_circle(self.force_buf, self.move_buf)
+            #     if self.data_test.type_test == 'hand':
+            #         self.signals.win_set_update.emit()
+            #     else:
+            #         self._pars_response_on_circle(self.force_buf, self.move_buf)
 
         except Exception as e:
             if str(e) == 'list index out of range':
