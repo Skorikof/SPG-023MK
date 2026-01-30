@@ -161,7 +161,7 @@ class Model:
 
     def reader_start_test(self):
         self.reader.reader_start_test()
-        self.status_bar_msg(f'Чтение буффура контроллера запущено')
+        self.status_bar_msg(f'Чтение буфера контроллера запущено')
 
     def reader_stop(self):
         self.reader.reader_stop()
@@ -169,7 +169,7 @@ class Model:
 
     def reader_stop_test(self):
         self.reader.reader_stop_test()
-        self.status_bar_msg(f'Чтение буффера контроллера остановлено')
+        self.status_bar_msg(f'Чтение буфера контроллера остановлено')
 
     def reader_exit(self):
         self.reader.reader_exit()
