@@ -176,7 +176,8 @@ class Model:
         
     def _update_switch_dict(self, data):
         try:
-            self.switch_dict = {**self.switch_dict, **data}
+            if data is not None:
+                self.switch_dict = {**self.switch_dict, **data}
 
         except Exception as e:
             self.logger.error(e)
@@ -184,7 +185,8 @@ class Model:
 
     def _update_state_dict(self, data):
         try:
-            self.state_dict = {**self.state_dict, **data}
+            if data is not None:
+                self.state_dict = {**self.state_dict, **data}
 
         except Exception as e:
             self.logger.error(e)
