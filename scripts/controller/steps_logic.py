@@ -156,7 +156,7 @@ class Steps:
     def stage_stop_gear_end_test(self):
         try:
             # if abs(self.model.move_list[-1] - self.model.move_list[-10]) < 0.1:
-            if statistics.stdev(self.model.move_list) < 0.1: # Перемещение перестало изменятьсяs
+            if statistics.stdev(self.model.move_buf) < 0.1: # Перемещение перестало изменятьсяs
                 self.count_wait_point += 1
 
             else:

@@ -45,7 +45,7 @@ class CalcData:
     def middle_min_and_max_force(self, data: list):
         """Усреднение максимального и инимального усилия"""
         try:
-            if data is not None:
+            if data != []:
                 rec_ind = data.index(max(data))
                 max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
 

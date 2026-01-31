@@ -61,7 +61,8 @@ class ParserSPG023MK:
                 result = {'count': [count[i] for i in valid_indices],
                         'force': [force[i] for i in valid_indices],
                         'move': [self._movement_amount(move[i]) for i in valid_indices],
-                        'state': [state[i] for i in valid_indices],
+                        'state': [self._register_state(state[i]) for i in valid_indices],
+                        'state_list': self._change_state_list(state[0]),
                         'temper': [round(temper[i] * 0.01, 1) for i in valid_indices],
                         }
 
