@@ -11,7 +11,7 @@ class ReaderSignals(QObject):
     stop_test = Signal()
     stop = Signal()
     exit = Signal()
-    result = Signal(str, tuple)
+    result = Signal(dict, str)
     error = Signal(str)
     
 
@@ -51,6 +51,6 @@ class Reader:
     def _log_error_thread(self, txt_log):
         self.signals.error.emit(txt_log)
     
-    def _reader_result(self, tag, res):
-        self.signals.result.emit(tag, res)
+    def _reader_result(self, res, tag):
+        self.signals.result.emit(res, tag)
     

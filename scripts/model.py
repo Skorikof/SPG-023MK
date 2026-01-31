@@ -251,13 +251,13 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
 
-    def _reader_result(self, tag, response):
+    def _reader_result(self, response, tag):
         try:
             if tag == 'buffer':
                 self._pars_buffer_result(response)
 
             if tag == 'reg':
-                self._pars_regs_result(response)
+                self._pars_regs_result(response.get('regs'))
 
             # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
             # if self.flag_test_launch is True:
@@ -317,7 +317,7 @@ class Model:
 
     def _pars_buffer_result(self, res):
         try:
-            data = self.parser.pars_response_from_buffer(res)
+            data = self.parser.discard_left_data(res)
 
             if data is None:
                 self.logger.debug('Response from buffer controller is None')
@@ -333,12 +333,12 @@ class Model:
                 self.move_buf = data.get('move')
 
                 self.counter = data.get('count')[-1]
+                
+                self._change_state_list(data.get('state')[-1])
 
                 self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
                                                                                   self.data_test.max_temperature)
                 self.data_test.temperature = data.get('temper')[-1]
-
-                self.state_list = data.get('state_list')
 
                 if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
@@ -351,6 +351,19 @@ class Model:
             else:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+                
+    def _change_state_list(self, reg):
+        try:
+            temp = bin(reg)[2:].zfill(16)
+            bits = ''.join(reversed(temp))
+            self.state_list = [int(x) for x in bits]
+
+            self._update_state_dict(self.parser.register_state(reg))
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
+
                 
     def _add_data_in_graph(self, force, move):
         try:
