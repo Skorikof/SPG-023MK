@@ -57,16 +57,13 @@ class WriterArch:
 
     def _log_error_write_arch_thread(self, txt_log):
         self.logger.error(txt_log)
-        self._result_write_arch()
         
-    def _result_write_arch(self):
+    def _result_write_arch(self, tag):
         try:
+            # print(f'tag archive save --> {tag}')
             if self.query_write_arch:
                 self.query_write_arch = False
                 self.list_write_arch.pop(0)
-                
-            if not self.list_write_arch:
-                self.timer_writer_arch_stop()
 
         except Exception as e:
             self.logger.error(e)

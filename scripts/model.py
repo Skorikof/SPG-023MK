@@ -137,8 +137,8 @@ class Model:
             self.reader.init_reader(self.client.client)
             self.reader_start()
 
-            # self.save_arch = WriterArch()
-            # self.save_arch.timer_writer_arch_start()
+            self.save_arch = WriterArch()
+            self.save_arch.timer_writer_arch_start()
             
             # self._stand_initialisation()
 
@@ -768,8 +768,6 @@ class Model:
             
     def write_data_in_archive(self, tag, data=None):
         try:
-            self.save_arch = WriterArch()
-            self.save_arch.timer_writer_arch_start()
             self.save_arch.write_arch_out(tag, data)
             
         except Exception as e:

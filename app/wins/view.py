@@ -40,7 +40,7 @@ class AppWindow(QMainWindow):
         self.model.reader_exit()
         self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
-        # self.model.save_arch.timer_writer_arch_stop()
+        self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
         self.model.client.disconnect_client()
         event.accept()

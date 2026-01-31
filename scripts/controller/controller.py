@@ -201,6 +201,7 @@ class Controller:
 
             elif self.stage == 'test_speed_one':
                 if self.count_cycle >= 5:
+                    self.model.save_result_cycle()
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('one')
 
@@ -209,16 +210,18 @@ class Controller:
 
             elif self.stage == 'test_speed_two':
                 if self.count_cycle >= 5:
+                    self.model.save_result_cycle()
                     if type_test == 'conv':
                         self.steps.step_result_conveyor_test('two')
                         
-                    self.model.write_end_test_in_archive()
                     self.stage = 'wait'
                     self.model.flag_fill_graph = False
+                    self.model.write_end_test_in_archive()
                     self.steps.step_stop_gear_end_test()
 
             elif self.stage == 'test_lab_hand_speed':
                 if self.count_cycle >= 5:
+                    self.model.save_result_cycle()
                     self.stage = 'wait'
                     self.model.flag_fill_graph = False
                     self.model.write_end_test_in_archive()
@@ -235,6 +238,7 @@ class Controller:
                             self._full_cycle_update('0')
 
                         else:
+                            self.model.save_result_cycle()
                             self.model.flag_fill_graph = False
                             self.stage = 'wait'
                             self.model.write_end_test_in_archive()

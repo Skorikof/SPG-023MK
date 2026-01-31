@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 class Signals(QObject):
     thread_err = Signal(str)
-    write_archive = Signal()
+    write_archive = Signal(str)
     
 
 class WriterArchive(QRunnable):
@@ -124,7 +124,7 @@ class WriterArchive(QRunnable):
 
                 file_arch.write(write_name + write_str + write_data)
             
-            self.signals.write_archive.emit()
+            self.signals.write_archive.emit(self.tag)
             self.tag = None
 
         except Exception as e:
@@ -149,7 +149,7 @@ class WriterArchive(QRunnable):
                 str_t = f'end_test;\n'
                 file_arch.write(str_t)
                 
-            self.signals.write_archive.emit()
+            self.signals.write_archive.emit(self.tag)
             self.tag = None
 
         except Exception as e:
