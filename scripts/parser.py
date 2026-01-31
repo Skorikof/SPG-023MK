@@ -6,37 +6,49 @@ from scripts.logger import my_logger
 class ParserSPG023MK:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
-            
-    def discard_left_data(self, request):
-        """Filter out invalid force data points (value -100000) from request."""
+        
+    def pars_response_from_buffer(self, res):
         try:
-            force_data = request.get('force', [])
+            count = res[0::6]
+            force_low = res[1::6]
+            force_big = res[2::6]
+            move = res[3::6]
+            state = res[4::6]
+            temper = res[5::6]
             
-            if not force_data:
-                return None
+            force = tuple(self.magnitude_effort(x, force_big[i]) for i, x in enumerate(force_low))
             
-            # Filter indices where force is not -100000
-            valid_indices = [i for i, force in enumerate(force_data) if force != -100000]
+            # print(f'count ==> {count}')
+            # print(f'force ==> {force}')
+            # print(f'move ==> {move}')
+            # print(f'state ==> {state}')
+            # print(f'temper ==> {temper}')
             
-            if not valid_indices:
-                return None
+            return self._discard_left_data(count, force, move, state, temper)
             
-            # Build response with only valid data points
-            response = {
-                'count': [request['count'][i] for i in valid_indices],
-                'force': [request['force'][i] for i in valid_indices],
-                'move': [request['move'][i] for i in valid_indices],
-                'state': [request['state'][i] for i in valid_indices],
-                'temper': [request['temper'][i] for i in valid_indices],
-            }
+        except Exception as e:
+            self.logger.error(e)
             
-            # print(f'count ==> {response["count"]}')
-            # print(f'force ==> {response["force"]}')
-            # print(f'move ==> {response["move"]}')
-            # print(f'state ==> {response["state"]}')
-            # print(f'temper ==> {response["temper"]}')
+    def _discard_left_data(self, count: tuple, force: tuple,
+                           move: tuple, state: tuple, temper: tuple):
+        try:
+            if force is not None:
+                valid_indices = [i for i, force in enumerate(force) if force != -100000]
+                
+                if not valid_indices:
+                    return None
+                
+                result = {'count': [count[i] for i in valid_indices],
+                        'force': [force[i] for i in valid_indices],
+                        'move': [self.movement_amount(move[i]) for i in valid_indices],
+                        'state': [state[i] for i in valid_indices],
+                        'temper': [round(temper[i] * 0.01, 1) for i in valid_indices],
+                        }
 
-            return response
+                return result
+            
+            else:
+                return None
             
         except Exception as e:
             self.logger.error(e)
@@ -50,10 +62,10 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
 
-    def movement_amount(self, data):
+    def movement_amount(self, value):
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
-            return round(-0.1 * (int.from_bytes(pack('>H', data), 'big', signed=True)), 1)
+            return round(-0.1 * (int.from_bytes(pack('>H', value), 'big', signed=True)), 1)
 
         except Exception as e:
             self.logger.error(e)

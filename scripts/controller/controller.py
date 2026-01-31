@@ -261,7 +261,7 @@ class Controller:
             if self._check_max_temper_test():
                 self.steps_tests.step_start_test()
 
-                self.model.write_emergency_force(self.calc_data.excess_force(self.model.amort))
+                self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
 
                 if self.model.flag_repeat:
                     self.state.stage = 'wait_buffer'
@@ -327,11 +327,11 @@ class Controller:
         """Позционирование траверсы"""
         try:
             stock_point = 760 # Константа, измереная высота у стенда
-            hod = self.model.amort.hod
-            len_min = self.model.amort.min_length
-            len_max = self.model.amort.max_length
+            hod = self.model.data_test.amort.hod
+            len_min = self.model.data_test.amort.min_length
+            len_max = self.model.data_test.amort.max_length
             mid_point = (len_max - len_min) / 2
-            adapter = self.model.amort.adapter_len
+            adapter = self.model.data_test.amort.adapter_len
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
@@ -390,12 +390,14 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _check_max_temper_test(self):
-        if self.model.type_test == 'temper':
-            finish_temp = self.model.finish_temper
+        first = self.model.data_test.first_temperature
+        second = self.model.data_test.second_tmperature
+        if self.model.data_test.type_test == 'temper':
+            finish_temp = self.model.data_test.finish_temperature
         else:
-            finish_temp = self.model.amort.max_temper
+            finish_temp = self.model.data_test.amort.max_temper
 
-        if self.model.temper_first < finish_temp and self.model.temper_second < finish_temp:
+        if first < finish_temp and second < finish_temp:
             return True
 
         else:
