@@ -42,18 +42,20 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def middle_min_and_max_force(self, data: list):
+    def middle_min_and_max_force(self, force: list):
         """Усреднение максимального и инимального усилия"""
         try:
-            if data != []:
-                rec_ind = data.index(max(data))
-                max_rec = round(statistics.fmean(data[rec_ind - 5:rec_ind + 5]), 1)
+            max_rec = max(force)
+            max_comp = abs(min(force))
+            # if force != []:
+            #     rec_ind = force.index(max(force))
+            #     max_rec = round(statistics.fmean(force[rec_ind - 5:rec_ind + 5]), 1)
 
-                comp_ind = data.index(min(data))
-                max_comp = round(statistics.fmean(data[comp_ind - 5:comp_ind + 5]), 1)
+            #     comp_ind = force.index(min(force))
+            #     max_comp = round(statistics.fmean(force[comp_ind - 5:comp_ind + 5]), 1)
             
-            else:
-                max_rec = max_comp = 0
+            # else:
+            #     max_rec = max_comp = 0
 
         except Exception as e:
             max_rec = max_comp = 0

@@ -31,7 +31,7 @@ class BoostGraphOne(AbstractGraph):
             push_force = CalcGraphValue().select_push_force(data)
             recoil, comp = CalcData().middle_min_and_max_force(data.force_list)
             max_recoil = round(recoil + push_force, 2)
-            max_comp = round(comp + push_force, 2)
+            max_comp = round(comp - push_force, 2)
             
             move_array = np.array(data.move_list)
             force_array = np.array(data.force_list)

@@ -546,7 +546,7 @@ class Model:
                 
                 push_force = self._choice_push_force()
                 self.max_recoil = round(max_recoil + push_force, 1)
-                self.max_comp = round(max_comp + push_force, 1)
+                self.max_comp = round(max_comp - push_force, 1)
                 self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
 
                 self.power_amort = self.calc_data.power_amort(self.force, self.move)
