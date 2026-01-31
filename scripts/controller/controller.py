@@ -113,6 +113,8 @@ class Controller:
                 if self.model.buffer_state[0] == 'OK!':
                     if self.model.buffer_state[1] == 'buffer_on':
                         self.model.buffer_state = ['null', 'null']
+                        # self.model.flag_bufer = True
+                        # self.model.timer_pars_circle_start()
                         self.model.reader_start_test()
                         self.model.fc_control(**{'tag': 'up', 'adr': 1})
                         self.stage = self.next_stage
@@ -168,6 +170,7 @@ class Controller:
 
             elif self.stage == 'start_point_amort':
                 if self.steps.step_control_traverse_move(self.set_trav_point):
+                    # self.model.reset_current_circle()
                     self.next_stage = 'test_move_cycle'
                     self.signals.control_msg.emit(f'move_detection')
                     self._full_cycle_update('0')
@@ -340,6 +343,9 @@ class Controller:
             self.model.fc_control(**{'tag': 'stop', 'adr': 1})
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.reader_stop_test()
+            # self.model.flag_bufer = False
+            # self.model.clear_data_in_graph()
+            # self.model.timer_pars_circle_stop()
             self.model.write_bit_force_cycle(0)
 
     def _yellow_btn_push(self, state: bool):
@@ -366,7 +372,7 @@ class Controller:
             if self._check_max_temper_test():
                 self.steps_tests.step_start_test()
 
-                self.model.write_emergency_force(self.calc_data.excess_force(self.model.amort))
+                self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
 
                 if self.model.flag_repeat:
                     self.stage = 'wait_buffer'
@@ -495,12 +501,14 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _check_max_temper_test(self):
-        if self.model.type_test == 'temper':
+        first = self.model.data_test.first_temperature
+        second = self.model.data_test.second_temperature
+        if self.model.data_test.type_test == 'temper':
             finish_temp = self.model.finish_temper
         else:
-            finish_temp = self.model.amort.max_temper
+            finish_temp = self.model.data_test.amort.max_temper
 
-        if self.model.temper_first < finish_temp and self.model.temper_second < finish_temp:
+        if first < finish_temp and second < finish_temp:
             return True
 
         else:

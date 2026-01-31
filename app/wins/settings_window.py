@@ -43,6 +43,8 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def closeEvent(self, event):
         if self.model.buffer_state[1] == 'buffer_on':
+            # self.model.flag_bufer = False
+            # self.model.clear_data_in_graph()
             self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
@@ -285,6 +287,9 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.model.reset_current_circle()
 
             self.model.reader_start_test()
+            # self.model.flag_bufer = True
 
         else:
             self.model.reader_stop_test()
+            # self.model.flag_bufer = False
+            # self.model.clear_data_in_graph()

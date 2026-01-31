@@ -47,6 +47,9 @@ class AlarmSteps:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
                 self.model.reader_stop_test()
+                # self.model.flag_bufer = False
+                # self.model.clear_data_in_graph()
+                # self.model.timer_pars_circle_stop()
                 self.model.write_bit_force_cycle(0)
             
             # Visual feedback
@@ -102,6 +105,9 @@ class AlarmSteps:
                 # Feedback
                 self.model.write_bit_red_light(1)
                 self.model.reader_stop_test()
+                # self.model.flag_bufer = False
+                # self.model.clear_data_in_graph()
+                # self.model.timer_pars_circle_stop()
                 self.model.write_bit_force_cycle(0)
                 
                 # Signal with direction

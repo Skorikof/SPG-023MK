@@ -127,6 +127,9 @@ class Steps:
                     if abs(14 - self.model.move_now) < 5:
                         self.model.fc_control(**{'tag': 'stop', 'adr': 1})
                         self.model.reader_stop_test()
+                        # self.model.flag_bufer = False
+                        # self.model.clear_data_in_graph()
+                        # self.model.timer_pars_circle_stop()
                         self.model.write_bit_force_cycle(0)
                         self.model.min_pos = False
                         self.model.max_pos = False
@@ -152,7 +155,8 @@ class Steps:
 
     def stage_stop_gear_end_test(self):
         try:
-            if statistics.stdev(self.model.move_buf) < 0.1: # Перемещение перестало изменяться
+            # if abs(self.model.move_list[-1] - self.model.move_list[-10]) < 0.1:
+            if statistics.stdev(self.model.move_list) < 0.1: # Перемещение перестало изменятьсяs
                 self.count_wait_point += 1
 
             else:
@@ -172,6 +176,9 @@ class Steps:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
+            # self.model.flag_bufer = False
+            # self.model.clear_data_in_graph()
+            # self.model.timer_pars_circle_stop()
 
             self.model.write_bit_force_cycle(0)
 
@@ -195,7 +202,9 @@ class Steps:
                 self.model.clear_data_in_graph()
 
                 self.model.reset_current_circle()
-                self.model.flag_test = False
+                
+                if self.model.flag_test:
+                    self.model.flag_test = False
 
                 return True
 

@@ -80,7 +80,7 @@ class DataSpeeds:
 class DataTest:
     def __init__(self):
         self.amort = None
-        self.type_test = 'hand'
+        self.type_test = ''
         self.operator = OperatorSchema(name='', rank='')
         self.serial = ''
         self.speed_test = 0

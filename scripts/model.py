@@ -78,6 +78,8 @@ class Model:
         self.koef_force_list = []
         self.timer_add_koef = None
         self.timer_calc_koef = None
+        
+        # self.timer_pars_circle = None
 
         self.timer_yellow = None
         self.time_push_yellow = None
@@ -100,6 +102,7 @@ class Model:
         self.gear_referent = False
         self.traverse_referent = False
 
+        # self.flag_bufer = False
         self.flag_fill_graph = False
         self.flag_test = False
         self.flag_test_lunch = False
@@ -114,6 +117,11 @@ class Model:
         self.reader.signals.result.connect(self._reader_result)
         self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
+        
+    # def _init_timer_pars_circle(self):
+    #     self.timer_pars_circle = QTimer()
+    #     self.timer_pars_circle.setInterval(300)
+    #     self.timer_pars_circle.timeout.connect(self._pars_response_on_circle)
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -125,13 +133,14 @@ class Model:
             self.writer.timer_writer_start()
 
             self._init_signals()
+            # self._init_timer_pars_circle()
             self.reader.init_reader(self.client.client)
             self.reader_start()
 
             # self.save_arch = WriterArch()
             # self.save_arch.timer_writer_arch_start()
             
-            self._stand_initialisation()
+            # self._stand_initialisation()
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
@@ -174,6 +183,12 @@ class Model:
     def reader_exit(self):
         self.reader.reader_exit()
         
+    # def timer_pars_circle_start(self):
+    #     self.timer_pars_circle.start()
+        
+    # def timer_pars_circle_stop(self):
+    #     self.timer_pars_circle.stop()
+        
     def _update_switch_dict(self, data):
         try:
             if data is not None:
@@ -212,9 +227,9 @@ class Model:
 
     def _calc_and_save_force_koef(self):
         try:
-            self.write_bit_force_cycle(0)
             self.timer_add_koef.stop()
             self.timer_calc_koef.stop()
+            self.write_bit_force_cycle(0)
 
             if self.koef_force_list:
                 self.force_koef_offset = round(statistics.fmean(self.koef_force_list), 1)
@@ -260,34 +275,78 @@ class Model:
             if not res:
                 pass
             else:
-                self.force_clear = self.parser.magnitude_effort(res[0], res[1])
-                self.force_correct = round(self.force_clear * self.force_koef, 1)
-                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+                result = self.parser.pars_response_from_regs(res)
+                
+                if result.get('force', None) is not None:
+                    self.force_clear = result.get('force', 0)
+                    self.force_correct = round(self.force_clear * self.force_koef, 1)
+                    self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-                self.move_now = self.parser.movement_amount(res[2])
-                self.move_traverse = round(0.5 * self.parser.movement_amount(res[6]), 1)
+                self.move_now = result.get('move')
+                self.move_traverse = result.get('traverse')
+                self.counter = result.get('counter')
+                self.data_test.force_alarm = result.get('force_a')
 
-                self.counter = self.parser.counter_time(res[4])
-                self.data_test.force_alarm = self.parser.emergency_force(res[10], res[11])
-
-                self.data_test.first_temperature = self.parser.temperature_value(res[7], res[8])
-                self.data_test.second_temperature = self.parser.temperature_value(res[12], res[13])
+                self.data_test.first_temperature = result.get('first_t')
+                self.data_test.second_temperature = result.get('second_t')
                 if self.data_test.first_temperature > self.data_test.second_temperature:
                     temp = self.data_test.first_temperature
                 else:
                     temp = self.data_test.second_temperature
+                self.data_test.temperature = temp
                 if temp > self.data_test.max_temperature:
                     self.data_test.max_temperature = temp
 
-                self._update_switch_dict(self.parser.switch_state(res[5]))
-                self._change_state_list(res[3])
+                self._update_switch_dict(result.get('switch'))
+                self._update_state_dict(result.get('state'))
+                self.state_list = result.get('state_list')
 
                 if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
+                    
+                # if self.flag_bufer:
+                #     self._add_data_in_graph(self.force_offset, self.move_now)
+                #     # print(f'force_list ==> {self.force_list}')
+                #     # print(f'move_list ==> {self.move_list}')
+                #     # print(f'force_list ==> {len(self.force_list)}')
+                #     # print(f'move_list ==> {len(self.move_list)}')
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
+            
+    def _add_data_in_graph(self, force, move):
+        try:
+            # if force > -50000:
+                # self.force_list.append(force)
+                # self.move_list.append(move)
+            self.force_list.extend(force)
+            self.move_list.extend(move)
+            
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
+            
+    def _add_terminator_in_graph(self):
+        try:
+            self.force_list.append('end')
+            self.move_list.append('end')
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def clear_data_in_graph(self):
+        self.force_list = []
+        self.move_list = []
+        
+    def clear_data_in_circle_graph(self):
+        self.force = []
+        self.move = []
+
+    def clear_data_in_temper_graph(self):
+        self.temper_graph = []
+        self.temper_recoil_graph = []
+        self.temper_comp_graph = []
 
     def _pars_buffer_result(self, res):
         try:
@@ -312,7 +371,7 @@ class Model:
                                                                                   self.data_test.max_temperature)
                 self.data_test.temperature = data.get('temper')[-1]
 
-                self._change_state_list(data.get('state')[-1])
+                # self._change_state_list(data.get('state')[-1])
 
                 if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
@@ -325,18 +384,6 @@ class Model:
             else:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
-
-    def _change_state_list(self, reg):
-        try:
-            temp = bin(reg)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-            self.state_list = [int(x) for x in bits]
-
-            self._update_state_dict(self.parser.register_state(reg))
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
 
     def _init_timer_yellow_btn(self):
         try:
@@ -426,36 +473,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_find_direction_and_point - {e}')
-            
-    def _add_data_in_graph(self, force, move):
-        try:
-            self.force_list.extend(force)
-            self.move_list.extend(move)
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
-            
-    def _add_terminator_in_graph(self):
-        try:
-            self.force_list.append('end')
-            self.move_list.append('end')
-            
-        except Exception as e:
-            self.logger.error(e)
-            
-    def clear_data_in_graph(self):
-        self.force_list = []
-        self.move_list = []
-        
-    def clear_data_in_circle_graph(self):
-        self.force = []
-        self.move = []
-
-    def clear_data_in_temper_graph(self):
-        self.temper_graph = []
-        self.temper_recoil_graph = []
-        self.temper_comp_graph = []
 
     def _check_full_circle(self):
         try:
@@ -512,6 +529,8 @@ class Model:
                 self.clear_data_in_graph()
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
+                # max_recoil = max(self.force)
+                # max_comp = min(self.force)
                 self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
                 
                 push_force = self._choice_push_force()
