@@ -84,19 +84,32 @@ class ParserSPG023MK:
                 return None
             
             # Filter indices where force is not -100000
-            valid_indices = [i for i, force in enumerate(force_data) if force != -100000]
+            valid_ind_f = [i for i, force in enumerate(force_data) if force != -100000]
             
-            if not valid_indices:
+            if not valid_ind_f:
                 return None
             
             # Build response with only valid data points
-            response = {
-                'count': [request['count'][i] for i in valid_indices],
-                'force': [request['force'][i] for i in valid_indices],
-                'move': [request['move'][i] for i in valid_indices],
-                'state': [request['state'][i] for i in valid_indices],
-                'temper': [request['temper'][i] for i in valid_indices],
+            valid_force = {
+                'count': [request['count'][i] for i in valid_ind_f],
+                'force': [request['force'][i] for i in valid_ind_f],
+                'move': [request['move'][i] for i in valid_ind_f],
+                'state': [request['state'][i] for i in valid_ind_f],
+                'temper': [request['temper'][i] for i in valid_ind_f],
             }
+            
+            # valid_ind_m = self.discard_left_move(valid_force.get('move'))
+            
+            # if not valid_ind_m:
+            #     return None
+            
+            # valid_move = {
+            #     'count': [valid_force['count'][i] for i in valid_ind_m],
+            #     'force': [valid_force['force'][i] for i in valid_ind_m],
+            #     'move': [valid_force['move'][i] for i in valid_ind_m],
+            #     'state': [valid_force['state'][i] for i in valid_ind_m],
+            #     'temper': [valid_force['temper'][i] for i in valid_ind_m],
+            # }
             
             # print(f'count ==> {response["count"]}')
             # print(f'force ==> {response["force"]}')
@@ -104,10 +117,23 @@ class ParserSPG023MK:
             # print(f'state ==> {response["state"]}')
             # print(f'temper ==> {response["temper"]}')
 
-            return response
+            return valid_force
         
         except Exception as e:
             self.logger.error(e)
+            
+    def discard_left_move(self, move):
+        valid_ind = []
+        for i, move in enumerate(move):
+            if i == 0:
+                valid_ind.append(i)
+                temp = abs(move)
+            else:
+                if abs(temp - abs(move)) < 10:
+                    valid_ind.append(i)
+                    temp = abs(move)
+                    
+        return valid_ind
 
     def magnitude_effort(self, low_reg, big_reg):
         """Текущая величина усилия"""

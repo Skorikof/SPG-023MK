@@ -534,10 +534,11 @@ class Model:
         try:
             self.logger.debug('Full circle is done')
             if self.flag_fill_graph:
-                offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
+                # offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
                 
                 self.force = [round(x * (-1), 2) for x in self.force_list]
-                self.move = [round(x + offset_p, 2) for x in self.move_list]
+                # self.move = [round(x + offset_p, 2) for x in self.move_list]
+                self.move = self.move_list[:]
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
                 # max_recoil = max(self.force)
