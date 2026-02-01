@@ -451,6 +451,9 @@ class Controller:
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
                 self.signals.control_msg.emit(f'pos_traverse')
+                if self.model.move_traverse < install_point:
+                    install_point -= 2
+                    
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
 
@@ -508,7 +511,7 @@ class Controller:
         first = self.model.data_test.first_temperature
         second = self.model.data_test.second_temperature
         if self.model.data_test.type_test == 'temper':
-            finish_temp = self.model.finish_temper
+            finish_temp = self.model.data_test.finish_temperature
         else:
             finish_temp = self.model.data_test.amort.max_temper
 
