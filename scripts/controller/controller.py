@@ -231,7 +231,7 @@ class Controller:
                 if self.count_cycle >= 1:
                     if self.model.data_test.max_temperature != self.last_max_temper:
                         self.last_max_temper = self.model.data_test.max_temperature
-                        if self.model.data_test.max_temperture <= self.model.data_test.finish_temperature:
+                        if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
                             self.model.temper_graph.append(self.model.data_test.max_temperature)
                             self.model.temper_recoil_graph.append(self.model.max_recoil)
                             self.model.temper_comp_graph.append(self.model.max_comp)

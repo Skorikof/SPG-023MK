@@ -162,7 +162,7 @@ class Steps:
             else:
                 self.count_wait_point = 0
 
-            if self.count_wait_point > 5:
+            if self.count_wait_point > 20:
                 self.signals.stage_from_logic.emit('wait')
                 self.count_wait_point = 0
                 return True
@@ -194,7 +194,7 @@ class Steps:
 
     def stage_stop_gear_min_pos(self):
         try:
-            if self.model.move_now < self.model.min_point + 2:
+            if self.model.move_now < self.model.min_point + 1:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
                 self.signals.stage_from_logic.emit('wait')
