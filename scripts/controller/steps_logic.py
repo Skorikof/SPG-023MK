@@ -298,18 +298,19 @@ class Steps:
 
     def step_control_traverse_move(self, point) -> bool:  # Функция отслеживания траверсы, при достижении точки останов
         try:
-            if 5 < abs(point - self.model.move_traverse) <= 10:
+            if 8 < abs(point - self.model.move_traverse) <= 15:
                 if not self.flag_freq_1_step:
-                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 20})
+                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 15})
                     self.flag_freq_1_step = True
 
-            if 1 < abs(point - self.model.move_traverse) <= 5:
+            if 2 < abs(point - self.model.move_traverse) <= 8:
                 if not self.flag_freq_2_step:
-                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 15})
+                    self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 5})
                     self.flag_freq_2_step = True
 
-            if abs(point - self.model.move_traverse) <= 0.5:
+            if abs(point - self.model.move_traverse) <= 0.3:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
+                # print(f'Остановился -- {self.model.move_traverse}')
                 return True
 
             return False

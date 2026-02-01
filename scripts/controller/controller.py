@@ -450,9 +450,10 @@ class Controller:
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
+                # print(f'Цель -- {install_point}')
                 self.signals.control_msg.emit(f'pos_traverse')
-                if self.model.move_traverse < install_point:
-                    install_point -= 2
+                # if self.model.move_traverse < install_point:
+                #     install_point -= 1
                     
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
