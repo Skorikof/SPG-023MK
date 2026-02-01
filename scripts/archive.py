@@ -17,6 +17,7 @@ DECIMAL_SEPARATOR = ','
 
 TYPE_TEMPER = 'temper'
 TYPE_LAB = 'lab'
+TYPE_LAB_HAND = 'lab_hand'
 TYPE_CONV = 'conv'
 TYPE_LAB_CASCADE = 'lab_cascade'
 
@@ -66,6 +67,7 @@ class ReadArchive:
     SOURCE_DIR = Path('archive/')
     TYPE_SCHEMA_MAP = {
         TYPE_LAB: LabSchema,
+        TYPE_LAB_HAND: LabSchema,
         TYPE_CONV: ConvSchema,
         TYPE_TEMPER: TempSchema,
         TYPE_LAB_CASCADE: LabSchema,
@@ -171,7 +173,7 @@ class ReadArchive:
 
                 if self.type_test == TYPE_TEMPER:
                     self.temper.append(obj)
-                elif self.type_test == TYPE_LAB:
+                elif self.type_test == TYPE_LAB or self.type_test == TYPE_LAB_HAND:
                     self.lab.append(obj)
                 elif self.type_test == TYPE_CONV:
                     self.conv.append(obj)
@@ -237,7 +239,7 @@ class ReadArchive:
                 data['recoil_list'] = recoil_list
                 data['comp_list'] = comp_list
 
-            elif self.type_test in (TYPE_LAB, TYPE_CONV):
+            elif self.type_test in (TYPE_LAB, TYPE_LAB_HAND, TYPE_CONV):
                 data['force_list'] = self._parse_float_list(archive_list)
 
             elif self.type_test == TYPE_LAB_CASCADE:
