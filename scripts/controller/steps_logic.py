@@ -254,6 +254,7 @@ class Steps:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
 
                 self.model.traverse_referent = True
+                self.model.init_timer_koef_force()
 
                 return True
             return False
@@ -281,16 +282,25 @@ class Steps:
     def step_traverse_move_position(self, set_point):
         """Непосредственно включение и перемещение траверсы"""
         try:
-            self.flag_freq_1_step = False
-            self.flag_freq_2_step = False
-            self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 30})
-            pos_trav = self.model.move_traverse
+            val = abs(set_point - self.model.move_traverse)
+            if val > 0.3:
+                if val <= 10:
+                    freq = 5
+                elif 10 < val < 20:
+                    freq = 15
+                else:
+                    freq = 30
+                    
+                self.flag_freq_1_step = False
+                self.flag_freq_2_step = False
+                self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': freq})
+                pos_trav = self.model.move_traverse
 
-            if pos_trav > set_point:
-                tag = 'up'
-            else:
-                tag = 'down'
-            self.model.fc_control(**{'tag': tag, 'adr': 2})
+                if pos_trav > set_point:
+                    tag = 'up'
+                else:
+                    tag = 'down'
+                self.model.fc_control(**{'tag': tag, 'adr': 2})
 
         except Exception as e:
             self.logger.error(e)
