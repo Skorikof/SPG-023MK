@@ -39,10 +39,12 @@ class AppWindow(QMainWindow):
         
         self.model.reader_exit()
         self.controller.timer_process.stop()
-        self.model.writer.timer_writer_stop()
-        self.model.save_arch.timer_writer_arch_stop()
+        if self.model.writer is not None:
+            self.model.writer.timer_writer_stop()
+        # self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
-        self.model.client.disconnect_client()
+        self.model.qtCtrl.stop()
+        # self.model.client.disconnect_client()
         event.accept()
 
     def _start_param_view(self):
@@ -112,6 +114,10 @@ class AppWindow(QMainWindow):
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
+
+        self.model.qtCtrl.fastDataUpdated.connect(self.model.pars_regs_result)
+        self.model.qtCtrl.bufferRecordReceived.connect(self.model.pars_buffer_result)
+        self.model.qtCtrl.errorOccurred.connect(self.model.showError)
 
     def _init_lab_graph(self):
         try:

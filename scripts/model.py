@@ -3,16 +3,19 @@ import time
 import statistics
 from PySide6.QtCore import QObject, Signal, QTimer
 
+from config import config
 from scripts.logger import my_logger
 from scripts.test_obj import DataTest
 from scripts.settings import PrgSettings
-from scripts.parser import ParserSPG023MK
+from scripts.parser.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
 from scripts.client import Client
 from scripts.freq_control import FreqControl
+
+from scripts.modbus_client.modbus_controller import SPG005MKQtController
 
 
 class ModelSignals(QObject):
@@ -46,6 +49,8 @@ class Model:
         self.calc_data = CalcData()
 
         self.data_test = DataTest()
+        
+        self.qtCtrl = SPG005MKQtController(config.comport, config.baudrate)
 
         self.state_dict = {}
         self.switch_dict = {}
@@ -124,27 +129,28 @@ class Model:
     #     self.timer_pars_circle.timeout.connect(self._pars_response_on_circle)
 
     def _start_param_model(self):
-        self.client.connect_client()
-        # FIXME таймер жёлтой кнопки
-        # self._init_timer_yellow_btn()
+        self.qtCtrl.start()
+        # self.client.connect_client()
+        # # FIXME таймер жёлтой кнопки
+        # # self._init_timer_yellow_btn()
 
-        if self.client.flag_connect:
-            self.writer = Writer(self.client.client)
-            self.writer.timer_writer_start()
+        # if self.client.flag_connect:
+        #     self.writer = Writer(self.client.client)
+        #     self.writer.timer_writer_start()
 
-            self._init_signals()
-            # self._init_timer_pars_circle()
-            self.reader.init_reader(self.client.client)
-            self.reader_start()
+        #     self._init_signals()
+        #     # self._init_timer_pars_circle()
+        #     self.reader.init_reader(self.client.client)
+        #     self.reader_start()
 
-            self.save_arch = WriterArch()
-            self.save_arch.timer_writer_arch_start()
+        #     self.save_arch = WriterArch()
+        #     self.save_arch.timer_writer_arch_start()
             
             # self._stand_initialisation()
 
-        else:
-            self.status_bar_msg(f'Нет подключения к контроллеру')
-            self.logger.warning(f'Нет подключения к контроллеру')
+        # else:
+        #     self.status_bar_msg(f'Нет подключения к контроллеру')
+        #     self.logger.warning(f'Нет подключения к контроллеру')
             
     def _stand_initialisation(self):
         try:
@@ -254,10 +260,10 @@ class Model:
     def _reader_result(self, response, tag):
         try:
             if tag == 'buffer':
-                self._pars_buffer_result(response)
+                self.pars_buffer_result(response)
 
             if tag == 'reg':
-                self._pars_regs_result(response.get('regs'))
+                self.pars_regs_result(response.get('regs'))
 
             # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
             # if self.flag_test_launch is True:
@@ -269,40 +275,46 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
+            
+    def showError(self, error):
+        print(f'Error from Qt controller --> {error}')
 
-    def _pars_regs_result(self, res):
+    def pars_regs_result(self, res):
         try:
             if not res:
                 pass
             else:
-                result = self.parser.pars_response_from_regs(res)
+                for k, v in res.items():
+                    print(f'{k} --> {v}')
+                print('--------------------------------')
+                # result = self.parser.pars_response_from_regs(res)
                 
-                if result.get('force', None) is not None:
-                    self.force_clear = result.get('force', 0)
-                    self.force_correct = round(self.force_clear * self.force_koef, 1)
-                    self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+                # if result.get('force', None) is not None:
+                #     self.force_clear = result.get('force', 0)
+                #     self.force_correct = round(self.force_clear * self.force_koef, 1)
+                #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-                self.move_now = result.get('move')
-                self.move_traverse = result.get('traverse')
-                self.counter = result.get('counter')
-                self.data_test.force_alarm = result.get('force_a')
+                # self.move_now = result.get('move')
+                # self.move_traverse = result.get('traverse')
+                # self.counter = result.get('counter')
+                # self.data_test.force_alarm = result.get('force_a')
 
-                self.data_test.first_temperature = result.get('first_t')
-                self.data_test.second_temperature = result.get('second_t')
-                if self.data_test.first_temperature > self.data_test.second_temperature:
-                    temp = self.data_test.first_temperature
-                else:
-                    temp = self.data_test.second_temperature
-                self.data_test.temperature = temp
-                if temp > self.data_test.max_temperature:
-                    self.data_test.max_temperature = temp
+                # self.data_test.first_temperature = result.get('first_t')
+                # self.data_test.second_temperature = result.get('second_t')
+                # if self.data_test.first_temperature > self.data_test.second_temperature:
+                #     temp = self.data_test.first_temperature
+                # else:
+                #     temp = self.data_test.second_temperature
+                # self.data_test.temperature = temp
+                # if temp > self.data_test.max_temperature:
+                #     self.data_test.max_temperature = temp
 
-                self._update_switch_dict(result.get('switch'))
-                self._update_state_dict(result.get('state'))
-                self.state_list = result.get('state_list')
+                # self._update_switch_dict(result.get('switch'))
+                # self._update_state_dict(result.get('state'))
+                # self.state_list = result.get('state_list')
 
-                if self.data_test.type_test == 'hand':
-                    self.signals.win_set_update.emit()
+                # if self.data_test.type_test == 'hand':
+                #     self.signals.win_set_update.emit()
                     
                 # if self.flag_bufer:
                 #     self._add_data_in_graph(self.force_offset, self.move_now)
@@ -315,35 +327,40 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
-    def _pars_buffer_result(self, res):
+    def pars_buffer_result(self, res):
         try:
-            data = self.parser.discard_left_data(res)
-
-            if data is None:
-                self.logger.debug('Response from buffer controller is None')
-                pass  # Пришла пустая посылка
-
+            if not res:
+                pass
             else:
-                self.force_clear = data.get('force')[-1]
-                self.force_correct = round(self.force_clear * self.force_koef, 1)
-                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
-                self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
-
-                self.move_now = data.get('move')[-1]
-                self.move_buf = data.get('move')
-
-                self.counter = data.get('count')[-1]
+                print(f'Response from buffer reader --> {res}')
                 
-                self._change_state_list(data.get('state')[-1])
+            # data = self.parser.discard_left_data(res)
 
-                self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
-                                                                                  self.data_test.max_temperature)
-                self.data_test.temperature = data.get('temper')[-1]
+            # if data is None:
+            #     self.logger.debug('Response from buffer controller is None')
+            #     pass  # Пришла пустая посылка
 
-                if self.data_test.type_test == 'hand':
-                    self.signals.win_set_update.emit()
-                else:
-                    self._pars_response_on_circle(self.force_buf, self.move_buf)
+            # else:
+            #     self.force_clear = data.get('force')[-1]
+            #     self.force_correct = round(self.force_clear * self.force_koef, 1)
+            #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+            #     self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
+
+            #     self.move_now = data.get('move')[-1]
+            #     self.move_buf = data.get('move')
+
+            #     self.counter = data.get('count')[-1]
+                
+            #     self._change_state_list(data.get('state')[-1])
+
+            #     self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
+            #                                                                       self.data_test.max_temperature)
+            #     self.data_test.temperature = data.get('temper')[-1]
+
+            #     if self.data_test.type_test == 'hand':
+            #         self.signals.win_set_update.emit()
+            #     else:
+            #         self._pars_response_on_circle(self.force_buf, self.move_buf)
 
         except Exception as e:
             if str(e) == 'list index out of range':

@@ -2,7 +2,7 @@
 import time
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
-from scripts.parser import ParserSPG023MK
+from scripts.parser.parser import ParserSPG023MK
 
 
 class Signals(QObject):
