@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import statistics
-from PySide6.QtCore import QObject, Signal, QTimer
+from PySide6.QtCore import QObject, Signal, Slot, QTimer
 
 from config import config
 from scripts.logger import my_logger
@@ -123,6 +123,17 @@ class Model:
         self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
         
+        # FIXME
+        self.qtCtrl.missedRecordsUpdated.connect(self.updateMissedLabel)
+        self.qtCtrl.fastDataUpdated.connect(self.pars_regs_result)
+        self.qtCtrl.bufferRecordReceived.connect(self.pars_buffer_result)
+        self.qtCtrl.errorOccurred.connect(self.showError)
+
+    # FIXME
+    @Slot(int)
+    def updateMissedLabel(self, count):
+        self.ui.missedLabel.setText(f"Пропущено записей: {count}")
+
     # def _init_timer_pars_circle(self):
     #     self.timer_pars_circle = QTimer()
     #     self.timer_pars_circle.setInterval(300)
@@ -284,8 +295,7 @@ class Model:
             if not res:
                 pass
             else:
-                for k, v in res.items():
-                    print(f'{k} --> {v}')
+                print(repr(res))
                 print('--------------------------------')
                 # result = self.parser.pars_response_from_regs(res)
                 

@@ -1,7 +1,34 @@
+from dataclasses import dataclass
 from struct import pack, unpack
 
 from scripts.logger import my_logger
 
+
+@dataclass
+class RegisterState:
+    cycle_force: bool = False
+    red_light: bool = False
+    green_light: bool = False
+    lost_control: bool = False
+    excess_force: bool = False
+    referent: bool = False
+    select_temper: int = 0
+    safety_fence: bool = False
+    traverse_block: bool = False
+    state_freq: bool = False
+    state_force: bool = False
+    yellow_btn: bool = False
+    
+    
+@dataclass
+class SwitchState:
+    traverse_block_left: bool = False
+    traverse_block_right: bool = False
+    alarm_highest_position: bool = False
+    alarm_lowest_position: bool = False
+    highest_position: bool = False
+    lowest_position: bool = False
+    
 
 class ParserSPG023MK:
     def __init__(self):
@@ -13,7 +40,7 @@ class ParserSPG023MK:
                 'force': self.magnitude_effort(res[0], res[1]),
                 'move': self.movement_amount(res[2]),
                 'state': self.register_state(res[3]),
-                'state_list': self._change_state_list(res[3]),
+                'state_list': self.change_state_list(res[3]),
                 'counter': self.counter_time(res[4]),
                 'switch': self.switch_state(res[5]),
                 'traverse': round(0.5 * self.movement_amount(res[6]), 1),
@@ -94,23 +121,23 @@ class ParserSPG023MK:
         """Регистр состояния 0х2003"""
         try:
             bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
-
-            BIT_MAP = {'cycle_force': (0, bool),
-                       'red_light': (1, bool),
-                       'green_light': (2, bool),
-                       'lost_control': (3, bool),
-                       'excess_force': (4, bool),
-                       'referent': (5, bool),
-                       'select_temper': (6, int),
-                       'safety_fence': (8, bool),
-                       'traverse_block': (9, bool),
-                       'state_freq': (11, bool),
-                       'state_force': (12, bool),
-                       'yellow_btn': (13, bool),
-                       }
+            
+            reg_state = RegisterState(
+                cycle_force=bool(int(bits[0])),
+                red_light=bool(int(bits[1])),
+                green_light=bool(int(bits[2])),
+                lost_control=bool(int(bits[3])),
+                excess_force=bool(int(bits[4])),
+                referent=bool(int(bits[5])),
+                select_temper=int(bits[6]),
+                safety_fence=bool(int(bits[8])),
+                traverse_block=bool(int(bits[9])),
+                state_freq=bool(int(bits[11])),
+                state_force=bool(int(bits[12])),
+                yellow_btn=bool(int(bits[13]))
+            )
         
-            return {key: converter(int(bits[bit_pos])) 
-                    for key, (bit_pos, converter) in BIT_MAP.items()}
+            return reg_state
 
         except Exception as e:
             self.logger.error(e)
@@ -129,16 +156,16 @@ class ParserSPG023MK:
         try:
             bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
             
-            BIT_MAP = {'traverse_block_left': (1, bool),
-                       'traverse_block_right': (2, bool),
-                       'alarm_highest_position': (8, bool),
-                       'alarm_lowest_position': (9, bool),
-                       'highest_position': (12, bool),
-                       'lowest_position': (13, bool),
-                       }
+            switch_state = SwitchState(
+                traverse_block_left=bool(int(bits[1])),
+                traverse_block_right=bool(int(bits[2])),
+                alarm_highest_position=bool(int(bits[8])),
+                alarm_lowest_position=bool(int(bits[9])),
+                highest_position=bool(int(bits[12])),
+                lowest_position=bool(int(bits[13])),
+            )
         
-            return {key: converter(int(bits[bit_pos])) 
-                    for key, (bit_pos, converter) in BIT_MAP.items()}
+            return switch_state
 
         except Exception as e:
             self.logger.error(e)

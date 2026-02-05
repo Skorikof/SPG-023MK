@@ -115,10 +115,6 @@ class AppWindow(QMainWindow):
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
 
-        self.model.qtCtrl.fastDataUpdated.connect(self.model.pars_regs_result)
-        self.model.qtCtrl.bufferRecordReceived.connect(self.model.pars_buffer_result)
-        self.model.qtCtrl.errorOccurred.connect(self.model.showError)
-
     def _init_lab_graph(self):
         try:
             self.graph = TestGraph(self.ui.lab_GraphWidget, 'move')

@@ -1,17 +1,34 @@
+from dataclasses import dataclass
+from enum import Enum
+from typing import List
 import serial
 import serial.rs485
 import struct
 import threading
 import queue
 import time
-from enum import Enum
 
-from scripts.parser.parser import ParserSPG023MK
+from scripts.parser.parser import ParserSPG023MK, RegisterState, SwitchState
 
 
 class ReadMode(Enum):
     FAST = 1
     BUFFER = 2
+    
+
+@dataclass
+class FastStatus:
+    force: float = 0.0
+    pos: float = 0.0
+    state: RegisterState = RegisterState()
+    state_list: List[int] = None
+    time_ms: int = 0
+    switch: SwitchState = SwitchState()
+    traverse: float = 0.0
+    first_t: float = 0.0
+    force_a: float = 0.0
+    second_t: float = 0.0
+    cyclic_on: bool = False
     
 
 def modbus_crc(data: bytes) -> bytes:
@@ -133,12 +150,17 @@ class SPG007MKController:
         self.mode = ReadMode.FAST
         self.mode_lock = threading.Lock()
         self.parser = ParserSPG023MK()
-
+        
+        self.fast_status = FastStatus()
         self.on_fast_data = None
         self.on_record = None
         self.last_record = None
         self.running = False
-        self.fast_status = {}
+        self.buf_addr = self.BUF_START
+        self.last_record = None
+        self.buffer_active = False
+        self.missed_records = 0
+        self.on_missed_records = None
         
     # --- UI callbacks ---
     def ui_start_buffer_read(self):
@@ -180,7 +202,7 @@ class SPG007MKController:
                 elif mode == ReadMode.BUFFER:
                     if self.worker.queue.qsize() < 10:
                         self._read_buffer_step()
-                    time.sleep(0.0015)
+                    time.sleep(0.001)
 
         threading.Thread(target=loop, daemon=True).start()
 
@@ -198,21 +220,22 @@ class SPG007MKController:
             if regs is None:
                 return
 
-            self.fast_status = {
-                "force": self.parser.magnitude_effort(regs[0], regs[1]),
-                "pos": self.parser.movement_amount(regs[2]),
-                "state": self.parser.register_state(regs[3]),
-                "state_list": self.parser.change_state_list(regs[3]),
-                "time_ms": self.parser.counter_time(regs[4]),
-                "switch": self.parser.switch_state(regs[5]),
-                "traverse": round(0.5 * self.parser.movement_amount(regs[6]), 1),
-                "first_t": self.parser.temperature_value(regs[7], regs[8]),
-                "force_a": self.parser.emergency_force(regs[10], regs[11]),
-                "second_t": self.parser.temperature_value(regs[12], regs[13])
-            }
+            self.fast_status = FastStatus(
+                force=self.parser.magnitude_effort(regs[0], regs[1]),
+                pos=self.parser.movement_amount(regs[2]),
+                state=self.parser.register_state(regs[3]),
+                state_list=self.parser.change_state_list(regs[3]),
+                time_ms=self.parser.counter_time(regs[4]),
+                switch=self.parser.switch_state(regs[5]),
+                traverse=round(0.5 * self.parser.movement_amount(regs[6]), 1),
+                first_t=self.parser.temperature_value(regs[7], regs[8]),
+                force_a=self.parser.emergency_force(regs[10], regs[11]),
+                second_t=self.parser.temperature_value(regs[12], regs[13])
+                )
+            
 
-        if self.on_fast_data:
-            self.on_fast_data(self.fast_status)
+            if self.on_fast_data:
+                self.on_fast_data(self.fast_status)
         
     def parse_fc03(self, resp, expected_regs):
         if len(resp) < 5:
@@ -236,47 +259,81 @@ class SPG007MKController:
         return [(data[i] << 8) | data[i+1] for i in range(0, len(data), 2)]
 
     # ---------- data buffer ----------
+    def ui_start_buffer_read(self):
+        # включаем запись в буфер (бит 0 регистра 0x2003)
+        self.modbus.write_regs(0x2003, [1], prio=0)
+
+        self.buffer_active = True
+        self.last_record = None
+        self.buf_addr = self.BUF_START
+        self.set_mode(ReadMode.BUFFER)
+        
+    def ui_stop_buffer_read(self):
+        # выключаем запись в буфер
+        self.modbus.write_regs(0x2003, [0], prio=0)
+
+        self.buffer_active = False
+        self.set_mode(ReadMode.FAST)
+    
     def _read_buffer_step(self):
-        addr = self.BUF_START
-        if self.last_record is not None:
-            addr += (self.last_record % self.RECORD_COUNT) * self.RECORD_SIZE
+        if not self.buffer_active:
+            return
 
         self.modbus.read_holding(
-            addr,
+            self.buf_addr,
             self.RECORD_SIZE,
             self._on_record,
             prio=5
         )
         
     def _on_record(self, resp: bytes):
-        data = resp[3:-2]
-        r = [(data[i] << 8) | data[i+1] for i in range(0, len(data), 2)]
-        num = r[0]
+        regs = self.parse_fc03(resp, self.RECORD_SIZE)
+        if regs is None:
+            return
+
+        rec_id = regs[0]
 
         if self.last_record is None:
-            self.last_record = num
+            # первая валидная запись после старта
+            self.last_record = rec_id
+            self._emit_record(regs)
+            self._advance_buf_addr()
             return
 
-        if num == self.last_record:
-            # буфер дочитан → возвращаемся
-            self.set_mode(ReadMode.FAST)
+        delta = rec_id - self.last_record
+
+        if delta <= 0:
+            # либо ещё не перезаписано, либо мы слишком рано читаем
             return
 
-        self.last_record = num
+        if delta > 1:
+            self.missed_records += delta - 1
+            
+            if self.on_missed_records and self.missed_records % 10 == 0:
+                self.on_missed_records(self.missed_records)
+
+        self.last_record = rec_id
+        self._emit_record(regs)
+        self._advance_buf_addr()
+        
+    def _advance_buf_addr(self):
+        self.buf_addr += self.RECORD_SIZE
+        if self.buf_addr > (self.BUF_START + self.RECORD_SIZE * self.RECORD_COUNT - 1):
+            self.buf_addr = self.BUF_START
+            
+    def _emit_record(self, regs):
+        if not self.on_record:
+            return
 
         self.on_record({
-            "num": num,
-            "force": self.parser.magnitude_effort(r[1], r[2]),
-            "pos": self.parser.movement_amount(r[3]),
-            "state": self.parser.register_state(r[4]),
-            "temp": self.parser.temperature_value(r[5], r[6])
+            "num": regs[0],
+            "force": self.parser.magnitude_effort(regs[1], regs[2]),
+            "pos": self.parser.movement_amount(regs[3]),
+            "state": self.parser.register_state(regs[4]),
+            "temp": self.parser.temperature_value(regs[5], regs[6])
         })
 
     # ---------- API ----------
-    def on_record(self, record: dict):
-        if self.on_record:
-            self.on_record(record)
-
     def set_emergency_force(self, value: float):
         hi, lo = struct.unpack(">HH", struct.pack(">f", value))
         self.modbus.write_regs(0x200A, [hi, lo])
@@ -285,14 +342,5 @@ class SPG007MKController:
 if __name__ == "__main__":
     ctrl = SPG007MKController('COM4')
     ctrl.start()
-
-    time.sleep(30)
-
+    time.sleep(10)
     ctrl.stop()
-
-    # UI callbacks example:
-    # buttonStart.clicked.connect(ctrl.ui_start_buffer_read)
-    # buttonStop.clicked.connect(ctrl.ui_stop_buffer_read)
-    # buttonWrite.clicked.connect(
-    #     lambda: ctrl.ui_write_registers(0x200A, [hi, lo])
-    # )
