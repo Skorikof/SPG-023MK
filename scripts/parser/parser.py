@@ -27,54 +27,6 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
         
-    # def pars_response_from_buffer(self, res):
-    #     try:
-    #         count = res[0::6]
-    #         force_low = res[1::6]
-    #         force_big = res[2::6]
-    #         move = res[3::6]
-    #         state = res[4::6]
-    #         temper = res[5::6]
-            
-    #         force = tuple(self._magnitude_effort(x, force_big[i]) for i, x in enumerate(force_low))
-            
-    #         # print(f'count ==> {count}')
-    #         # print(f'force ==> {force}')
-    #         # print(f'move ==> {move}')
-    #         # print(f'state ==> {state}')
-    #         # print(f'temper ==> {temper}')
-            
-    #         return self._discard_left_data(count, force, move, state, temper)
-            
-    #     except Exception as e:
-    #         self.logger.error(e)
-            
-    # def _discard_left_data(self, count: tuple, force: tuple,
-    #                        move: tuple, state: tuple, temper: tuple):
-    #     try:
-    #         if force is not None:
-    #             valid_indices = [i for i, force in enumerate(force) if force != -100000]
-                
-    #             if not valid_indices:
-    #                 return None
-                
-    #             result = {'count': [count[i] for i in valid_indices],
-    #                     'force': [force[i] for i in valid_indices],
-    #                     'move': [self.movement_amount(move[i]) for i in valid_indices],
-    #                     'state': [self.register_state(state[i]) for i in valid_indices],
-    #                     'state_list': self._change_state_list(state[0]),
-    #                     'temper': [round(temper[i] * 0.01, 1) for i in valid_indices],
-    #                     }
-
-    #             return result
-            
-    #         else:
-    #             return None
-            
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #         return None
-        
     def discard_left_data(self, request):
         """Filter out invalid force data points (value -100000) from request."""
         try:
@@ -82,14 +34,12 @@ class ParserSPG023MK:
             
             if not force_data:
                 return None
-            
-            # Filter indices where force is not -100000
+
             valid_ind_f = [i for i, force in enumerate(force_data) if force != -100000]
             
             if not valid_ind_f:
                 return None
-            
-            # Build response with only valid data points
+
             valid_force = {
                 'count': [request['count'][i] for i in valid_ind_f],
                 'force': [request['force'][i] for i in valid_ind_f],
@@ -98,25 +48,6 @@ class ParserSPG023MK:
                 'temper': [request['temper'][i] for i in valid_ind_f],
             }
             
-            # valid_ind_m = self.discard_left_move(valid_force.get('move'))
-            
-            # if not valid_ind_m:
-            #     return None
-            
-            # valid_move = {
-            #     'count': [valid_force['count'][i] for i in valid_ind_m],
-            #     'force': [valid_force['force'][i] for i in valid_ind_m],
-            #     'move': [valid_force['move'][i] for i in valid_ind_m],
-            #     'state': [valid_force['state'][i] for i in valid_ind_m],
-            #     'temper': [valid_force['temper'][i] for i in valid_ind_m],
-            # }
-            
-            # print(f'count ==> {response["count"]}')
-            # print(f'force ==> {response["force"]}')
-            # print(f'move ==> {response["move"]}')
-            # print(f'state ==> {response["state"]}')
-            # print(f'temper ==> {response["temper"]}')
-
             return valid_force
         
         except Exception as e:
@@ -151,7 +82,7 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
             
-    def _change_state_list(self, reg):
+    def change_state_list(self, reg):
         try:
             bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
             return [int(x) for x in bits]
@@ -169,6 +100,7 @@ class ParserSPG023MK:
                        'green_light': (2, bool),
                        'lost_control': (3, bool),
                        'excess_force': (4, bool),
+                       'referent': (5, bool),
                        'select_temper': (6, int),
                        'safety_fence': (8, bool),
                        'traverse_block': (9, bool),
