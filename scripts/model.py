@@ -12,10 +12,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
-from scripts.client import Client
 from scripts.freq_control import FreqControl
-
-from scripts.modbus_client.modbus_controller import SPG005MKQtController
 
 
 class ModelSignals(QObject):
@@ -41,7 +38,6 @@ class Model:
     def _init_variables(self):
         self.logger = my_logger.get_logger(__name__)
         self.signals = ModelSignals()
-        self.client = Client()
         self.writer = None
         self.reader = Reader()
         self.fc = FreqControl()
@@ -49,8 +45,6 @@ class Model:
         self.calc_data = CalcData()
 
         self.data_test = DataTest()
-        
-        self.qtCtrl = SPG005MKQtController(config.comport, config.baudrate)
 
         self.state_dict = {}
         self.switch_dict = {}
@@ -119,15 +113,10 @@ class Model:
         self.flag_alarm = False
         
     def _init_signals(self):
-        self.reader.signals.result.connect(self._reader_result)
-        self.reader.signals.error.connect(self.log_error_thread)
-        self.writer.signals.check_buffer.connect(self.check_buffer_state)
-        
-        # FIXME
-        self.qtCtrl.missedRecordsUpdated.connect(self.updateMissedLabel)
-        self.qtCtrl.fastDataUpdated.connect(self.pars_regs_result)
-        self.qtCtrl.bufferRecordReceived.connect(self.pars_buffer_result)
-        self.qtCtrl.errorOccurred.connect(self.showError)
+        pass
+        # self.reader.signals.result.connect(self._reader_result)
+        # self.reader.signals.error.connect(self.log_error_thread)
+        # self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     # FIXME
     @Slot(int)
@@ -153,9 +142,17 @@ class Model:
                 pass
         else:
             print(f'Response from buffer reader --> {res}')
+            
+    @Slot(object)
+    def onFastData(self, data):
+        if not data:
+                pass
+        else:
+            print(repr(data))
+            print('--------------------------------')
 
     def _start_param_model(self):
-        self.qtCtrl.start()
+        pass
         # self.client.connect_client()
         # # FIXME таймер жёлтой кнопки
         # # self._init_timer_yellow_btn()
@@ -171,20 +168,10 @@ class Model:
 
         #     self.save_arch = WriterArch()
         #     self.save_arch.timer_writer_arch_start()
-            
-            # self._stand_initialisation()
 
         # else:
         #     self.status_bar_msg(f'Нет подключения к контроллеру')
         #     self.logger.warning(f'Нет подключения к контроллеру')
-            
-    def _stand_initialisation(self):
-        try:
-            self.fc_control(**{'tag':'max', 'adr':1, 'freq':120})
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_stand_initialisation - {e}')
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)

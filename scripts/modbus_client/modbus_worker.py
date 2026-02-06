@@ -15,19 +15,17 @@ class ReadMode(Enum):
     BUFFER = 2
     
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class FastStatus:
     force: float = 0.0
     pos: float = 0.0
     state: RegisterState = field(default_factory=RegisterState)
-    state_list: list[int] = None
     time_ms: int = 0
     switch: SwitchState = field(default_factory=SwitchState)
     traverse: float = 0.0
     first_t: float = 0.0
     force_a: float = 0.0
     second_t: float = 0.0
-    cyclic_on: bool = False
     
 
 def modbus_crc(data: bytes) -> bytes:
@@ -214,27 +212,36 @@ class SPG007MKController:
         )
 
     def _on_fast(self, resp: bytes):
-        if resp != b'':
-            regs = self.parse_fc03(resp, self.FAST_COUNT)
-            if regs is None:
-                return
+        regs = self.parse_fc03(resp, self.FAST_COUNT)
+        if regs is None:
+            return
+        force = self.parser.parse_float(regs[0], regs[1])
+        pos = self.parser.movement_amount(regs[2])
+        state = self.parser.register_state(regs[3])
+        switch = self.parser.switch_state(regs[5])
+        traverse = self.parser.movement_amount(regs[6])
+        first_t = self.parser.parse_float(regs[7], regs[8])
+        force_a = self.parser.parse_float(regs[10], regs[11])
+        second_t = self.parser.parse_float(regs[12], regs[13])
 
-            self.fast_status = FastStatus(
-                force=self.parser.magnitude_effort(regs[0], regs[1]),
-                pos=self.parser.movement_amount(regs[2]),
-                state=self.parser.register_state(regs[3]),
-                state_list=self.parser.change_state_list(regs[3]),
-                time_ms=self.parser.counter_time(regs[4]),
-                switch=self.parser.switch_state(regs[5]),
-                traverse=round(0.5 * self.parser.movement_amount(regs[6]), 1),
-                first_t=self.parser.temperature_value(regs[7], regs[8]),
-                force_a=self.parser.emergency_force(regs[10], regs[11]),
-                second_t=self.parser.temperature_value(regs[12], regs[13])
-                )
-            
+        values = (force, pos, state, switch, traverse, first_t, force_a, second_t)
+        if any(v is None for v in values):
+            return
 
-            if self.on_fast_data:
-                self.on_fast_data(self.fast_status)
+        self.fast_status = FastStatus(
+            force=force,
+            pos=pos,
+            state=state,
+            time_ms=regs[4],
+            switch=switch,
+            traverse=0.5 * traverse,
+            first_t=first_t,
+            force_a=force_a,
+            second_t=second_t,
+            )
+
+        if self.on_fast_data:
+            self.on_fast_data(self.fast_status)
         
     def parse_fc03(self, resp, expected_regs):
         if len(resp) < 5:
@@ -324,10 +331,10 @@ class SPG007MKController:
 
         self.on_record({
             "num": regs[0],
-            "force": self.parser.magnitude_effort(regs[1], regs[2]),
+            "force": self.parser.parse_float(regs[1], regs[2]),
             "pos": self.parser.movement_amount(regs[3]),
             "state": self.parser.register_state(regs[4]),
-            "temp": self.parser.temperature_value(regs[5], regs[6])
+            "temp": self.parser.parse_float(regs[5], regs[6])
         })
 
     # ---------- API ----------

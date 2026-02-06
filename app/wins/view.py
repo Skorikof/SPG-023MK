@@ -13,6 +13,9 @@ from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
 from scripts.logger import my_logger
 
+from scripts.modbus_client.modbus_controller import SPG005MKQtController
+from config import config
+
 
 class AppWindow(QMainWindow):
     def __init__(self, model, controller, win_set):
@@ -27,6 +30,8 @@ class AppWindow(QMainWindow):
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
+        
+        self.qtCtrl = SPG005MKQtController(config.comport, config.baudrate)
 
         self._start_param_view()
 
@@ -43,7 +48,7 @@ class AppWindow(QMainWindow):
             self.model.writer.timer_writer_stop()
         # self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
-        self.model.qtCtrl.stop()
+        self.qtCtrl.stop()
         # self.model.client.disconnect_client()
         event.accept()
 
@@ -55,6 +60,8 @@ class AppWindow(QMainWindow):
         self._init_signals()
 
         self._start_page()
+        
+        self.qtCtrl.start()
 
     def _init_start_view(self):
         self.tag_msg = 'info'
@@ -114,6 +121,11 @@ class AppWindow(QMainWindow):
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
+        
+        self.qtCtrl.fastDataUpdated.connect(self.model.onFastData)
+        self.qtCtrl.missedRecordsUpdated.connect(self.model.updateMissedLabel)
+        self.qtCtrl.bufferRecordReceived.connect(self.model.pars_buffer_result)
+        self.qtCtrl.errorOccurred.connect(self.model.showError)
 
     def _init_lab_graph(self):
         try:

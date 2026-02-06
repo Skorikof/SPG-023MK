@@ -284,16 +284,12 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            self.btn_test.clicked.connect(self.model.qtCtrl.startBuffer)
-            self.btn_test.clicked.disconnect(self.model.qtCtrl.startBuffer)
-            # self.model.reset_current_circle()
+            self.model.reset_current_circle()
 
-            # self.model.reader_start_test()
+            self.model.reader_start_test()
             # self.model.flag_bufer = True
 
         else:
-            self.btn_test.clicked.connect(self.model.qtCtrl.stopBuffer)
-            self.btn_test.clicked.disconnect(self.model.qtCtrl.stopBuffer)
-            # self.model.reader_stop_test()
+            self.model.reader_stop_test()
             # self.model.flag_bufer = False
             # self.model.clear_data_in_graph()

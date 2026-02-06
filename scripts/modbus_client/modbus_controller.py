@@ -1,4 +1,3 @@
-from itertools import count
 from PySide6.QtCore import QObject, Signal, Slot
 
 from scripts.modbus_client.modbus_worker import SPG007MKController, ReadMode
@@ -6,7 +5,7 @@ from scripts.modbus_client.modbus_worker import SPG007MKController, ReadMode
 
 class SPG005MKQtController(QObject):
     fastDataUpdated = Signal(object)
-    bufferRecordReceived = Signal(object)
+    bufferRecordReceived = Signal(dict)
     errorOccurred = Signal(str)
     modeChanged = Signal(str)
     missedRecordsUpdated = Signal(int)
@@ -51,7 +50,7 @@ class SPG005MKQtController(QObject):
     def _emit_fast(self, data: object):
         self.fastDataUpdated.emit(data)
 
-    def _emit_record(self, record: object):
+    def _emit_record(self, record: dict):
         self.bufferRecordReceived.emit(record)
         
     def _emit_missed(self, count: int):
