@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import time
 import statistics
+from dataclasses import fields
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 
 from config import config
 from scripts.logger import my_logger
 from scripts.test_obj import DataTest
-from scripts.settings import PrgSettings
 from scripts.parser.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
 from scripts.reader import Reader
@@ -38,8 +38,7 @@ class Model:
     def _init_variables(self):
         self.logger = my_logger.get_logger(__name__)
         self.signals = ModelSignals()
-        self.writer = None
-        self.reader = Reader()
+
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
@@ -51,7 +50,6 @@ class Model:
         
         self.buffer_state = ['null', 'null']
         
-        self.force_koef = PrgSettings().force_koef
         self.force_clear = 0
         self.force_correct = 0
         self.force_koef_offset = 0
@@ -82,8 +80,6 @@ class Model:
 
         self.timer_yellow = None
         self.time_push_yellow = None
-
-        self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         self.dynamic_push_force = 0
         self.max_recoil = 0
@@ -127,14 +123,6 @@ class Model:
     @Slot(str)
     def showError(self, error):
         print(f'Error from Qt controller --> {error}')
-        
-    @Slot(object)
-    def pars_regs_result(self, res):
-        if not res:
-                pass
-        else:
-            print(repr(res))
-            print('--------------------------------')
             
     @Slot(object)
     def pars_buffer_result(self, res):
@@ -146,10 +134,10 @@ class Model:
     @Slot(object)
     def onFastData(self, data):
         if not data:
-                pass
-        else:
-            print(repr(data))
-            print('--------------------------------')
+            return
+        # print(repr(data))
+        # print('--------------------------------')
+        self.pars_regs_result(data)
 
     def _start_param_model(self):
         pass
@@ -183,25 +171,6 @@ class Model:
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
 
-    def reader_start(self):
-        self.reader.reader_start()
-        self.status_bar_msg(f'Чтение контроллера запущено')
-
-    def reader_start_test(self):
-        self.reader.reader_start_test()
-        self.status_bar_msg(f'Чтение буфера контроллера запущено')
-
-    def reader_stop(self):
-        self.reader.reader_stop()
-        self.status_bar_msg(f'Чтение контроллера остановлено')
-
-    def reader_stop_test(self):
-        self.reader.reader_stop_test()
-        self.status_bar_msg(f'Чтение буфера контроллера остановлено')
-
-    def reader_exit(self):
-        self.reader.reader_exit()
-        
     # def timer_pars_circle_start(self):
     #     self.timer_pars_circle.start()
         
@@ -288,51 +257,47 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
+            
+    def dataclass_to_dict_fast(self, obj):
+        return {f.name: getattr(obj, f.name) for f in fields(obj)}
 
-    # def pars_regs_result(self, res):
-    #     try:
-    #         if not res:
-    #             pass
-    #         else:
-                # result = self.parser.pars_response_from_regs(res)
+    def pars_regs_result(self, data):
+        try:
+            self.force_clear = data.force
+            self.force_correct = round(self.force_clear * config.force_koef, 1)
+            self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+
+            self.move_now = data.pos
+            self.move_traverse = data.traverse * 0.5
+            self.counter = data.time_ms
+            self.data_test.force_alarm = data.force_a
+
+            self.data_test.first_temperature = data.first_t
+            self.data_test.second_temperature = data.second_t
+            if self.data_test.first_temperature > self.data_test.second_temperature:
+                temp = self.data_test.first_temperature
+            else:
+                temp = self.data_test.second_temperature
+            self.data_test.temperature = temp
+            if temp > self.data_test.max_temperature:
+                self.data_test.max_temperature = temp
                 
-                # if result.get('force', None) is not None:
-                #     self.force_clear = result.get('force', 0)
-                #     self.force_correct = round(self.force_clear * self.force_koef, 1)
-                #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+            self._update_switch_dict(self.dataclass_to_dict_fast(data.switch))
+            self._update_state_dict(self.dataclass_to_dict_fast(data.state))
 
-                # self.move_now = result.get('move')
-                # self.move_traverse = result.get('traverse')
-                # self.counter = result.get('counter')
-                # self.data_test.force_alarm = result.get('force_a')
+            if self.data_test.type_test == 'hand':
+                self.signals.win_set_update.emit()
+                
+            # if self.flag_bufer:
+            #     self._add_data_in_graph(self.force_offset, self.move_now)
+                # print(f'force_list ==> {self.force_list}')
+                # print(f'move_list ==> {self.move_list}')
+                # print(f'force_list ==> {len(self.force_list)}')
+                # print(f'move_list ==> {len(self.move_list)}')
 
-                # self.data_test.first_temperature = result.get('first_t')
-                # self.data_test.second_temperature = result.get('second_t')
-                # if self.data_test.first_temperature > self.data_test.second_temperature:
-                #     temp = self.data_test.first_temperature
-                # else:
-                #     temp = self.data_test.second_temperature
-                # self.data_test.temperature = temp
-                # if temp > self.data_test.max_temperature:
-                #     self.data_test.max_temperature = temp
-
-                # self._update_switch_dict(result.get('switch'))
-                # self._update_state_dict(result.get('state'))
-                # self.state_list = result.get('state_list')
-
-                # if self.data_test.type_test == 'hand':
-                #     self.signals.win_set_update.emit()
-                    
-                # if self.flag_bufer:
-                #     self._add_data_in_graph(self.force_offset, self.move_now)
-                #     # print(f'force_list ==> {self.force_list}')
-                #     # print(f'move_list ==> {self.move_list}')
-                #     # print(f'force_list ==> {len(self.force_list)}')
-                #     # print(f'move_list ==> {len(self.move_list)}')
-
-        # except Exception as e:
-        #     self.logger.error(e)
-        #     self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
     # def pars_buffer_result(self, res):
     #     try:
@@ -353,7 +318,7 @@ class Model:
 
             #     self.counter = data.get('count')[-1]
                 
-            #     self._change_state_list(data.get('state')[-1])
+            #     self._change_state_list(data.get('state')[-1]) # FIXME
 
             #     self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
             #                                                                       self.data_test.max_temperature)
@@ -370,20 +335,7 @@ class Model:
         #     else:
         #         self.logger.error(e)
         #         self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
-                
-    def _change_state_list(self, reg):
-        try:
-            temp = bin(reg)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-            self.state_list = [int(x) for x in bits]
 
-            self._update_state_dict(self.parser.register_state(reg))
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
-
-                
     def _add_data_in_graph(self, force, move):
         try:
             # if force > -50000:
@@ -621,7 +573,7 @@ class Model:
 
     def _write_reg_state(self, bit, value, command=None):
         try:
-            com_list = self.state_list[:]
+            com_list = self.state_dict.get('bits')
             com_list[bit] = value
 
             res = 0

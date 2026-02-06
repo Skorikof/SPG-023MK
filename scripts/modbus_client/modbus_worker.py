@@ -234,7 +234,7 @@ class SPG007MKController:
             state=state,
             time_ms=regs[4],
             switch=switch,
-            traverse=0.5 * traverse,
+            traverse=traverse,
             first_t=first_t,
             force_a=force_a,
             second_t=second_t,

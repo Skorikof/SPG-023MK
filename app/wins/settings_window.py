@@ -173,30 +173,31 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _btn_set_doclick(self):
         try:
+            bits = self.model.state_dict.get('bits')
             btn = self.sender().objectName()
             if btn == 'btn_cycle_F':
-                if self.model.state_list[0] == 0:
+                if bits[0] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_force_cycle(value)
 
             elif btn == 'btn_red_light':
-                if self.model.state_list[1] == 0:
+                if bits[1] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_red_light(value)
 
             elif btn == 'btn_green_light':
-                if self.model.state_list[2] == 0:
+                if bits[2] == 0:
                     value = 1
                 else:
                     value = 0
                 self.model.write_bit_green_light(value)
 
             elif btn == 'btn_temper_channel':
-                if self.model.state_list[6] == 0:
+                if bits[6] == 0:
                     value = 1
                 else:
                     value = 0

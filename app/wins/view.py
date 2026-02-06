@@ -688,7 +688,8 @@ class AppWindow(QMainWindow):
 
     def change_temper_sensor_btn(self):
         try:
-            if self.model.state_list[6] == 0:
+            bit = self.model.state_dict.get('bits')[6]
+            if bit == 0:
                 self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
             else:
                 self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
