@@ -85,12 +85,9 @@ class DataTest:
         self.serial = ''
         self.speed_test = 0
         self.speed_list = []
-        self.force_alarm = 0
         self.flag_push_force = False
         self.static_push_force = 0
         self.temperature = 0
-        self.first_temperature = 0
-        self.second_temperature = 0
         self.max_temperature = 0
         self.finish_temperature = PrgSettings().finish_temper
 

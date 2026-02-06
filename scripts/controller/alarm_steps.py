@@ -88,9 +88,9 @@ class AlarmSteps:
         try:
             # Determine alarm direction
             tag = None
-            if not self.model.switch_dict.get('alarm_highest_position', False):
+            if not self.model.reg_data.switch.alarm_highest_position:
                 tag = 'up'
-            elif not self.model.switch_dict.get('alarm_lowest_position', False):
+            elif not self.model.reg_data.switch.alarm_lowest_position:
                 tag = 'down'
             
             if tag and not self.flag_alarm_traverse:

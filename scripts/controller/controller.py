@@ -509,8 +509,8 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
 
     def _check_max_temper_test(self):
-        first = self.model.data_test.first_temperature
-        second = self.model.data_test.second_temperature
+        first = self.model.reg_data.first_t
+        second = self.model.reg_data.second_t
         if self.model.data_test.type_test == 'temper':
             finish_temp = self.model.data_test.finish_temperature
         else:

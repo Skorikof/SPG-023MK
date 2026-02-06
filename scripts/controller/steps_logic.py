@@ -30,18 +30,16 @@ class Steps:
     def stage_control_alarm_state(self):
         """Check for alarm conditions and return alarm tag or None."""
         try:
-            # Check state_dict alarms first (higher priority)
             alarm_checks = [
-                ('lost_control', self.model.state_dict.get('lost_control', False)),
-                ('excess_force', self.model.state_dict.get('excess_force', False)),
-                ('safety_fence', self.model.state_dict.get('safety_fence', False)),
+                ('lost_control', self.model.reg_data.state.lost_control),
+                ('excess_force', self.model.reg_data.state.excess_force),
+                ('safety_fence', self.model.reg_data.state.safety_fence),
             ]
             
             for alarm_tag, is_triggered in alarm_checks:
                 if is_triggered:
                     return alarm_tag
             
-            # Check temperature alarm (only if not in temperature test)
             if self.model.data_test.type_test != 'temper':
                 if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
                     return 'excess_temperature'
@@ -124,7 +122,7 @@ class Steps:
         try:
             if self.model.gear_referent:
                 if self.model.max_pos:
-                    if abs(14 - self.model.move_now) < 5:
+                    if abs(14 - self.model.reg_data.pos) < 5:
                         self.model.fc_control(**{'tag': 'stop', 'adr': 1})
                         self.model.reader_stop_test()
                         # self.model.flag_bufer = False
@@ -194,7 +192,7 @@ class Steps:
 
     def stage_stop_gear_min_pos(self):
         try:
-            if self.model.move_now < self.model.min_point + 1:
+            if self.model.reg_data.pos < self.model.min_point + 1:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
                 self.signals.stage_from_logic.emit('wait')
@@ -250,7 +248,7 @@ class Steps:
 
     def stage_traverse_referent(self):
         try:
-            if self.model.switch_dict.get('highest_position', False) is True:
+            if self.model.reg_data.state.referent is True:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
 
                 self.model.traverse_referent = True

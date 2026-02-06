@@ -1,35 +1,8 @@
-from dataclasses import dataclass
 import struct
 
 from scripts.logger import my_logger
+from scripts.data_classes import RegisterState, SwitchState
 
-
-@dataclass(slots=True, frozen=True)
-class RegisterState:
-    bits: list[int] = None
-    cycle_force: bool = False
-    red_light: bool = False
-    green_light: bool = False
-    lost_control: bool = False
-    excess_force: bool = False
-    referent: bool = False
-    select_temper: int = 0
-    safety_fence: bool = False
-    traverse_block: bool = False
-    state_freq: bool = False
-    state_force: bool = False
-    yellow_btn: bool = False
-    
-    
-@dataclass(slots=True, frozen=True)
-class SwitchState:
-    traverse_block_left: bool = False
-    traverse_block_right: bool = False
-    alarm_highest_position: bool = False
-    alarm_lowest_position: bool = False
-    highest_position: bool = False
-    lowest_position: bool = False
-    
 
 class ParserSPG023MK:
     def __init__(self):
@@ -44,12 +17,15 @@ class ParserSPG023MK:
             self.logger.error(e)
             return None
 
-    def movement_amount(self, value: int) -> float | None:
+    def movement_amount(self, value: int, tag: str) -> float | None:
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
             if value & 0x8000:
                 value -= 0x10000
-            return -0.1 * value
+            if tag == 'pos':
+                return -0.1 * value
+            elif tag == 'traverse':
+                return -0.5 * value
 
         except Exception as e:
             self.logger.error(e)
@@ -71,7 +47,7 @@ class ParserSPG023MK:
                 lost_control=bool(bits[3]),
                 excess_force=bool(bits[4]),
                 referent=bool(bits[5]),
-                select_temper=bits[6],
+                select_temper=bool(bits[6]),
                 safety_fence=bool(bits[8]),
                 traverse_block=bool(bits[9]),
                 state_freq=bool(bits[11]),

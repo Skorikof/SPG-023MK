@@ -18,7 +18,7 @@ class StepTests:
     def step_yellow_btn_push(self):
         try:
             if self.model.flag_test is False:
-                if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
+                if self.model.reg_data.state.green_light or self.model.reg_data.state.red_light:
                     self.model.lamp_all_switch_off()
 
                 self.model.clear_data_in_graph()
@@ -29,11 +29,8 @@ class StepTests:
                 self.model.alarm_tag = ''
                 self.model.flag_alarm = False
 
-                if self.model.state_dict.get('lost_control'):
-                    self.model.write_bit_unblock_control()
-
-                if self.model.state_dict.get('excess_force'):
-                    self.model.write_bit_emergency_force()
+                self.model.write_bit_unblock_control()
+                self.model.write_bit_emergency_force()
 
                 return 'start'
 
@@ -47,11 +44,8 @@ class StepTests:
 
     def step_start_test(self):
         try:
-            if self.model.state_dict.get('excess_force', False) is True:
-                self.model.write_bit_emergency_force()
-
-            if self.model.state_dict.get('lost_control', False) is True:
-                self.model.write_bit_unblock_control()
+            self.model.write_bit_emergency_force()
+            self.model.write_bit_unblock_control()
 
             self.model.lamp_all_switch_off()
 
