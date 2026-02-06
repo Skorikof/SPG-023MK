@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
 import serial
 import serial.rs485
 import struct
@@ -16,14 +15,14 @@ class ReadMode(Enum):
     BUFFER = 2
     
 
-@dataclass
+@dataclass(slots=True)
 class FastStatus:
     force: float = 0.0
     pos: float = 0.0
-    state: RegisterState = RegisterState()
-    state_list: List[int] = None
+    state: RegisterState = field(default_factory=RegisterState)
+    state_list: list[int] = None
     time_ms: int = 0
-    switch: SwitchState = SwitchState()
+    switch: SwitchState = field(default_factory=SwitchState)
     traverse: float = 0.0
     first_t: float = 0.0
     force_a: float = 0.0
@@ -260,7 +259,6 @@ class SPG007MKController:
 
     # ---------- data buffer ----------
     def ui_start_buffer_read(self):
-        # включаем запись в буфер (бит 0 регистра 0x2003)
         self.modbus.write_regs(0x2003, [1], prio=0)
 
         self.buffer_active = True
@@ -269,7 +267,6 @@ class SPG007MKController:
         self.set_mode(ReadMode.BUFFER)
         
     def ui_stop_buffer_read(self):
-        # выключаем запись в буфер
         self.modbus.write_regs(0x2003, [0], prio=0)
 
         self.buffer_active = False

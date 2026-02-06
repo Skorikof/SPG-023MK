@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
 from pydantic import field_validator
 
 from scripts.amorts import AmortSchema
@@ -75,24 +75,24 @@ class ReadArchive:
     
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
-        self.files_arr: List[Path] = []
-        self.files_name_arr: List[str] = []
-        self.files_name_sort: List[str] = []
+        self.files_arr: list[Path] = []
+        self.files_name_arr: list[str] = []
+        self.files_name_sort: list[str] = []
         self._reset_state()
         
     def _reset_state(self) -> None:
         """Reset parsing state variables"""
-        self.data_one: Dict[str, Any] = {}
-        self.data_two: Dict[str, Any] = {}
+        self.data_one: dict[str, Any] = {}
+        self.data_two: dict[str, Any] = {}
         self.type_test: str = ''
-        self.lab: List[BaseSchema] = []
-        self.conv: List[ConvSchema] = []
-        self.temper: List[TempSchema] = []
-        self.cascade: List[CascSchema] = []
-        self.cascade_meta: Dict[str, Any] = {}
-        self.speed_list: List[float] = []
-        self.recoil_list: List[float] = []
-        self.comp_list: List[float] = []
+        self.lab: list[BaseSchema] = []
+        self.conv: list[ConvSchema] = []
+        self.temper: list[TempSchema] = []
+        self.cascade: list[CascSchema] = []
+        self.cascade_meta: dict[str, Any] = {}
+        self.speed_list: list[float] = []
+        self.recoil_list: list[float] = []
+        self.comp_list: list[float] = []
 
     def init_arch(self) -> None:
         """Initialize archive files list"""
@@ -131,7 +131,7 @@ class ReadArchive:
             if data_list[0] != HEADER_MARKER:
                 yield data_list
 
-    def _parse_str_archive(self, archive_list: List[str]) -> None:
+    def _parse_str_archive(self, archive_list: list[str]) -> None:
         """Parse archive line and create objects"""
         if not archive_list:
             return
@@ -149,8 +149,8 @@ class ReadArchive:
         if self.data_one and self.data_two:
             self._create_object_archive(self.data_one, self.data_two)
 
-    def _create_object_archive(self, data_one: Dict[str, Any], 
-                               data_two: Dict[str, Any]) -> None:
+    def _create_object_archive(self, data_one: dict[str, Any], 
+                               data_two: dict[str, Any]) -> None:
         """Create schema object from parsed data"""
         try:
             data = {**data_one, **data_two}
@@ -209,7 +209,7 @@ class ReadArchive:
         self.recoil_list = []
         self.comp_list = []
 
-    def _parse_first_data(self, archive_list: List[str]) -> Dict[str, Any]:
+    def _parse_first_data(self, archive_list: list[str]) -> dict[str, Any]:
         """Parse first part of archive record"""
         try:
             data = self._fill_obj_archive_data(archive_list[:FIRST_DATA_LENGTH])
@@ -230,7 +230,7 @@ class ReadArchive:
             self.logger.error(f"Failed to parse first data: {e}")
             return {}
 
-    def _parse_second_data(self, archive_list: List[str]) -> Dict[str, Any]:
+    def _parse_second_data(self, archive_list: list[str]) -> dict[str, Any]:
         """Parse second part of archive record"""
         try:
             data = {}
@@ -256,7 +256,7 @@ class ReadArchive:
             self.logger.error(f"Failed to parse second data: {e}")
             return {}
 
-    def _fill_obj_archive_data(self, data: List[str]) -> Dict[str, Any]:
+    def _fill_obj_archive_data(self, data: list[str]) -> dict[str, Any]:
         """Fill object with archive data"""
         try:
             if len(data) < FIRST_DATA_LENGTH:
@@ -298,7 +298,7 @@ class ReadArchive:
         """Parse float value with locale support"""
         return float(value.replace(DECIMAL_SEPARATOR, '.'))
 
-    def _parse_float_list(self, data_list: List[str]) -> List[float]:
+    def _parse_float_list(self, data_list: list[str]) -> list[float]:
         """Parse list of float values"""
         try:
             return [self._parse_float(x) for x in data_list if x.strip()]
@@ -316,7 +316,7 @@ class ReadArchive:
         if comp is not None:
             self.comp_list.append(comp)
 
-    def _parse_temper_graph(self, data_list: List[str]) -> tuple:
+    def _parse_temper_graph(self, data_list: list[str]) -> tuple:
         """Parse temperature graph data"""
         try:
             recoil_list = []

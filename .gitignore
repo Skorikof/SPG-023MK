@@ -7,5 +7,6 @@ dist/
 logs/
 venv/
 .venv/
+.venv311/
 screens/
 firm/

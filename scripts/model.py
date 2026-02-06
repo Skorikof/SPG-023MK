@@ -132,12 +132,27 @@ class Model:
     # FIXME
     @Slot(int)
     def updateMissedLabel(self, count):
-        self.ui.missedLabel.setText(f"Пропущено записей: {count}")
-
-    # def _init_timer_pars_circle(self):
-    #     self.timer_pars_circle = QTimer()
-    #     self.timer_pars_circle.setInterval(300)
-    #     self.timer_pars_circle.timeout.connect(self._pars_response_on_circle)
+        print(f'Missed records count --> {count}')
+        # self.ui.missedLabel.setText(f"Пропущено записей: {count}")
+        
+    @Slot(str)
+    def showError(self, error):
+        print(f'Error from Qt controller --> {error}')
+        
+    @Slot(object)
+    def pars_regs_result(self, res):
+        if not res:
+                pass
+        else:
+            print(repr(res))
+            print('--------------------------------')
+            
+    @Slot(object)
+    def pars_buffer_result(self, res):
+        if not res:
+                pass
+        else:
+            print(f'Response from buffer reader --> {res}')
 
     def _start_param_model(self):
         self.qtCtrl.start()
@@ -286,17 +301,12 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
-            
-    def showError(self, error):
-        print(f'Error from Qt controller --> {error}')
 
-    def pars_regs_result(self, res):
-        try:
-            if not res:
-                pass
-            else:
-                print(repr(res))
-                print('--------------------------------')
+    # def pars_regs_result(self, res):
+    #     try:
+    #         if not res:
+    #             pass
+    #         else:
                 # result = self.parser.pars_response_from_regs(res)
                 
                 # if result.get('force', None) is not None:
@@ -333,17 +343,12 @@ class Model:
                 #     # print(f'force_list ==> {len(self.force_list)}')
                 #     # print(f'move_list ==> {len(self.move_list)}')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
+        # except Exception as e:
+        #     self.logger.error(e)
+        #     self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
-    def pars_buffer_result(self, res):
-        try:
-            if not res:
-                pass
-            else:
-                print(f'Response from buffer reader --> {res}')
-                
+    # def pars_buffer_result(self, res):
+    #     try:
             # data = self.parser.discard_left_data(res)
 
             # if data is None:
@@ -372,12 +377,12 @@ class Model:
             #     else:
             #         self._pars_response_on_circle(self.force_buf, self.move_buf)
 
-        except Exception as e:
-            if str(e) == 'list index out of range':
-                pass
-            else:
-                self.logger.error(e)
-                self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+        # except Exception as e:
+        #     if str(e) == 'list index out of range':
+        #         pass
+        #     else:
+        #         self.logger.error(e)
+        #         self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
                 
     def _change_state_list(self, reg):
         try:

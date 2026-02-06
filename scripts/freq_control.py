@@ -1,4 +1,4 @@
-import crcmod
+# import crcmod
 from enum import Enum
 
 from scripts.logger import my_logger
@@ -98,24 +98,24 @@ class FreqControl:
 
             freq_hex = hex(value)[2:].zfill(4)
             com_hex = f'0{adr}{self.COMMAND_SPEED}{freq_hex}'
-            com_crc = com_hex + self._calc_crc(com_hex)
-            return self._values_freq_command(com_crc)
+            # com_crc = com_hex + self._calc_crc(com_hex)
+            # return self._values_freq_command(com_crc)
 
         except Exception as e:
             self.logger.error(f'Ошибка в _get_speed_motor: {e}')
             raise
 
-    def _calc_crc(self, data: str) -> str:
-        """Расчет CRC16"""
-        try:
-            byte_data = bytes.fromhex(data)
-            crc16 = crcmod.mkCrcFun(0x18005, initCrc=0xFFFF, rev=True, xorOut=0x0000)
-            crc_str = hex(crc16(byte_data))[2:].zfill(4)
-            return crc_str[2:] + crc_str[:2]
+    # def _calc_crc(self, data: str) -> str:
+    #     """Расчет CRC16"""
+    #     try:
+    #         byte_data = bytes.fromhex(data)
+    #         crc16 = crcmod.mkCrcFun(0x18005, initCrc=0xFFFF, rev=True, xorOut=0x0000)
+    #         crc_str = hex(crc16(byte_data))[2:].zfill(4)
+    #         return crc_str[2:] + crc_str[:2]
 
-        except Exception as e:
-            self.logger.error(f'Ошибка в _calc_crc: {e}')
-            raise
+    #     except Exception as e:
+    #         self.logger.error(f'Ошибка в _calc_crc: {e}')
+    #         raise
 
     def _values_freq_command(self, data: str) -> list:
         """Преобразование hex-строки в список значений регистров"""

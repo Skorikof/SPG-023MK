@@ -1,4 +1,4 @@
-import modbus_tk.defines as cst
+# import modbus_tk.defines as cst
 from PySide6.QtCore import QThreadPool, QObject, Signal
 
 from scripts.logger import my_logger
@@ -23,7 +23,7 @@ class Reader:
         self.reader = None
 
     def init_reader(self, client):
-        self.reader = ReaderThread(client, cst)
+        self.reader = ReaderThread(client) #cst
         self.reader.signals.thread_err.connect(self._log_error_thread)
         self.reader.signals.read_result.connect(self._reader_result)
         self.signals.start.connect(self.reader.start_read)

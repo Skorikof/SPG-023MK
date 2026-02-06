@@ -2,12 +2,11 @@
 import configparser
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
 
 from scripts.logger import my_logger
 
 
-@dataclass
+@dataclass(slots=True)
 class Operator:
     """Оператор с именем и рангом"""
     name: str
@@ -98,7 +97,7 @@ class Operators:
         """Возвращает список рангов операторов"""
         return [op.rank for op in self.operators]
 
-    def get_operator(self, index: int) -> Optional[Operator]:
+    def get_operator(self, index: int) -> Operator | None:
         """Возвращает оператора по индексу"""
         if 0 <= index < len(self.operators):
             return self.operators[index]

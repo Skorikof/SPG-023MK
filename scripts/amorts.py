@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import configparser
-from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from scripts.logger import my_logger
@@ -9,7 +8,7 @@ from scripts.logger import my_logger
 class StructAmort:
     """Контейнер для хранения данных амортизаторов"""
     def __init__(self):
-        self.amorts: List['ArchiveSchema'] = []
+        self.amorts: list['ArchiveSchema'] = []
         
 
 class AmortSchema(BaseModel):
@@ -37,7 +36,7 @@ class ArchiveSchema(AmortSchema):
 
 class Amort:
     # Соответствие номеров адаптеров их длинам
-    ADAPTER_LENGTHS: Dict[str, int] = {
+    ADAPTER_LENGTHS: dict[str, int] = {
         '069': 25,
         '069-01': 25,
         '069-02': 34,
@@ -50,7 +49,7 @@ class Amort:
     
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
-        self.names: List[str] = []
+        self.names: list[str] = []
         self.current_index: int = -1
         self.struct = StructAmort()
         self.config = configparser.ConfigParser()
@@ -90,7 +89,7 @@ class Amort:
         except Exception as e:
             self.logger.error(f"Error reading config file '{self.CONFIG_FILE}': {e}")
 
-    def _parse_section(self, section: str) -> Optional[Dict]:
+    def _parse_section(self, section: str) -> dict | None:
         """Парсинг одной секции конфига"""
         data = {}
         
@@ -119,7 +118,7 @@ class Amort:
         except Exception as e:
             self.logger.error(f"Error deleting amort at index {index_del}: {e}")
 
-    def add_amort(self, obj: Dict) -> None:
+    def add_amort(self, obj: dict) -> None:
         """Добавление нового амортизатора"""
         try:
             nam_section = f'Amort{len(self.struct.amorts)}'
@@ -134,7 +133,7 @@ class Amort:
         except Exception as e:
             self.logger.error(f"Error adding amort: {e}")
 
-    def change_amort(self, ind: int, obj: Dict) -> None:
+    def change_amort(self, ind: int, obj: dict) -> None:
         """Изменение данных амортизатора по индексу"""
         try:
             if 0 <= ind < len(self.struct.amorts):

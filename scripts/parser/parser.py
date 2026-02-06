@@ -4,7 +4,7 @@ from struct import pack, unpack
 from scripts.logger import my_logger
 
 
-@dataclass
+@dataclass(slots=True)
 class RegisterState:
     cycle_force: bool = False
     red_light: bool = False
@@ -20,7 +20,7 @@ class RegisterState:
     yellow_btn: bool = False
     
     
-@dataclass
+@dataclass(slots=True)
 class SwitchState:
     traverse_block_left: bool = False
     traverse_block_right: bool = False

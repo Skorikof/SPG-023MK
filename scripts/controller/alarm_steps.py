@@ -4,7 +4,7 @@ from PySide6.QtCore import QObject, Signal
 from scripts.logger import my_logger
 
 
-@dataclass
+@dataclass(slots=True)
 class AlarmConfig:
     """Configuration for alarm types."""
     tag: str

@@ -1,6 +1,6 @@
 import serial
-import modbus_tk.modbus_rtu as modbus_rtu
-from typing import Optional, Dict, Any
+# import modbus_tk.modbus_rtu as modbus_rtu
+from typing import Any
 
 from scripts.logger import my_logger
 from scripts.settings import PrgSettings
@@ -13,8 +13,8 @@ class Client:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
         self.settings = PrgSettings()
-        self.set_dict: Dict[str, Any] = self.settings.con_set
-        self.client: Optional[modbus_rtu.RtuMaster] = None
+        self.set_dict: dict[str, Any] = self.settings.con_set
+        # self.client: modbus_rtu.RtuMaster = None
         self.flag_connect: bool = False
 
     def _init_connect(self) -> bool:
@@ -23,19 +23,20 @@ class Client:
             bool: True if initialization successful, False otherwise
         """
         try:
-            port_config = serial.Serial(
-                port=self.set_dict.get('COM'),
-                baudrate=self.set_dict.get('baudrate'),
-                bytesize=self.set_dict.get('bytesize'),
-                parity=self.set_dict.get('parity'),
-                stopbits=self.set_dict.get('stopbits'),
-                timeout=self.set_dict.get('timeout', 0.000001)
-            )
+            pass
+            # port_config = serial.Serial(
+            #     port=self.set_dict.get('COM'),
+            #     baudrate=self.set_dict.get('baudrate'),
+            #     bytesize=self.set_dict.get('bytesize'),
+            #     parity=self.set_dict.get('parity'),
+            #     stopbits=self.set_dict.get('stopbits'),
+            #     timeout=self.set_dict.get('timeout', 0.000001)
+            # )
             
-            self.client = modbus_rtu.RtuMaster(port_config)
-            self.client.set_timeout(self.DEFAULT_TIMEOUT)
-            self.client.set_verbose(True)
-            return True
+            # self.client = modbus_rtu.RtuMaster(port_config)
+            # self.client.set_timeout(self.DEFAULT_TIMEOUT)
+            # self.client.set_verbose(True)
+            # return True
             
         except Exception as e:
             self.client = None

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from PySide6.QtCore import QTimer, QThreadPool, QObject, Signal
-import modbus_tk.defines as cst
+# import modbus_tk.defines as cst
 
 from scripts.logger import my_logger
 from scripts.my_thread.thread_writer import WriterThread
@@ -50,7 +50,7 @@ class Writer:
     def _init_writer(self, tag, values=None, reg_write=None, freq_command=None, command=None):
         try:
             writer = WriterThread(client=self.client,
-                                  cst=cst,
+                                #   cst=cst,
                                   tag=tag,
                                   values=values,
                                   reg_write=reg_write,
