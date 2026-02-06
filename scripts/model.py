@@ -4,7 +4,6 @@ import statistics
 from dataclasses import fields
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 
-from config import config
 from scripts.logger import my_logger
 from scripts.test_obj import DataTest
 from scripts.parser.parser import ParserSPG023MK
@@ -12,6 +11,8 @@ from scripts.data_calculation import CalcData
 from scripts.archive_saver import WriterArch
 from scripts.freq_control import FreqControl
 
+from config import config
+from scripts.modbus_client.modbus_controller import SPG005MKQtController
 
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
@@ -24,31 +25,31 @@ class ModelSignals(QObject):
 
     connect_ctrl = Signal()
     read_finish = Signal()
+    
+    fastStatusChanged = Signal(object)
 
 
 class Model:
     def __init__(self):
         self._init_variables()
         self._init_flags()
+        self._init_signals()
 
         self._start_param_model()
 
     def _init_variables(self):
         self.logger = my_logger.get_logger(__name__)
         self.signals = ModelSignals()
-
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
-
         self.data_test = DataTest()
-
-        self.state_dict = {}
-        self.switch_dict = {}
+        
+        self.qtCtrl = SPG005MKQtController(config.comport, config.baudrate)
+        self.reg_data = None
         
         self.buffer_state = ['null', 'null']
         
-        self.force_clear = 0
         self.force_correct = 0
         self.force_koef_offset = 0
         self.force_offset = 0
@@ -61,8 +62,6 @@ class Model:
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
 
-        self.counter = 0
-        self.move_now = 0
         self.move_traverse = 0
         self.hod_measure = 0
         self.min_point = 0
@@ -105,34 +104,96 @@ class Model:
 
         self.alarm_tag = ''
         self.flag_alarm = False
-
-    # FIXME
-    @Slot(int)
-    def updateMissedLabel(self, count):
-        print(f'Missed records count --> {count}')
-        # self.ui.missedLabel.setText(f"Пропущено записей: {count}")
         
-    @Slot(str)
-    def showError(self, error):
-        print(f'Error from Qt controller --> {error}')
-            
-    @Slot(object)
-    def pars_buffer_result(self, res):
-        if not res:
-                pass
-        else:
-            print(f'Response from buffer reader --> {res}')
-            
+    def _init_signals(self):
+        self.qtCtrl.fastDataUpdated.connect(self.onFastData)
+        self.qtCtrl.bufferRecordReceived.connect(self.onBufferData)
+        self.qtCtrl.errorOccurred.connect(self.modbusError)
+        self.qtCtrl.missedRecordsUpdated.connect(self.updateMissedRes)
+        
     @Slot(object)
     def onFastData(self, data):
         if not data:
             return
-        # print(repr(data))
-        # print('--------------------------------')
-        self.pars_regs_result(data)
+        # Закоммичено для отладки, чтобы приходили даже одинаковые данные
+        # if self.reg_data == data:
+        #     return
+        self.reg_data = data
+        self.pars_regs_result()
+        
+    @Slot(object)
+    def onBufferData(self, data):
+        if not data:
+                pass
+        else:
+            print(f'Response from buffer reader --> {data}')
+            
+    @Slot(str)
+    def modbusError(self, error):
+        print(f'Error from modbus controller --> {error}')
+        self.logger.error(error)
+        
+    @Slot(int)
+    def updateMissedRes(self, count):
+        print(f'Missed buffer records count --> {count}')
 
+    def startConnectCtrl(self):
+        self.qtCtrl.start()
+        
+    def stopConnectCtrl(self):
+        self.qtCtrl.stop()
+        
+    def write_bit_force_cycle(self, enable: bool):
+        try:
+            if enable != self.reg_data.state.cycle_force:
+                self.qtCtrl.setCycleForce(enable)
+        except Exception as e:
+            self.logger.error(e)
+
+    def write_bit_red_light(self, enable: bool):
+        try:
+            if enable != self.reg_data.state.red_light:
+                self.qtCtrl.setRedLight(enable)
+        except Exception as e:
+            self.logger.error(e)
+
+    def write_bit_green_light(self, enable: bool):
+        try:
+            if enable != self.reg_data.state.green_light:
+                self.qtCtrl.setGreenLight(enable)
+        except Exception as e:
+            self.logger.error(e)
+
+    def write_bit_unblock_control(self):
+        try:
+            if self.reg_data.state.lost_control:
+                self.qtCtrl.setUnblockControl()
+        except Exception as e:
+            self.logger.error(e)
+            
+    def write_bit_emergency_force(self):
+        try:
+            if self.reg_data.state.excess_force:
+                self.qtCtrl.setUnblockExcessForce()
+        except Exception as e:
+            self.logger.error(e)
+            
+    def write_bit_select_temper(self, enable: bool):
+        try:
+            if enable != self.reg_data.state.select_temper:
+                self.qtCtrl.setSelectTemper(enable)
+        except Exception as e:
+            self.logger.error(e)
+            
+    def write_emergency_force(self, value):
+        try:
+            if value != self.reg_data.force_a:
+                self.qtCtrl.setEmergencyForce(value)
+        except Exception as e:
+            self.logger.error(e)
+            
     def _start_param_model(self):
-        pass
+        self.startConnectCtrl()
         # self.client.connect_client()
         # # FIXME таймер жёлтой кнопки
         # # self._init_timer_yellow_btn()
@@ -168,22 +229,6 @@ class Model:
         
     # def timer_pars_circle_stop(self):
     #     self.timer_pars_circle.stop()
-        
-    def _update_switch_dict(self, data):
-        try:
-            self.switch_dict = {**self.switch_dict, **data}
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_update_switch_dict - {e}')
-
-    def _update_state_dict(self, data):
-        try:
-            self.state_dict = {**self.state_dict, **data}
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_update_state_dict - {e}')
 
     def init_timer_koef_force(self):
         self.write_bit_force_cycle(1)
@@ -198,7 +243,7 @@ class Model:
         self.timer_calc_koef.start()
 
     def _add_koef_force_in_list(self):
-        if self.force_clear != -100000.0:
+        if self.reg_data.force != -100000.0:
             self.koef_force_list.append(self.force_correct)
         else:
             pass
@@ -232,33 +277,22 @@ class Model:
     def dataclass_to_dict_fast(self, obj):
         return {f.name: getattr(obj, f.name) for f in fields(obj)}
 
-    def pars_regs_result(self, data):
+    def pars_regs_result(self):
         try:
-            self.force_clear = data.force
-            self.force_correct = round(self.force_clear * config.force_koef, 1)
+            self.force_correct = round(self.reg_data.force * config.force_koef, 1)
             self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-            self.move_now = data.pos
-            self.move_traverse = data.traverse * 0.5
-            self.counter = data.time_ms
-            self.data_test.force_alarm = data.force_a
-
-            self.data_test.first_temperature = data.first_t
-            self.data_test.second_temperature = data.second_t
-            if self.data_test.first_temperature > self.data_test.second_temperature:
-                temp = self.data_test.first_temperature
+            if self.reg_data.first_t > self.reg_data.second_t:
+                temp = self.reg_data.first_t
             else:
-                temp = self.data_test.second_temperature
+                temp = self.reg_data.second_t
             self.data_test.temperature = temp
             if temp > self.data_test.max_temperature:
                 self.data_test.max_temperature = temp
-                
-            self._update_switch_dict(self.dataclass_to_dict_fast(data.switch))
-            self._update_state_dict(self.dataclass_to_dict_fast(data.state))
 
             if self.data_test.type_test == 'hand':
-                self.signals.win_set_update.emit()
-                
+                self.signals.fastStatusChanged.emit(self.reg_data)
+
             # if self.flag_bufer:
             #     self._add_data_in_graph(self.force_offset, self.move_now)
                 # print(f'force_list ==> {self.force_list}')
@@ -352,7 +386,7 @@ class Model:
 
     def yellow_btn_click(self):
         try:
-            if self.state_dict.get('yellow_btn', True) is False:
+            if self.reg_data.state.yellow_btn:
                 if self.yellow_rattle is False:
                     self.time_push_yellow = time.monotonic()
                     self.signals.test_launch.emit(True)
@@ -541,102 +575,11 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_response_on_circle - {e}')
-
-    def _write_reg_state(self, bit, value, command=None):
-        try:
-            com_list = self.state_dict.get('bits')
-            com_list[bit] = value
-
-            res = 0
-
-            for i in range(16):
-                res = res + com_list[i] * 2 ** i
-
-            self.writer.write_out('reg',
-                                  values=[res],
-                                  reg_write=0x2003,
-                                  command=command)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_write_reg_state - {e}')
-
-    def write_bit_force_cycle(self, value):
-        try:
-            self.buffer_state = ['null', 'null']
-            if value == 1:
-                command = 'buffer_on'
-            else:
-                command = 'buffer_off'
-
-            self._write_reg_state(0, value, command)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_force_cycle - {e}')
-
-    def write_bit_red_light(self, value):
-        try:
-            bit = self.state_dict.get('red_light', 0)
-            if int(bit) != value:
-                self._write_reg_state(1, value, command='red_light')
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_red_light - {e}')
-
-    def write_bit_green_light(self, value):
-        try:
-            bit = self.state_dict.get('green_light', 0)
-            if int(bit) != value:
-                self._write_reg_state(2, value, command='green_light')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_green_light - {e}')
-
-    def write_bit_unblock_control(self):
-        try:
-            self._write_reg_state(3, 1, command='unblock_control')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_unblock_control - {e}')
-
-    def write_bit_emergency_force(self):
-        try:
-            self._write_reg_state(4, 1, command='reset_emergency_force')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_emergency_force - {e}')
-
-    def write_bit_select_temper(self, value):
-        try:
-            bit = self.state_dict.get('select_temper', 0)
-            if int(bit) != value:
-                self._write_reg_state(6, value, command='select_temper')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_select_temper - {e}')
-
-    def write_emergency_force(self, value):
-        try:
-            arr = self.calc_data.emergency_force(value)
-
-            self.writer.write_out('reg', values=arr, reg_write=0x200a)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_emergency_force - {e}')
             
     def fc_control(self, tag: str, adr: int, speed: float = None, freq: int = None, hod: int = None):
         try:
-            if self.state_dict.get('lost_control'):
-                self.write_bit_unblock_control()
-
-            if self.state_dict.get('excess_force'):
-                self.write_bit_emergency_force()
+            self.write_bit_unblock_control()
+            self.write_bit_emergency_force()
                 
             if hod is None:
                 if self.data_test.amort is None:
@@ -750,3 +693,7 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/write_end_test_in_archive - {e}')
+
+    @property
+    def is_opened_modbus(self):
+        return self.qtCtrl.ctrl.worker.port.ser.is_open

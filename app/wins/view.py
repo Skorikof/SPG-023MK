@@ -14,9 +14,6 @@ from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
 from scripts.logger import my_logger
 
-from scripts.modbus_client.modbus_controller import SPG005MKQtController
-from config import config
-
 
 class AppWindow(QMainWindow):
     def __init__(self, model, controller):
@@ -31,8 +28,6 @@ class AppWindow(QMainWindow):
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
-        
-        self.qtCtrl = SPG005MKQtController(config.comport, config.baudrate)
 
         self._start_param_view()
 
@@ -44,7 +39,7 @@ class AppWindow(QMainWindow):
         #     self.controller.timer_process.stop()
 
         # self.model.save_arch.timer_writer_arch_stop()
-        self.qtCtrl.stop()
+        self.model.stopConnectCtrl()
         # self.model.client.disconnect_client()
         event.accept()
 
@@ -56,8 +51,6 @@ class AppWindow(QMainWindow):
         self._init_signals()
 
         self._start_page()
-        
-        self.qtCtrl.start()
 
     def _init_start_view(self):
         self.tag_msg = 'info'
@@ -97,7 +90,6 @@ class AppWindow(QMainWindow):
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.win_set_update.connect(self.update_data_win_settings)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
@@ -117,11 +109,6 @@ class AppWindow(QMainWindow):
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
-        
-        self.qtCtrl.fastDataUpdated.connect(self.model.onFastData)
-        self.qtCtrl.missedRecordsUpdated.connect(self.model.updateMissedLabel)
-        self.qtCtrl.bufferRecordReceived.connect(self.model.pars_buffer_result)
-        self.qtCtrl.errorOccurred.connect(self.model.showError)
 
     def _init_lab_graph(self):
         try:
@@ -282,7 +269,7 @@ class AppWindow(QMainWindow):
     def _start_page(self):
         try:
             self.main_stop_state(False)
-            if self.qtCtrl.ctrl.worker.port.ser.is_open:
+            if self.model.is_opened_modbus:
                 self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
                 self.main_btn_state(True)
                 self.main_ui_state(True)
@@ -684,8 +671,7 @@ class AppWindow(QMainWindow):
 
     def change_temper_sensor_btn(self):
         try:
-            bit = self.model.state_dict.get('bits')[6]
-            if bit == 0:
+            if self.model.reg_data.state.select_temper:
                 self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
             else:
                 self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
@@ -1185,11 +1171,8 @@ class AppWindow(QMainWindow):
         self.main_btn_state(False)
         self.main_ui_state(False)
         self.model.data_test.type_test = 'hand'
-        self.win_set.start_param_win_set()
         self.win_set.show()
-
-    def update_data_win_settings(self):
-        self.win_set.update_data_win_set()
+        self.win_set.start_param_win_set()
 
     def close_win_settings(self):
         self.main_btn_state(True)
