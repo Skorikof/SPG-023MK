@@ -8,6 +8,7 @@ from app.ui_py.mainui import Ui_MainWindow
 from app.wins.executors_win import ExecWin
 from app.wins.amorts_win import AmortWin
 from app.wins.archive_win import ArchiveWin
+from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
@@ -18,15 +19,15 @@ from config import config
 
 
 class AppWindow(QMainWindow):
-    def __init__(self, model, controller, win_set):
+    def __init__(self, model, controller):
         super(AppWindow, self).__init__()
         self.logger = my_logger.get_logger(__name__)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.model = model
         self.controller = controller
-        self.win_set = win_set
         self.calc_data = CalcData()
+        self.win_set = SetWindow(model)
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
@@ -36,18 +37,13 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
-        if self.model.buffer_state[1] == 'buffer_on':
-            self.model.write_bit_force_cycle(0)
+        # if self.model.buffer_state[1] == 'buffer_on':
+        #     self.model.write_bit_force_cycle(0)
             
-        if self.controller.timer_process is not None:
-            self.controller.timer_process.stop()
-        
-        self.model.reader_exit()
-        self.controller.timer_process.stop()
-        if self.model.writer is not None:
-            self.model.writer.timer_writer_stop()
+        # if self.controller.timer_process is not None:
+        #     self.controller.timer_process.stop()
+
         # self.model.save_arch.timer_writer_arch_stop()
-        self.model.reader.threadpool.waitForDone()
         self.qtCtrl.stop()
         # self.model.client.disconnect_client()
         event.accept()
@@ -286,7 +282,7 @@ class AppWindow(QMainWindow):
     def _start_page(self):
         try:
             self.main_stop_state(False)
-            if self.model.client:
+            if self.qtCtrl.ctrl.worker.port.ser.is_open:
                 self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
                 self.main_btn_state(True)
                 self.main_ui_state(True)

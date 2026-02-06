@@ -41,7 +41,7 @@ class Controller:
             self.last_max_temper = -100
 
             self._init_signals()
-            self._init_timer_test()
+            # self._init_timer_test()
 
         except Exception as e:
             self.logger.error(e)

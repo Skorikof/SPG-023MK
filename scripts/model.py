@@ -9,8 +9,6 @@ from scripts.logger import my_logger
 from scripts.test_obj import DataTest
 from scripts.parser.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
-from scripts.reader import Reader
-from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
 from scripts.freq_control import FreqControl
 
@@ -107,12 +105,6 @@ class Model:
 
         self.alarm_tag = ''
         self.flag_alarm = False
-        
-    def _init_signals(self):
-        pass
-        # self.reader.signals.result.connect(self._reader_result)
-        # self.reader.signals.error.connect(self.log_error_thread)
-        # self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     # FIXME
     @Slot(int)
@@ -179,8 +171,7 @@ class Model:
         
     def _update_switch_dict(self, data):
         try:
-            if data is not None:
-                self.switch_dict = {**self.switch_dict, **data}
+            self.switch_dict = {**self.switch_dict, **data}
 
         except Exception as e:
             self.logger.error(e)
@@ -188,8 +179,7 @@ class Model:
 
     def _update_state_dict(self, data):
         try:
-            if data is not None:
-                self.state_dict = {**self.state_dict, **data}
+            self.state_dict = {**self.state_dict, **data}
 
         except Exception as e:
             self.logger.error(e)
@@ -238,25 +228,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
-
-    def _reader_result(self, response, tag):
-        try:
-            if tag == 'buffer':
-                self.pars_buffer_result(response)
-
-            if tag == 'reg':
-                self.pars_regs_result(response.get('regs'))
-
-            # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
-            # if self.flag_test_launch is True:
-            #     if not self.timer_yellow.isActive():
-            #         self.timer_yellow.start()
-            #     else:
-            #         pass
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
             
     def dataclass_to_dict_fast(self, obj):
         return {f.name: getattr(obj, f.name) for f in fields(obj)}

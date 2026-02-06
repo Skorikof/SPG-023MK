@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 from PySide6.QtWidgets import QMainWindow
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import QObject, Signal, QSignalMapper, Slot
 
 from scripts.logger import my_logger
@@ -22,6 +23,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.model = model
             self.calc_data = CalcData()
             self.setupUi(self)
+            self.setWindowIcon(QIcon('icon/settings.png'))
 
             self.hod = 50
 
