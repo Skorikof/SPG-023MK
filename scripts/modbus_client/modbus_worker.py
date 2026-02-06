@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
+import itertools
+import math
 import serial
 import serial.rs485
 import struct
@@ -7,7 +9,8 @@ import threading
 import queue
 import time
 
-from scripts.parser.parser import ParserSPG023MK, RegisterState, SwitchState
+from scripts.parser.parser import ParserSPG023MK
+from scripts.data_classes import FastStatus
 
 
 class ReadMode(Enum):
@@ -15,17 +18,13 @@ class ReadMode(Enum):
     BUFFER = 2
     
 
-@dataclass(slots=True, frozen=True)
-class FastStatus:
-    force: float = 0.0
-    pos: float = 0.0
-    state: RegisterState = field(default_factory=RegisterState)
-    time_ms: int = 0
-    switch: SwitchState = field(default_factory=SwitchState)
-    traverse: float = 0.0
-    first_t: float = 0.0
-    force_a: float = 0.0
-    second_t: float = 0.0
+class StateBits(Enum):
+    BIT_CYCLE_FORCE = 0
+    BIT_RED_LIGHT = 1
+    BIT_GREEN_LIGHT = 2
+    BIT_LOST_CONTROL = 3
+    BIT_EXCESS_FORCE = 4
+    BIT_SELECT_TEMPER = 6
     
 
 def modbus_crc(data: bytes) -> bytes:
@@ -78,19 +77,24 @@ class ModbusWorker(threading.Thread):
         self.slave_id = slave_id
         self.queue = queue.PriorityQueue()
         self.running = True
+        self._seq = itertools.count()
 
     def run(self):
         while self.running:
             try:
-                prio, frame, resp_len, cb = self.queue.get(timeout=0.1)
+                prio, seq, frame, resp_len, cb = self.queue.get(timeout=0.1)
             except queue.Empty:
                 continue
 
-            self.port.write(frame)
-            resp = self.port.read(resp_len)
+            try:
+                self.port.write(frame)
+                resp = self.port.read(resp_len)
 
-            if cb:
-                cb(resp)
+                if cb:
+                    cb(resp)
+
+            except Exception as e:
+                print(f"ModbusWorker error: {e}")
 
             time.sleep(0.001)  # пауза между кадрами
 
@@ -98,7 +102,13 @@ class ModbusWorker(threading.Thread):
         self.running = False
 
     def send(self, frame, resp_len, callback=None, priority=5):
-        self.queue.put((priority, frame, resp_len, callback))
+        self.queue.put((
+            priority,
+            next(self._seq),
+            frame,
+            resp_len,
+            callback
+        ))
 
 
 class ModbusRTUMaster:
@@ -106,7 +116,7 @@ class ModbusRTUMaster:
         self.w = worker
         self.sid = worker.slave_id
 
-    def read_holding(self, addr, count, cb, prio=5):
+    def read_holding(self, addr: int, count: int, cb, *, prio: int = 1):
         frame = bytearray([
             self.sid, 0x03,
             addr >> 8, addr & 0xFF,
@@ -135,6 +145,8 @@ class SPG007MKController:
     # --- адреса ---
     FAST_ADDR = 0x2000
     FAST_COUNT = 14
+    
+    STATE_REG = 0x2003
 
     BUF_START = 0x4000
     RECORD_SIZE = 6
@@ -158,18 +170,10 @@ class SPG007MKController:
         self.buffer_active = False
         self.missed_records = 0
         self.on_missed_records = None
+        self._last_emergency_force = None
         
-    # --- UI callbacks ---
-    def ui_start_buffer_read(self):
-        self.set_mode(ReadMode.BUFFER)
+        self.on_error = None
 
-    def ui_stop_buffer_read(self):
-        self.set_mode(ReadMode.FAST)
-
-    def ui_write_registers(self, addr, values):
-        self.modbus.write_regs(addr, values, prio=0)
-
-    # ---------- lifecycle ----------
     def start(self):
         self.port.open()
         self.worker.start()
@@ -216,10 +220,10 @@ class SPG007MKController:
         if regs is None:
             return
         force = self.parser.parse_float(regs[0], regs[1])
-        pos = self.parser.movement_amount(regs[2])
+        pos = self.parser.movement_amount(regs[2], 'pos')
         state = self.parser.register_state(regs[3])
         switch = self.parser.switch_state(regs[5])
-        traverse = self.parser.movement_amount(regs[6])
+        traverse = self.parser.movement_amount(regs[6], 'traverse')
         first_t = self.parser.parse_float(regs[7], regs[8])
         force_a = self.parser.parse_float(regs[10], regs[11])
         second_t = self.parser.parse_float(regs[12], regs[13])
@@ -266,16 +270,12 @@ class SPG007MKController:
 
     # ---------- data buffer ----------
     def ui_start_buffer_read(self):
-        self.modbus.write_regs(0x2003, [1], prio=0)
-
         self.buffer_active = True
         self.last_record = None
         self.buf_addr = self.BUF_START
         self.set_mode(ReadMode.BUFFER)
         
     def ui_stop_buffer_read(self):
-        self.modbus.write_regs(0x2003, [0], prio=0)
-
         self.buffer_active = False
         self.set_mode(ReadMode.FAST)
     
@@ -336,11 +336,79 @@ class SPG007MKController:
             "state": self.parser.register_state(regs[4]),
             "temp": self.parser.parse_float(regs[5], regs[6])
         })
+        
+    def _float_to_regs(self, value: float) -> tuple[int, int]:
+        return struct.unpack('>HH', struct.pack('>f', value))
+    
+    def _modify_state_reg(self, updates: dict[int, bool]):
+        """Запись битов в регистр состояния 0х2003"""
+        def on_read(resp: bytes):
+            regs = self.parse_fc03(resp, 1)
+            if not regs:
+                return
+
+            value = regs[0]
+
+            for bit, flag in updates.items():
+                if flag:
+                    value |= (1 << bit)
+                else:
+                    value &= ~(1 << bit)
+
+            self.modbus.write_regs(
+                addr=self.STATE_REG,
+                values=[value],
+                prio=0
+            )
+
+        self.modbus.read_holding(self.STATE_REG, 1, on_read, prio=0)
 
     # ---------- API ----------
     def set_emergency_force(self, value: float):
-        hi, lo = struct.unpack(">HH", struct.pack(">f", value))
-        self.modbus.write_regs(0x200A, [hi, lo])
+        """Запись аварийного усилия (float32) в регистры 0x200A–0x200B"""
+        if not math.isfinite(value):
+            raise ValueError("Emergency force must be finite")
+        
+        if value == self._last_emergency_force:
+            return
+        self._last_emergency_force = value
+
+        try:
+            hi, lo = struct.unpack('>HH', struct.pack('>f', value))
+            self.modbus.write_regs(0x200A, [hi, lo], prio=0)
+        except Exception as e:
+            self.on_error(f"Error setting emergency force: {e}")
+            raise
+        
+    def set_cycle_force(self, enable: bool):
+        self._modify_state_reg({
+            StateBits.BIT_CYCLE_FORCE: enable
+        })
+        
+    def set_red_light(self, enable: bool):
+        self._modify_state_reg({
+            StateBits.BIT_RED_LIGHT: enable
+        })
+        
+    def set_green_light(self, enable: bool):
+        self._modify_state_reg({
+            StateBits.BIT_GREEN_LIGHT: enable
+        })
+        
+    def set_unblock_control(self):
+        self._modify_state_reg({
+            StateBits.BIT_LOST_CONTROL: True
+        })
+        
+    def set_unblock_excess_force(self):
+        self._modify_state_reg({
+            StateBits.BIT_EXCESS_FORCE: True
+        })
+        
+    def set_select_temper(self, enable: bool):
+        self._modify_state_reg({
+            StateBits.BIT_SELECT_TEMPER: enable
+        })
 
 
 if __name__ == "__main__":
