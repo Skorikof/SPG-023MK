@@ -11,10 +11,9 @@ class Signals(QObject):
 class ReaderThread(QRunnable):
     signals = Signals()
 
-    def __init__(self, client, cst):
+    def __init__(self, client):
         super(ReaderThread, self).__init__()
         self.client = client
-        self.cst = cst
 
         self.read_tag: str = ''
 
@@ -41,10 +40,14 @@ class ReaderThread(QRunnable):
             else:
                 if self.read_tag == 'reg':
                     try:
-                        self.result['regs'] = self.client.execute(
-                            1, self.cst.READ_HOLDING_REGISTERS, 0x2000, 14)
+                        rr = self.client.read_holding_registers(0x2000, count=14, device_id=1)
+                        if not rr.isError():
+                            self.result['regs'] = rr.registers
+                            self.signals.read_result.emit(self.result, self.read_tag)
+                            time.sleep(0.05)
 
-                        self.signals.read_result.emit(self.result, self.read_tag)
+                        else:
+                            self.signals.thread_err.emit(str(rr))
 
                     except Exception as e:
                         self.signals.thread_err.emit(f'ERROR in thread reader reg - {e}')
@@ -57,66 +60,67 @@ class ReaderThread(QRunnable):
                                        'move': [],
                                        'state': [],
                                        'temper': []}
-
-                        rr = self.client.execute(1, self.cst.READ_HOLDING_REGISTERS,
-                                                 self.reg_buffer, self.buffer_count * 6)
-
-                        if len(rr) == self.buffer_count * 6:  # 120
-                            for i in range(0, self.buffer_count):  # 20
-                                flag_add = False
-                                ind = 6 * i
-                                if self.flag_start_test:
-                                    flag_add = True
-                                    self.flag_start_test = False
-                                else:
-                                    # if abs(rr[ind] - self.current_rec) < 2 or abs(rr[ind] - self.current_rec) > 65530:
-                                    flag_add = True
-
-                                if flag_add:
-                                    # if rr[ind] is not None and rr[ind] != 0:
-                                    self.current_rec = rr[ind]
-                                    self.reg_buffer += 6
-                                    
-                                    if self._last_move is None:
-                                        self._last_move = rr[ind + 3]
-                                        self.flag_add_data = True
-                                        
+                        
+                        rr = self.client.read_holding_registers(self.reg_buffer,
+                                                                count=self.buffer_count * 6,
+                                                                device_id=1)
+                        if not rr.isError():
+                            if len(rr.registers) == self.buffer_count * 6:  # 120
+                                for i in range(0, self.buffer_count):  # 20
+                                    flag_add = False
+                                    ind = 6 * i
+                                    if self.flag_start_test:
+                                        flag_add = True
+                                        self.flag_start_test = False
                                     else:
-                                        if self._last_move != rr[ind + 3]:
+                                        # if abs(rr[ind] - self.current_rec) < 2 or abs(rr[ind] - self.current_rec) > 65530:
+                                        flag_add = True
+
+                                    if flag_add:
+                                        # if rr[ind] is not None and rr[ind] != 0:
+                                        self.current_rec = rr.registers[ind]
+                                        self.reg_buffer += 6
+                                        
+                                        if self._last_move is None:
+                                            self._last_move = rr.registers[ind + 3]
                                             self.flag_add_data = True
                                             
-                                    if self.flag_add_data:
-                                        self.result['count'].append(rr[ind])
-                                        self.result['force_big'].append(rr[ind+1])
-                                        self.result['force_low'].append(rr[ind+2])
-                                        self.result['move'].append(rr[ind+3])
-                                        self.result['state'].append(rr[ind + 4])
-                                        self.result['temper'].append(rr[ind + 5])
-                                        
-                                        self.flag_send_res = True
-                                        self.flag_add_data = True
+                                        else:
+                                            if self._last_move != rr.registers[ind + 3]:
+                                                self.flag_add_data = True
+                                                
+                                        if self.flag_add_data:
+                                            self.result['count'].append(rr.registers[ind])
+                                            self.result['force_big'].append(rr.registers[ind+1])
+                                            self.result['force_low'].append(rr.registers[ind+2])
+                                            self.result['move'].append(rr.registers[ind+3])
+                                            self.result['state'].append(rr.registers[ind + 4])
+                                            self.result['temper'].append(rr.registers[ind + 5])
+                                            
+                                            self.flag_send_res = True
+                                            self.flag_add_data = True
 
-                                else:
-                                    # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
-                                    break
+                                    else:
+                                        # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
+                                        break
 
-                            delta_r = 16384 + 18000 - self.reg_buffer
+                                delta_r = 16384 + 18000 - self.reg_buffer
 
-                            if delta_r <= 0:
-                                if delta_r < 0:
-                                    self.signals.thread_err.emit('Выход за пределы буфера')
-                                self.buffer_count = 20
-                                self.reg_buffer = 0x4000
-                            else:
-                                if delta_r >= 6 * self.buffer_count:
+                                if delta_r <= 0:
+                                    if delta_r < 0:
+                                        self.signals.thread_err.emit('Выход за пределы буфера')
                                     self.buffer_count = 20
-
+                                    self.reg_buffer = 0x4000
                                 else:
-                                    self.buffer_count = int(delta_r / 6)
-                                    
-                            if self.flag_send_res:
-                                self.signals.read_result.emit(self.result, self.read_tag)
-                                self.flag_send_res = False
+                                    if delta_r >= 6 * self.buffer_count:
+                                        self.buffer_count = 20
+
+                                    else:
+                                        self.buffer_count = int(delta_r / 6)
+                                        
+                                if self.flag_send_res:
+                                    self.signals.read_result.emit(self.result, self.read_tag)
+                                    self.flag_send_res = False
 
                         else:
                             self.signals.thread_err.emit(str(rr))

@@ -139,20 +139,10 @@ class Model:
 
             self.save_arch = WriterArch()
             self.save_arch.timer_writer_arch_start()
-            
-            # self._stand_initialisation()
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
             self.logger.warning(f'Нет подключения к контроллеру')
-            
-    def _stand_initialisation(self):
-        try:
-            self.fc_control(**{'tag':'max', 'adr':1, 'freq':120})
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_stand_initialisation - {e}')
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)

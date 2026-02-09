@@ -10,10 +10,10 @@ class Signals(QObject):
 class WriterThread(QRunnable):
     signals = Signals()
 
-    def __init__(self, client, cst, tag, values, reg_write, freq_command, command):
+    def __init__(self, client, tag, values, reg_write, freq_command, command):
         super(WriterThread, self).__init__()
         self.client = client
-        self.cst = cst
+        # self.cst = cst
         self.tag = tag
         self.values = values
         self.reg_write = reg_write
@@ -30,15 +30,18 @@ class WriterThread(QRunnable):
         if self.tag == 'reg':
             try:
                 while self.number_attempts <= self.max_attempts:
-                    try:
-                        rw = self.client.execute(1, self.cst.WRITE_MULTIPLE_REGISTERS,
-                                                 self.reg_write, output_value=tuple(self.values))
+                    # rw = self.client.execute(1, self.cst.WRITE_MULTIPLE_REGISTERS,
+                    #                          self.reg_write, output_value=tuple(self.values))
+                    rw = self.client.write_registers(self.reg_write,
+                                                     self.values,
+                                                     device_id=1)
+                    if not rw.isError:
                         self.number_attempts = 10
                         self.signals.write_result.emit(('OK!', self.tag,
                                                         self.reg_write,
                                                         self.values, self.command))
-
-                    except:
+                    
+                    else:
                         self.number_attempts += 1
                         time.sleep(0.02)
 
@@ -54,30 +57,29 @@ class WriterThread(QRunnable):
             try:
                 while self.cond:  # Проверяем бит занятости ПЧ
                     time.sleep(0.02)
-                    rr = self.client.execute(1, self.cst.READ_HOLDING_REGISTERS, 0x2003, 1)
-                    if len(rr) == 1:
-                        bits_list = self._dec_to_bin_str(rr[0])
-                        if bits_list[11] == 0:
-                            self.flag_next = True
-                            self.cond = False
-                    else:
-                        self.number_attempts += 1
-                        if self.number_attempts >= self.max_attempts:
-                            self.flag_next = False
-                            self.cond = False
+                    rr = self.client.read_holding_registers(0x2003, count=1, device_id=1)
+                    if not rr.isError:
+                        if len(rr.registers) == 1:
+                            bits_list = self._dec_to_bin_str(rr.registers[0])
+                            if bits_list[11] == 0:
+                                self.flag_next = True
+                                self.cond = False
+                        else:
+                            self.number_attempts += 1
+                            if self.number_attempts >= self.max_attempts:
+                                self.flag_next = False
+                                self.cond = False
 
                 if self.flag_next:  # Записываем длину команды
                     self.flag_next = False
                     self.number_attempts = 0
                     while self.number_attempts < self.max_attempts:
                         time.sleep(0.02)
-                        try:
-                            rq = self.client.execute(1, self.cst.WRITE_MULTIPLE_REGISTERS,
-                                                     0x2060, output_value=tuple([8]))
+                        rw = self.client.write_registers(0x2060, [8], device_id=1)
+                        if rw.isError:
                             self.flag_next = True
                             self.number_attempts = 10
-
-                        except Exception as e:
+                        else:
                             self.number_attempts += 1
                             if self.number_attempts >= self.max_attempts:
                                 self.flag_next = False
@@ -88,9 +90,10 @@ class WriterThread(QRunnable):
                     self.number_attempts = 0
                     while self.cond:
                         time.sleep(0.02)
-                        rr = self.client.execute(1, self.cst.READ_HOLDING_REGISTERS, 0x2003, 1)
-                        if len(rr) == 1:
-                            bits_list = self._dec_to_bin_str(rr[0])
+                        rr = self.client.read_holding_registers(0x2003, count=1, device_id=1)
+                    if not rr.isError:
+                        if len(rr.registers) == 1:
+                            bits_list = self._dec_to_bin_str(rr.registers[0])
                             if bits_list[11] == 0:
                                 self.flag_next = True
                                 self.cond = False
@@ -105,13 +108,11 @@ class WriterThread(QRunnable):
                     self.number_attempts = 0
                     while self.number_attempts < self.max_attempts:
                         time.sleep(0.02)
-                        try:
-                            rq = self.client.execute(1, self.cst.WRITE_MULTIPLE_REGISTERS,
-                                                     0x2061, output_value=tuple(self.freq_command))
+                        rw = self.client.write_registers(0x2061, self.freq_command, device_id=1)
+                        if not rw.isError:
                             self.number_attempts = 10
                             self.flag_next = True
-
-                        except Exception as e:
+                        else:
                             self.number_attempts += 1
                             if self.number_attempts >= self.max_attempts:
                                 self.signals.write_result.emit(('ERROR!', self.tag,
