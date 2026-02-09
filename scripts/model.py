@@ -116,10 +116,10 @@ class Model:
         if not data:
             return
         # Закоммичено для отладки, чтобы приходили даже одинаковые данные
-        # if self.reg_data == data:
-        #     return
-        self.reg_data = data
-        self.pars_regs_result()
+        if self.reg_data == data:
+            return
+        
+        self.pars_regs_result(data)
         
     @Slot(object)
     def onBufferData(self, data):
@@ -127,22 +127,36 @@ class Model:
                 pass
         else:
             print(f'Response from buffer reader --> {data}')
-            
+
     @Slot(str)
     def modbusError(self, error):
         print(f'Error from modbus controller --> {error}')
         self.logger.error(error)
-        
+
     @Slot(int)
     def updateMissedRes(self, count):
         print(f'Missed buffer records count --> {count}')
 
     def startConnectCtrl(self):
         self.qtCtrl.start()
-        
+
     def stopConnectCtrl(self):
         self.qtCtrl.stop()
         
+    def _convert_state_reg(self, bit, flag):
+        try:
+            state_list = self.reg_data.state.bits[:]
+            
+            for bit, flag in enumerate(state_list):
+                    mask = 1 << bit.value
+                    if flag:
+                        value = value | mask
+                    else:
+                        value = value & ~mask
+                    
+        except Exception as e:
+            self.logger.error(e)
+
     def write_bit_force_cycle(self, enable: bool):
         try:
             if enable != self.reg_data.state.cycle_force:
@@ -277,15 +291,17 @@ class Model:
     def dataclass_to_dict_fast(self, obj):
         return {f.name: getattr(obj, f.name) for f in fields(obj)}
 
-    def pars_regs_result(self):
+    def pars_regs_result(self, data):
         try:
-            self.force_correct = round(self.reg_data.force * config.force_koef, 1)
+            print(f'Pars data state --> {data.state.bits}')
+            self.reg_data = data
+            self.force_correct = round(data.force * config.force_koef, 1)
             self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-            if self.reg_data.first_t > self.reg_data.second_t:
-                temp = self.reg_data.first_t
+            if data.first_t > data.second_t:
+                temp = data.first_t
             else:
-                temp = self.reg_data.second_t
+                temp = data.second_t
             self.data_test.temperature = temp
             if temp > self.data_test.max_temperature:
                 self.data_test.max_temperature = temp

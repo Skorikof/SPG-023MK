@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 import itertools
@@ -16,15 +17,26 @@ from scripts.data_classes import FastStatus
 class ReadMode(Enum):
     FAST = 1
     BUFFER = 2
+    WRITE = 3
     
 
 class StateBits(Enum):
-    BIT_CYCLE_FORCE = 0
-    BIT_RED_LIGHT = 1
-    BIT_GREEN_LIGHT = 2
-    BIT_LOST_CONTROL = 3
-    BIT_EXCESS_FORCE = 4
-    BIT_SELECT_TEMPER = 6
+    CYCLE_FORCE = 0
+    RED_LIGHT = 1
+    GREEN_LIGHT = 2
+    UNBLOCK_CONTROL = 3
+    UNBLOCK_EXCESS_FORCE = 4
+    REFERENT_PASSED = 5
+    SELECT_TEMPER = 6
+    NULL_7 = 7
+    SAFETY_FENCE = 8
+    TRAVERSE_BLOCK = 9
+    NULL_10 = 10
+    STATE_FREQ = 11
+    STATE_FORCE = 12
+    YEL_BTN = 13
+    NULL_14 = 14
+    NULL_15 = 15
     
 
 def modbus_crc(data: bytes) -> bytes:
@@ -50,10 +62,10 @@ class RS485Port:
             stopbits=1
         )
 
-        self.ser.rs485_mode = serial.rs485.RS485Settings(
-            rts_level_for_tx=True,
-            rts_level_for_rx=False
-        )
+        # self.ser.rs485_mode = serial.rs485.RS485Settings(
+        #     rts_level_for_tx=True,
+        #     rts_level_for_rx=False
+        # )
 
         self.lock = threading.Lock()
 
@@ -156,23 +168,53 @@ class SPG007MKController:
         self.port = RS485Port(port, baudrate)
         self.worker = ModbusWorker(self.port, slave_id=1)
         self.modbus = ModbusRTUMaster(self.worker)
+        self.parser = ParserSPG023MK()
         self.mode = ReadMode.FAST
         self.mode_lock = threading.Lock()
-        self.parser = ParserSPG023MK()
+        self._state_lock = threading.Lock()
+        self._write_lock = threading.Lock()
         
         self.fast_status = FastStatus()
+        self._prev_mode: ReadMode | None = None
         self.on_fast_data = None
         self.on_record = None
         self.last_record = None
         self.running = False
         self.buf_addr = self.BUF_START
-        self.last_record = None
         self.buffer_active = False
         self.missed_records = 0
         self.on_missed_records = None
         self._last_emergency_force = None
-        
         self.on_error = None
+        
+        self._last_state_reg: int | None = None
+        
+        self.MODE_CONFIG = {
+            ReadMode.FAST: {
+                "limit": 20,
+                "sleep": 0.05,
+                "reader": self._read_fast,
+            },
+            ReadMode.BUFFER: {
+                "limit": 100,
+                "sleep": 0.001,
+                "reader": self._read_buffer_step,
+            },
+        }
+        
+    @contextmanager
+    def _write_mode(self):
+        with self._write_lock:
+            with self.mode_lock:
+                self._prev_mode = self.mode
+                self.mode = ReadMode.WRITE
+
+            try:
+                yield
+            finally:
+                with self.mode_lock:
+                    self.mode = self._prev_mode
+                    self._prev_mode = None
 
     def start(self):
         self.port.open()
@@ -194,16 +236,16 @@ class SPG007MKController:
             while self.running:
                 with self.mode_lock:
                     mode = self.mode
-
-                if mode == ReadMode.FAST:
-                    if self.worker.queue.qsize() < 5:
-                        self._read_fast()
-                    time.sleep(0.05)
-
-                elif mode == ReadMode.BUFFER:
-                    if self.worker.queue.qsize() < 10:
-                        self._read_buffer_step()
+                    
+                if mode == ReadMode.WRITE:
                     time.sleep(0.001)
+                    continue
+
+                config = self.MODE_CONFIG.get(mode)
+                if config:
+                    if self.worker.queue.qsize() < config["limit"]:
+                        config["reader"]()
+                    time.sleep(config["sleep"])
 
         threading.Thread(target=loop, daemon=True).start()
 
@@ -243,7 +285,10 @@ class SPG007MKController:
             force_a=force_a,
             second_t=second_t,
             )
-
+        
+        if self._last_state_reg != regs[3]:
+            self._last_state_reg = regs[3]
+        
         if self.on_fast_data:
             self.on_fast_data(self.fast_status)
         
@@ -334,34 +379,27 @@ class SPG007MKController:
             "force": self.parser.parse_float(regs[1], regs[2]),
             "pos": self.parser.movement_amount(regs[3]),
             "state": self.parser.register_state(regs[4]),
-            "temp": self.parser.parse_float(regs[5], regs[6])
+            "temp": regs[5]
         })
         
     def _float_to_regs(self, value: float) -> tuple[int, int]:
         return struct.unpack('>HH', struct.pack('>f', value))
-    
-    def _modify_state_reg(self, updates: dict[int, bool]):
-        """Запись битов в регистр состояния 0х2003"""
-        def on_read(resp: bytes):
-            regs = self.parse_fc03(resp, 1)
-            if not regs:
+        
+    def _write_state_bits(self, updates, *, optimistic=False):
+        with self._state_lock:
+            if self._last_state_reg is None:
                 return
 
-            value = regs[0]
+            value = self._last_state_reg
 
             for bit, flag in updates.items():
-                if flag:
-                    value |= (1 << bit)
-                else:
-                    value &= ~(1 << bit)
+                mask = 1 << bit.value
+                value = value | mask if flag else value & ~mask
 
-            self.modbus.write_regs(
-                addr=self.STATE_REG,
-                values=[value],
-                prio=0
-            )
+            if optimistic:
+                self._last_state_reg = value
 
-        self.modbus.read_holding(self.STATE_REG, 1, on_read, prio=0)
+        self.modbus.write_regs(self.STATE_REG, [value], prio=0)
 
     # ---------- API ----------
     def set_emergency_force(self, value: float):
@@ -374,41 +412,51 @@ class SPG007MKController:
         self._last_emergency_force = value
 
         try:
-            hi, lo = struct.unpack('>HH', struct.pack('>f', value))
+            hi, lo = self._float_to_regs(value)
             self.modbus.write_regs(0x200A, [hi, lo], prio=0)
         except Exception as e:
             self.on_error(f"Error setting emergency force: {e}")
             raise
         
     def set_cycle_force(self, enable: bool):
-        self._modify_state_reg({
-            StateBits.BIT_CYCLE_FORCE: enable
-        })
+        with self._write_mode():
+            self._write_state_bits({
+                StateBits.CYCLE_FORCE: enable
+            }, optimistic=False)
+        
+        self._write_state_bits({
+            StateBits.CYCLE_FORCE: enable
+        }, optimistic=True)
         
     def set_red_light(self, enable: bool):
-        self._modify_state_reg({
-            StateBits.BIT_RED_LIGHT: enable
-        })
+        self._write_state_bits({
+            StateBits.RED_LIGHT: enable
+        }, optimistic=True)
         
     def set_green_light(self, enable: bool):
-        self._modify_state_reg({
-            StateBits.BIT_GREEN_LIGHT: enable
-        })
+        self._write_state_bits({
+            StateBits.GREEN_LIGHT: enable
+        }, optimistic=True)
         
     def set_unblock_control(self):
-        self._modify_state_reg({
-            StateBits.BIT_LOST_CONTROL: True
-        })
+        self._write_state_bits({
+            StateBits.UNBLOCK_CONTROL: True
+        }, optimistic=False)
         
     def set_unblock_excess_force(self):
-        self._modify_state_reg({
-            StateBits.BIT_EXCESS_FORCE: True
-        })
+        self._write_state_bits({
+            StateBits.UNBLOCK_EXCESS_FORCE: True
+        }, optimistic=False)
+        
+    def set_reset_referent(self):
+        self._write_state_bits({
+            StateBits.REFERENT_PASSED: True
+        }, optimistic=False)
         
     def set_select_temper(self, enable: bool):
-        self._modify_state_reg({
-            StateBits.BIT_SELECT_TEMPER: enable
-        })
+        self._write_state_bits({
+            StateBits.SELECT_TEMPER: enable
+        }, optimistic=True)
 
 
 if __name__ == "__main__":

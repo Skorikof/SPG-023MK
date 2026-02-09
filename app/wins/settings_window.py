@@ -82,6 +82,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.btn_motor_up.clicked.connect(self._click_btn_motor_up)
         self.btn_motor_down.clicked.connect(self._click_btn_motor_down)
         self.btn_motor_traverse_stop.clicked.connect(self._click_btn_motor_traverse_stop)
+        
         self.btn_cycle_F.clicked.connect(self._btn_force_cycle)
         self.btn_no_control.clicked.connect(self._btn_set_doclick)
         self.btn_max_F.clicked.connect(self._btn_set_doclick)
