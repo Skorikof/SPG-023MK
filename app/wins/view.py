@@ -8,6 +8,7 @@ from app.ui_py.mainui import Ui_MainWindow
 from app.wins.executors_win import ExecWin
 from app.wins.amorts_win import AmortWin
 from app.wins.archive_win import ArchiveWin
+from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
@@ -15,14 +16,14 @@ from scripts.logger import my_logger
 
 
 class AppWindow(QMainWindow):
-    def __init__(self, model, controller, win_set):
+    def __init__(self, model, controller):
         super(AppWindow, self).__init__()
         self.logger = my_logger.get_logger(__name__)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.model = model
         self.controller = controller
-        self.win_set = win_set
+        self.win_set = SetWindow(model)
         self.calc_data = CalcData()
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()

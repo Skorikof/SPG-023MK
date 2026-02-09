@@ -5,7 +5,6 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
 from app.wins.view import AppWindow
-from app.wins.settings_window import SetWindow
 from scripts.controller.controller import Controller
 from scripts.logger import my_logger
 from scripts.model import Model
@@ -20,9 +19,7 @@ def main():
         app = QApplication(sys.argv)
         m = Model()
         c = Controller(m)
-        win_set = SetWindow(m)
-        win_set.setWindowIcon(QIcon('icon/settings.png'))
-        win = AppWindow(m, c, win_set)
+        win = AppWindow(m, c)
         win.setWindowIcon(QIcon('icon/shock-absorber.png'))
         win.show()
         sys.exit(app.exec())

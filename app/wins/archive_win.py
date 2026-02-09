@@ -417,6 +417,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self._visible_compare_btn(False)
                 
             else:
+                self.casc_tableWt.clear()
                 self._visible_compare_btn(True)
                 
                 arch_obj = self.archive.cascade[self.index_test]
