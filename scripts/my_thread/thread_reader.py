@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import time
-from typing import Dict, List
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 
@@ -29,7 +28,7 @@ class ReaderThread(QRunnable):
         self.flag_add_data: bool = False
         self.flag_send_res: bool = False
 
-        self.result: Dict[str, tuple | List[int]] = {}
+        self.result: dict[str, tuple | list[int]] = {}
 
         self.cycle: bool = True
         self.is_run: bool = False
@@ -74,28 +73,28 @@ class ReaderThread(QRunnable):
                                     flag_add = True
 
                                 if flag_add:
-                                    if rr[ind] is not None and rr[ind] != 0:
-                                        self.current_rec = rr[ind]
-                                        self.reg_buffer += 6
+                                    # if rr[ind] is not None and rr[ind] != 0:
+                                    self.current_rec = rr[ind]
+                                    self.reg_buffer += 6
+                                    
+                                    if self._last_move is None:
+                                        self._last_move = rr[ind + 3]
+                                        self.flag_add_data = True
                                         
-                                        if self._last_move is None:
-                                            self._last_move = rr[ind + 3]
+                                    else:
+                                        if self._last_move != rr[ind + 3]:
                                             self.flag_add_data = True
                                             
-                                        else:
-                                            if self._last_move != rr[ind + 3]:
-                                                self.flag_add_data = True
-                                                
-                                        if self.flag_add_data:
-                                            self.result['count'].append(rr[ind])
-                                            self.result['force_big'].append(rr[ind+1])
-                                            self.result['force_low'].append(rr[ind+2])
-                                            self.result['move'].append(rr[ind+3])
-                                            self.result['state'].append(rr[ind + 4])
-                                            self.result['temper'].append(rr[ind + 5])
-                                            
-                                            self.flag_send_res = True
-                                            self.flag_add_data = False
+                                    if self.flag_add_data:
+                                        self.result['count'].append(rr[ind])
+                                        self.result['force_big'].append(rr[ind+1])
+                                        self.result['force_low'].append(rr[ind+2])
+                                        self.result['move'].append(rr[ind+3])
+                                        self.result['state'].append(rr[ind + 4])
+                                        self.result['temper'].append(rr[ind + 5])
+                                        
+                                        self.flag_send_res = True
+                                        self.flag_add_data = True
 
                                 else:
                                     # print(f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr[ind]}\n')
