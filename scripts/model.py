@@ -303,11 +303,11 @@ class Model:
     def _pars_buffer_result(self, res):
         try:
             print(f'counter --> {res.get("count")}')
-            print(f'force_big --> {res.get("force_big")}')
-            print(f'force_low --> {res.get("force_low")}')
-            print(f'move --> {res.get("move")}')
-            print(f'state --> {res.get("state")}')
-            print(f'temper --> {res.get("temper")}')
+            # print(f'force_big --> {res.get("force_big")}')
+            # print(f'force_low --> {res.get("force_low")}')
+            # print(f'move --> {res.get("move")}')
+            # print(f'state --> {res.get("state")}')
+            # print(f'temper --> {res.get("temper")}')
             
             # data = self.parser.discard_left_data(res)
 
