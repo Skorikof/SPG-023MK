@@ -530,8 +530,6 @@ class Model:
                 self.move = self.move_list[:]
 
                 max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
-                # max_recoil = max(self.force)
-                # max_comp = min(self.force)
                 self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
                 
                 push_force = self._choice_push_force()
