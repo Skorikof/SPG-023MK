@@ -3,9 +3,9 @@ import time
 import statistics
 from PySide6.QtCore import QObject, Signal, QTimer
 
+from config import config
 from scripts.logger import my_logger
 from scripts.test_obj import DataTest
-from scripts.settings import PrgSettings
 from scripts.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
 from scripts.reader import Reader
@@ -68,8 +68,7 @@ class Model:
                             }
         
         self.buffer_state = ['null', 'null']
-        
-        self.force_koef = PrgSettings().force_koef
+
         self.force_clear = 0
         self.force_correct = 0
         self.force_koef_offset = 0
@@ -272,7 +271,7 @@ class Model:
                 
                 if result.get('force', None) is not None:
                     self.force_clear = result.get('force', 0)
-                    self.force_correct = round(self.force_clear * self.force_koef, 1)
+                    self.force_correct = round(self.force_clear * config.force_koef, 1)
                     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
                 self.move_now = result.get('move')
@@ -318,7 +317,7 @@ class Model:
 
             # else:
             #     self.force_clear = data.get('force')[-1]
-            #     self.force_correct = round(self.force_clear * self.force_koef, 1)
+            #     self.force_correct = round(self.force_clear * config.force_koef, 1)
             #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
             #     self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
 

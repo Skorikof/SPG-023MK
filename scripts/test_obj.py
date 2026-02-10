@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from scripts.settings import PrgSettings
+from config import config
 
 
 class OperatorSchema(BaseModel):
@@ -92,6 +92,6 @@ class DataTest:
         self.first_temperature = 0
         self.second_temperature = 0
         self.max_temperature = 0
-        self.finish_temperature = PrgSettings().finish_temper
+        self.finish_temperature = config.finish_temper
 
         self.data_test = {}
