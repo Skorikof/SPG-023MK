@@ -1,5 +1,7 @@
 from pymodbus.client import ModbusSerialClient as ModbusClient
+from pymodbus.framer import FramerType
 
+from config import config
 from scripts.logger import my_logger
 
 
@@ -12,12 +14,17 @@ class Client:
 
     def _init_client(self):
         try:
-            self.client = ModbusClient(port='COM4',
-                                       parity='N',
-                                       baudrate=460800,
+            self.client = ModbusClient(framer=FramerType.RTU,
+                                       port=config.comport,
+                                       baudrate=config.baudrate,
                                        bytesize=8,
+                                       parity='N',
                                        stopbits=1,
-                                       retries=1)
+                                       # handle_local_echo=False,
+                                       timeout=0.2,
+                                       retries=2,
+                                       # trace_packet=self.trace_paket,
+                                       )
 
         except Exception as e:
             self.client = None
@@ -35,3 +42,11 @@ class Client:
             self.client.close()
             self.flag_connect = False
             self.client = None
+            
+    def trace_paket(self, *args, **kwargs):
+        """Функция для анализа отправляемых посылок по modbus"""
+        if args:
+            print(f'Trace_paket args --> {args}')
+        if kwargs:
+            for k, v in kwargs.items():
+                print(f'Trace_packet --> {k} - {v}')

@@ -47,8 +47,25 @@ class Model:
 
         self.data_test = DataTest()
 
-        self.state_dict = {}
-        self.switch_dict = {}
+        self.state_dict = {'cycle_force': False,
+                           'red_light': False,
+                           'green_light': False,
+                           'lost_control': True,
+                           'excess_force': False,
+                           'select_temper': False,
+                           'safety_fence': False,
+                           'traverse_block': False,
+                           'state_freq': False,
+                           'state_force': False,
+                           'yellow_btn': False,
+                           }
+        self.switch_dict = {'traverse_block_left': False,
+                            'traverse_block_right': False,
+                            'alarm_highest_position': True,
+                            'alarm_lowest_position': True,
+                            'highest_position': False,
+                            'lowest_position': False,
+                            }
         
         self.buffer_state = ['null', 'null']
         
@@ -78,8 +95,6 @@ class Model:
         self.koef_force_list = []
         self.timer_add_koef = None
         self.timer_calc_koef = None
-        
-        # self.timer_pars_circle = None
 
         self.timer_yellow = None
         self.time_push_yellow = None
@@ -102,7 +117,6 @@ class Model:
         self.gear_referent = False
         self.traverse_referent = False
 
-        # self.flag_bufer = False
         self.flag_fill_graph = False
         self.flag_test = False
         self.flag_test_lunch = False
@@ -117,11 +131,6 @@ class Model:
         self.reader.signals.result.connect(self._reader_result)
         self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
-        
-    # def _init_timer_pars_circle(self):
-    #     self.timer_pars_circle = QTimer()
-    #     self.timer_pars_circle.setInterval(300)
-    #     self.timer_pars_circle.timeout.connect(self._pars_response_on_circle)
 
     def _start_param_model(self):
         self.client.connect_client()
@@ -133,7 +142,6 @@ class Model:
             self.writer.timer_writer_start()
 
             self._init_signals()
-            # self._init_timer_pars_circle()
             self.reader.init_reader(self.client.client)
             self.reader_start()
 
@@ -172,12 +180,6 @@ class Model:
 
     def reader_exit(self):
         self.reader.reader_exit()
-        
-    # def timer_pars_circle_start(self):
-    #     self.timer_pars_circle.start()
-        
-    # def timer_pars_circle_stop(self):
-    #     self.timer_pars_circle.stop()
         
     def _update_switch_dict(self, data):
         try:
@@ -262,6 +264,7 @@ class Model:
 
     def _pars_regs_result(self, res):
         try:
+            # print(f'res --> {res}')
             if not res:
                 pass
             else:
@@ -287,19 +290,12 @@ class Model:
                 if temp > self.data_test.max_temperature:
                     self.data_test.max_temperature = temp
 
-                self._update_switch_dict(result.get('switch'))
+                # self._update_switch_dict(result.get('switch')) # FIXME Пока отключено, так как у макета нет концевиков траверсы
                 self._update_state_dict(result.get('state'))
                 self.state_list = result.get('state_list')
 
                 if self.data_test.type_test == 'hand':
                     self.signals.win_set_update.emit()
-                    
-                # if self.flag_bufer:
-                #     self._add_data_in_graph(self.force_offset, self.move_now)
-                #     # print(f'force_list ==> {self.force_list}')
-                #     # print(f'move_list ==> {self.move_list}')
-                #     # print(f'force_list ==> {len(self.force_list)}')
-                #     # print(f'move_list ==> {len(self.move_list)}')
 
         except Exception as e:
             self.logger.error(e)
@@ -364,9 +360,6 @@ class Model:
                 
     def _add_data_in_graph(self, force, move):
         try:
-            # if force > -50000:
-                # self.force_list.append(force)
-                # self.move_list.append(move)
             self.force_list.extend(force)
             self.move_list.extend(move)
             

@@ -42,12 +42,13 @@ class ReaderThread(QRunnable):
                     try:
                         rr = self.client.read_holding_registers(0x2000, count=14, device_id=1)
                         if not rr.isError():
-                            self.result['regs'] = rr.registers
-                            self.signals.read_result.emit(self.result, self.read_tag)
-                            time.sleep(0.05)
+                            result = {'regs': rr.registers}
+                            self.signals.read_result.emit(result, self.read_tag)
 
                         else:
                             self.signals.thread_err.emit(str(rr))
+                            
+                        time.sleep(0.05)
 
                     except Exception as e:
                         self.signals.thread_err.emit(f'ERROR in thread reader reg - {e}')
