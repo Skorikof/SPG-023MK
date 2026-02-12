@@ -12,6 +12,14 @@ class Config:
     @property
     def baudrate(self) -> int:
         return int(os.getenv("BAUDRATE", "460800"))
+    
+    @property
+    def timeout(self) -> float:
+        return float(os.getenv("TIMEOUT", "0.02"))
+    
+    @property
+    def retries(self) -> int:
+        return int(os.getenv("RETRIES", "1"))
 
     @property
     def pause_reg(self) -> float:

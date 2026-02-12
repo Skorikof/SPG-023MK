@@ -21,8 +21,8 @@ class Client:
                                        parity='N',
                                        stopbits=1,
                                        # handle_local_echo=False,
-                                       timeout=0.2,
-                                       retries=2,
+                                       timeout=config.timeout,
+                                       retries=config.retries,
                                        # trace_packet=self.trace_paket,
                                        )
 
