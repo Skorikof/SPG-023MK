@@ -1,4 +1,4 @@
-from struct import pack, unpack
+import struct
 
 from scripts.logger import my_logger
 
@@ -10,72 +10,48 @@ class ParserSPG023MK:
     def pars_response_from_regs(self, res):
         try:
             result = {
-                'force': self.magnitude_effort(res[0], res[1]),
-                'move': self.movement_amount(res[2]),
-                'state': self.register_state(res[3]),
-                'state_list': self._change_state_list(res[3]),
-                'counter': self.counter_time(res[4]),
-                'switch': self.switch_state(res[5]),
-                'traverse': round(0.5 * self.movement_amount(res[6]), 1),
-                'first_t': self.temperature_value(res[7], res[8]),
-                'force_a': self.emergency_force(res[10], res[11]),
-                'second_t': self.temperature_value(res[12], res[13])
+                'force': self._parse_float(res[0], res[1]),
+                'move': self._movement_amount(res[2], 'pos'),
+                'state': self._register_state(res[3]),
+                'state_list': self._bits16(res[3]),
+                'counter': res[4],
+                'switch': self._switch_state(res[5]),
+                'traverse': self._movement_amount(res[6], 'traverse'),
+                'first_t': self._parse_float(res[7], res[8]),
+                'force_a': self._parse_float(res[10], res[11]),
+                'second_t': self._parse_float(res[12], res[13])
             }
-            
+
             return result
             
         except Exception as e:
             self.logger.error(e)
+            
+    def pars_response_from_buffer(self, res):
+        try:
+            if res.get('count') == []:
+                return
+            
+            result = {
+                'count': res.get('count')[-1],
+                'force': [self._parse_float(a, b) for a, b in zip(res.get('force_big'), res.get('force_low'))],
+                'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
+                'state': self._register_state(res.get('state')[-1]),
+                'state_list': self._bits16(res.get('state')[-1]),
+                'temper': res.get('temper')[-1],
+            }
+            # print(f'count --> {result.get("count")}')
+            # print(f'force --> {result.get("force")}')
+            # print(f'move --> {result.get("move")}')
+            # print(f'state --> {result.get("state")}')
+            # print(f'temper --> {result.get("temper")}')
+            return result
+            # return self._discard_left_data(result) # Убрал для отладки, контроллер на столе
+            
+        except Exception as e:
+            self.logger.error(e)
         
-    # def pars_response_from_buffer(self, res):
-    #     try:
-    #         count = res[0::6]
-    #         force_low = res[1::6]
-    #         force_big = res[2::6]
-    #         move = res[3::6]
-    #         state = res[4::6]
-    #         temper = res[5::6]
-            
-    #         force = tuple(self._magnitude_effort(x, force_big[i]) for i, x in enumerate(force_low))
-            
-    #         # print(f'count ==> {count}')
-    #         # print(f'force ==> {force}')
-    #         # print(f'move ==> {move}')
-    #         # print(f'state ==> {state}')
-    #         # print(f'temper ==> {temper}')
-            
-    #         return self._discard_left_data(count, force, move, state, temper)
-            
-    #     except Exception as e:
-    #         self.logger.error(e)
-            
-    # def _discard_left_data(self, count: tuple, force: tuple,
-    #                        move: tuple, state: tuple, temper: tuple):
-    #     try:
-    #         if force is not None:
-    #             valid_indices = [i for i, force in enumerate(force) if force != -100000]
-                
-    #             if not valid_indices:
-    #                 return None
-                
-    #             result = {'count': [count[i] for i in valid_indices],
-    #                     'force': [force[i] for i in valid_indices],
-    #                     'move': [self.movement_amount(move[i]) for i in valid_indices],
-    #                     'state': [self.register_state(state[i]) for i in valid_indices],
-    #                     'state_list': self._change_state_list(state[0]),
-    #                     'temper': [round(temper[i] * 0.01, 1) for i in valid_indices],
-    #                     }
-
-    #             return result
-            
-    #         else:
-    #             return None
-            
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #         return None
-        
-    def discard_left_data(self, request):
+    def _discard_left_data(self, request):
         """Filter out invalid force data points (value -100000) from request."""
         try:
             force_data = request.get('force', [])
@@ -97,25 +73,6 @@ class ParserSPG023MK:
                 'state': [request['state'][i] for i in valid_ind_f],
                 'temper': [request['temper'][i] for i in valid_ind_f],
             }
-            
-            # valid_ind_m = self.discard_left_move(valid_force.get('move'))
-            
-            # if not valid_ind_m:
-            #     return None
-            
-            # valid_move = {
-            #     'count': [valid_force['count'][i] for i in valid_ind_m],
-            #     'force': [valid_force['force'][i] for i in valid_ind_m],
-            #     'move': [valid_force['move'][i] for i in valid_ind_m],
-            #     'state': [valid_force['state'][i] for i in valid_ind_m],
-            #     'temper': [valid_force['temper'][i] for i in valid_ind_m],
-            # }
-            
-            # print(f'count ==> {response["count"]}')
-            # print(f'force ==> {response["force"]}')
-            # print(f'move ==> {response["move"]}')
-            # print(f'state ==> {response["state"]}')
-            # print(f'temper ==> {response["temper"]}')
 
             return valid_force
         
@@ -134,35 +91,37 @@ class ParserSPG023MK:
                     temp = abs(move)
                     
         return valid_ind
-
-    def magnitude_effort(self, low_reg, big_reg):
-        """Текущая величина усилия"""
+    
+    def _parse_float(self, big_reg: int, low_reg: int) -> float | None:
+        """Парсер значения типа float из двух регистров"""
         try:
-            return round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
-
+            raw = (big_reg << 16) | low_reg
+            return struct.unpack_from('<f', raw.to_bytes(4, 'little'))[0]
         except Exception as e:
             self.logger.error(e)
-
-    def movement_amount(self, value):
+            return None
+        
+    def _movement_amount(self, value: int, tag: str) -> float | None:
         """Текущая величина перемещения штока аммортизатора или траверсы"""
         try:
-            return round(-0.1 * (int.from_bytes(pack('>H', value), 'big', signed=True)), 1)
+            if value & 0x8000:
+                value -= 0x10000
+            if tag == 'pos':
+                return -0.1 * value
+            elif tag == 'traverse':
+                return -0.5 * value
 
         except Exception as e:
             self.logger.error(e)
-            
-    def _change_state_list(self, reg):
-        try:
-            bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
-            return [int(x) for x in bits]
+            return None
+        
+    def _bits16(self, reg: int) -> list[int]:
+        return [(reg >> i) & 1 for i in range(16)]
 
-        except Exception as e:
-            self.logger.error(e)
-
-    def register_state(self, reg):
+    def _register_state(self, reg):
         """Регистр состояния 0х2003"""
         try:
-            bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
+            bits = self._bits16(reg)
 
             BIT_MAP = {'cycle_force': (0, bool),
                        'red_light': (1, bool),
@@ -184,18 +143,10 @@ class ParserSPG023MK:
             self.logger.error(e)
             return None
 
-    def counter_time(self, register):
-        """Регистр счётчика времени"""
-        try:
-            return register
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def switch_state(self, reg):
+    def _switch_state(self, reg):
         """Регистр состояния входов модуля МВ110-224.16ДН"""
         try:
-            bits = ''.join(reversed(bin(reg)[2:].zfill(16)))
+            bits = self._bits16(reg)
             
             BIT_MAP = {'traverse_block_left': (1, bool),
                        'traverse_block_right': (2, bool),
@@ -211,19 +162,3 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
             return None
-
-    def temperature_value(self, low_reg, big_reg):
-        """Величина температуры с модуля МВ-110-224-2А"""
-        try:
-            return round(unpack('f', pack('<HH', big_reg, low_reg))[0], 1)
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def emergency_force(self, low_reg, big_reg):
-        """Аварийное усилие"""
-        try:
-            return unpack('f', pack('<HH', big_reg, low_reg))[0]
-
-        except Exception as e:
-            self.logger.error(e)

@@ -24,9 +24,6 @@ class ModelSignals(QObject):
     test_launch = Signal(bool)
     save_koef_force = Signal(str)
 
-    connect_ctrl = Signal()
-    read_finish = Signal()
-
 
 class Model:
     def __init__(self):
@@ -39,8 +36,8 @@ class Model:
         self.logger = my_logger.get_logger(__name__)
         self.signals = ModelSignals()
         self.client = Client()
-        self.writer = None
-        self.reader = Reader()
+        self.writer: Writer | None = None
+        self.reader: Reader | None = None
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
@@ -125,6 +122,7 @@ class Model:
 
         self.alarm_tag = ''
         self.flag_alarm = False
+        self.flag_non_buffer = False
         
     def _init_signals(self):
         self.reader.signals.result.connect(self._reader_result)
@@ -263,7 +261,6 @@ class Model:
 
     def _pars_regs_result(self, res):
         try:
-            # print(f'res --> {res}')
             if not res:
                 pass
             else:
@@ -294,48 +291,31 @@ class Model:
                 self.state_list = result.get('state_list')
 
                 if self.data_test.type_test == 'hand':
-                    self.signals.win_set_update.emit()
+                    self.signals.win_set_update.emit('reg')
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
+    # FIXME Тестирую чтение буфера
     def _pars_buffer_result(self, res):
         try:
-            print(f'counter --> {res.get("count")}')
-            # print(f'force_big --> {res.get("force_big")}')
-            # print(f'force_low --> {res.get("force_low")}')
-            # print(f'move --> {res.get("move")}')
-            # print(f'state --> {res.get("state")}')
-            # print(f'temper --> {res.get("temper")}')
-            
-            # data = self.parser.discard_left_data(res)
+            print(f'res --> {res}')
+            # data = self.parser.pars_response_from_buffer(res)
 
             # if data is None:
-            #     self.logger.debug('Response from buffer controller is None')
-            #     pass  # Пришла пустая посылка
+            #     if not self.flag_non_buffer:
+            #         self.flag_non_buffer = True
+            #         self.logger.debug('Response from force sensor is None')
 
             # else:
-            #     self.force_clear = data.get('force')[-1]
-            #     self.force_correct = round(self.force_clear * config.force_koef, 1)
-            #     self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
-            #     self.force_buf = [x * self.force_koef - self.force_koef_offset for x in data.get('force')]
-
-            #     self.move_now = data.get('move')[-1]
-            #     self.move_buf = data.get('move')
-
-            #     self.counter = data.get('count')[-1]
-                
-            #     self._change_state_list(data.get('state')[-1])
-
-            #     self.data_test.max_temperature = self.calc_data.check_temperature(data.get('temper'),
-            #                                                                       self.data_test.max_temperature)
-            #     self.data_test.temperature = data.get('temper')[-1]
-
+            #     self.flag_non_buffer = False
             #     if self.data_test.type_test == 'hand':
-            #         self.signals.win_set_update.emit()
+            #         self._send_data_in_set_win(data)
+                    
             #     else:
-            #         self._pars_response_on_circle(self.force_buf, self.move_buf)
+            #         # Тут нужно подумать над респределением данных для испытаний
+            #         pass
 
         except Exception as e:
             if str(e) == 'list index out of range':
@@ -344,19 +324,20 @@ class Model:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
                 
-    def _change_state_list(self, reg):
+    def _send_data_in_set_win(self, data):
         try:
-            temp = bin(reg)[2:].zfill(16)
-            bits = ''.join(reversed(temp))
-            self.state_list = [int(x) for x in bits]
+            self.force_clear = data.get('force')[-1]
 
-            self._update_state_dict(self.parser.register_state(reg))
+            self.move_now = data.get('move')[-1]
+            self.counter = data.get('count')
+            self.state_list = data.get('state_list')
+            self._update_state_dict(data.get('state'))
 
+            self.signals.win_set_update.emit('buf')
+            
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_change_state_list - {e}')
 
-                
     def _add_data_in_graph(self, force, move):
         try:
             self.force_list.extend(force)

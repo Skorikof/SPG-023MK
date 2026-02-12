@@ -50,31 +50,14 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.signals.closed.emit()
 
     def start_param_win_set(self):
+        self._init_signals()
         self._init_buttons()
         self._smap_line_edit()
-        self._fill_lbl_temp_sens()
-
         self._check_operator()
-
-    def _check_operator(self):
-        try:
-            if self.model.data_test.operator.name == 'Скориков И.А.':
-                self.freq_frame.setVisible(True)
-
-            else:
-                self.freq_frame.setVisible(False)
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _fill_lbl_temp_sens(self):
-        channel = self.model.state_dict.get('select_temper', 0)
-        txt = ''
-        if channel == 0:
-            txt = 'Бесконтактный датчик температуры'
-        elif channel == 1:
-            txt = 'Контактный датчик темературы'
-        self.lbl_temp_sens.setText(txt)
+        self._fill_lbl_temp_sens()
+            
+    def _init_signals(self):
+        self.model.signals.win_set_update.connect(self._update_win)
 
     def _init_buttons(self):
         self.btn_hod.clicked.connect(self._write_hod)
@@ -96,13 +79,87 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
         self.lineEdit_F_alarm.returnPressed.connect(self._write_alarm_force)
+            
+    @Slot(str)
+    def _update_win(self, tag):
+        if tag == 'reg':
+            self.koef_force_lcd.display(self.model.force_correct)
+            self.correct_force_lcd.display(self.model.force_offset)
+            self.lcdH_T.display(self.model.move_traverse)
+            self.lcdTemp_1.display(self.model.data_test.first_temperature)
+            self.lcdTemp_2.display(self.model.data_test.second_temperature)
+            self.lineEdit_F_alarm.setText(f'{self.model.data_test.force_alarm}')
+            
+        self.lcdTime.display(self.model.counter)
+        self.clear_force_lcd.display(self.model.force_clear)
+        self.lcdH.display(self.model.move_now)
 
-    def update_data_win_set(self):
+        self._update_color_switch(tag)
+
+    def _update_color_switch(self, tag):
         try:
-            self._update_win()
+            if tag == 'reg':
+                self.fram_block_traverse_1.setStyleSheet(self._set_color_fram(
+                    self.model.switch_dict.get('traverse_block_left', True), True))
+                self.fram_block_traverse_2.setStyleSheet(self._set_color_fram(
+                    self.model.switch_dict.get('traverse_block_right', True), True))
+                self.fram_down_point.setStyleSheet(self._set_color_fram(self.model.switch_dict.get('lowest_position', False)))
+                self.fram_down__alarm_point.setStyleSheet(self._set_color_fram(
+                    self.model.switch_dict.get('alarm_lowest_position', True), True))
+                self.fram_up_point.setStyleSheet(self._set_color_fram(self.model.switch_dict.get('highest_position', False)))
+                self.fram_up_alarm_point.setStyleSheet(self._set_color_fram(
+                    self.model.switch_dict.get('alarm_highest_position', True), True))
+            
+            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('cycle_force', False)))
+            self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.state_dict.get('lost_control', False)))
+            self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('excess_force', False)))
+            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.model.state_dict.get('safety_fence', False)))
+            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_freq', False)))
+            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_force', False)))
+            
+            self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('green_light', False)))
+            self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('red_light', False)))
+            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.state_dict.get('yellow_btn', True)))
 
         except Exception as e:
             self.logger.error(e)
+
+    def _set_color_fram(self, state, rev=False):
+        try:
+            if rev:
+                if state is False:
+                    state = True
+                else:
+                    state = False
+            color_gray = "background-color: rgb(93, 93, 93);\n"
+            color_green = "background-color: rgb(0, 255, 0);\n"
+            if state is False:
+                return color_gray + "border-color: rgb(0, 0, 0);"
+            elif state is True:
+                return color_green + "border-color: rgb(0, 0, 0);"
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _check_operator(self):
+        try:
+            if self.model.data_test.operator.name == 'Скориков И.А.':
+                self.freq_frame.setVisible(True)
+
+            else:
+                self.freq_frame.setVisible(False)
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _fill_lbl_temp_sens(self):
+        channel = self.model.state_dict.get('select_temper', 0)
+        txt = ''
+        if channel == 0:
+            txt = 'Бесконтактный датчик температуры'
+        elif channel == 1:
+            txt = 'Контактный датчик темературы'
+        self.lbl_temp_sens.setText(txt)
 
     def _write_hod(self):
         try:
@@ -227,61 +284,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             txt = 'Бесконтактный датчик температуры'
 
         self.lbl_temp_sens.setText(txt)
-
-    def _update_win(self):
-        self.lcdTime.display(self.model.counter)
-        self.clear_force_lcd.display(self.model.force_clear)
-        self.koef_force_lcd.display(self.model.force_correct)
-        self.correct_force_lcd.display(self.model.force_offset)
-        self.lcdH.display(self.model.move_now)
-        self.lcdH_T.display(self.model.move_traverse)
-        self.lcdTemp_1.display(self.model.data_test.first_temperature)
-        self.lcdTemp_2.display(self.model.data_test.second_temperature)
-        self.lineEdit_F_alarm.setText(f'{self.model.data_test.force_alarm}')
-
-        self._update_color_switch()
-
-    def _update_color_switch(self):
-        try:
-            self.fram_cycle_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('cycle_force', False)))
-            self.fram_no_control.setStyleSheet(self._set_color_fram(self.model.state_dict.get('lost_control', False)))
-            self.fram_max_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('excess_force', False)))
-            self.fram_safety_fence.setStyleSheet(self._set_color_fram(self.model.state_dict.get('safety_fence', False)))
-            self.fram_condition_FC.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_freq', False)))
-            self.fram_sensor_F.setStyleSheet(self._set_color_fram(self.model.state_dict.get('state_force', False)))
-            self.fram_block_traverse_1.setStyleSheet(self._set_color_fram(
-                self.model.switch_dict.get('traverse_block_left', True), True))
-            self.fram_block_traverse_2.setStyleSheet(self._set_color_fram(
-                self.model.switch_dict.get('traverse_block_right', True), True))
-            self.fram_down_point.setStyleSheet(self._set_color_fram(self.model.switch_dict.get('lowest_position', False)))
-            self.fram_down__alarm_point.setStyleSheet(self._set_color_fram(
-                self.model.switch_dict.get('alarm_lowest_position', True), True))
-            self.fram_up_point.setStyleSheet(self._set_color_fram(self.model.switch_dict.get('highest_position', False)))
-            self.fram_up_alarm_point.setStyleSheet(self._set_color_fram(
-                self.model.switch_dict.get('alarm_highest_position', True), True))
-            self.fram_green_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('green_light', False)))
-            self.fram_red_light.setStyleSheet(self._set_color_fram(self.model.state_dict.get('red_light', False)))
-            self.fram_yellow_btn.setStyleSheet(self._set_color_fram(self.model.state_dict.get('yellow_btn', True)))
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _set_color_fram(self, state, rev=False):
-        try:
-            if rev:
-                if state is False:
-                    state = True
-                else:
-                    state = False
-            color_gray = "background-color: rgb(93, 93, 93);\n"
-            color_green = "background-color: rgb(0, 255, 0);\n"
-            if state is False:
-                return color_gray + "border-color: rgb(0, 0, 0);"
-            elif state is True:
-                return color_green + "border-color: rgb(0, 0, 0);"
-
-        except Exception as e:
-            self.logger.error(e)
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():

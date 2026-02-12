@@ -31,11 +31,11 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def check_temperature(self, temp_list: list, max_temper: float):
+    def check_temperature(self, temp_buf: float, max_temper: float):
         """Фиксация максимальной температуры"""
         try:
-            if max(temp_list) > max_temper:
-                return max(temp_list)
+            if temp_buf > max_temper:
+                return temp_buf
             else:
                 return max_temper
 

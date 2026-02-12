@@ -91,9 +91,7 @@ class AppWindow(QMainWindow):
         self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
 
     def _init_signals(self):
-        self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.win_set_update.connect(self.update_data_win_settings)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
 
@@ -1177,9 +1175,6 @@ class AppWindow(QMainWindow):
         self.model.data_test.type_test = 'hand'
         self.win_set.start_param_win_set()
         self.win_set.show()
-
-    def update_data_win_settings(self):
-        self.win_set.update_data_win_set()
 
     def close_win_settings(self):
         self.main_btn_state(True)
