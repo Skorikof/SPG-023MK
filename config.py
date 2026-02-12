@@ -22,6 +22,10 @@ class Config:
         return float(os.getenv("PAUSE_BUF", "0.01"))
     
     @property
+    def pause_write(self) -> float:
+        return float(os.getenv("PAUSE_WRITE", "0.005"))
+    
+    @property
     def log_level(self) -> int:
         return int(os.getenv("LOG_LEVEL", "20"))
     
