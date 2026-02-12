@@ -33,18 +33,18 @@ class ParserSPG023MK:
                 return
             
             result = {
-                'count': res.get('count')[-1],
+                'count': res.get('count'),
                 'force': [self._parse_float(a, b) for a, b in zip(res.get('force_big'), res.get('force_low'))],
                 'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
                 'state': self._register_state(res.get('state')[-1]),
                 'state_list': self._bits16(res.get('state')[-1]),
-                'temper': res.get('temper')[-1],
+                'temper': res.get('temper'),
             }
-            # print(f'count --> {result.get("count")}')
-            # print(f'force --> {result.get("force")}')
-            # print(f'move --> {result.get("move")}')
-            # print(f'state --> {result.get("state")}')
-            # print(f'temper --> {result.get("temper")}')
+            print(f'count --> {result.get("count")}')
+            print(f'force --> {result.get("force")}')
+            print(f'move --> {result.get("move")}')
+            print(f'state --> {result.get("state")}')
+            print(f'temper --> {result.get("temper")}')
             return result
             # return self._discard_left_data(result) # Убрал для отладки, контроллер на столе
             

@@ -18,11 +18,14 @@ from scripts.freq_control import FreqControl
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
-    win_set_update = Signal()
+    win_set_update = Signal(str)
     full_cycle_count = Signal(str)
     update_data_graph = Signal()
     test_launch = Signal(bool)
     save_koef_force = Signal(str)
+    
+    connect_ctrl = Signal()
+    read_finish = Signal()
 
 
 class Model:
@@ -37,7 +40,7 @@ class Model:
         self.signals = ModelSignals()
         self.client = Client()
         self.writer: Writer | None = None
-        self.reader: Reader | None = None
+        self.reader = Reader()
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
@@ -130,24 +133,28 @@ class Model:
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
 
     def _start_param_model(self):
-        self.client.connect_client()
-        # FIXME таймер жёлтой кнопки
-        # self._init_timer_yellow_btn()
+        try:
+            self.client.connect_client()
+            # FIXME таймер жёлтой кнопки
+            # self._init_timer_yellow_btn()
 
-        if self.client.flag_connect:
-            self.writer = Writer(self.client.client)
-            self.writer.timer_writer_start()
+            if self.client.flag_connect:
+                self.writer = Writer(self.client.client)
+                self.writer.timer_writer_start()
 
-            self._init_signals()
-            self.reader.init_reader(self.client.client)
-            self.reader_start()
+                self.reader.init_reader(self.client.client)
+                self._init_signals()
+                self.reader_start()
 
-            self.save_arch = WriterArch()
-            self.save_arch.timer_writer_arch_start()
+                self.save_arch = WriterArch()
+                self.save_arch.timer_writer_arch_start()
 
-        else:
-            self.status_bar_msg(f'Нет подключения к контроллеру')
-            self.logger.warning(f'Нет подключения к контроллеру')
+            else:
+                self.status_bar_msg(f'Нет подключения к контроллеру')
+                self.logger.warning(f'Нет подключения к контроллеру')
+                
+        except Exception as e:
+            self.logger.error(e)
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
@@ -300,13 +307,12 @@ class Model:
     # FIXME Тестирую чтение буфера
     def _pars_buffer_result(self, res):
         try:
-            print(f'res --> {res}')
-            # data = self.parser.pars_response_from_buffer(res)
+            data = self.parser.pars_response_from_buffer(res)
 
-            # if data is None:
-            #     if not self.flag_non_buffer:
-            #         self.flag_non_buffer = True
-            #         self.logger.debug('Response from force sensor is None')
+            if data is None:
+                if not self.flag_non_buffer:
+                    self.flag_non_buffer = True
+                    self.logger.debug('Response from force sensor is None')
 
             # else:
             #     self.flag_non_buffer = False

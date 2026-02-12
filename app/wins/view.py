@@ -91,6 +91,7 @@ class AppWindow(QMainWindow):
         self.ui.specif_choice_comboBox.activated[int].connect(self.change_index_select_amort)
 
     def _init_signals(self):
+        self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)

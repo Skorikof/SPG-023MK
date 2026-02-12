@@ -15,7 +15,7 @@ class ReaderThread(QRunnable):
         super(ReaderThread, self).__init__()
         self.client = client
 
-        self.read_tag: str = ''
+        self.read_tag: str = 'reg'
 
         self.reg_buffer: int = 0x4000
         self.buffer_count: int = 20
@@ -125,7 +125,6 @@ class ReaderThread(QRunnable):
                                     # self.flag_send_res = False
 
                         else:
-                            self.signals.thread_err.emit(f'This is it error')
                             self.signals.thread_err.emit(str(rr))
                             
                         time.sleep(0.01)
