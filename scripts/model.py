@@ -293,7 +293,8 @@ class Model:
                 if temp > self.data_test.max_temperature:
                     self.data_test.max_temperature = temp
 
-                # self._update_switch_dict(result.get('switch')) # FIXME Пока отключено, так как у макета нет концевиков траверсы
+                # FIXME Пока отключено, так как у макета нет концевиков траверсы
+                # self._update_switch_dict(result.get('switch'))
                 self._update_state_dict(result.get('state'))
                 self.state_list = result.get('state_list')
 
@@ -314,10 +315,10 @@ class Model:
                     self.flag_non_buffer = True
                     self.logger.debug('Response from force sensor is None')
 
-            # else:
-            #     self.flag_non_buffer = False
-            #     if self.data_test.type_test == 'hand':
-            #         self._send_data_in_set_win(data)
+            else:
+                self.flag_non_buffer = False
+                if self.data_test.type_test == 'hand':
+                    self._send_data_in_set_win(data)
                     
             #     else:
             #         # Тут нужно подумать над респределением данных для испытаний
@@ -335,7 +336,7 @@ class Model:
             self.force_clear = data.get('force')[-1]
 
             self.move_now = data.get('move')[-1]
-            self.counter = data.get('count')
+            self.counter = data.get('count')[-1]
             self.state_list = data.get('state_list')
             self._update_state_dict(data.get('state'))
 

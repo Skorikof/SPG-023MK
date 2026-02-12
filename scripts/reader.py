@@ -1,4 +1,4 @@
-from PySide6.QtCore import QThreadPool, QObject, Signal
+from PySide6.QtCore import QThreadPool, QObject, Signal, Slot
 
 from scripts.logger import my_logger
 from scripts.my_thread.thread_reader import ReaderThread
@@ -47,9 +47,11 @@ class Reader:
     def reader_exit(self):
         self.signals.exit.emit()
         
+    @Slot(str)
     def _log_error_thread(self, txt_log):
         self.signals.error.emit(txt_log)
     
+    @Slot(dict, str)
     def _reader_result(self, res, tag):
         self.signals.result.emit(res, tag)
     

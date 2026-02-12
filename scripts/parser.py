@@ -41,10 +41,10 @@ class ParserSPG023MK:
                 'temper': res.get('temper'),
             }
             print(f'count --> {result.get("count")}')
-            print(f'force --> {result.get("force")}')
-            print(f'move --> {result.get("move")}')
-            print(f'state --> {result.get("state")}')
-            print(f'temper --> {result.get("temper")}')
+            # print(f'force --> {result.get("force")}')
+            # print(f'move --> {result.get("move")}')
+            # print(f'state --> {result.get("state")}')
+            # print(f'temper --> {result.get("temper")}')
             return result
             # return self._discard_left_data(result) # Убрал для отладки, контроллер на столе
             

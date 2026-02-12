@@ -12,6 +12,18 @@ class Config:
     @property
     def baudrate(self) -> int:
         return int(os.getenv("BAUDRATE", "460800"))
+
+    @property
+    def pause_reg(self) -> float:
+        return float(os.getenv("PAUSE_REG", "0.05"))
+    
+    @property
+    def pause_buf(self) -> float:
+        return float(os.getenv("PAUSE_BUF", "0.01"))
+    
+    @property
+    def log_level(self) -> int:
+        return int(os.getenv("LOG_LEVEL", "20"))
     
     @property
     def force_koef(self) -> float:
@@ -20,9 +32,5 @@ class Config:
     @property
     def finish_temper(self) -> int:
         return int(os.getenv("FINISH_TEMPER", "80"))
-    
-    @property
-    def log_level(self) -> int:
-        return int(os.getenv("LOG_LEVEL", "20"))
     
 config = Config()

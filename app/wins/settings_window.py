@@ -69,13 +69,13 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.btn_motor_up.clicked.connect(self._click_btn_motor_up)
         self.btn_motor_down.clicked.connect(self._click_btn_motor_down)
         self.btn_motor_traverse_stop.clicked.connect(self._click_btn_motor_traverse_stop)
-        self.btn_cycle_F.clicked.connect(self._btn_set_doclick)
-        self.btn_no_control.clicked.connect(self._btn_set_doclick)
-        self.btn_max_F.clicked.connect(self._btn_set_doclick)
-        self.btn_green_light.clicked.connect(self._btn_set_doclick)
-        self.btn_red_light.clicked.connect(self._btn_set_doclick)
-        self.btn_temper_channel.clicked.connect(self._btn_set_doclick)
-        self.btn_correct_force.clicked.connect(self._btn_set_doclick)
+        self.btn_cycle_F.clicked.connect(self._btn_force_sensor)
+        self.btn_no_control.clicked.connect(self._btn_unloss_control)
+        self.btn_max_F.clicked.connect(self._btn_reset_lock_force)
+        self.btn_green_light.clicked.connect(self._btn_green_light)
+        self.btn_red_light.clicked.connect(self._btn_red_light)
+        self.btn_temper_channel.clicked.connect(self._btn_temper_channel)
+        self.btn_correct_force.clicked.connect(self._btn_correct_force)
 
         self.btn_test.clicked.connect(self._btn_test_clicked)
         self.lineEdit_F_alarm.returnPressed.connect(self._write_alarm_force)
@@ -90,12 +90,22 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.lcdTemp_2.display(self.model.data_test.second_temperature)
             self.lineEdit_F_alarm.setText(f'{self.model.data_test.force_alarm}')
             
+            self._change_lbl_temper_channel()
+            
         self.lcdTime.display(self.model.counter)
         self.clear_force_lcd.display(self.model.force_clear)
         self.lcdH.display(self.model.move_now)
-
+        
         self._update_color_switch(tag)
+        
+    def _change_lbl_temper_channel(self):
+        if self.model.state_list[6] == 1:
+            txt = 'Контактный датчик температуры'
+        else:
+            txt = 'Бесконтактный датчик температуры'
 
+        self.lbl_temp_sens.setText(txt)
+        
     def _update_color_switch(self, tag):
         try:
             if tag == 'reg':
@@ -228,62 +238,44 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
         except Exception as e:
             self.logger.error(e)
+            
+    def _btn_force_sensor(self):
+        value = 0
+        if self.model.state_list[0] == 0:
+            value = 1
 
-    def _btn_set_doclick(self):
-        try:
-            btn = self.sender().objectName()
-            if btn == 'btn_cycle_F':
-                if self.model.state_list[0] == 0:
-                    value = 1
-                else:
-                    value = 0
-                self.model.write_bit_force_cycle(value)
+        self.model.write_bit_force_cycle(value)
+        
+    def _btn_red_light(self):
+        value = 0
+        if self.model.state_list[1] == 0:
+            value = 1
+        
+        self.model.write_bit_red_light(value)
+        
+    def _btn_green_light(self):
+        value = 0
+        if self.model.state_list[2] == 0:
+            value = 1
+        
+        self.model.write_bit_green_light(value)
+        
+    def _btn_temper_channel(self):
+        value = 0
+        if self.model.state_list[6] == 0:
+            value = 1
 
-            elif btn == 'btn_red_light':
-                if self.model.state_list[1] == 0:
-                    value = 1
-                else:
-                    value = 0
-                self.model.write_bit_red_light(value)
-
-            elif btn == 'btn_green_light':
-                if self.model.state_list[2] == 0:
-                    value = 1
-                else:
-                    value = 0
-                self.model.write_bit_green_light(value)
-
-            elif btn == 'btn_temper_channel':
-                if self.model.state_list[6] == 0:
-                    value = 1
-                else:
-                    value = 0
-                self._change_lbl_temper_channel(value)
-                self.model.write_bit_select_temper(value)
-
-            elif btn == 'btn_no_control':
-                self.model.write_bit_unblock_control()
-
-            elif btn == 'btn_max_F':
-                self.model.write_bit_emergency_force()
-
-            elif btn == 'btn_correct_force':
-                self.setEnabled(False)
-                self.model.init_timer_koef_force()
-
-            else:
-                pass
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def _change_lbl_temper_channel(self, value):
-        if value == 1:
-            txt = 'Контактный датчик температуры'
-        else:
-            txt = 'Бесконтактный датчик температуры'
-
-        self.lbl_temp_sens.setText(txt)
+        self.model.write_bit_select_temper(value)
+        
+    def _btn_unloss_control(self):
+        self.model.write_bit_unblock_control()
+        
+    def _btn_reset_lock_force(self):
+        self.model.write_bit_emergency_force()
+        
+    def _btn_correct_force(self):
+        self.setEnabled(False)
+        self.model.init_timer_koef_force()
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
