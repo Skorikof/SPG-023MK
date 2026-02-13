@@ -111,8 +111,8 @@ class ReaderThread(QRunnable):
                                         # self.flag_add_data = True
 
                                 else:
-                                    txt = (f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr.registers[ind]}\n')
-                                    self.signals.thread_err.emit(txt)
+                                    # txt = (f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr.registers[ind]}\n')
+                                    # self.signals.thread_err.emit(txt)
                                     break
 
                             delta_r = 16384 + 18000 - self.reg_buffer
@@ -133,7 +133,7 @@ class ReaderThread(QRunnable):
                             self.signals.read_result.emit(self.result, self.read_tag)
                                 # self.flag_send_res = False       
                         
-                    time.sleep(self.PAUSE_BUF)
+                    # time.sleep(self.PAUSE_BUF)
 
                 except Exception as e:
                     self.signals.thread_err.emit(f'ERROR in thread reader buffer - {e}')
