@@ -16,17 +16,52 @@ from scripts.freq_ctrl.eura.freq_control import FreqControl
 
 
 # FIXME вариант распарсивания 3 циклов
-# collector = CycleCollector()
+# collector = CycleCollector(target_cycles=3)
 
 # while True:
+#     batch = read_device()
 
-#     data = read_buffer()
+#     state = collector.add_stream_dict(batch)
 
-#     done = collector.add_stream_dict(data)
-
-#     if done:
-#         pos, force = average_cycles(collector.cycles[:3])
+#     if state == CycleState.DONE:
+#         cycles = collector.get_cycles()
 #         break
+
+# avg = average_cycles(cycles)
+# plot(avg)
+# save_archive(raw=cycles, avg=avg)
+
+#FIXME Прокачка
+# collector.start_detect_only()
+
+# while collector.turn_count < 6:
+#     collector.add_stream_dict(data)
+
+# FIXME Сбор данных
+# collector.reset_cycles()
+# collector.start_collect()
+
+# while not collector.done():
+#     collector.add_stream_dict(data)
+
+######################################
+# FIXME Первый запуск
+# collector.load_program([
+#     (CycleMode.DETECT_ONLY, 1),
+#     (CycleMode.DETECT_ONLY, 2),
+#     (CycleMode.COLLECT, 3),
+# ])
+
+# FIXME 30 испытаний подряд
+# collector.load_program([
+#     (CycleMode.COLLECT, 30),
+# ])
+
+# FIXME Только прокачка
+# collector.load_program([
+#     (CycleMode.DETECT_ONLY, 5),
+# ])
+
 
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
