@@ -29,9 +29,9 @@ class WriterThread(QRunnable):
     def run(self):
         if self.tag == 'reg':
             try:
+                succes = False
                 while self.number_attempts < self.max_attempts:
                     try:
-                        succes = False
                         rw = self.client.write_registers(self.reg_write,
                                                         self.values,
                                                         device_id=1)

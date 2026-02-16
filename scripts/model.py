@@ -6,14 +6,27 @@ from PySide6.QtCore import QObject, Signal, QTimer
 from config import config
 from scripts.logger import my_logger
 from scripts.test_obj import DataTest
-from scripts.parser import ParserSPG023MK
+from scripts.parser.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
-from scripts.client import Client
-from scripts.freq_control import FreqControl
+from scripts.modbus.client import Client
+from scripts.freq_ctrl.eura.freq_control import FreqControl
 
+
+# FIXME вариант распарсивания 3 циклов
+# collector = CycleCollector()
+
+# while True:
+
+#     data = read_buffer()
+
+#     done = collector.add_stream_dict(data)
+
+#     if done:
+#         pos, force = average_cycles(collector.cycles[:3])
+#         break
 
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
@@ -188,7 +201,7 @@ class Model:
     def _update_switch_dict(self, data):
         try:
             if data is not None:
-                self.switch_dict = {**self.switch_dict, **data}
+                self.switch_dict.update(data)
 
         except Exception as e:
             self.logger.error(e)
@@ -197,7 +210,7 @@ class Model:
     def _update_state_dict(self, data):
         try:
             if data is not None:
-                self.state_dict = {**self.state_dict, **data}
+                self.state_dict.update(data)
 
         except Exception as e:
             self.logger.error(e)
@@ -249,11 +262,10 @@ class Model:
 
     def _reader_result(self, response, tag):
         try:
-            if tag == 'buffer':
-                self._pars_buffer_result(response)
-
             if tag == 'reg':
                 self._pars_regs_result(response.get('regs'))
+            else:
+                self._pars_buffer_result(response)
 
             # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
             # if self.flag_test_launch is True:
@@ -285,13 +297,16 @@ class Model:
 
                 self.data_test.first_temperature = result.get('first_t')
                 self.data_test.second_temperature = result.get('second_t')
-                if self.data_test.first_temperature > self.data_test.second_temperature:
-                    temp = self.data_test.first_temperature
-                else:
-                    temp = self.data_test.second_temperature
-                self.data_test.temperature = temp
-                if temp > self.data_test.max_temperature:
-                    self.data_test.max_temperature = temp
+                
+                self.data_test.temperature = max(
+                    self.data_test.first_temperature,
+                    self.data_test.second_temperature
+                )
+
+                self.data_test.max_temperature = max(
+                    self.data_test.max_temperature,
+                    self.data_test.temperature
+                )
 
                 # FIXME Пока отключено, так как у макета нет концевиков траверсы
                 # self._update_switch_dict(result.get('switch'))
@@ -319,10 +334,10 @@ class Model:
                 self.flag_non_buffer = False
                 if self.data_test.type_test == 'hand':
                     self._send_data_in_set_win(data)
-                    
-            #     else:
-            #         # Тут нужно подумать над респределением данных для испытаний
-            #         pass
+
+                else:
+                    # Тут нужно подумать над респределением данных для испытаний
+                    pass
 
         except Exception as e:
             if str(e) == 'list index out of range':
@@ -330,7 +345,7 @@ class Model:
             else:
                 self.logger.error(e)
                 self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
-                
+
     def _send_data_in_set_win(self, data):
         try:
             self.force_clear = data.get('force')[-1]

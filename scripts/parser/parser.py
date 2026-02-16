@@ -38,9 +38,9 @@ class ParserSPG023MK:
                 'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
                 'state': self._register_state(res.get('state')[-1]),
                 'state_list': self._bits16(res.get('state')[-1]),
-                'temper': res.get('temper'),
+                'temper': res.get('temper')[-1],
             }
-            print(f'count --> {result.get("count")}')
+            # print(f'count --> {result.get("count")}')
             # print(f'force --> {result.get("force")}')
             # print(f'move --> {result.get("move")}')
             # print(f'state --> {result.get("state")}')
@@ -78,19 +78,6 @@ class ParserSPG023MK:
         
         except Exception as e:
             self.logger.error(e)
-            
-    def discard_left_move(self, move):
-        valid_ind = []
-        for i, move in enumerate(move):
-            if i == 0:
-                valid_ind.append(i)
-                temp = abs(move)
-            else:
-                if abs(temp - abs(move)) < 10:
-                    valid_ind.append(i)
-                    temp = abs(move)
-                    
-        return valid_ind
     
     def _parse_float(self, big_reg: int, low_reg: int) -> float | None:
         """Парсер значения типа float из двух регистров"""
