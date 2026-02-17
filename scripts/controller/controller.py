@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PySide6.QtCore import QTimer, QObject, Signal
+from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
 from scripts.logger import my_logger
 from scripts.data_calculation import CalcData
@@ -39,6 +39,8 @@ class Controller:
             self.count_cascade = 1
             self.max_cascade = 0
             self.last_max_temper = -100
+            
+            self.flag_collect_done = False
 
             self._init_signals()
             self._init_timer_test()
@@ -75,6 +77,10 @@ class Controller:
     def change_next_stage_controller(self, stage: str):
         self.next_stage = stage
         self.logger.debug(f'Next Stage --> {stage}')
+    
+    @Slot()
+    def _collect_done(self):
+        self.flag_collect_done = True
 
     def _full_cycle_update(self, command: str):
         try:
@@ -182,6 +188,7 @@ class Controller:
                     self.signals.control_msg.emit('pumping')
                     self._full_cycle_update('0')
                     self.steps.step_pumping_before_test()
+                    self.flag_collect_done = False
 
             elif self.stage == 'pumping':
                 if self.count_cycle >= 3:
@@ -441,7 +448,7 @@ class Controller:
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
-            stock_point = 760 # Константа, измереная высота у стенда
+            stock_point = 760 # Константа, измеренная высота у стенда
             hod = self.model.data_test.amort.hod
             len_min = self.model.data_test.amort.min_length
             len_max = self.model.data_test.amort.max_length

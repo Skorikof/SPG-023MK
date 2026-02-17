@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import statistics
+from enum import Enum
 from PySide6.QtCore import QObject, Signal, QTimer
 
 from config import config
@@ -14,9 +15,11 @@ from scripts.archive_saver import WriterArch
 from scripts.modbus.client import Client
 from scripts.freq_ctrl.eura.freq_control import FreqControl
 
+from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
+
 
 # FIXME вариант распарсивания 3 циклов
-# collector = CycleCollector(target_cycles=3)
+# collector = CycleCollector()
 
 # while True:
 #     batch = read_device()
@@ -31,36 +34,20 @@ from scripts.freq_ctrl.eura.freq_control import FreqControl
 # plot(avg)
 # save_archive(raw=cycles, avg=avg)
 
-#FIXME Прокачка
-# collector.start_detect_only()
-
-# while collector.turn_count < 6:
-#     collector.add_stream_dict(data)
-
-# FIXME Сбор данных
-# collector.reset_cycles()
-# collector.start_collect()
-
-# while not collector.done():
-#     collector.add_stream_dict(data)
-
 ######################################
-# FIXME Первый запуск
-# collector.load_program([
-#     (CycleMode.DETECT_ONLY, 1),
-#     (CycleMode.DETECT_ONLY, 2),
-#     (CycleMode.COLLECT, 3),
-# ])
+# FIXME Использование метода определения хода
+# result = controller.measure_stroke(
+#     detect_cycles=3,
+#     collect_cycles=5,
+#     max_std=0.05,
+# )
 
-# FIXME 30 испытаний подряд
-# collector.load_program([
-#     (CycleMode.COLLECT, 30),
-# ])
+# print(result["stroke_mean"])
 
-# FIXME Только прокачка
-# collector.load_program([
-#     (CycleMode.DETECT_ONLY, 5),
-# ])
+
+class ModeCollect(Enum):
+    WITHOUT_DATA = 0
+    WITH_DATA = 1
 
 
 class ModelSignals(QObject):
@@ -74,6 +61,8 @@ class ModelSignals(QObject):
     
     connect_ctrl = Signal()
     read_finish = Signal()
+    
+    collect_done = Signal()
 
 
 class Model:
@@ -92,6 +81,8 @@ class Model:
         self.fc = FreqControl()
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
+        self.collector = CycleCollector()
+        self.mode_collect = ModeCollect.WITHOUT_DATA
 
         self.data_test = DataTest()
 
@@ -294,6 +285,40 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
+            
+    def _init_timer_yellow_btn(self):
+        try:
+            self.timer_yellow = QTimer()
+            self.timer_yellow.setInterval(1000)
+            self.timer_yellow.timeout.connect(self.yellow_btn_click)
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_init_timer_yellow_btn - {e}')
+
+    def yellow_btn_click(self):
+        try:
+            if self.state_dict.get('yellow_btn', True) is False:
+                if self.yellow_rattle is False:
+                    self.time_push_yellow = time.monotonic()
+                    self.signals.test_launch.emit(True)
+                    self.yellow_rattle = True
+
+                else:
+                    time_signal = time.monotonic() - self.time_push_yellow
+                    if 2 < time_signal:
+                        self.time_push_yellow = time.monotonic()
+                        self.signals.test_launch.emit(True)
+                        self.yellow_rattle = True
+
+                    else:
+                        pass
+            else:
+                self.timer_yellow.stop()
+
+        except Exception as e:
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_yellow_btn_click - {e}')
 
     def _reader_result(self, response, tag):
         try:
@@ -371,15 +396,59 @@ class Model:
                     self._send_data_in_set_win(data)
 
                 else:
+                    state = self.collector.add_stream_dict(data)
+                    
+                    if state == PhaseState.DONE:
+                        self.signals.collect_done.emit()
+                        if self.mode_collect == ModeCollect.WITH_DATA:
+                            cycles = self.collector.get_cycles()
+                            avg = self.calc_data.average_cycles(cycles) # возвращает 2 массива - pos, force
+                            print(avg)
+                        
+                    elif state == PhaseState.ERROR:
+                        txt = 'Error in collector/add_stream_dict'
+                        self.logger.error(txt)
+                    
+                    # while True:
+                    #     batch = read_device()
+
+                    #     state = collector.add_stream_dict(batch)
+
+                    #     if state == CycleState.DONE:
+                    #         cycles = collector.get_cycles()
+                    #         break
+
+                    # avg = average_cycles(cycles)
+                    # plot(avg)
+                    # save_archive(raw=cycles, avg=avg)
                     # Тут нужно подумать над респределением данных для испытаний
                     pass
 
         except Exception as e:
-            if str(e) == 'list index out of range':
-                pass
-            else:
-                self.logger.error(e)
-                self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+            self.logger.error(e)
+            self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
+                
+    def run_collector_without_data(self, count: int=1):
+        try:
+            self.collector.reset()
+            self.collector.load_program([
+                (Mode.DETECT_ONLY, count),
+            ])
+            self.mode_collect = ModeCollect.WITHOUT_DATA
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def run_collector_with_data(self, count: int=3):
+        try:
+            self.collector.reset()
+            self.collector.load_program([
+                (Mode.COLLECT, count),
+            ])
+            self.mode_collect = ModeCollect.WITH_DATA
+            
+        except Exception as e:
+            self.logger.error(e)
 
     def _send_data_in_set_win(self, data):
         try:
@@ -404,14 +473,6 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
             
-    def _add_terminator_in_graph(self):
-        try:
-            self.force_list.append('end')
-            self.move_list.append('end')
-            
-        except Exception as e:
-            self.logger.error(e)
-            
     def clear_data_in_graph(self):
         self.force_list = []
         self.move_list = []
@@ -424,40 +485,6 @@ class Model:
         self.temper_graph = []
         self.temper_recoil_graph = []
         self.temper_comp_graph = []
-
-    def _init_timer_yellow_btn(self):
-        try:
-            self.timer_yellow = QTimer()
-            self.timer_yellow.setInterval(1000)
-            self.timer_yellow.timeout.connect(self.yellow_btn_click)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_init_timer_yellow_btn - {e}')
-
-    def yellow_btn_click(self):
-        try:
-            if self.state_dict.get('yellow_btn', True) is False:
-                if self.yellow_rattle is False:
-                    self.time_push_yellow = time.monotonic()
-                    self.signals.test_launch.emit(True)
-                    self.yellow_rattle = True
-
-                else:
-                    time_signal = time.monotonic() - self.time_push_yellow
-                    if 2 < time_signal:
-                        self.time_push_yellow = time.monotonic()
-                        self.signals.test_launch.emit(True)
-                        self.yellow_rattle = True
-
-                    else:
-                        pass
-            else:
-                self.timer_yellow.stop()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_yellow_btn_click - {e}')
 
     def reset_current_circle(self):
         try:

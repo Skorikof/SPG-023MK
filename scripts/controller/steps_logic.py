@@ -230,6 +230,8 @@ class Steps:
         try:
             speed = self._definition_speed_by_hod('fast')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+            self.model.write_bit_force_cycle(1)
+            self.model.reader_start_test()
 
             self.signals.stage_from_logic.emit('pumping')
 
