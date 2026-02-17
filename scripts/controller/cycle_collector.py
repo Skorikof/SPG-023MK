@@ -10,6 +10,7 @@ class PhaseState(Enum):
     ACCEL = 0
     RUN = 1
     DONE = 2
+    ERROR = 3
 
 
 class Mode(Enum):
@@ -121,7 +122,11 @@ class CycleCollector:
                 return False
 
             arr = np.array(self.cycle_times)
-            return np.std(arr) / np.mean(arr) < self.period_stability_threshold
+            mean = np.mean(arr)
+            if mean < 1e-9:
+                return False
+            
+            return np.std(arr) / mean < self.period_stability_threshold
         
         except Exception as e:
             self.logger.error(e)
@@ -238,12 +243,14 @@ class CycleCollector:
                     self.current_force.append(force)
 
                 self.prev_pos = pos
-
-            return self.phase_state
         
         except Exception as e:
             self.logger.error(e)
-
+            self.phase_state = PhaseState.ERROR
+            
+        finally:
+            return self.phase_state
+            
     def get_cycles(self):
         return self.cycles
 
@@ -277,36 +284,87 @@ class CycleCollector:
         except Exception as e:
             self.logger.error(e)
 
-    def _normalize_cycle(self, x, y, target_len=200):
-        try:
-            t_old = np.linspace(0, 1, len(x))
-            t_new = np.linspace(0, 1, target_len)
+    def measure_stroke(self,
+        detect_cycles=3,
+        collect_cycles=5,
+        timeout_sec=30.0,
+        max_std=None,
+    ):
+        """
+        Запускает измерение хода через CycleCollector.
 
-            x_new = np.interp(t_new, t_old, x)
-            y_new = np.interp(t_new, t_old, y)
+        Parameters
+        ----------
+        collector : CycleCollector
+        detect_cycles : int
+            Сколько циклов дать на стабилизацию движения.
+        collect_cycles : int
+            Сколько циклов использовать для измерения.
+        timeout_sec : float
+            Максимальное время ожидания DONE.
+        max_std : float | None
+            Если задано — проверяет repeatability.
 
-            return x_new, y_new
-        
-        except Exception as e:
-            self.logger.error(e)
+        Returns
+        -------
+        dict:
+            {
+                "stroke_mean": float,
+                "stroke_std": float,
+                "strokes": list[float],
+                "ok": bool,
+            }
+        """
 
-    def average_cycles(self, target_len=200):
-        try:
-            if not self.cycles:
-                return None, None
+        # --- 1. Полный reset ---
+        self.reset()
 
-            xs = []
-            ys = []
+        # --- 2. Загружаем программу измерения ---
+        program = [
+            (Mode.DETECT_ONLY, detect_cycles),
+            (Mode.COLLECT, collect_cycles),
+        ]
 
-            for pos, force in self.cycles:
-                x_n, y_n = self._normalize_cycle(pos, force, target_len)
-                xs.append(x_n)
-                ys.append(y_n)
+        self.load_program(program)
 
-            mean_x = np.mean(xs, axis=0)
-            mean_y = np.mean(ys, axis=0)
+        # --- 3. Ждём завершения ---
+        t0 = time.perf_counter()
 
-            return mean_x, mean_y
+        while True:
 
-        except Exception as e:
-            self.logger.error(e)
+            # Обычно collector уже кормится из data thread.
+            # Здесь просто ждём DONE.
+
+            if self.phase_state == PhaseState.DONE:
+                break
+
+            if time.perf_counter() - t0 > timeout_sec:
+                raise TimeoutError("Stroke measurement timeout")
+
+            time.sleep(0.01)
+
+        # --- 4. Считаем stroke по циклам ---
+        strokes = []
+
+        for pos, _ in self.get_cycles():
+            if len(pos) < 5:
+                continue
+            strokes.append(float(np.max(pos) - np.min(pos)))
+
+        if not strokes:
+            raise RuntimeError("No valid cycles collected for stroke measurement")
+
+        stroke_mean = float(np.mean(strokes))
+        stroke_std = float(np.std(strokes))
+
+        # --- 5. Проверка repeatability ---
+        ok = True
+        if max_std is not None:
+            ok = stroke_std <= max_std
+
+        return {
+            "stroke_mean": stroke_mean,
+            "stroke_std": stroke_std,
+            "strokes": strokes,
+            "ok": ok,
+        }

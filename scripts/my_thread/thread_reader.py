@@ -56,7 +56,7 @@ class ReaderThread(QRunnable):
                     time.sleep(self.PAUSE_REG)
 
                 except Exception as e:
-                    self.thread_err.emit(f'ERROR in thread reader reg - {e}')
+                    self.signals.thread_err.emit(f'ERROR in thread reader reg - {e}')
 
             elif self.read_tag == 'buffer':
                 try:

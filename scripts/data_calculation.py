@@ -1,4 +1,5 @@
 import statistics
+import numpy as np
 from struct import pack
 
 from scripts.logger import my_logger
@@ -7,6 +8,40 @@ from scripts.logger import my_logger
 class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
+        
+    def _normalize_cycle(self, x, y, target_len=200):
+        try:
+            t_old = np.linspace(0, 1, len(x))
+            t_new = np.linspace(0, 1, target_len)
+
+            x_new = np.interp(t_new, t_old, x)
+            y_new = np.interp(t_new, t_old, y)
+
+            return x_new, y_new
+        
+        except Exception as e:
+            self.logger.error(e)
+
+    def average_cycles(self, cycles, target_len=200):
+        try:
+            if not cycles:
+                return None, None
+
+            xs = []
+            ys = []
+
+            for pos, force in cycles:
+                x_n, y_n = self._normalize_cycle(pos, force, target_len)
+                xs.append(x_n)
+                ys.append(y_n)
+
+            mean_x = np.mean(xs, axis=0)
+            mean_y = np.mean(ys, axis=0)
+
+            return mean_x, mean_y
+
+        except Exception as e:
+            self.logger.error(e)
 
     def max_speed(self, hod, freq=119):
         """Расчёт максимальной скорости от хода поршня"""
