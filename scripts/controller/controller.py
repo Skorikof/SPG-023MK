@@ -264,9 +264,6 @@ class Controller:
             self.model.fc_control(**{'tag': 'stop', 'adr': 1})
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.reader_stop_test()
-            # self.model.flag_bufer = False
-            # self.model.clear_data_in_graph()
-            # self.model.timer_pars_circle_stop()
             self.model.write_bit_force_cycle(0)
 
     def _yellow_btn_push(self, state: bool):
@@ -302,7 +299,6 @@ class Controller:
 
                 else:
                     if self.model.move_traverse < 10:
-                        self.signals.control_msg.emit('traverse_referent')
                         self.steps.step_traverse_referent_point()
 
                     else:
@@ -337,7 +333,6 @@ class Controller:
 
     def search_hod_gear(self):
         try:
-            self.signals.control_msg.emit(f'move_detection')
             self._full_cycle_update('0')
             self.steps.step_search_hod_gear()
 
@@ -347,7 +342,6 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
-            self.signals.control_msg.emit('gear_set_pos')
             self._full_cycle_update('0')
             self.steps.step_move_gear_set_pos()
 
@@ -364,31 +358,21 @@ class Controller:
             len_max = self.model.data_test.amort.max_length
             mid_point = (len_max - len_min) / 2
             adapter = self.model.data_test.amort.adapter_len
-
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
-                    
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
-
                 else:
                     self.set_stage(Stage.INSTALL_AMORT)
                     self.set_trav_point = install_point
                     self.steps.step_traverse_move_position(install_point)
-
             elif tag == 'start_test':
                 start_point = int(stock_point - len_max - adapter + mid_point)
-                self.signals.control_msg.emit(f'pos_traverse')
                 self.set_stage(Stage.START_POINT_AMORT)
                 self.set_trav_point = start_point
                 self.steps.step_traverse_move_position(start_point)
-
             elif tag == 'stop_test':
-                if not self.model.flag_alarm:
-                    self.signals.control_msg.emit(f'pos_traverse')
-
                 end_point = int((stock_point + hod / 2) - len_max - adapter)
-
                 self.set_stage(Stage.STOP_TEST)
                 self.set_trav_point = end_point
                 self.steps.step_traverse_move_position(end_point)
@@ -413,7 +397,6 @@ class Controller:
     def _test_lab_hand_speed(self):
         try:
             self.signals.lab_win_test.emit()
-
             self.steps_tests.step_test_lab_hand_speed()
             self._full_cycle_update('0')
 
@@ -428,10 +411,8 @@ class Controller:
             finish_temp = self.model.data_test.finish_temperature
         else:
             finish_temp = self.model.data_test.amort.max_temper
-
         if first < finish_temp and second < finish_temp:
             return True
-
         else:
             self.signals.control_msg.emit('excess_temperature')
             return False
@@ -439,7 +420,6 @@ class Controller:
     def _test_temper(self):
         try:
             self.signals.lab_win_test.emit()
-            self.last_max_temper = -100
             self.steps_tests.step_test_temper()
             self._full_cycle_update('0')
 
@@ -508,7 +488,7 @@ class Controller:
         pass
 
     def _enter_search_hod(self):
-        pass
+        self.signals.control_msg.emit(f'move_detection')
 
     def _stage_search_hod(self):
         if self.steps.stage_search_hod(self.count_cycle):
@@ -559,7 +539,7 @@ class Controller:
         pass
 
     def _enter_pos_set_gear(self):
-        pass
+        self.signals.control_msg.emit('gear_set_pos')
 
     def _stage_pos_set_gear(self):
         if self.steps.stage_pos_set_gear():
@@ -570,7 +550,7 @@ class Controller:
         pass
 
     def _enter_traverse_referent(self):
-        pass
+        self.signals.control_msg.emit('traverse_referent')
 
     def _stage_traverse_referent(self):
         if self.steps.stage_traverse_referent():
@@ -592,7 +572,7 @@ class Controller:
         pass
 
     def _enter_start_point_amort(self):
-        pass
+        self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_start_point_amort(self):
         if self.steps.step_control_traverse_move(self.set_trav_point):
@@ -668,7 +648,7 @@ class Controller:
         pass
 
     def _enter_test_temper(self):
-        pass
+        self.last_max_temper = -100
 
     def _stage_test_temper(self):
         if 0 < self.count_cycle < 2:
@@ -746,7 +726,8 @@ class Controller:
         pass
 
     def _enter_stop_test(self):
-        pass
+        if not self.model.flag_alarm:
+                    self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_stop_test(self):
         flag = self.steps.step_control_traverse_move(self.set_trav_point)

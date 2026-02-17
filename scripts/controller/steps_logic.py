@@ -243,8 +243,8 @@ class Steps:
     def step_traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
-            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
             self.signals.stage_from_logic.emit(Stage.TRAVERSE_REFERENT)
+            self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
             self.model.fc_control(**{'tag': 'up', 'adr': 2})
 
         except Exception as e:
