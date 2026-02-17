@@ -65,6 +65,7 @@ class Controller:
             Stage.TEST_LAB_CASCADE: self._stage_test_lab_cascade,
             Stage.STOP_GEAR_END_TEST: self._stage_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._stage_stop_gear_min_pos,
+            Stage.STOP_TEST: self._stage_stop_test
         }
         
         self.count_cycle = 0
@@ -145,8 +146,12 @@ class Controller:
                 )
 
             handler = self.stage_handlers.get(self.stage)
-            if handler:
-                handler(type_test)
+            
+            if handler is None:
+                self.logger.error(f'No handler for stage {self.stage}')
+                return
+            
+            handler(type_test)
 
         except Exception as e:
             self.logger.error(e)
@@ -487,7 +492,7 @@ class Controller:
             self.set_stage(Stage.WAIT_BUFFER)
     
     def _stage_test_move_cycle(self, type_test):
-        if self.count_cycle < 2:
+        if 0 < self.count_cycle < 2:
             return
         self.signals.control_msg.emit('pumping')
         self._full_cycle_update('0')
@@ -523,7 +528,7 @@ class Controller:
         self.steps.step_stop_gear_end_test()
     
     def _stage_test_temper(self, type_test):
-        if self.count_cycle < 2:
+        if 0 < self.count_cycle < 2:
             return
         if self.model.data_test.max_temperature != self.last_max_temper:
             self.last_max_temper = self.model.data_test.max_temperature
