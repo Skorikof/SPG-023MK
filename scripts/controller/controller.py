@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
+from config import config
 from scripts.logger import my_logger
 from scripts.data_calculation import CalcData
 from scripts.controller.steps_logic import Steps
@@ -448,7 +449,7 @@ class Controller:
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
         try:
-            stock_point = 760 # Константа, измеренная высота у стенда
+            stock_point = config.const_traverse
             hod = self.model.data_test.amort.hod
             len_min = self.model.data_test.amort.min_length
             len_max = self.model.data_test.amort.max_length

@@ -34,6 +34,10 @@ class Config:
         return float(os.getenv("PAUSE_WRITE", "0.005"))
     
     @property
+    def const_traverse(self) -> int:
+        return int(os.getenv("CONST_TRAV", "760"))
+    
+    @property
     def log_level(self) -> int:
         return int(os.getenv("LOG_LEVEL", "20"))
     
