@@ -1,11 +1,12 @@
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
+from scripts.controller.stages import Stage
 
 
 class StepTestsSignals(QObject):
-    stage_from_tests = Signal(str)
-    next_stage_from_tests = Signal(str)
+    stage_from_tests = Signal(object)
+    next_stage_from_tests = Signal(object)
 
 
 class StepTests:
@@ -68,7 +69,7 @@ class StepTests:
 
     def step_stop_test(self):
         try:
-            self.signals.stage_from_tests.emit('wait')
+            self.signals.stage_from_tests.emit(Stage.WAIT)
 
             self.model.clear_data_in_graph()
 
@@ -86,14 +87,14 @@ class StepTests:
             if ind == 1:
                 self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                          'speed': self.model.data_test.amort.speed_one})
-                self.signals.stage_from_tests.emit('test_speed_one')
+                self.signals.stage_from_tests.emit(Stage.TEST_SPEED_ONE)
                 self.model.clear_data_in_graph()
                 self.model.data_test.speed_test = self.model.data_test.amort.speed_one
 
                 self.model.flag_fill_graph = True
 
             elif ind == 2:
-                self.signals.stage_from_tests.emit('test_speed_two')
+                self.signals.stage_from_tests.emit(Stage.TEST_SPEED_TWO)
                 self.model.data_test.speed_test = self.model.data_test.amort.speed_two
                 self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                          'speed': self.model.data_test.amort.speed_two})
@@ -110,7 +111,7 @@ class StepTests:
         try:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': self.model.data_test.speed_test})
-            self.signals.stage_from_tests.emit('test_lab_hand_speed')
+            self.signals.stage_from_tests.emit(Stage.TEST_LAB_HAND_SPEED)
             self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
 
@@ -126,7 +127,7 @@ class StepTests:
         try:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': speed_list[0]})
-            self.signals.stage_from_tests.emit('test_lab_cascade')
+            self.signals.stage_from_tests.emit(Stage.TEST_LAB_CASCADE)
 
             self.model.clear_data_in_graph()
             self.model.data_test.speed_test = speed_list[0]
@@ -144,7 +145,7 @@ class StepTests:
         try:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': self.model.data_test.speed_test})
-            self.signals.stage_from_tests.emit('test_temper')
+            self.signals.stage_from_tests.emit(Stage.TEST_TEMPER)
 
             self.model.clear_data_in_graph()
             self.model.clear_data_in_temper_graph()

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
+from scripts.controller.stages import Stage
 
 
 @dataclass
@@ -14,7 +15,7 @@ class AlarmConfig:
     
 
 class AlarmSignals(QObject):
-    stage_from_alarm = Signal(str)
+    stage_from_alarm = Signal(object)
     alarm_traverse = Signal(str)
 
 
@@ -57,7 +58,7 @@ class AlarmSteps:
             
             # Emit signal if needed
             if config.emit_stage:
-                self.signals.stage_from_alarm.emit('wait')
+                self.signals.stage_from_alarm.emit(Stage.WAIT)
             
             # Logging
             self.logger.warning(config.message)

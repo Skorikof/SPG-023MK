@@ -2,11 +2,12 @@ import statistics
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
+from scripts.controller.stages import Stage
 
 
 class StepsSignal(QObject):
-    stage_from_logic = Signal(str)
-    next_stage_from_logic = Signal(str)
+    stage_from_logic = Signal(object)
+    next_stage_from_logic = Signal(object)
     conv_result_lamp = Signal(str, str)
 
 
@@ -72,8 +73,8 @@ class Steps:
 
     def step_search_hod_gear(self):
         try:
-            self.signals.stage_from_logic.emit('wait')
-            self.signals.next_stage_from_logic.emit('search_hod')
+            self.signals.stage_from_logic.emit(Stage.WAIT)
+            self.signals.next_stage_from_logic.emit(Stage.SEARCH_HOD)
 
             self.model.reset_current_circle()
             self.model.alarm_tag = ''
@@ -82,7 +83,7 @@ class Steps:
 
             speed = self._definition_speed_by_hod('medium')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.signals.stage_from_logic.emit('wait_buffer')
+            self.signals.stage_from_logic.emit(Stage.WAIT_BUFFER)
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -104,8 +105,8 @@ class Steps:
 
     def step_move_gear_set_pos(self):
         try:
-            self.signals.stage_from_logic.emit('wait')
-            self.signals.next_stage_from_logic.emit('pos_set_gear')
+            self.signals.stage_from_logic.emit(Stage.WAIT)
+            self.signals.next_stage_from_logic.emit(Stage.POS_SET_GEAR)
 
             self.model.reset_current_circle()
             self.model.alarm_tag = ''
@@ -113,7 +114,7 @@ class Steps:
 
             speed = self._definition_speed_by_hod('slow')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.signals.stage_from_logic.emit('wait_buffer')
+            self.signals.stage_from_logic.emit(Stage.WAIT_BUFFER)
             self.model.write_bit_force_cycle(1)
 
         except Exception as e:
@@ -147,7 +148,7 @@ class Steps:
         try:
             self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
-            self.signals.stage_from_logic.emit('stop_gear_end_test')
+            self.signals.stage_from_logic.emit(Stage.STOP_GEAR_END_TEST)
 
         except Exception as e:
             self.logger.error(e)
@@ -163,7 +164,7 @@ class Steps:
                 self.count_wait_point = 0
 
             if self.count_wait_point > 20:
-                self.signals.stage_from_logic.emit('wait')
+                self.signals.stage_from_logic.emit(Stage.WAIT)
                 self.count_wait_point = 0
                 return True
             return False
@@ -186,7 +187,7 @@ class Steps:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
-            self.signals.stage_from_logic.emit('stop_gear_min_pos')
+            self.signals.stage_from_logic.emit(Stage.STOP_GEAR_MIN_POS)
 
         except Exception as e:
             self.logger.error(e)
@@ -197,7 +198,7 @@ class Steps:
             if self.model.move_now < self.model.min_point + 1:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
-                self.signals.stage_from_logic.emit('wait')
+                self.signals.stage_from_logic.emit(Stage.WAIT)
 
                 self.model.clear_data_in_graph()
 
@@ -233,7 +234,7 @@ class Steps:
             self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()
 
-            self.signals.stage_from_logic.emit('pumping')
+            self.signals.stage_from_logic.emit(Stage.PUMPING)
 
         except Exception as e:
             self.logger.error(e)
@@ -243,7 +244,7 @@ class Steps:
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
             self.model.fc_control(**{'tag':'speed', 'adr':2, 'freq':30})
-            self.signals.stage_from_logic.emit('traverse_referent')
+            self.signals.stage_from_logic.emit(Stage.TRAVERSE_REFERENT)
             self.model.fc_control(**{'tag': 'up', 'adr': 2})
 
         except Exception as e:
