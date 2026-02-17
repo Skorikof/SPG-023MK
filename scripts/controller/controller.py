@@ -65,7 +65,51 @@ class Controller:
             Stage.TEST_LAB_CASCADE: self._stage_test_lab_cascade,
             Stage.STOP_GEAR_END_TEST: self._stage_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._stage_stop_gear_min_pos,
-            Stage.STOP_TEST: self._stage_stop_test
+            Stage.STOP_TEST: self._stage_stop_test,
+        }
+        
+        self._enter_handlers = {
+            Stage.WAIT: self._enter_wait,
+            Stage.WAIT_BUFFER: self._enter_wait_buffer,
+            Stage.REPEAT_TEST: self._enter_repeat_test,
+            Stage.ALARM_TRAVERSE: self._enter_alarm_traverse,
+            Stage.SEARCH_HOD: self._enter_search_hod,
+            Stage.PUMPING: self._enter_pumping,
+            Stage.POS_SET_GEAR: self._enter_pos_set_gear,
+            Stage.TRAVERSE_REFERENT: self._enter_traverse_referent,
+            Stage.INSTALL_AMORT: self._enter_install_amort,
+            Stage.START_POINT_AMORT: self._enter_start_point_amort,
+            Stage.TEST_MOVE_CYCLE: self._enter_test_move_cycle,
+            Stage.TEST_SPEED_ONE: self._enter_test_speed_one,
+            Stage.TEST_SPEED_TWO: self._enter_test_speed_two,
+            Stage.TEST_LAB_HAND_SPEED: self._enter_test_lab_hand_speed,
+            Stage.TEST_TEMPER: self._enter_test_temper,
+            Stage.TEST_LAB_CASCADE: self._enter_test_lab_cascade,
+            Stage.STOP_GEAR_END_TEST: self._enter_stop_gear_end_test,
+            Stage.STOP_GEAR_MIN_POS: self._enter_stop_gear_min_pos,
+            Stage.STOP_TEST: self._enter_stop_test,
+        }
+        
+        self._exit_handlers = {
+            Stage.WAIT: self._exit_wait,
+            Stage.WAIT_BUFFER: self._exit_wait_buffer,
+            Stage.REPEAT_TEST: self._exit_repeat_test,
+            Stage.ALARM_TRAVERSE: self._exit_alarm_traverse,
+            Stage.SEARCH_HOD: self._exit_search_hod,
+            Stage.PUMPING: self._exit_pumping,
+            Stage.POS_SET_GEAR: self._exit_pos_set_gear,
+            Stage.TRAVERSE_REFERENT: self._exit_traverse_referent,
+            Stage.INSTALL_AMORT: self._exit_install_amort,
+            Stage.START_POINT_AMORT: self._exit_start_point_amort,
+            Stage.TEST_MOVE_CYCLE: self._exit_test_move_cycle,
+            Stage.TEST_SPEED_ONE: self._exit_test_speed_one,
+            Stage.TEST_SPEED_TWO: self._exit_test_speed_two,
+            Stage.TEST_LAB_HAND_SPEED: self._exit_test_lab_hand_speed,
+            Stage.TEST_TEMPER: self._exit_test_temper,
+            Stage.TEST_LAB_CASCADE: self._exit_test_lab_cascade,
+            Stage.STOP_GEAR_END_TEST: self._exit_stop_gear_end_test,
+            Stage.STOP_GEAR_MIN_POS: self._exit_stop_gear_min_pos,
+            Stage.STOP_TEST: self._exit_stop_test,
         }
         
         self.count_cycle = 0
@@ -99,10 +143,27 @@ class Controller:
     def _alarm_traverse_position(self, pos):
         self.signals.control_msg.emit(f'alarm_traverse_{pos}')
         
-    def set_stage(self, stage):
-        if stage != self.stage:
-            self.logger.debug(f'Stage {self.stage} -> {stage}')
-        self.stage = stage
+    def set_stage(self, new_stage: Stage):
+        if new_stage == self.stage:
+            return
+        if new_stage not in self.stage_handlers:
+            self.logger.error(f"Unknown stage {new_stage}")
+            return
+        old_stage = self.stage
+        self._on_exit_stage(old_stage)
+        self.logger.debug(f'Stage {old_stage} -> {new_stage}')
+        self.stage = new_stage
+        self._on_enter_stage(new_stage)
+
+    def _on_exit_stage(self, stage):
+        handler = self._exit_handlers.get(stage)
+        if handler:
+            handler()
+
+    def _on_enter_stage(self, stage: Stage):
+        handler = self._enter_handlers.get(stage)
+        if handler:
+            handler()
 
     def set_next_stage(self, stage):
         self.logger.debug(f'Next stage {self.next_stage} -> {stage}')
@@ -308,10 +369,6 @@ class Controller:
 
             if tag == 'install':
                 install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
-                # print(f'Цель -- {install_point}')
-                self.signals.control_msg.emit(f'pos_traverse')
-                # if self.model.move_traverse < install_point:
-                #     install_point -= 1
                     
                 if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
@@ -406,9 +463,18 @@ class Controller:
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_cascade - {e}')
             
     ##### STAGES #####
+    def _enter_wait(self):
+        pass
+
     def _stage_wait(self, type_test):
         pass
-    
+
+    def _exit_wait(self):
+        pass
+
+    def _enter_wait_buffer(self):
+        pass
+
     def _stage_wait_buffer(self, type_test):
         if self.model.buffer_state[0] == 'OK!':
             if self.model.buffer_state[1] == 'buffer_on':
@@ -416,14 +482,18 @@ class Controller:
                 self.model.reader_start_test()
                 self.model.fc_control(tag='up', adr=1)
                 self.set_stage(self.next_stage)
-
             elif self.model.buffer_state[1] == 'buffer_off':
                 pass
-
         elif self.model.buffer_state[0] == 'ERROR!':
             self.model.buffer_state = ['null', 'null']
             self.model.write_bit_force_cycle(1)
-            
+
+    def _exit_wait_buffer(self):
+        pass
+
+    def _enter_repeat_test(self):
+        pass
+
     def _stage_repeat_test(self, type_test):
         self.set_stage(Stage.WAIT)
         if type_test == 'lab_hand':
@@ -434,12 +504,24 @@ class Controller:
             self._test_lab_cascade()
         else:
             self._test_on_two_speed(1)
-            
+
+    def _exit_repeat_test(self):
+        pass
+
+    def _enter_search_hod(self):
+        pass
+
     def _stage_search_hod(self, type_test):
         if self.steps.stage_search_hod(self.count_cycle):
             self.set_stage(Stage.WAIT)
             self.steps.step_stop_gear_end_test()
-            
+
+    def _exit_search_hod(self):
+        pass
+
+    def _enter_pumping(self):
+        pass
+
     def _stage_pumping(self, type_test):
         if self.count_cycle < 3:
             return
@@ -456,7 +538,13 @@ class Controller:
                 self._test_lab_cascade()
             else:
                 self._test_on_two_speed(1)
-                
+
+    def _exit_pumping(self):
+        pass
+
+    def _enter_alarm_traverse(self):
+        pass
+
     def _stage_alarm_traverse(self, type_test):
         if self.steps.step_control_traverse_move(self.set_trav_point):
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
@@ -465,24 +553,47 @@ class Controller:
             self.set_stage(Stage.WAIT)
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
-
             self.signals.reset_ui.emit()
-            
+
+    def _exit_alarm_traverse(self):
+        pass
+
+    def _enter_pos_set_gear(self):
+        pass
+
     def _stage_pos_set_gear(self, type_test):
         if self.steps.stage_pos_set_gear():
             self.set_stage(Stage.WAIT)
             self.signals.reset_ui.emit()
-    
+
+    def _exit_pos_set_gear(self):
+        pass
+
+    def _enter_traverse_referent(self):
+        pass
+
     def _stage_traverse_referent(self, type_test):
         if self.steps.stage_traverse_referent():
             self.set_stage(Stage.WAIT)
             self.traverse_install_point('install')
-    
+
+    def _exit_traverse_referent(self):
+        pass
+
+    def _enter_install_amort(self):
+        self.signals.control_msg.emit('pos_traverse')
+
     def _stage_install_amort(self, type_test):
         if self.steps.step_control_traverse_move(self.set_trav_point):
             self.set_stage(Stage.WAIT)
             self.signals.control_msg.emit('yellow_btn')
-            
+
+    def _exit_install_amort(self):
+        pass
+
+    def _enter_start_point_amort(self):
+        pass
+
     def _stage_start_point_amort(self, type_test):
         if self.steps.step_control_traverse_move(self.set_trav_point):
             self.set_next_stage(Stage.TEST_MOVE_CYCLE)
@@ -490,14 +601,26 @@ class Controller:
             self._full_cycle_update('0')
             self.steps.step_test_move_cycle()
             self.set_stage(Stage.WAIT_BUFFER)
-    
+
+    def _exit_start_point_amort(self):
+        pass
+
+    def _enter_test_move_cycle(self):
+        pass
+
     def _stage_test_move_cycle(self, type_test):
         if 0 < self.count_cycle < 2:
             return
         self.signals.control_msg.emit('pumping')
         self._full_cycle_update('0')
         self.steps.step_pumping_before_test()
-        
+
+    def _exit_test_move_cycle(self):
+        pass
+
+    def _enter_test_speed_one(self):
+        pass
+
     def _stage_test_speed_one(self, type_test):
         if self.count_cycle < 5:
             return
@@ -506,7 +629,13 @@ class Controller:
             self.steps.step_result_conveyor_test('one')
         self.model.write_end_test_in_archive()
         self._test_on_two_speed(2)
-        
+
+    def _exit_test_speed_one(self):
+        pass
+
+    def _enter_test_speed_two(self):
+        pass
+
     def _stage_test_speed_two(self, type_test):
         if self.count_cycle < 5:
             return
@@ -517,7 +646,13 @@ class Controller:
         self.model.flag_fill_graph = False
         self.model.write_end_test_in_archive()
         self.steps.step_stop_gear_end_test()
-        
+
+    def _exit_test_speed_two(self):
+        pass
+
+    def _enter_test_lab_hand_speed(self):
+        pass
+
     def _stage_test_lab_hand_speed(self, type_test):
         if self.count_cycle < 5:
             return
@@ -526,7 +661,13 @@ class Controller:
         self.model.flag_fill_graph = False
         self.model.write_end_test_in_archive()
         self.steps.step_stop_gear_end_test()
-    
+
+    def _exit_test_lab_hand_speed(self):
+        pass
+
+    def _enter_test_temper(self):
+        pass
+
     def _stage_test_temper(self, type_test):
         if 0 < self.count_cycle < 2:
             return
@@ -537,17 +678,21 @@ class Controller:
                 self.model.temper_recoil_graph.append(self.model.max_recoil)
                 self.model.temper_comp_graph.append(self.model.max_comp)
                 self._full_cycle_update('0')
-
             else:
                 self.model.save_result_cycle()
                 self.model.flag_fill_graph = False
                 self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
                 self.steps.step_stop_gear_end_test()
-
         else:
             self._full_cycle_update('0')
-            
+
+    def _exit_test_temper(self):
+        pass
+
+    def _enter_test_lab_cascade(self):
+        pass
+
     def _stage_test_lab_cascade(self, type_test):
         if self.count_cycle < 5:
             return
@@ -556,24 +701,33 @@ class Controller:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                         'speed':self.model.data_test.speed_list[self.count_cascade]})
             self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
-
             self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
             self.count_cascade += 1
-
             self._full_cycle_update('0')
-
         else:
             self.set_stage(Stage.WAIT)
             self.model.flag_fill_graph = False
             self.count_cascade = 1
             self.model.write_end_test_in_archive()
             self.steps.step_stop_gear_end_test()
-            
+
+    def _exit_test_lab_cascade(self):
+        pass
+
+    def _enter_stop_gear_end_test(self):
+        pass
+
     def _stage_stop_gear_end_test(self, type_test):
         if self.steps.stage_stop_gear_end_test():
             self.steps.step_stop_gear_min_pos()
-            
+
+    def _exit_stop_gear_end_test(self):
+        pass
+
+    def _enter_stop_gear_min_pos(self):
+        pass
+
     def _stage_stop_gear_min_pos(self, type_test):
         if self.steps.stage_stop_gear_min_pos():
             if self.model.flag_search_hod:
@@ -584,10 +738,19 @@ class Controller:
                     self.signals.conv_test_stop.emit()
                 else:
                     self.signals.lab_test_stop.emit()
-                    
+
+    def _exit_stop_gear_min_pos(self):
+        pass
+
+    def _enter_stop_test(self):
+        pass
+
     def _stage_stop_test(self, type_test):
         flag = self.steps.step_control_traverse_move(self.set_trav_point)
         if flag:
             self.set_stage(Stage.WAIT)
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
+
+    def _exit_stop_test(self):
+        pass
