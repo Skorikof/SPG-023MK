@@ -21,11 +21,6 @@ class StepTests:
             if self.model.flag_test is False:
                 if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
                     self.model.lamp_all_switch_off()
-
-                self.model.clear_data_in_graph()
-                self.model.clear_data_in_circle_graph()
-
-                self.model.reset_current_circle()
                 self.model.flag_test = True
                 self.model.alarm_tag = ''
                 self.model.flag_alarm = False
@@ -57,8 +52,6 @@ class StepTests:
             self.model.lamp_all_switch_off()
 
             self.model.data_test.max_temperature = 0
-
-            self.model.reset_current_circle()
             self.model.flag_test_launch = True
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
@@ -70,10 +63,6 @@ class StepTests:
     def step_stop_test(self):
         try:
             self.signals.stage_from_tests.emit(Stage.WAIT)
-
-            self.model.clear_data_in_graph()
-
-            self.model.reset_current_circle()
             self.model.flag_test_launch = False
             self.model.flag_test = False
             self.model.flag_fill_graph = False
@@ -88,7 +77,6 @@ class StepTests:
                 self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                          'speed': self.model.data_test.amort.speed_one})
                 self.signals.stage_from_tests.emit(Stage.TEST_SPEED_ONE)
-                self.model.clear_data_in_graph()
                 self.model.data_test.speed_test = self.model.data_test.amort.speed_one
 
                 self.model.flag_fill_graph = True
@@ -112,7 +100,6 @@ class StepTests:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': self.model.data_test.speed_test})
             self.signals.stage_from_tests.emit(Stage.TEST_LAB_HAND_SPEED)
-            self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
 
             if self.model.flag_repeat:
@@ -128,8 +115,6 @@ class StepTests:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': speed_list[0]})
             self.signals.stage_from_tests.emit(Stage.TEST_LAB_CASCADE)
-
-            self.model.clear_data_in_graph()
             self.model.data_test.speed_test = speed_list[0]
             self.model.flag_fill_graph = True
 
@@ -146,9 +131,6 @@ class StepTests:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                      'speed': self.model.data_test.speed_test})
             self.signals.stage_from_tests.emit(Stage.TEST_TEMPER)
-
-            self.model.clear_data_in_graph()
-            self.model.clear_data_in_temper_graph()
             self.model.flag_fill_graph = True
 
             if self.model.flag_repeat:

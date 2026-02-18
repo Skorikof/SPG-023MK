@@ -54,7 +54,6 @@ class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
     win_set_update = Signal(str)
-    full_cycle_count = Signal(str)
     update_data_graph = Signal()
     test_launch = Signal(bool)
     save_koef_force = Signal(str)
@@ -62,7 +61,7 @@ class ModelSignals(QObject):
     connect_ctrl = Signal()
     read_finish = Signal()
     
-    collect_done = Signal()
+    collect_done = Signal(bool)
 
 
 class Model:
@@ -165,6 +164,9 @@ class Model:
         self.alarm_tag = ''
         self.flag_alarm = False
         self.flag_non_buffer = False
+
+        self.flag_collect_done = False
+        self.flag_collect_error = False
         
     def _init_signals(self):
         self.reader.signals.result.connect(self._reader_result)
@@ -398,31 +400,19 @@ class Model:
                 else:
                     state = self.collector.add_stream_dict(data)
                     
-                    if state == PhaseState.DONE:
-                        self.signals.collect_done.emit()
+                    if state == PhaseState.DONE and not self.flag_collect_done:
+                        self.flag_collect_done = True
+                        self.signals.collect_done.emit(True)
                         if self.mode_collect == ModeCollect.WITH_DATA:
                             cycles = self.collector.get_cycles()
                             avg = self.calc_data.average_cycles(cycles) # возвращает 2 массива - pos, force
                             print(avg)
-                        
-                    elif state == PhaseState.ERROR:
+                            print('#################################')
+                            
+                    elif state == PhaseState.ERROR and not self.flag_collect_error:
+                        self.flag_collect_error = True
                         txt = 'Error in collector/add_stream_dict'
                         self.logger.error(txt)
-                    
-                    # while True:
-                    #     batch = read_device()
-
-                    #     state = collector.add_stream_dict(batch)
-
-                    #     if state == CycleState.DONE:
-                    #         cycles = collector.get_cycles()
-                    #         break
-
-                    # avg = average_cycles(cycles)
-                    # plot(avg)
-                    # save_archive(raw=cycles, avg=avg)
-                    # Тут нужно подумать над респределением данных для испытаний
-                    pass
 
         except Exception as e:
             self.logger.error(e)
@@ -430,7 +420,8 @@ class Model:
                 
     def run_collector_without_data(self, count: int=1):
         try:
-            self.collector.reset()
+            self.flag_collect_done = False
+            self.flag_collect_error = False
             self.collector.load_program([
                 (Mode.DETECT_ONLY, count),
             ])
@@ -441,7 +432,8 @@ class Model:
             
     def run_collector_with_data(self, count: int=3):
         try:
-            self.collector.reset()
+            self.flag_collect_done = False
+            self.flag_collect_error = False
             self.collector.load_program([
                 (Mode.COLLECT, count),
             ])
@@ -465,194 +457,6 @@ class Model:
             
         except Exception as e:
             self.logger.error(e)
-
-    def _add_data_in_graph(self, force, move):
-        try:
-            self.force_list.extend(force)
-            self.move_list.extend(move)
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_add_data_in_graph - {e}')
-            
-    def clear_data_in_graph(self):
-        self.force_list = []
-        self.move_list = []
-        
-    def clear_data_in_circle_graph(self):
-        self.force = []
-        self.move = []
-
-    def clear_data_in_temper_graph(self):
-        self.temper_graph = []
-        self.temper_recoil_graph = []
-        self.temper_comp_graph = []
-
-    def reset_current_circle(self):
-        try:
-            self.min_pos = False
-            self.max_pos = False
-            self.start_direction = False
-            self.current_direction = False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/reset_current_circle - {e}')
-
-    def _find_start_direction(self, move):
-        try:
-            if move[0] < move[-1]:
-                direction = 'up'
-
-            elif move[0] > move[-1]:
-                direction = 'down'
-
-            else:
-                direction = False
-
-            if direction:
-                self.start_direction = direction
-                self.current_direction = direction
-                self.logger.debug(f'Start direction --> {direction}')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_find_start_direction - {e}')
-
-    def _find_direction_and_point(self, move):
-        try:
-            if self.current_direction == 'up':
-                max_point = max(move)
-                if max_point > move[-1]:
-                    if not -1 < max_point < 1:
-                        self.max_point = max_point
-                        self.max_pos = True
-                        self.current_direction = 'down'
-                        self.logger.debug(f'Max point --> {max_point}')
-
-            elif self.current_direction == 'down':
-                min_point = min(move)
-                if min_point < move[-1]:
-                    if not -1 < min_point < 1:
-                        self.min_point = min_point
-                        self.min_pos = True
-                        self.current_direction = 'up'
-                        self.logger.debug(f'Min point --> {min_point}')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_find_direction_and_point - {e}')
-
-    def _check_full_circle(self):
-        try:
-            if self.gear_referent is False:
-                self.clear_data_in_graph()
-
-                self.reset_current_circle()
-
-                self.gear_referent = True
-                self.logger.debug('Gear referent is True')
-
-            else:
-                self._full_circle_done()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_check_full_circle - {e}')
-            
-    def _calc_dynamic_push_force(self):
-        try:
-            force_min = self.force[self.move.index(min(self.move))]
-            force_max = self.force[self.move.index(max(self.move))]
-            force_mid = (force_min + force_max) / 2
-            static = self.data_test.static_push_force
-            self.dynamic_push_force = round((force_mid - static) / 2 + static, 2)
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_calc_dynamic_push_force - {e}')
-
-    def _choice_push_force(self):
-        try:
-            if self.data_test.flag_push_force:
-                self._calc_dynamic_push_force()
-                return self.dynamic_push_force
-
-            else:
-                self.dynamic_push_force = 0
-                return self.data_test.static_push_force
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_choice_push_force - {e}')
-
-    def _full_circle_done(self):
-        try:
-            self.logger.debug('Full circle is done')
-            if self.flag_fill_graph:
-                # offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
-                
-                self.force = [round(x * (-1), 2) for x in self.force_list]
-                # self.move = [round(x + offset_p, 2) for x in self.move_list]
-                self.move = self.move_list[:]
-
-                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
-                self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
-                
-                push_force = self._choice_push_force()
-                self.max_recoil = round(max_recoil + push_force, 1)
-                self.max_comp = round(max_comp - push_force, 1)
-                self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
-
-                self.power_amort = self.calc_data.power_amort(self.force, self.move)
-                self.freq_piston = self.calc_data.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
-                
-                self.logger.debug('Full circle response parsing is done')
-
-                self.signals.update_data_graph.emit()
-                
-                self.clear_data_in_graph()
-
-            self.signals.full_cycle_count.emit('+1')
-
-            self.min_pos = False
-            self.max_pos = False
-
-        except Exception as e:
-            self.clear_data_in_graph()
-            self.min_pos = False
-            self.max_pos = False
-
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_full_circle_done - {e}')
-
-    def _pars_response_on_circle(self, force, move):
-        try:
-            if self.start_direction is False:
-                self._find_start_direction(move)
-
-            else:
-                if self.flag_fill_graph:
-                    self._add_data_in_graph(force, move)
-
-                if self.min_pos and self.max_pos and min(move) <= self.min_point <= max(move):
-                    hod = round(abs(self.min_point) + abs(self.max_point), 1)
-                    if self.flag_search_hod is False:
-                        if hod > 30:
-                            self._check_full_circle()
-                        else:
-                            self.min_pos = False
-                            self.max_pos = False
-
-                    else:
-                        self._check_full_circle()
-
-                else:
-                    self._find_direction_and_point(move)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_response_on_circle - {e}')
 
     def _write_reg_state(self, bit, value, command=None):
         try:
@@ -846,8 +650,6 @@ class Model:
                          'static_push_force': self.data_test.static_push_force,
                          'dynamic_push_force': self.dynamic_push_force,
                          'max_temperature': self.data_test.max_temperature}
-            
-            self.clear_data_in_circle_graph()
             
             self.write_data_in_archive('data', data_dict)
 

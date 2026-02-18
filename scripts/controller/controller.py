@@ -66,6 +66,7 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._stage_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._stage_stop_gear_min_pos,
             Stage.STOP_TEST: self._stage_stop_test,
+            Stage.TEST_PROGRAM: self._stage_testing_prog,
         }
         
         self._enter_handlers = {
@@ -88,6 +89,7 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._enter_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._enter_stop_gear_min_pos,
             Stage.STOP_TEST: self._enter_stop_test,
+            Stage.TEST_PROGRAM: self._enter_testing_prog,
         }
         
         self._exit_handlers = {
@@ -110,9 +112,9 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._exit_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._exit_stop_gear_min_pos,
             Stage.STOP_TEST: self._exit_stop_test,
+            Stage.TEST_PROGRAM: self._exit_testing_prog,
         }
         
-        self.count_cycle = 0
         self.set_trav_point = 0
         self.count_cascade = 1
         self.max_cascade = 0
@@ -124,8 +126,8 @@ class Controller:
 
     def _init_signals(self):
         try:
-            self.model.signals.full_cycle_count.connect(self._full_cycle_update)
             self.model.signals.test_launch.connect(self._yellow_btn_push)
+            self.model.signals.collect_done.connect(self._collect_done)
 
             self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
             self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
@@ -169,20 +171,12 @@ class Controller:
         self.logger.debug(f'Next stage {self.next_stage} -> {stage}')
         self.next_stage = stage
     
-    @Slot()
-    def _collect_done(self):
-        self.flag_collect_done = True
-
-    def _full_cycle_update(self, command: str):
-        try:
-            if command == '+1':
-                self.count_cycle += 1
-            else:
-                self.count_cycle = int(command)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_full_cycle_update - {e}')
+    @Slot(bool)
+    def _collect_done(self, flag):
+        self.flag_collect_done = flag
+        
+    def restart_flag_collect(self):
+        self.flag_collect_done = False
 
     def _init_timer_test(self):
         try:
@@ -281,31 +275,33 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_yellow_btn_push - {e}')
 
+    # FIXME
     def start_test_clicked(self):
         """
         Точка входа в испытание, определение референтной точки траверсы, если известна,
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            if self._check_max_temper_test():
-                self.steps_tests.step_start_test()
+            self._test_program()
+            # if self._check_max_temper_test():
+            #     self.steps_tests.step_start_test()
 
-                self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
+            #     self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
 
-                if self.model.flag_repeat:
-                    self.set_stage(Stage.WAIT_BUFFER)
-                    self.set_next_stage(Stage.REPEAT_TEST)
-                    self.model.write_bit_force_cycle(1)
+            #     if self.model.flag_repeat:
+            #         self.set_stage(Stage.WAIT_BUFFER)
+            #         self.set_next_stage(Stage.REPEAT_TEST)
+            #         self.model.write_bit_force_cycle(1)
 
-                else:
-                    if self.model.move_traverse < 10:
-                        self.steps.step_traverse_referent_point()
+            #     else:
+            #         if self.model.move_traverse < 10:
+            #             self.steps.step_traverse_referent_point()
 
-                    else:
-                        self.traverse_install_point('install')
+            #         else:
+            #             self.traverse_install_point('install')
 
-            else:
-                self.steps_tests.step_stop_test()
+            # else:
+            #     self.steps_tests.step_stop_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -318,14 +314,7 @@ class Controller:
         """
         try:
             self.steps_tests.step_stop_test()
-
-            if self.model.gear_referent:
-                self.steps.step_stop_gear_end_test()
-            else:
-                self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-                self.model.fc_control(**{'tag': 'stop', 'adr': 2})
-
-                self.signals.cancel_test.emit()
+            self.steps.step_stop_gear_end_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -333,7 +322,6 @@ class Controller:
 
     def search_hod_gear(self):
         try:
-            self._full_cycle_update('0')
             self.steps.step_search_hod_gear()
 
         except Exception as e:
@@ -342,7 +330,6 @@ class Controller:
 
     def move_gear_set_pos(self):
         try:
-            self._full_cycle_update('0')
             self.steps.step_move_gear_set_pos()
 
         except Exception as e:
@@ -388,7 +375,6 @@ class Controller:
             # elif self.model.type_test == 'lab':
             #     self.signals.lab_win_test.emit()
             self.steps_tests.step_test_on_two_speed(ind)
-            self._full_cycle_update('0')
 
         except Exception as e:
             self.logger.error(e)
@@ -398,7 +384,6 @@ class Controller:
         try:
             self.signals.lab_win_test.emit()
             self.steps_tests.step_test_lab_hand_speed()
-            self._full_cycle_update('0')
 
         except Exception as e:
             self.logger.error(e)
@@ -421,7 +406,6 @@ class Controller:
         try:
             self.signals.lab_win_test.emit()
             self.steps_tests.step_test_temper()
-            self._full_cycle_update('0')
 
         except Exception as e:
             self.logger.error(e)
@@ -434,12 +418,16 @@ class Controller:
             self.max_cascade = len(self.model.data_test.speed_list)
 
             self.steps_tests.step_test_lab_cascade(self.model.data_test.speed_list)
-            self._full_cycle_update('0')
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_cascade - {e}')
             
+    def _test_program(self):
+        self.model.write_bit_force_cycle(1)
+        self.set_stage(Stage.WAIT_BUFFER)
+        self.set_next_stage(Stage.TEST_PROGRAM)
+
     ##### STAGES #####
     def _enter_wait(self):
         pass
@@ -578,7 +566,6 @@ class Controller:
         if self.steps.step_control_traverse_move(self.set_trav_point):
             self.set_next_stage(Stage.TEST_MOVE_CYCLE)
             self.signals.control_msg.emit(f'move_detection')
-            self._full_cycle_update('0')
             self.steps.step_test_move_cycle()
             self.set_stage(Stage.WAIT_BUFFER)
 
@@ -592,7 +579,6 @@ class Controller:
         if 0 < self.count_cycle < 2:
             return
         self.signals.control_msg.emit('pumping')
-        self._full_cycle_update('0')
         self.steps.step_pumping_before_test()
 
     def _exit_test_move_cycle(self):
@@ -659,15 +645,12 @@ class Controller:
                 self.model.temper_graph.append(self.model.data_test.max_temperature)
                 self.model.temper_recoil_graph.append(self.model.max_recoil)
                 self.model.temper_comp_graph.append(self.model.max_comp)
-                self._full_cycle_update('0')
             else:
                 self.model.save_result_cycle()
                 self.model.flag_fill_graph = False
                 self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
                 self.steps.step_stop_gear_end_test()
-        else:
-            self._full_cycle_update('0')
 
     def _exit_test_temper(self):
         pass
@@ -683,10 +666,8 @@ class Controller:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1,
                                         'speed':self.model.data_test.speed_list[self.count_cascade]})
             self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
-            self.model.clear_data_in_graph()
             self.model.flag_fill_graph = True
             self.count_cascade += 1
-            self._full_cycle_update('0')
         else:
             self.set_stage(Stage.WAIT)
             self.model.flag_fill_graph = False
@@ -738,3 +719,19 @@ class Controller:
 
     def _exit_stop_test(self):
         pass
+
+    def _enter_testing_prog(self):
+        print('enter test stage')
+        self.model.run_collector_with_data(3)
+        self.model.reader_start_test()
+        
+    def _stage_testing_prog(self):
+        if self.flag_collect_done:
+            self.flag_collect_done = False
+            print('Congratelations! 3 cycles is done')
+            self.set_stage(Stage.WAIT)
+        
+    def _exit_testing_prog(self):
+        print('exit test stage')
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)

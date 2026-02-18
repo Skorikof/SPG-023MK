@@ -75,8 +75,6 @@ class Steps:
         try:
             self.signals.stage_from_logic.emit(Stage.WAIT)
             self.signals.next_stage_from_logic.emit(Stage.SEARCH_HOD)
-
-            self.model.reset_current_circle()
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
             self.model.flag_search_hod = True
@@ -107,8 +105,6 @@ class Steps:
         try:
             self.signals.stage_from_logic.emit(Stage.WAIT)
             self.signals.next_stage_from_logic.emit(Stage.POS_SET_GEAR)
-
-            self.model.reset_current_circle()
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
 
@@ -128,9 +124,6 @@ class Steps:
                     if abs(14 - self.model.move_now) < 5:
                         self.model.fc_control(**{'tag': 'stop', 'adr': 1})
                         self.model.reader_stop_test()
-                        # self.model.flag_bufer = False
-                        # self.model.clear_data_in_graph()
-                        # self.model.timer_pars_circle_stop()
                         self.model.write_bit_force_cycle(0)
                         self.model.min_pos = False
                         self.model.max_pos = False
@@ -177,10 +170,6 @@ class Steps:
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
-            # self.model.flag_bufer = False
-            # self.model.clear_data_in_graph()
-            # self.model.timer_pars_circle_stop()
-
             self.model.write_bit_force_cycle(0)
 
             speed = self._definition_speed_by_hod('slow')
@@ -199,11 +188,6 @@ class Steps:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
                 self.signals.stage_from_logic.emit(Stage.WAIT)
-
-                self.model.clear_data_in_graph()
-
-                self.model.reset_current_circle()
-                
                 if self.model.flag_test:
                     self.model.flag_test = False
 

@@ -141,3 +141,63 @@ class CalcData:
 
         except Exception as e:
             self.logger.error(e)
+
+    def calc_dynamic_push_force(self, force, move, static):
+        """Расчёт динамической выталкивающей силы"""
+        try:
+            force_min = force[move.index(min(move))]
+            force_max = force[move.index(max(move))]
+            force_mid = (force_min + force_max) / 2
+            dynamic = round((force_mid - static) / 2 + static, 2)
+            
+            return dynamic
+        
+        except Exception as e:
+            self.logger.error(e)
+            
+    def choice_push_force(self, flag, force, move, static):
+        """Выбор выталкивающей силы для расчётов и архива"""
+        try:
+            if flag:
+                return self.calc_dynamic_push_force(force, move, static)
+
+            else:
+                dynamic = 0
+                return static, dynamic
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def full_circle_done(self):
+        try:
+            self.logger.debug('Full circle is done')
+            if self.flag_fill_graph:
+                # offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
+                
+                self.force = [round(x * (-1), 2) for x in self.force_list]
+                # self.move = [round(x + offset_p, 2) for x in self.move_list]
+                self.move = self.move_list[:]
+
+                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
+                self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
+                
+                push_force = self._choice_push_force()
+                self.max_recoil = round(max_recoil + push_force, 1)
+                self.max_comp = round(max_comp - push_force, 1)
+                self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
+
+                self.power_amort = self.calc_data.power_amort(self.force, self.move)
+                self.freq_piston = self.calc_data.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
+                
+                self.logger.debug('Full circle response parsing is done')
+
+                self.signals.update_data_graph.emit()
+
+            self.signals.full_cycle_count.emit('+1')
+
+        except Exception as e:
+            self.logger.error(e)
+            
+        finally:
+            self.min_pos = False
+            self.max_pos = False

@@ -21,3 +21,4 @@ class Stage(Enum):
     STOP_GEAR_END_TEST = auto()
     STOP_GEAR_MIN_POS = auto()
     STOP_TEST = auto()
+    TEST_PROGRAM = auto()

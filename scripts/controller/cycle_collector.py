@@ -25,7 +25,7 @@ class CycleCollector:
         sample_rate=1000,
         min_halfcycle_fraction=0.2,
         period_stability_threshold=0.02,
-        min_stable_cycles=3,
+        min_stable_cycles=2,
 
         watchdog_cycles_factor=3.5,
         watchdog_min_sec=0.5,
@@ -79,10 +79,8 @@ class CycleCollector:
 
     def load_program(self, program):
         try:
+            self.reset()
             self.program = program
-            self.program_index = 0
-            self.program_cycle_counter = 0
-            self.cycles.clear()
             
         except Exception as e:
             self.logger.error(e)
@@ -149,14 +147,17 @@ class CycleCollector:
 
     def add_stream_dict(self, data):
         try:
+            if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
+                return self.phase_state
+            
             now = time.perf_counter()
 
-            # -------- watchdog --------
-            if self.last_turn_time is not None:
-                if now - self.last_turn_time > self.watchdog_timeout_sec:
-                    self.logger.warning("Watchdog timeout: motion stopped")
-                    self.phase_state = PhaseState.DONE
-                    return self.phase_state
+            # # -------- watchdog --------
+            # if self.last_turn_time is not None:
+            #     if now - self.last_turn_time > self.watchdog_timeout_sec:
+            #         self.logger.warning("Watchdog timeout: motion stopped")
+            #         self.phase_state = PhaseState.ERROR
+            #         return self.phase_state
 
             pos_arr = data.get("move")
             force_arr = data.get("force")
@@ -199,7 +200,7 @@ class CycleCollector:
 
                                 if self._is_period_stable():
                                     self.phase_state = PhaseState.RUN
-                                    self._update_watchdog_timeout()
+                                    # self._update_watchdog_timeout()
 
                                     self.current_pos.clear()
                                     self.current_force.clear()
@@ -207,7 +208,7 @@ class CycleCollector:
                             # -------- RUN --------
                             elif self.phase_state == PhaseState.RUN:
 
-                                self._update_watchdog_timeout()
+                                # self._update_watchdog_timeout()
 
                                 step = self._current_program_step()
 
@@ -231,6 +232,7 @@ class CycleCollector:
 
                                     if self.program_index >= len(self.program):
                                         self.phase_state = PhaseState.DONE
+                                        return self.phase_state
 
                             self.current_pos.clear()
                             self.current_force.clear()
@@ -252,7 +254,7 @@ class CycleCollector:
             return self.phase_state
             
     def get_cycles(self):
-        return self.cycles
+        return list(self.cycles)
 
     def reset(self):
         try:
