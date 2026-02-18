@@ -453,6 +453,8 @@ class Model:
     def _send_data_in_set_win(self, data):
         try:
             self.force_clear = data.get('force')[-1]
+            self.force_correct = round(self.force_clear * config.force_koef, 1)
+            self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
             self.move_now = data.get('move')[-1]
             self.counter = data.get('count')[-1]

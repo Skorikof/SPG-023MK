@@ -81,8 +81,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
     @Slot(str)
     def _update_win(self, tag):
         if tag == 'reg':
-            self.koef_force_lcd.display(self.model.force_correct)
-            self.correct_force_lcd.display(self.model.force_offset)
             self.lcdH_T.display(self.model.move_traverse)
             self.lcdTemp_1.display(self.model.data_test.first_temperature)
             self.lcdTemp_2.display(self.model.data_test.second_temperature)
@@ -90,6 +88,8 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             
             self._change_lbl_temper_channel()
             
+        self.koef_force_lcd.display(self.model.force_correct)
+        self.correct_force_lcd.display(self.model.force_offset)
         self.lcdTime.display(self.model.counter)
         self.clear_force_lcd.display(self.model.force_clear)
         self.lcdH.display(self.model.move_now)
