@@ -144,6 +144,17 @@ class CycleCollector:
             
         except Exception as e:
             self.logger.error(e)
+            
+    def _normalize_cycle(self, pos_arr, force_arr):
+        if len(pos_arr) == 0:
+            return pos_arr, force_arr
+
+        start_idx = np.argmin(pos_arr)
+
+        pos_arr = np.roll(pos_arr, -start_idx)
+        force_arr = np.roll(force_arr, -start_idx)
+
+        return pos_arr, force_arr
 
     def add_stream_dict(self, data):
         try:
@@ -219,10 +230,11 @@ class CycleCollector:
                                 mode, target_cycles = step
 
                                 if mode == Mode.COLLECT:
-                                    self.cycles.append((
-                                        np.array(self.current_pos, dtype=np.float32),
-                                        np.array(self.current_force, dtype=np.float32)
-                                    ))
+                                    pos_np = np.array(self.current_pos, dtype=np.float32)
+                                    force_np = np.array(self.current_force, dtype=np.float32)
+                                    pos_np, force_np = self._normalize_cycle(pos_np, force_np)
+
+                                    self.cycles.append((pos_np, force_np))
 
                                 self.program_cycle_counter += 1
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
 import statistics
-from enum import Enum
 from PySide6.QtCore import QObject, Signal, QTimer
 
 from config import config
@@ -45,11 +44,6 @@ from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 # print(result["stroke_mean"])
 
 
-class ModeCollect(Enum):
-    WITHOUT_DATA = 0
-    WITH_DATA = 1
-
-
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
@@ -81,7 +75,6 @@ class Model:
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
         self.collector = CycleCollector()
-        self.mode_collect = ModeCollect.WITHOUT_DATA
 
         self.data_test = DataTest()
 
@@ -403,12 +396,11 @@ class Model:
                     if state == PhaseState.DONE and not self.flag_collect_done:
                         self.flag_collect_done = True
                         self.signals.collect_done.emit(True)
-                        if self.mode_collect == ModeCollect.WITH_DATA:
-                            cycles = self.collector.get_cycles()
-                            avg = self.calc_data.average_cycles(cycles) # возвращает 2 массива - pos, force
-                            print(avg)
-                            print('#################################')
-                            
+                        cycles = self.collector.get_cycles()
+                        avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
+                        print(avg)
+                        print('#################################')
+
                     elif state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
                         txt = 'Error in collector/add_stream_dict'
@@ -425,19 +417,18 @@ class Model:
             self.collector.load_program([
                 (Mode.DETECT_ONLY, count),
             ])
-            self.mode_collect = ModeCollect.WITHOUT_DATA
             
         except Exception as e:
             self.logger.error(e)
             
-    def run_collector_with_data(self, count: int=3):
+    def run_collector_with_data(self, count_det: int=1, count_col: int=1):
         try:
             self.flag_collect_done = False
             self.flag_collect_error = False
             self.collector.load_program([
-                (Mode.COLLECT, count),
+                (Mode.DETECT_ONLY, count_det),
+                (Mode.COLLECT, count_col),
             ])
-            self.mode_collect = ModeCollect.WITH_DATA
             
         except Exception as e:
             self.logger.error(e)

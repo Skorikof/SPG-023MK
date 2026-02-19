@@ -864,8 +864,9 @@ class AppWindow(QMainWindow):
 
     def begin_test(self):
         try:
-            self.main_stop_state(True)
-            self.main_btn_state(False)
+            # FIXME закоммичено для тестов на столе
+            # self.main_stop_state(True)
+            # self.main_btn_state(False)
 
             if self.model.data_test.type_test != 'conv':
                 self.model.list_lab_result = []

@@ -425,8 +425,8 @@ class Controller:
             
     def _test_program(self):
         self.model.write_bit_force_cycle(1)
-        self.set_stage(Stage.WAIT_BUFFER)
         self.set_next_stage(Stage.TEST_PROGRAM)
+        self.set_stage(Stage.WAIT_BUFFER)
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -722,16 +722,18 @@ class Controller:
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        self.model.run_collector_with_data(3)
+        self.model.run_collector_with_data()
         self.model.reader_start_test()
-        
+        print('enter stage buffer start')
+
     def _stage_testing_prog(self):
         if self.flag_collect_done:
             self.flag_collect_done = False
             print('Congratelations! 3 cycles is done')
             self.set_stage(Stage.WAIT)
-        
+
     def _exit_testing_prog(self):
         print('exit test stage')
         self.model.reader_stop_test()
         self.model.write_bit_force_cycle(0)
+        print('exit stage off sensor')
