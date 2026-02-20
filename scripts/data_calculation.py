@@ -9,7 +9,7 @@ class CalcData:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
         
-    def _normalize_cycle(self, x, y, target_len=200):
+    def _normalize_cycle(self, x, y, target_len=1000):
         try:
             t_old = np.linspace(0, 1, len(x))
             t_new = np.linspace(0, 1, target_len)
@@ -22,7 +22,7 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def average_cycles(self, cycles, target_len=200):
+    def average_cycles(self, cycles, target_len=1000):
         try:
             if not cycles:
                 return None, None
@@ -31,9 +31,11 @@ class CalcData:
             ys = []
 
             for pos, force in cycles:
-                x_n, y_n = self._normalize_cycle(pos, force, target_len)
-                xs.append(x_n)
-                ys.append(y_n)
+                # x_n, y_n = self._normalize_cycle(pos, force, target_len)
+                # xs.append(x_n)
+                # ys.append(y_n)
+                xs.append(pos)
+                ys.append(force)
 
             mean_x = np.mean(xs, axis=0)
             mean_y = np.mean(ys, axis=0)

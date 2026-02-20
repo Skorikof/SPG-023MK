@@ -421,7 +421,7 @@ class AppWindow(QMainWindow):
         self.select_type_test()
         self.select_amort()
 
-    def update_graph_view(self):
+    def update_graph_view(self, data):
         try:
             type_test = self.model.data_test.type_test
             if type_test == 'hand':
@@ -436,8 +436,8 @@ class AppWindow(QMainWindow):
                 self._update_lab_data()
 
             else:
-                self._update_lab_graph()
-                self._update_lab_data()
+                self._update_lab_graph(data)
+                # self._update_lab_data()
 
         except Exception as e:
             self.logger.error(e)
@@ -1014,11 +1014,11 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
 
-    def _update_lab_graph(self):
+    def _update_lab_graph(self, data):
         try:
             self.ui.lab_GraphWidget.clear()
-            self.graph.fill_graph(self.model.move,
-                                  self.model.force,
+            self.graph.fill_graph(data[0],
+                                  data[1],
                                   name=f'{self.model.data_test.speed_test} м/с')
 
         except Exception as e:

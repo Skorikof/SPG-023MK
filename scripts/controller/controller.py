@@ -725,6 +725,7 @@ class Controller:
         self.model.run_collector_with_data()
         self.model.reader_start_test()
         print('enter stage buffer start')
+        self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
         if self.flag_collect_done:

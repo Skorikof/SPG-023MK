@@ -17,38 +17,11 @@ from scripts.freq_ctrl.eura.freq_control import FreqControl
 from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 
 
-# FIXME вариант распарсивания 3 циклов
-# collector = CycleCollector()
-
-# while True:
-#     batch = read_device()
-
-#     state = collector.add_stream_dict(batch)
-
-#     if state == CycleState.DONE:
-#         cycles = collector.get_cycles()
-#         break
-
-# avg = average_cycles(cycles)
-# plot(avg)
-# save_archive(raw=cycles, avg=avg)
-
-######################################
-# FIXME Использование метода определения хода
-# result = controller.measure_stroke(
-#     detect_cycles=3,
-#     collect_cycles=5,
-#     max_std=0.05,
-# )
-
-# print(result["stroke_mean"])
-
-
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
     win_set_update = Signal(str)
-    update_data_graph = Signal()
+    update_data_graph = Signal(object)
     test_launch = Signal(bool)
     save_koef_force = Signal(str)
     
@@ -398,8 +371,9 @@ class Model:
                         self.signals.collect_done.emit(True)
                         cycles = self.collector.get_cycles()
                         avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
-                        print(avg)
-                        print('#################################')
+                        self.signals.update_data_graph.emit(avg)
+                        # print(avg)
+                        # print('#################################')
 
                     elif state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
