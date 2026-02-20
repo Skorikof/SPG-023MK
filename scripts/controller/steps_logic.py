@@ -139,31 +139,6 @@ class Steps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_stop_gear_min_pos - {e}')
 
-    def step_test_move_cycle(self):
-        """Проверочный ход"""
-        try:
-            speed = self.definition_speed_by_hod('medium')
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.model.write_bit_force_cycle(1)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/step_test_move_cycle - {e}')
-
-    def step_pumping_before_test(self):
-        """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
-        try:
-            speed = self.definition_speed_by_hod('fast')
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.model.write_bit_force_cycle(1)
-            self.model.reader_start_test()
-
-            self.signals.stage_from_logic.emit(Stage.PUMPING)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/step_pumping_before_test - {e}')
-
     def step_traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:

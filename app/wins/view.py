@@ -1092,7 +1092,7 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
-                self.controller.steps_tests.step_stop_test()
+                self.controller.step_stop_test()
                 self.model.flag_test_launch = False
                 self.controller.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
@@ -1140,7 +1140,7 @@ class AppWindow(QMainWindow):
                 self.controller.stop_test_clicked()
 
             elif temp == 'НАЗАД':
-                self.controller.steps_tests.step_stop_test()
+                self.controller.step_stop_test()
                 self.model.flag_test_launch = False
                 self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
                 self.controller.traverse_install_point('stop_test')

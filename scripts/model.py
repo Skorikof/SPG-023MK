@@ -374,11 +374,12 @@ class Model:
                     if state == PhaseState.DONE and not self.flag_collect_done:
                         self.flag_collect_done = True
                         self.signals.collect_done.emit(True)
-                        cycles = self.collector.get_cycles()
                         if Mode.STROKE_ONLY:
+                            cycles = self.collector.get_cycles()
                             self.min_point, self.max_point, self.stroke = cycles[0]
                             
                         elif Mode.COLLECT:
+                            cycles = self.collector.get_cycles()
                             avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
                             self.signals.update_data_graph.emit(avg)
 

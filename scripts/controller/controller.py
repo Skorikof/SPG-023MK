@@ -7,7 +7,6 @@ from scripts.data_calculation import CalcData
 from scripts.controller.stages import Stage
 from scripts.controller.steps_logic import Steps
 from scripts.controller.alarm_steps import AlarmSteps
-from scripts.controller.steps_tests import StepTests
 
 
 class ControlSignals(QObject):
@@ -29,7 +28,6 @@ class Controller:
             self.model = model
             self.steps = Steps(model)
             self.alarm_steps = AlarmSteps(model)
-            self.steps_tests = StepTests(model)
             self.calc_data = CalcData()
 
             self._init_variables()
@@ -134,9 +132,6 @@ class Controller:
 
             self.steps.signals.stage_from_logic.connect(self.set_stage)
             self.steps.signals.next_stage_from_logic.connect(self.set_next_stage)
-
-            self.steps_tests.signals.stage_from_tests.connect(self.set_stage)
-            self.steps_tests.signals.next_stage_from_tests.connect(self.set_next_stage)
 
         except Exception as e:
             self.logger.error(e)
@@ -259,12 +254,37 @@ class Controller:
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.reader_stop_test()
             self.model.write_bit_force_cycle(0)
+            
+    # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание
+    def step_yellow_btn_push(self):
+        try:
+            if self.model.flag_test is False:
+                if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
+                    self.model.lamp_all_switch_off()
+                self.model.flag_test = True
+                self.model.alarm_tag = ''
+                self.model.flag_alarm = False
+
+                if self.model.state_dict.get('lost_control'):
+                    self.model.write_bit_unblock_control()
+
+                if self.model.state_dict.get('excess_force'):
+                    self.model.write_bit_emergency_force()
+
+                return 'start'
+
+            else:
+                self.model.flag_test = False
+                return 'stop'
+
+        except Exception as e:
+            self.logger.error(e)
 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
         try:
             if state:
-                tag = self.steps_tests.step_yellow_btn_push()
+                tag = self.step_yellow_btn_push()
                 if tag == 'start':
                     self.traverse_install_point('start_test')
 
@@ -284,7 +304,7 @@ class Controller:
         try:
             self._test_program()
             # if self._check_max_temper_test():
-            #     self.steps_tests.step_start_test()
+            #     self.step_start_test()
 
             #     self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
 
@@ -301,11 +321,42 @@ class Controller:
             #             self.traverse_install_point('install')
 
             # else:
-            #     self.steps_tests.step_stop_test()
+            #     self.step_stop_test()
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/start_test_clicked - {e}')
+            
+    def _check_max_temper_test(self):
+        first = self.model.data_test.first_temperature
+        second = self.model.data_test.second_temperature
+        if self.model.data_test.type_test == 'temper':
+            finish_temp = self.model.data_test.finish_temperature
+        else:
+            finish_temp = self.model.data_test.amort.max_temper
+        if first < finish_temp and second < finish_temp:
+            return True
+        else:
+            self.signals.control_msg.emit('excess_temperature')
+            return False
+        
+    def step_start_test(self):
+        try:
+            if self.model.state_dict.get('excess_force', False) is True:
+                self.model.write_bit_emergency_force()
+
+            if self.model.state_dict.get('lost_control', False) is True:
+                self.model.write_bit_unblock_control()
+
+            self.model.lamp_all_switch_off()
+
+            self.model.data_test.max_temperature = 0
+            self.model.flag_test_launch = True
+            self.model.alarm_tag = ''
+            self.model.flag_alarm = False
+
+        except Exception as e:
+            self.logger.error(e)
 
     def stop_test_clicked(self):
         """
@@ -313,12 +364,21 @@ class Controller:
         иначе моментальная остановка
         """
         try:
-            self.steps_tests.step_stop_test()
+            self.step_stop_test()
             self._stop_gear_end_test()
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/stop_test_clicked - {e}')
+            
+    def step_stop_test(self):
+        try:
+            self.model.flag_test_launch = False
+            self.model.flag_test = False
+            self.model.flag_fill_graph = False
+
+        except Exception as e:
+            self.logger.error(e)
 
     def move_gear_set_pos(self):
         try:
@@ -359,61 +419,124 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/traverse_install_point - {e}')
-
+            
+    def search_hod(self):
+        """Блок определения хода шатуна"""
+        self.model.alarm_tag = ''
+        self.model.flag_alarm = False
+        self.model.flag_search_hod = True
+        
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+        self.model.write_bit_force_cycle(1)
+        self.set_next_stage(Stage.SEARCH_HOD)
+        self.set_stage(Stage.WAIT_BUFFER)
+        
+    def _test_move_cycle(self):
+        """Блок провероного хода на алой скорости"""
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+        self.model.write_bit_force_cycle(1)
+        self.set_next_stage(Stage.TEST_MOVE_CYCLE)
+        self.set_stage(Stage.WAIT_BUFFER)
+        
+    def _pumping(self):
+        """Блок прокачки амортизатора"""
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.definition_speed_by_hod('fast', hod)
+        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+        self.model.write_bit_force_cycle(1)
+        self.set_next_stage(Stage.PUMPING)
+        self.set_stage(Stage.WAIT_BUFFER)
+        
     def _test_on_two_speed(self, ind):
+        """Блок испытания на двух скоростях"""
         try:
-            # if self.model.type_test == 'conv':
-            #     self.signals.conv_win_test.emit()
-            # elif self.model.type_test == 'lab':
-            #     self.signals.lab_win_test.emit()
-            self.steps_tests.step_test_on_two_speed(ind)
+            if ind == 1:
+                speed = self.model.data_test.amort.speed_one
+                self.model.data_test.speed_test = speed
+                self.model.flag_fill_graph = True
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                         'speed': speed})
+                self.model.write_bit_force_cycle(1)
+                self.set_next_stage(Stage.TEST_SPEED_ONE)
+                self.set_stage(Stage.WAIT_BUFFER)
+
+            elif ind == 2:
+                speed = self.model.data_test.amort.speed_two
+                self.model.data_test.speed_test = speed
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                         'speed': speed})
+                self.model.write_bit_force_cycle(1)
+                self.set_next_stage(Stage.TEST_SPEED_TWO)
+                self.set_stage(Stage.WAIT_BUFFER)
+
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_test_on_two_speed - {e}')
-
+            
     def _test_lab_hand_speed(self):
-        try:
-            self.signals.lab_win_test.emit()
-            self.steps_tests.step_test_lab_hand_speed()
+        """Блок испытания на скорости введённой ручную"""
+        self.model.flag_fill_graph = True
+        self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                'speed': self.model.data_test.speed_test})
+        self.model.write_bit_force_cycle(1)
+        self.set_stage(Stage.TEST_LAB_HAND_SPEED)
+        self.set_stage(Stage.WAIT_BUFFER)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_test_lab_hand_speed - {e}')
-
-    def _check_max_temper_test(self):
-        first = self.model.data_test.first_temperature
-        second = self.model.data_test.second_temperature
-        if self.model.data_test.type_test == 'temper':
-            finish_temp = self.model.data_test.finish_temperature
-        else:
-            finish_temp = self.model.data_test.amort.max_temper
-        if first < finish_temp and second < finish_temp:
-            return True
-        else:
-            self.signals.control_msg.emit('excess_temperature')
-            return False
-
-    def _test_temper(self):
-        try:
-            self.signals.lab_win_test.emit()
-            self.steps_tests.step_test_temper()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_test_temper - {e}')
-
+        if self.model.flag_repeat:
+            self.model.flag_repeat = False
+            self.model.fc_control(**{'tag': 'up', 'adr': 1})
+            
     def _test_lab_cascade(self):
+        """Блок испытания каскадом скоростей"""
         try:
-            self.signals.lab_win_test.emit()
+            self.model.flag_fill_graph = True
             self.count_cascade = 1
             self.max_cascade = len(self.model.data_test.speed_list)
-
-            self.steps_tests.step_test_lab_cascade(self.model.data_test.speed_list)
+            speed = self.model.data_test.speed_list[0]
+            self.model.data_test.speed_test = speed            
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                     'speed': speed})
+            self.model.write_bit_force_cycle(1)
+            self.set_next_stage(Stage.TEST_LAB_CASCADE)
+            self.set_stage(Stage.WAIT_BUFFER)
+            
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_test_lab_cascade - {e}')
+            
+    def _test_temper(self):
+        """Блок температурного испытания"""
+        try:
+            self.model.flag_fill_graph = True
+            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                     'speed': self.model.data_test.speed_test})
+            self.model.write_bit_force_cycle(1)
+            self.set_next_stage(Stage.TEST_TEMPER)
+            self.set_stage(Stage.WAIT_BUFFER)
+
+            if self.model.flag_repeat:
+                self.model.flag_repeat = False
+                self.model.fc_control(**{'tag': 'up', 'adr': 1})
+
+        except Exception as e:
+            self.logger.error(e)
+        
+    def _stop_gear_end_test(self):
+        """Блок детекта остановки привода(точнее почти максимального замедления)"""
+        self.model.write_bit_force_cycle(1)
+        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+        self.set_next_stage(Stage.TEST_PROGRAM)
+        self.set_stage(Stage.WAIT_BUFFER)
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -460,30 +583,6 @@ class Controller:
             self._test_on_two_speed(1)
 
     def _exit_repeat_test(self):
-        pass
-        
-    def _enter_pumping(self):
-        pass
-
-    def _stage_pumping(self):
-        type_test = self.model.data_test.type_test
-        if self.count_cycle < 3:
-            return
-        if type_test == 'conv':
-            self.signals.conv_win_test.emit()
-            self._test_on_two_speed(1)
-        else:
-            self.signals.lab_win_test.emit()
-            if type_test == 'lab_hand':
-                self._test_lab_hand_speed()
-            elif type_test == 'temper':
-                self._test_temper()
-            elif type_test == 'lab_cascade':
-                self._test_lab_cascade()
-            else:
-                self._test_on_two_speed(1)
-
-    def _exit_pumping(self):
         pass
 
     def _enter_alarm_traverse(self):
@@ -534,125 +633,6 @@ class Controller:
 
     def _exit_install_amort(self):
         pass
-
-    def _enter_start_point_amort(self):
-        self.signals.control_msg.emit(f'pos_traverse')
-
-    def _stage_start_point_amort(self):
-        if self.steps.step_control_traverse_move(self.set_trav_point):
-            self.set_next_stage(Stage.TEST_MOVE_CYCLE)
-            self.signals.control_msg.emit(f'move_detection')
-            self.steps.step_test_move_cycle()
-            self.set_stage(Stage.WAIT_BUFFER)
-
-    def _exit_start_point_amort(self):
-        pass
-
-    def _enter_test_move_cycle(self):
-        pass
-
-    def _stage_test_move_cycle(self):
-        if 0 < self.count_cycle < 2:
-            return
-        self.signals.control_msg.emit('pumping')
-        self.steps.step_pumping_before_test()
-
-    def _exit_test_move_cycle(self):
-        pass
-
-    def _enter_test_speed_one(self):
-        pass
-
-    def _stage_test_speed_one(self):
-        type_test = self.model.data_test.type_test
-        if self.count_cycle < 5:
-            return
-        self.model.save_result_cycle()
-        if type_test == 'conv':
-            self.steps.step_result_conveyor_test('one')
-        self.model.write_end_test_in_archive()
-        self._test_on_two_speed(2)
-
-    def _exit_test_speed_one(self):
-        pass
-
-    def _enter_test_speed_two(self):
-        pass
-
-    def _stage_test_speed_two(self):
-        type_test = self.model.data_test.type_test
-        if self.count_cycle < 5:
-            return
-        self.model.save_result_cycle()
-        if type_test == 'conv':
-            self.steps.step_result_conveyor_test('two')
-        self.set_stage(Stage.WAIT)
-        self.model.flag_fill_graph = False
-        self.model.write_end_test_in_archive()
-        self._stop_gear_end_test()
-
-    def _exit_test_speed_two(self):
-        pass
-
-    def _enter_test_lab_hand_speed(self):
-        pass
-
-    def _stage_test_lab_hand_speed(self):
-        if self.count_cycle < 5:
-            return
-        self.model.save_result_cycle()
-        self.set_stage(Stage.WAIT)
-        self.model.flag_fill_graph = False
-        self.model.write_end_test_in_archive()
-        self._stop_gear_end_test()
-
-    def _exit_test_lab_hand_speed(self):
-        pass
-
-    def _enter_test_temper(self):
-        self.last_max_temper = -100
-
-    def _stage_test_temper(self):
-        if 0 < self.count_cycle < 2:
-            return
-        if self.model.data_test.max_temperature != self.last_max_temper:
-            self.last_max_temper = self.model.data_test.max_temperature
-            if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
-                self.model.temper_graph.append(self.model.data_test.max_temperature)
-                self.model.temper_recoil_graph.append(self.model.max_recoil)
-                self.model.temper_comp_graph.append(self.model.max_comp)
-            else:
-                self.model.save_result_cycle()
-                self.model.flag_fill_graph = False
-                self.set_stage(Stage.WAIT)
-                self.model.write_end_test_in_archive()
-                self._stop_gear_end_test()
-
-    def _exit_test_temper(self):
-        pass
-
-    def _enter_test_lab_cascade(self):
-        pass
-
-    def _stage_test_lab_cascade(self):
-        if self.count_cycle < 5:
-            return
-        self.model.save_result_cycle()
-        if self.count_cascade < self.max_cascade:
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                        'speed':self.model.data_test.speed_list[self.count_cascade]})
-            self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
-            self.model.flag_fill_graph = True
-            self.count_cascade += 1
-        else:
-            self.set_stage(Stage.WAIT)
-            self.model.flag_fill_graph = False
-            self.count_cascade = 1
-            self.model.write_end_test_in_archive()
-            self._stop_gear_end_test()
-
-    def _exit_test_lab_cascade(self):
-        pass
         
     def _enter_stop_gear_min_pos(self):
         pass
@@ -685,20 +665,6 @@ class Controller:
 
     def _exit_stop_test(self):
         pass
-    
-    def search_hod(self):
-        """Блок определения хода шатуна"""
-        self.model.alarm_tag = ''
-        self.model.flag_alarm = False
-        self.model.flag_search_hod = True
-        
-        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-        
-        self.model.write_bit_force_cycle(1)
-        self.set_next_stage(Stage.SEARCH_HOD)
-        self.set_stage(Stage.WAIT_BUFFER)
 
     def _enter_search_hod(self):
         self.signals.control_msg.emit(f'move_detection')
@@ -707,19 +673,173 @@ class Controller:
 
     def _stage_search_hod(self):
         if self.flag_collect_done:
-            self.flag_collect_done = False
+            self.restart_flag_collect()
             self._stop_gear_end_test()
 
     def _exit_search_hod(self):
         self.model.reader_stop_test()
         self.model.write_bit_force_cycle(0)
-    
-    def _stop_gear_end_test(self):
-        """Блок детекта остановки привода(точнее почти максимального замедления)"""
-        self.model.write_bit_force_cycle(1)
-        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-        self.set_next_stage(Stage.TEST_PROGRAM)
-        self.set_stage(Stage.WAIT_BUFFER)
+        
+    def _enter_start_point_amort(self):
+        self.signals.control_msg.emit(f'pos_traverse')
+
+    def _stage_start_point_amort(self):
+        if self.steps.step_control_traverse_move(self.set_trav_point):
+            self._test_move_cycle()
+
+    def _exit_start_point_amort(self):
+        pass
+        
+    def _enter_test_move_cycle(self):
+        self.signals.control_msg.emit(f'move_detection')
+        self.model.run_collector_without_data()
+        self.model.reader_start_test()
+
+    def _stage_test_move_cycle(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            self._pumping()
+
+    def _exit_test_move_cycle(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_pumping(self):
+        self.signals.control_msg.emit('pumping')
+        self.model.run_collector_without_data()
+        self.model.reader_start_test()
+
+    def _stage_pumping(self):
+        type_test = self.model.data_test.type_test
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            if type_test == 'conv':
+                self.signals.conv_win_test.emit()
+                self._test_on_two_speed(1)
+            else:
+                self.signals.lab_win_test.emit()
+                if type_test == 'lab_hand':
+                    self._test_lab_hand_speed()
+                elif type_test == 'temper':
+                    self._test_temper()
+                elif type_test == 'lab_cascade':
+                    self._test_lab_cascade()
+                else:
+                    self._test_on_two_speed(1)
+
+    def _exit_pumping(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_test_speed_one(self):
+        self.model.run_collector_with_data()
+        self.model.reader_start_test()
+
+    def _stage_test_speed_one(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            type_test = self.model.data_test.type_test
+            self.model.save_result_cycle()
+            if type_test == 'conv':
+                self.steps.step_result_conveyor_test('one')
+            self.model.write_end_test_in_archive()
+            self._test_on_two_speed(2)
+
+    def _exit_test_speed_one(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_test_speed_two(self):
+        self.model.run_collector_with_data()
+        self.model.reader_start_test()
+
+    def _stage_test_speed_two(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            type_test = self.model.data_test.type_test
+
+            self.model.save_result_cycle()
+            if type_test == 'conv':
+                self.steps.step_result_conveyor_test('two')
+            self.set_stage(Stage.WAIT)
+            self.model.flag_fill_graph = False
+            self.model.write_end_test_in_archive()
+            self._stop_gear_end_test()
+
+    def _exit_test_speed_two(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_test_lab_hand_speed(self):
+        self.signals.lab_win_test.emit()
+        self.model.run_collector_with_data()
+        self.model.reader_start_test()
+
+    def _stage_test_lab_hand_speed(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            self.model.save_result_cycle()
+            self.set_stage(Stage.WAIT)
+            self.model.flag_fill_graph = False
+            self.model.write_end_test_in_archive()
+            self._stop_gear_end_test()
+
+    def _exit_test_lab_hand_speed(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_test_lab_cascade(self):
+        self.signals.lab_win_test.emit()
+        self.model.run_collector_with_data()
+        self.model.reader_start_test()
+
+    def _stage_test_lab_cascade(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            self.model.save_result_cycle()
+            if self.count_cascade < self.max_cascade:
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
+                                            'speed':self.model.data_test.speed_list[self.count_cascade]})
+                self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
+                self.model.run_collector_with_data()
+                self.model.flag_fill_graph = True
+                self.count_cascade += 1
+            else:
+                self.set_stage(Stage.WAIT)
+                self.model.flag_fill_graph = False
+                self.count_cascade = 1
+                self.model.write_end_test_in_archive()
+                self._stop_gear_end_test()
+
+    def _exit_test_lab_cascade(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+        
+    def _enter_test_temper(self):
+        self.last_max_temper = -100
+        self.signals.lab_win_test.emit()
+        self.model.run_collector_with_data()
+        self.model.reader_start_test()
+
+    def _stage_test_temper(self):
+        if self.flag_collect_done:
+            self.restart_flag_collect()
+            if self.model.data_test.max_temperature != self.last_max_temper:
+                self.last_max_temper = self.model.data_test.max_temperature
+                if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
+                    self.model.temper_graph.append(self.model.data_test.max_temperature)
+                    self.model.temper_recoil_graph.append(self.model.max_recoil)
+                    self.model.temper_comp_graph.append(self.model.max_comp)
+                else:
+                    self.model.save_result_cycle()
+                    self.model.flag_fill_graph = False
+                    self.set_stage(Stage.WAIT)
+                    self.model.write_end_test_in_archive()
+                    self._stop_gear_end_test()
+
+    def _exit_test_temper(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
 
     def _enter_stop_gear_end_test(self):
         self.model.reader_start_test()
@@ -742,15 +862,14 @@ class Controller:
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        # self.model.run_collector_with_data()
-        self.model.run_collector_find_stroke()
+        self.model.run_collector_with_data()
         self.model.reader_start_test()
         print('enter stage buffer start')
-        # self.signals.lab_win_test.emit()
+        self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
         if self.flag_collect_done:
-            self.flag_collect_done = False
+            self.restart_flag_collect()
             print('Congratelations! 3 cycles is done')
             self.set_stage(Stage.WAIT)
 
