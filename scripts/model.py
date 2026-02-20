@@ -370,10 +370,14 @@ class Model:
                         self.flag_collect_done = True
                         self.signals.collect_done.emit(True)
                         cycles = self.collector.get_cycles()
-                        avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
-                        self.signals.update_data_graph.emit(avg)
-                        # print(avg)
-                        # print('#################################')
+                        if Mode.STROKE_ONLY:
+                            min_pos, max_pos, stroke = cycles[0]
+                            print(f'{min_pos=}; {max_pos=}; {stroke=}')
+                        elif Mode.COLLECT:
+                            avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
+                            self.signals.update_data_graph.emit(avg)
+                            # print(avg)
+                            # print('#################################')
 
                     elif state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
@@ -384,12 +388,12 @@ class Model:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
                 
-    def run_collector_without_data(self, count: int=1):
+    def run_collector_without_data(self, count_det: int=1):
         try:
             self.flag_collect_done = False
             self.flag_collect_error = False
             self.collector.load_program([
-                (Mode.DETECT_ONLY, count),
+                (Mode.DETECT_ONLY, count_det),
             ])
             
         except Exception as e:
@@ -404,6 +408,17 @@ class Model:
                 (Mode.COLLECT, count_col),
             ])
             
+        except Exception as e:
+            self.logger.error(e)
+            
+    def run_collector_find_stroke(self, count_str: int=1):
+        try:
+            self.flag_collect_done = False
+            self.flag_collect_error = False
+            self.collector.load_program([
+                (Mode.STROKE_ONLY, count_str),
+            ])
+
         except Exception as e:
             self.logger.error(e)
 

@@ -422,11 +422,6 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_test_lab_cascade - {e}')
-            
-    def _test_program(self):
-        self.model.write_bit_force_cycle(1)
-        self.set_next_stage(Stage.TEST_PROGRAM)
-        self.set_stage(Stage.WAIT_BUFFER)
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -445,7 +440,6 @@ class Controller:
         if self.model.buffer_state[0] == 'OK!':
             if self.model.buffer_state[1] == 'buffer_on':
                 self.model.buffer_state = ['null', 'null']
-                self.model.reader_start_test()
                 self.model.fc_control(tag='up', adr=1)
                 self.set_stage(self.next_stage)
             elif self.model.buffer_state[1] == 'buffer_off':
@@ -708,7 +702,7 @@ class Controller:
 
     def _enter_stop_test(self):
         if not self.model.flag_alarm:
-                    self.signals.control_msg.emit(f'pos_traverse')
+            self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_stop_test(self):
         flag = self.steps.step_control_traverse_move(self.set_trav_point)
@@ -719,13 +713,19 @@ class Controller:
 
     def _exit_stop_test(self):
         pass
+    
+    def _test_program(self):
+        self.model.write_bit_force_cycle(1)
+        self.set_next_stage(Stage.TEST_PROGRAM)
+        self.set_stage(Stage.WAIT_BUFFER)
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        self.model.run_collector_with_data()
+        # self.model.run_collector_with_data()
+        self.model.run_collector_find_stroke()
         self.model.reader_start_test()
         print('enter stage buffer start')
-        self.signals.lab_win_test.emit()
+        # self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
         if self.flag_collect_done:

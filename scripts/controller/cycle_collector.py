@@ -16,6 +16,7 @@ class PhaseState(Enum):
 class Mode(Enum):
     DETECT_ONLY = 0
     COLLECT = 1
+    STROKE_ONLY = 2
 
 
 class CycleCollector:
@@ -63,6 +64,9 @@ class CycleCollector:
 
         self.turn_count = 0
         self.points_after_turn = 0
+        
+        self.cycle_min_pos = float("inf")
+        self.cycle_max_pos = float("-inf")
 
         self.current_pos = []
         self.current_force = []
@@ -215,6 +219,9 @@ class CycleCollector:
 
                                     self.current_pos.clear()
                                     self.current_force.clear()
+                                    
+                                    self.cycle_min_pos = float("inf")
+                                    self.cycle_max_pos = float("-inf")
 
                             # -------- RUN --------
                             elif self.phase_state == PhaseState.RUN:
@@ -233,8 +240,16 @@ class CycleCollector:
                                     pos_np = np.array(self.current_pos, dtype=np.float32)
                                     force_np = np.array(self.current_force, dtype=np.float32)
                                     pos_np, force_np = self._normalize_cycle(pos_np, force_np)
-
                                     self.cycles.append((pos_np, force_np))
+
+                                elif mode == Mode.STROKE_ONLY:
+                                    if self.cycle_min_pos is not None:
+                                        stroke = self.cycle_max_pos - self.cycle_min_pos
+                                        self.cycles.append((
+                                            self.cycle_min_pos,
+                                            self.cycle_max_pos,
+                                            stroke
+                                        ))
 
                                 self.program_cycle_counter += 1
 
@@ -248,13 +263,24 @@ class CycleCollector:
 
                             self.current_pos.clear()
                             self.current_force.clear()
+                            
+                            self.cycle_min_pos = float("inf")
+                            self.cycle_max_pos = float("-inf")
 
                 if sign != 0:
                     self.prev_sign = sign
-
+                    
                 if self.phase_state == PhaseState.RUN:
-                    self.current_pos.append(pos)
-                    self.current_force.append(force)
+                    step = self._current_program_step()
+                    mode, _ = step
+
+                    if mode == Mode.COLLECT:
+                        self.current_pos.append(pos)
+                        self.current_force.append(force)
+
+                    elif mode == Mode.STROKE_ONLY:
+                        self.cycle_min_pos = min(self.cycle_min_pos, pos)
+                        self.cycle_max_pos = max(self.cycle_max_pos, pos)
 
                 self.prev_pos = pos
         
@@ -283,6 +309,9 @@ class CycleCollector:
 
             self.current_pos.clear()
             self.current_force.clear()
+            
+            self.cycle_min_pos = float("inf")
+            self.cycle_max_pos = float("-inf")
 
             self.cycles.clear()
 
