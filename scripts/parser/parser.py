@@ -40,11 +40,7 @@ class ParserSPG023MK:
                 'state_list': self._bits16(res.get('state')[-1]),
                 'temper': res.get('temper')[-1],
             }
-            # print(f'count --> {result.get("count")}')
-            # print(f'force --> {result.get("force")}')
-            # print(f'move --> {result.get("move")}')
-            # print(f'state --> {result.get("state")}')
-            # print(f'temper --> {result.get("temper")}')
+
             return result
             # return self._discard_left_data(result) # Убрал для отладки, контроллер на столе
             

@@ -6,8 +6,29 @@ from scripts.logger import my_logger
 
 
 class CalcData:
+    SPEED_CONFIG = {
+        (100, float('inf')): {'slow': 0.03, 'medium': 0.1, 'fast': 0.2},
+        (50, 100): {'slow': 0.02, 'medium': 0.06, 'fast': 0.1},
+        (0, 50): {'slow': 0.01, 'medium': 0.03, 'fast': 0.03},
+    }
+    
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
+        
+    def definition_speed_by_hod(self, tag: str, hod: int) -> float:
+        """Get speed based on hod value and speed tag."""
+        try:
+            # Find matching range and get speed
+            for (min_hod, max_hod), speeds in self.SPEED_CONFIG.items():
+                if min_hod < hod <= max_hod:
+                    return speeds.get(tag, 0.03)
+            
+            return 0.03  # Safe default
+
+        except Exception as e:
+            self.logger.error(e)
+            self.model.status_bar_msg(f'ERROR in Steps/definition_speed_by_hod - {e}')
+            return 0.03  # Safe default on error
         
     def _normalize_cycle(self, x, y, target_len=1000):
         try:

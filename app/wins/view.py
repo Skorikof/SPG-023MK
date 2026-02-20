@@ -318,7 +318,7 @@ class AppWindow(QMainWindow):
             self.main_ui_state(False)
             self.main_btn_state(False)
             self.main_stop_state(True)
-            self.controller.search_hod_gear()
+            self.controller.search_hod()
 
         except Exception as e:
             self.logger.error(e)
@@ -329,7 +329,7 @@ class AppWindow(QMainWindow):
             msg = QMessageBox.information(self,
                                           'Внимание',
                                           f'<b style="color: #f00;">Ход шатуна равен '
-                                          f'{self.model.hod_measure}</b>'
+                                          f'{self.model.stroke}</b>'
                                           )
             self.main_ui_state(True)
             self.main_btn_state(True)

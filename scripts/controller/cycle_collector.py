@@ -4,6 +4,7 @@ from collections import deque
 from enum import Enum
 
 from scripts.logger import my_logger
+from scripts.controller.stop_detector import StopDetector
 
 
 class PhaseState(Enum):
@@ -34,6 +35,12 @@ class CycleCollector:
     ):
 
         self.logger = my_logger.get_logger(__name__)
+        
+        self.stop_detector = StopDetector(
+            vel_threshold_getter=lambda: self.vel_threshold,
+            stop_ratio=0.05,
+            confirm_time_sec=0.25, # Если ложные срабатывния увеличить, если медленно реагирует - уменьшить
+        )
 
         # -------- параметры --------
         self.sample_rate = sample_rate
@@ -188,6 +195,8 @@ class CycleCollector:
 
                 v = pos - self.prev_pos
                 self._update_threshold(v)
+                
+                self.stop_detector.update(v, self.phase_state, now)
 
                 sign = self._sign(v)
                 self.points_after_turn += 1
@@ -293,10 +302,15 @@ class CycleCollector:
             
     def get_cycles(self):
         return list(self.cycles)
+    
+    def motor_stopped(self):
+        return self.stop_detector.stopped
 
     def reset(self):
         try:
             self.phase_state = PhaseState.ACCEL
+            
+            self.stop_detector.reset()
 
             self.program_index = 0
             self.program_cycle_counter = 0

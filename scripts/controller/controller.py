@@ -225,7 +225,7 @@ class Controller:
                 self.alarm_steps.step_safety_fence()
 
             elif tag == 'excess_temperature':
-                self.steps.step_stop_gear_end_test()
+                self._stop_gear_end_test()
                 self.alarm_steps.step_excess_temperature()
             else:
                 pass
@@ -314,19 +314,11 @@ class Controller:
         """
         try:
             self.steps_tests.step_stop_test()
-            self.steps.step_stop_gear_end_test()
+            self._stop_gear_end_test()
 
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/stop_test_clicked - {e}')
-
-    def search_hod_gear(self):
-        try:
-            self.steps.step_search_hod_gear()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/search_hod_gear - {e}')
 
     def move_gear_set_pos(self):
         try:
@@ -437,6 +429,7 @@ class Controller:
         pass
 
     def _stage_wait_buffer(self):
+        """Блок ожидания включения записи в буфер и переключение на следующий шаг"""
         if self.model.buffer_state[0] == 'OK!':
             if self.model.buffer_state[1] == 'buffer_on':
                 self.model.buffer_state = ['null', 'null']
@@ -468,18 +461,7 @@ class Controller:
 
     def _exit_repeat_test(self):
         pass
-
-    def _enter_search_hod(self):
-        self.signals.control_msg.emit(f'move_detection')
-
-    def _stage_search_hod(self):
-        if self.steps.stage_search_hod(self.count_cycle):
-            self.set_stage(Stage.WAIT)
-            self.steps.step_stop_gear_end_test()
-
-    def _exit_search_hod(self):
-        pass
-
+        
     def _enter_pumping(self):
         pass
 
@@ -607,7 +589,7 @@ class Controller:
         self.set_stage(Stage.WAIT)
         self.model.flag_fill_graph = False
         self.model.write_end_test_in_archive()
-        self.steps.step_stop_gear_end_test()
+        self._stop_gear_end_test()
 
     def _exit_test_speed_two(self):
         pass
@@ -622,7 +604,7 @@ class Controller:
         self.set_stage(Stage.WAIT)
         self.model.flag_fill_graph = False
         self.model.write_end_test_in_archive()
-        self.steps.step_stop_gear_end_test()
+        self._stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
         pass
@@ -644,7 +626,7 @@ class Controller:
                 self.model.flag_fill_graph = False
                 self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
-                self.steps.step_stop_gear_end_test()
+                self._stop_gear_end_test()
 
     def _exit_test_temper(self):
         pass
@@ -667,21 +649,11 @@ class Controller:
             self.model.flag_fill_graph = False
             self.count_cascade = 1
             self.model.write_end_test_in_archive()
-            self.steps.step_stop_gear_end_test()
+            self._stop_gear_end_test()
 
     def _exit_test_lab_cascade(self):
         pass
-
-    def _enter_stop_gear_end_test(self):
-        pass
-
-    def _stage_stop_gear_end_test(self):
-        if self.steps.stage_stop_gear_end_test():
-            self.steps.step_stop_gear_min_pos()
-
-    def _exit_stop_gear_end_test(self):
-        pass
-
+        
     def _enter_stop_gear_min_pos(self):
         pass
 
@@ -714,6 +686,55 @@ class Controller:
     def _exit_stop_test(self):
         pass
     
+    def search_hod(self):
+        """Блок определения хода шатуна"""
+        self.model.alarm_tag = ''
+        self.model.flag_alarm = False
+        self.model.flag_search_hod = True
+        
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+        
+        self.model.write_bit_force_cycle(1)
+        self.set_next_stage(Stage.SEARCH_HOD)
+        self.set_stage(Stage.WAIT_BUFFER)
+
+    def _enter_search_hod(self):
+        self.signals.control_msg.emit(f'move_detection')
+        self.model.run_collector_find_stroke()
+        self.model.reader_start_test()
+
+    def _stage_search_hod(self):
+        if self.flag_collect_done:
+            self.flag_collect_done = False
+            self._stop_gear_end_test()
+
+    def _exit_search_hod(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+    
+    def _stop_gear_end_test(self):
+        """Блок детекта остановки привода(точнее почти максимального замедления)"""
+        self.model.write_bit_force_cycle(1)
+        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+        self.set_next_stage(Stage.TEST_PROGRAM)
+        self.set_stage(Stage.WAIT_BUFFER)
+
+    def _enter_stop_gear_end_test(self):
+        self.model.reader_start_test()
+
+    def _stage_stop_gear_end_test(self):
+        if self.model.collector.motor_stopped():
+            self.steps.step_stop_gear_min_pos()
+            self.set_stage(Stage.WAIT)
+            # Дальше нужно довернуть до минимальной точки
+
+    def _exit_stop_gear_end_test(self):
+        self.model.reader_stop_test()
+        self.model.write_bit_force_cycle(0)
+    
+    #--------- testing ---------#
     def _test_program(self):
         self.model.write_bit_force_cycle(1)
         self.set_next_stage(Stage.TEST_PROGRAM)

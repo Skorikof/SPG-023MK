@@ -76,7 +76,13 @@ class Model:
         self.force_clear = 0
         self.force_correct = 0
         self.force_koef_offset = 0
+        self.koef_force_list = []
         self.force_offset = 0
+        
+        self.min_point = 0
+        self.max_point = 0
+        self.stroke = 0
+        
 
         self.force_list = []
         self.move_list = []
@@ -90,12 +96,11 @@ class Model:
         self.move_now = 0
         self.move_traverse = 0
         self.hod_measure = 0
-        self.min_point = 0
-        self.max_point = 0
+        
         self.start_direction = False
         self.current_direction = False
 
-        self.koef_force_list = []
+        
         self.timer_add_koef = None
         self.timer_calc_koef = None
 
@@ -371,13 +376,11 @@ class Model:
                         self.signals.collect_done.emit(True)
                         cycles = self.collector.get_cycles()
                         if Mode.STROKE_ONLY:
-                            min_pos, max_pos, stroke = cycles[0]
-                            print(f'{min_pos=}; {max_pos=}; {stroke=}')
+                            self.min_point, self.max_point, self.stroke = cycles[0]
+                            
                         elif Mode.COLLECT:
                             avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
                             self.signals.update_data_graph.emit(avg)
-                            # print(avg)
-                            # print('#################################')
 
                     elif state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
@@ -413,6 +416,9 @@ class Model:
             
     def run_collector_find_stroke(self, count_str: int=1):
         try:
+            self.min_point = 0
+            self.max_point = 0
+            self.stroke = 0
             self.flag_collect_done = False
             self.flag_collect_error = False
             self.collector.load_program([

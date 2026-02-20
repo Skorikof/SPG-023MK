@@ -53,7 +53,7 @@ class Steps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_control_alarm_state - {e}')
             
-    def _definition_speed_by_hod(self, tag: str) -> float:
+    def definition_speed_by_hod(self, tag: str) -> float:
         """Get speed based on hod value and speed tag."""
         try:
             # Get hod value (default 120 if None)
@@ -68,38 +68,8 @@ class Steps:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/_definition_speed_by_hod - {e}')
+            self.model.status_bar_msg(f'ERROR in Steps/definition_speed_by_hod - {e}')
             return 0.03  # Safe default on error
-
-    def step_search_hod_gear(self):
-        try:
-            self.signals.stage_from_logic.emit(Stage.WAIT)
-            self.signals.next_stage_from_logic.emit(Stage.SEARCH_HOD)
-            self.model.alarm_tag = ''
-            self.model.flag_alarm = False
-            self.model.flag_search_hod = True
-
-            speed = self._definition_speed_by_hod('medium')
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.signals.stage_from_logic.emit(Stage.WAIT_BUFFER)
-            self.model.write_bit_force_cycle(1)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/step_search_hod_gear - {e}')
-
-    def stage_search_hod(self, count_cycle):
-        try:
-            if count_cycle >= 1:
-                self.model.hod_measure = round(abs(self.model.min_point) + abs(self.model.max_point), 1)
-                return True
-
-            else:
-                return False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/stage_search_hod - {e}')
 
     def step_move_gear_set_pos(self):
         try:
@@ -108,7 +78,7 @@ class Steps:
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
 
-            speed = self._definition_speed_by_hod('slow')
+            speed = self.definition_speed_by_hod('slow')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.signals.stage_from_logic.emit(Stage.WAIT_BUFFER)
             self.model.write_bit_force_cycle(1)
@@ -136,43 +106,13 @@ class Steps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_pos_set_gear - {e}')
 
-    def step_stop_gear_end_test(self):
-        """Остановка двигателя после испытания и перед исходным положением"""
-        try:
-            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-
-            self.signals.stage_from_logic.emit(Stage.STOP_GEAR_END_TEST)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/step_stop_gear_end_test - {e}')
-
-    def stage_stop_gear_end_test(self):
-        try:
-            # if abs(self.model.move_list[-1] - self.model.move_list[-10]) < 0.1:
-            if statistics.stdev(self.model.move_buf) < 0.1: # Перемещение перестало изменятьсяs
-                self.count_wait_point += 1
-
-            else:
-                self.count_wait_point = 0
-
-            if self.count_wait_point > 20:
-                self.signals.stage_from_logic.emit(Stage.WAIT)
-                self.count_wait_point = 0
-                return True
-            return False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in steps/stop_gear_end_test - {e}')
-
     def step_stop_gear_min_pos(self):
         """Снижение скорости и остановка привода в нижней точке"""
         try:
             self.model.reader_stop_test()
             self.model.write_bit_force_cycle(0)
 
-            speed = self._definition_speed_by_hod('slow')
+            speed = self.definition_speed_by_hod('slow')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
 
@@ -202,7 +142,7 @@ class Steps:
     def step_test_move_cycle(self):
         """Проверочный ход"""
         try:
-            speed = self._definition_speed_by_hod('medium')
+            speed = self.definition_speed_by_hod('medium')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.write_bit_force_cycle(1)
 
@@ -213,7 +153,7 @@ class Steps:
     def step_pumping_before_test(self):
         """Прокачка на скорости 0.2 3 оборота перед запуском теста"""
         try:
-            speed = self._definition_speed_by_hod('fast')
+            speed = self.definition_speed_by_hod('fast')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.write_bit_force_cycle(1)
             self.model.reader_start_test()

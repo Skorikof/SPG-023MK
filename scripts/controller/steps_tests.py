@@ -62,7 +62,6 @@ class StepTests:
 
     def step_stop_test(self):
         try:
-            self.signals.stage_from_tests.emit(Stage.WAIT)
             self.model.flag_test_launch = False
             self.model.flag_test = False
             self.model.flag_fill_graph = False
