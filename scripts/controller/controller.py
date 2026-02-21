@@ -4,10 +4,11 @@ from PySide6.QtCore import QTimer, QObject, Signal, Slot
 from config import config
 from scripts.logger import my_logger
 from scripts.data_calculation import CalcData
+from scripts.controller.alarm_steps import AlarmSteps
 from scripts.controller.collector_service import CollectorService
 from scripts.controller.stages import Stage
 from scripts.controller.steps_logic import Steps
-from scripts.controller.alarm_steps import AlarmSteps
+from scripts.controller.test_flow import TestFlow
 
 
 class ControlSignals(QObject):
@@ -31,6 +32,7 @@ class Controller:
             self.steps = Steps(model)
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
+            self.test_flow = TestFlow(Controller)
 
             self._init_variables()
             self._init_flags()
@@ -383,7 +385,7 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/move_gear_set_pos - {e}')
             
-    def _transition_via_buffer(
+    def transition_via_buffer(
         self,
         next_stage: Stage,
         *,
@@ -451,92 +453,36 @@ class Controller:
             
     def search_hod(self):
         """Блок определения хода шатуна"""
-        self.model.alarm_tag = ''
-        self.model.flag_alarm = False
-        self.model.flag_search_hod = True
-        
-        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self._transition_via_buffer(Stage.SEARCH_HOD, speed=speed)
+        self.test_flow.search_hod()
         
     def _test_move_cycle(self):
         """Блок провероного хода на алой скорости"""
-        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self._transition_via_buffer(Stage.TEST_MOVE_CYCLE, speed=speed)
+        self.test_flow.test_move_cycle()
         
     def _pumping(self):
         """Блок прокачки амортизатора"""
-        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('fast', hod)
-        self._transition_via_buffer(Stage.PUMPING, speed=speed)
+        self.test_flow.pumping()
         
     def _test_on_two_speed(self, ind):
         """Блок испытания на двух скоростях"""
-        try:
-            if ind == 1:
-                self.model.flag_fill_graph = True
-                speed = self.model.data_test.amort.speed_one
-                self.model.data_test.speed_test = speed
-                self._transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed)
+        self.test_flow.test_on_two_speed(ind)
 
-            elif ind == 2:
-                speed = self.model.data_test.amort.speed_two
-                self.model.data_test.speed_test = speed
-                self._transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed)
-
-            if self.model.flag_repeat:
-                self.model.flag_repeat = False
-                self.model.fc_control(**{'tag': 'up', 'adr': 1})
-
-        except Exception as e:
-            self.logger.error(e)
-            
     def _test_lab_hand_speed(self):
         """Блок испытания на скорости введённой ручную"""
-        self.model.flag_fill_graph = True
-        speed = self.model.data_test.speed_test
-        self._transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed)
+        self.test_flow.test_lab_hand_speed()
 
-        if self.model.flag_repeat:
-            self.model.flag_repeat = False
-            self.model.fc_control(**{'tag': 'up', 'adr': 1})
-            
     def _test_lab_cascade(self):
         """Блок испытания каскадом скоростей"""
-        try:
-            self.model.flag_fill_graph = True
-            self.count_cascade = 1
-            self.max_cascade = len(self.model.data_test.speed_list)
-            speed = self.model.data_test.speed_list[0]
-            self.model.data_test.speed_test = speed            
-            self._transition_via_buffer(Stage.TEST_LAB_CASCADE, speed=speed)
-            
-            if self.model.flag_repeat:
-                self.model.flag_repeat = False
-                self.model.fc_control(**{'tag': 'up', 'adr': 1})
+        self.test_flow.test_lab_cascade()
 
-        except Exception as e:
-            self.logger.error(e)
-            
     def _test_temper(self):
         """Блок температурного испытания"""
-        try:
-            self.model.flag_fill_graph = True
-            speed = self.model.data_test.speed_test
-            self._transition_via_buffer(Stage.TEST_TEMPER, speed=speed)
+        self.test_flow.test_temper()
 
-            if self.model.flag_repeat:
-                self.model.flag_repeat = False
-                self.model.fc_control(**{'tag': 'up', 'adr': 1})
-
-        except Exception as e:
-            self.logger.error(e)
-        
     # FIXME Заменить следующий шаг, сейчас тестово
     def _stop_gear_end_test(self):
         """Блок детекта остановки привода(точнее почти максимального замедления)"""
-        self._transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
+        self.transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
         
     ##### STAGES #####
     def _enter_wait(self):
@@ -830,7 +776,7 @@ class Controller:
     
     #--------- testing ---------#
     def _test_program(self):
-        self._transition_via_buffer(Stage.TEST_PROGRAM)
+        self.transition_via_buffer(Stage.TEST_PROGRAM)
 
     def _enter_testing_prog(self):
         print('enter test stage')
