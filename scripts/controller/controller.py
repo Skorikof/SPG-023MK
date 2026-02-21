@@ -255,7 +255,7 @@ class Controller:
             self.model.reader_stop_test()
             self.model.write_bit_force_cycle(0)
             
-    # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание
+    # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание, соответственно пока отключена кнопка
     def step_yellow_btn_push(self):
         try:
             if self.model.flag_test is False:
@@ -295,7 +295,7 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_yellow_btn_push - {e}')
 
-    # FIXME
+    # FIXME Пока закоммичено в тестовом режиме
     def start_test_clicked(self):
         """
         Точка входа в испытание, определение референтной точки траверсы, если известна,
@@ -311,7 +311,6 @@ class Controller:
             #     if self.model.flag_repeat:
             #         self.set_stage(Stage.WAIT_BUFFER)
             #         self.set_next_stage(Stage.REPEAT_TEST)
-            #         self.model.write_bit_force_cycle(1)
 
             #     else:
             #         if self.model.move_traverse < 10:
@@ -380,6 +379,7 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
 
+    # FIXME Пока не реализован
     def move_gear_set_pos(self):
         try:
             self.steps.step_move_gear_set_pos()
@@ -387,6 +387,40 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/move_gear_set_pos - {e}')
+            
+    def _transition_via_buffer(
+        self,
+        next_stage: Stage,
+        *,
+        speed=None,
+        adr=1,
+        force_cycle=True,
+        extra_fc=None
+    ):
+        """
+        Унифицированный переход через WAIT_BUFFER.
+        Parameters
+        ----------
+        next_stage : Stage
+            Куда перейти после buffer_on
+        speed : int | None
+            Если задан — отправим fc_control speed
+        adr : int
+            Адрес привода
+        force_cycle : bool
+            Нужно ли включать force_cycle
+        extra_fc : dict | None
+            Любая дополнительная команда fc_control
+        """
+        if force_cycle:
+            self.model.write_bit_force_cycle(1)
+        if speed is not None:
+            self.model.fc_control(tag='speed', adr=adr, speed=speed)
+        if extra_fc:
+            self.model.fc_control(**extra_fc)
+
+        self.set_next_stage(next_stage)
+        self.set_stage(Stage.WAIT_BUFFER)
 
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
@@ -428,50 +462,33 @@ class Controller:
         
         hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-        self.model.write_bit_force_cycle(1)
-        self.set_next_stage(Stage.SEARCH_HOD)
-        self.set_stage(Stage.WAIT_BUFFER)
+        self._transition_via_buffer(Stage.SEARCH_HOD, speed=speed)
         
     def _test_move_cycle(self):
         """Блок провероного хода на алой скорости"""
         hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-        self.model.write_bit_force_cycle(1)
-        self.set_next_stage(Stage.TEST_MOVE_CYCLE)
-        self.set_stage(Stage.WAIT_BUFFER)
+        self._transition_via_buffer(Stage.TEST_MOVE_CYCLE, speed=speed)
         
     def _pumping(self):
         """Блок прокачки амортизатора"""
         hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
         speed = self.definition_speed_by_hod('fast', hod)
-        self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-        self.model.write_bit_force_cycle(1)
-        self.set_next_stage(Stage.PUMPING)
-        self.set_stage(Stage.WAIT_BUFFER)
+        self._transition_via_buffer(Stage.PUMPING, speed=speed)
         
     def _test_on_two_speed(self, ind):
         """Блок испытания на двух скоростях"""
         try:
             if ind == 1:
+                self.model.flag_fill_graph = True
                 speed = self.model.data_test.amort.speed_one
                 self.model.data_test.speed_test = speed
-                self.model.flag_fill_graph = True
-                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                         'speed': speed})
-                self.model.write_bit_force_cycle(1)
-                self.set_next_stage(Stage.TEST_SPEED_ONE)
-                self.set_stage(Stage.WAIT_BUFFER)
+                self._transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed)
 
             elif ind == 2:
                 speed = self.model.data_test.amort.speed_two
                 self.model.data_test.speed_test = speed
-                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                         'speed': speed})
-                self.model.write_bit_force_cycle(1)
-                self.set_next_stage(Stage.TEST_SPEED_TWO)
-                self.set_stage(Stage.WAIT_BUFFER)
+                self._transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed)
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
@@ -483,11 +500,8 @@ class Controller:
     def _test_lab_hand_speed(self):
         """Блок испытания на скорости введённой ручную"""
         self.model.flag_fill_graph = True
-        self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                'speed': self.model.data_test.speed_test})
-        self.model.write_bit_force_cycle(1)
-        self.set_stage(Stage.TEST_LAB_HAND_SPEED)
-        self.set_stage(Stage.WAIT_BUFFER)
+        speed = self.model.data_test.speed_test
+        self._transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed)
 
         if self.model.flag_repeat:
             self.model.flag_repeat = False
@@ -501,11 +515,7 @@ class Controller:
             self.max_cascade = len(self.model.data_test.speed_list)
             speed = self.model.data_test.speed_list[0]
             self.model.data_test.speed_test = speed            
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                     'speed': speed})
-            self.model.write_bit_force_cycle(1)
-            self.set_next_stage(Stage.TEST_LAB_CASCADE)
-            self.set_stage(Stage.WAIT_BUFFER)
+            self._transition_via_buffer(Stage.TEST_LAB_CASCADE, speed=speed)
             
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
@@ -518,11 +528,8 @@ class Controller:
         """Блок температурного испытания"""
         try:
             self.model.flag_fill_graph = True
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                     'speed': self.model.data_test.speed_test})
-            self.model.write_bit_force_cycle(1)
-            self.set_next_stage(Stage.TEST_TEMPER)
-            self.set_stage(Stage.WAIT_BUFFER)
+            speed = self.model.data_test.speed_test
+            self._transition_via_buffer(Stage.TEST_TEMPER, speed=speed)
 
             if self.model.flag_repeat:
                 self.model.flag_repeat = False
@@ -531,13 +538,11 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
         
+    # FIXME Заменить следующий шаг, сейчас тестово
     def _stop_gear_end_test(self):
         """Блок детекта остановки привода(точнее почти максимального замедления)"""
-        self.model.write_bit_force_cycle(1)
-        self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-        self.set_next_stage(Stage.TEST_PROGRAM)
-        self.set_stage(Stage.WAIT_BUFFER)
-
+        self._transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
+        
     ##### STAGES #####
     def _enter_wait(self):
         pass
@@ -657,8 +662,7 @@ class Controller:
             self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_stop_test(self):
-        flag = self.steps.step_control_traverse_move(self.set_trav_point)
-        if flag:
+        if self.steps.step_control_traverse_move(self.set_trav_point):
             self.set_stage(Stage.WAIT)
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
@@ -757,7 +761,6 @@ class Controller:
         if self.flag_collect_done:
             self.restart_flag_collect()
             type_test = self.model.data_test.type_test
-
             self.model.save_result_cycle()
             if type_test == 'conv':
                 self.steps.step_result_conveyor_test('two')
