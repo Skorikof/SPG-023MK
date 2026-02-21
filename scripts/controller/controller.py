@@ -217,7 +217,7 @@ class Controller:
                 self.alarm_steps.step_safety_fence()
 
             elif tag == 'excess_temperature':
-                self._stop_gear_end_test()
+                self.test_flow.stop_gear_end_test()
                 self.alarm_steps.step_excess_temperature()
             else:
                 pass
@@ -361,7 +361,7 @@ class Controller:
         """
         try:
             self.step_stop_test()
-            self._stop_gear_end_test()
+            self.test_flow.stop_gear_end_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -454,36 +454,7 @@ class Controller:
     def search_hod(self):
         """Блок определения хода шатуна"""
         self.test_flow.search_hod()
-        
-    def _test_move_cycle(self):
-        """Блок провероного хода на алой скорости"""
-        self.test_flow.test_move_cycle()
-        
-    def _pumping(self):
-        """Блок прокачки амортизатора"""
-        self.test_flow.pumping()
-        
-    def _test_on_two_speed(self, ind):
-        """Блок испытания на двух скоростях"""
-        self.test_flow.test_on_two_speed(ind)
 
-    def _test_lab_hand_speed(self):
-        """Блок испытания на скорости введённой ручную"""
-        self.test_flow.test_lab_hand_speed()
-
-    def _test_lab_cascade(self):
-        """Блок испытания каскадом скоростей"""
-        self.test_flow.test_lab_cascade()
-
-    def _test_temper(self):
-        """Блок температурного испытания"""
-        self.test_flow.test_temper()
-
-    # FIXME Заменить следующий шаг, сейчас тестово
-    def _stop_gear_end_test(self):
-        """Блок детекта остановки привода(точнее почти максимального замедления)"""
-        self.transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
-        
     ##### STAGES #####
     def _enter_wait(self):
         pass
@@ -520,13 +491,13 @@ class Controller:
         type_test = self.model.data_test.type_test
         self.set_stage(Stage.WAIT)
         if type_test == 'lab_hand':
-            self._test_lab_hand_speed()
+            self.test_flow.test_lab_hand_speed()
         elif type_test == 'temper':
-            self._test_temper()
+            self.test_flow.test_temper()
         elif type_test == 'lab_cascade':
-            self._test_lab_cascade()
+            self.test_flow.test_lab_cascade()
         else:
-            self._test_on_two_speed(1)
+            self.test_flow.test_on_two_speed(1)
 
     def _exit_repeat_test(self):
         pass
@@ -617,7 +588,7 @@ class Controller:
 
     def _stage_search_hod(self):
         if self.collector.consume_done():
-            self._stop_gear_end_test()
+            self.test_flow.stop_gear_end_test()
 
     def _exit_search_hod(self):
         self.collector.stop()
@@ -627,7 +598,7 @@ class Controller:
 
     def _stage_start_point_amort(self):
         if self.steps.step_control_traverse_move(self.set_trav_point):
-            self._test_move_cycle()
+            self.test_flow.test_move_cycle()
 
     def _exit_start_point_amort(self):
         pass
@@ -638,7 +609,7 @@ class Controller:
         
     def _stage_test_move_cycle(self):
         if self.collector.consume_done():
-            self._pumping()
+            self.test_flow.pumping()
 
     def _exit_test_move_cycle(self):
         self.collector.stop()
@@ -652,17 +623,17 @@ class Controller:
         if self.collector.consume_done():
             if type_test == 'conv':
                 self.signals.conv_win_test.emit()
-                self._test_on_two_speed(1)
+                self.test_flow.test_on_two_speed(1)
             else:
                 self.signals.lab_win_test.emit()
                 if type_test == 'lab_hand':
-                    self._test_lab_hand_speed()
+                    self.test_flow.test_lab_hand_speed()
                 elif type_test == 'temper':
-                    self._test_temper()
+                    self.test_flow.test_temper()
                 elif type_test == 'lab_cascade':
-                    self._test_lab_cascade()
+                    self.test_flow.test_lab_cascade()
                 else:
-                    self._test_on_two_speed(1)
+                    self.test_flow.test_on_two_speed(1)
 
     def _exit_pumping(self):
         self.collector.stop()
@@ -677,7 +648,7 @@ class Controller:
             if type_test == 'conv':
                 self.steps.step_result_conveyor_test('one')
             self.model.write_end_test_in_archive()
-            self._test_on_two_speed(2)
+            self.test_flow.test_on_two_speed(2)
 
     def _exit_test_speed_one(self):
         self.collector.stop()
@@ -694,7 +665,7 @@ class Controller:
             self.set_stage(Stage.WAIT)
             self.model.flag_fill_graph = False
             self.model.write_end_test_in_archive()
-            self._stop_gear_end_test()
+            self.test_flow.stop_gear_end_test()
 
     def _exit_test_speed_two(self):
         self.collector.stop()
@@ -709,7 +680,7 @@ class Controller:
             self.set_stage(Stage.WAIT)
             self.model.flag_fill_graph = False
             self.model.write_end_test_in_archive()
-            self._stop_gear_end_test()
+            self.test_flow.stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
         self.collector.stop()
@@ -733,7 +704,7 @@ class Controller:
                 self.model.flag_fill_graph = False
                 self.count_cascade = 1
                 self.model.write_end_test_in_archive()
-                self._stop_gear_end_test()
+                self.test_flow.stop_gear_end_test()
 
     def _exit_test_lab_cascade(self):
         self.collector.stop()
@@ -756,7 +727,7 @@ class Controller:
                     self.model.flag_fill_graph = False
                     self.set_stage(Stage.WAIT)
                     self.model.write_end_test_in_archive()
-                    self._stop_gear_end_test()
+                    self.test_flow.stop_gear_end_test()
 
     def _exit_test_temper(self):
         self.collector.stop()

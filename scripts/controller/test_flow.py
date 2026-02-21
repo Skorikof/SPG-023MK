@@ -72,3 +72,6 @@ class TestFlow:
             self.model.flag_repeat = False
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
     
+    # FIXME Заменить следующий шаг, сейчас тестово
+    def stop_gear_end_test(self):
+        self.ctrl.transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
