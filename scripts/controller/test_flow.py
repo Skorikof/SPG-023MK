@@ -13,12 +13,12 @@ class TestFlow:
         self.model.flag_search_hod = True
         
         hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        speed = self.calc.definition_speed_by_hod('medium', hod)
         self.ctrl.transition_via_buffer(Stage.SEARCH_HOD, speed=speed)
         
     def test_move_cycle(self):
         hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        speed = self.calc.definition_speed_by_hod('medium', hod)
         self.ctrl.transition_via_buffer(Stage.TEST_MOVE_CYCLE, speed=speed)
         
     def pumping(self):
