@@ -421,6 +421,20 @@ class Controller:
 
         self.set_next_stage(next_stage)
         self.set_stage(Stage.WAIT_BUFFER)
+        
+    def _collector_start(self, *, with_data: bool):
+        """Унифицированный запуск коллектора и reader"""
+        if with_data:
+            self.model.run_collector_with_data()
+        else:
+            self.model.run_collector_without_data()
+        self.model.reader_start_test()
+
+    def _collector_stop(self, *, disable_force_cycle: bool = True):
+        """Унифицированная остановка коллектора"""
+        self.model.reader_stop_test()
+        if disable_force_cycle:
+            self.model.write_bit_force_cycle(0)
 
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
@@ -696,22 +710,19 @@ class Controller:
         
     def _enter_test_move_cycle(self):
         self.signals.control_msg.emit(f'move_detection')
-        self.model.run_collector_without_data()
-        self.model.reader_start_test()
-
+        self._collector_start(with_data=False)
+        
     def _stage_test_move_cycle(self):
         if self.flag_collect_done:
             self.restart_flag_collect()
             self._pumping()
 
     def _exit_test_move_cycle(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_pumping(self):
         self.signals.control_msg.emit('pumping')
-        self.model.run_collector_without_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=False)
 
     def _stage_pumping(self):
         type_test = self.model.data_test.type_test
@@ -732,12 +743,10 @@ class Controller:
                     self._test_on_two_speed(1)
 
     def _exit_pumping(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_test_speed_one(self):
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
 
     def _stage_test_speed_one(self):
         if self.flag_collect_done:
@@ -750,12 +759,10 @@ class Controller:
             self._test_on_two_speed(2)
 
     def _exit_test_speed_one(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_test_speed_two(self):
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
 
     def _stage_test_speed_two(self):
         if self.flag_collect_done:
@@ -770,13 +777,11 @@ class Controller:
             self._stop_gear_end_test()
 
     def _exit_test_speed_two(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_test_lab_hand_speed(self):
         self.signals.lab_win_test.emit()
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
 
     def _stage_test_lab_hand_speed(self):
         if self.flag_collect_done:
@@ -788,22 +793,20 @@ class Controller:
             self._stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_test_lab_cascade(self):
         self.signals.lab_win_test.emit()
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
 
     def _stage_test_lab_cascade(self):
         if self.flag_collect_done:
             self.restart_flag_collect()
             self.model.save_result_cycle()
             if self.count_cascade < self.max_cascade:
-                self.model.fc_control(**{'tag': 'speed', 'adr': 1,
-                                            'speed':self.model.data_test.speed_list[self.count_cascade]})
-                self.model.data_test.speed_test = self.model.data_test.speed_list[self.count_cascade]
+                speed = self.model.data_test.speed_list[self.count_cascade]
+                self.model.data_test.speed_test = speed
+                self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
                 self.model.run_collector_with_data()
                 self.model.flag_fill_graph = True
                 self.count_cascade += 1
@@ -815,14 +818,12 @@ class Controller:
                 self._stop_gear_end_test()
 
     def _exit_test_lab_cascade(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         
     def _enter_test_temper(self):
         self.last_max_temper = -100
         self.signals.lab_win_test.emit()
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
 
     def _stage_test_temper(self):
         if self.flag_collect_done:
@@ -841,8 +842,7 @@ class Controller:
                     self._stop_gear_end_test()
 
     def _exit_test_temper(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
 
     def _enter_stop_gear_end_test(self):
         self.model.reader_start_test()
@@ -854,8 +854,7 @@ class Controller:
             # Дальше нужно довернуть до минимальной точки
 
     def _exit_stop_gear_end_test(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
     
     #--------- testing ---------#
     def _test_program(self):
@@ -865,8 +864,7 @@ class Controller:
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        self.model.run_collector_with_data()
-        self.model.reader_start_test()
+        self._collector_start(with_data=True)
         print('enter stage buffer start')
         self.signals.lab_win_test.emit()
 
@@ -878,6 +876,5 @@ class Controller:
 
     def _exit_testing_prog(self):
         print('exit test stage')
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
+        self._collector_stop()
         print('exit stage off sensor')
