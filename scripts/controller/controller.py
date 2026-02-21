@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from PySide6.QtCore import QTimer, QObject, Signal, Slot
+from PySide6.QtCore import QTimer, QObject, Signal
 
-from config import config
 from scripts.logger import my_logger
 from scripts.data_calculation import CalcData
 from scripts.controller.alarm_steps import AlarmSteps
@@ -9,6 +8,7 @@ from scripts.controller.collector_service import CollectorService
 from scripts.controller.stages import Stage
 from scripts.controller.steps_logic import Steps
 from scripts.controller.test_flow import TestFlow
+from scripts.controller.traverse_service import TraverseService
 
 
 class ControlSignals(QObject):
@@ -33,6 +33,7 @@ class Controller:
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
             self.test_flow = TestFlow(Controller)
+            self.trav_serv = TraverseService(Controller)
 
             self._init_variables()
             self._init_flags()
@@ -226,19 +227,6 @@ class Controller:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/_select_alarm_state - {e}')
 
-    def traverse_move_out_alarm(self, pos):
-        try:
-            if pos == 'up':
-                self.set_trav_point = 20
-            elif pos == 'down':
-                self.set_trav_point = 550
-            self.set_stage(Stage.ALARM_TRAVERSE)
-            self.steps.step_traverse_move_position(self.set_trav_point)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/traverse_move_out_alarm - {e}')
-
     def work_interrupted_operator(self):
         self.set_stage(Stage.WAIT)
         self.model.flag_test_launch = False
@@ -283,7 +271,7 @@ class Controller:
             if state:
                 tag = self.step_yellow_btn_push()
                 if tag == 'start':
-                    self.traverse_install_point('start_test')
+                    self.trav_serv.traverse_install_point('start_test')
 
                 elif tag == 'stop':
                     self.stop_test_clicked()
@@ -314,7 +302,7 @@ class Controller:
             #             self.steps.step_traverse_referent_point()
 
             #         else:
-            #             self.traverse_install_point('install')
+            #             self.trav_serv.traverse_install_point('install')
 
             # else:
             #     self.step_stop_test()
@@ -419,38 +407,6 @@ class Controller:
         self.set_next_stage(next_stage)
         self.set_stage(Stage.WAIT_BUFFER)
 
-    def traverse_install_point(self, tag):
-        """Позционирование траверсы"""
-        try:
-            stock_point = config.const_traverse
-            hod = self.model.data_test.amort.hod
-            len_min = self.model.data_test.amort.min_length
-            len_max = self.model.data_test.amort.max_length
-            mid_point = (len_max - len_min) / 2
-            adapter = self.model.data_test.amort.adapter_len
-            if tag == 'install':
-                install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
-                if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
-                    self.signals.control_msg.emit('yellow_btn')
-                else:
-                    self.set_stage(Stage.INSTALL_AMORT)
-                    self.set_trav_point = install_point
-                    self.steps.step_traverse_move_position(install_point)
-            elif tag == 'start_test':
-                start_point = int(stock_point - len_max - adapter + mid_point)
-                self.set_stage(Stage.START_POINT_AMORT)
-                self.set_trav_point = start_point
-                self.steps.step_traverse_move_position(start_point)
-            elif tag == 'stop_test':
-                end_point = int((stock_point + hod / 2) - len_max - adapter)
-                self.set_stage(Stage.STOP_TEST)
-                self.set_trav_point = end_point
-                self.steps.step_traverse_move_position(end_point)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/traverse_install_point - {e}')
-            
     def search_hod(self):
         """Блок определения хода шатуна"""
         self.test_flow.search_hod()
@@ -535,7 +491,7 @@ class Controller:
     def _stage_traverse_referent(self):
         if self.steps.stage_traverse_referent():
             self.set_stage(Stage.WAIT)
-            self.traverse_install_point('install')
+            self.trav_serv.traverse_install_point('install')
 
     def _exit_traverse_referent(self):
         pass

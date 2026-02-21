@@ -218,10 +218,10 @@ class AppWindow(QMainWindow):
         try:
             if self.tag_msg == 'warning':
                 if self.model.alarm_tag == 'alarm_traverse_up':
-                    self.controller.traverse_move_out_alarm('up')
+                    self.controller.trav_serv.traverse_move_out_alarm('up')
 
                 elif self.model.alarm_tag == 'alarm_traverse_down':
-                    self.controller.traverse_move_out_alarm('down')
+                    self.controller.trav_serv.traverse_move_out_alarm('down')
 
                 else:
                     self.model.lamp_all_switch_off()
@@ -1094,7 +1094,7 @@ class AppWindow(QMainWindow):
             elif temp == 'НАЗАД':
                 self.controller.step_stop_test()
                 self.model.flag_test_launch = False
-                self.controller.traverse_install_point('stop_test')
+                self.controller.trav_serv.traverse_install_point('stop_test')
                 self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
@@ -1143,7 +1143,7 @@ class AppWindow(QMainWindow):
                 self.controller.step_stop_test()
                 self.model.flag_test_launch = False
                 self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
-                self.controller.traverse_install_point('stop_test')
+                self.controller.trav_serv.traverse_install_point('stop_test')
                 self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
         except Exception as e:
