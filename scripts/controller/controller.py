@@ -169,9 +169,6 @@ class Controller:
     @Slot(bool)
     def _collect_done(self, flag):
         self.flag_collect_done = flag
-        
-    def restart_flag_collect(self):
-        self.flag_collect_done = False
 
     def _init_timer_test(self):
         try:
@@ -387,6 +384,13 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in controller/move_gear_set_pos - {e}')
+            
+    def _collector_done(self) -> bool:
+        """Проверяет, завершил ли коллектор сбор, и автоматически сбрасывает флаг"""
+        if self.flag_collect_done:
+            self.flag_collect_done = False
+            return True
+        return False
             
     def _transition_via_buffer(
         self,
@@ -690,8 +694,7 @@ class Controller:
         self.model.reader_start_test()
 
     def _stage_search_hod(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             self._stop_gear_end_test()
 
     def _exit_search_hod(self):
@@ -713,8 +716,7 @@ class Controller:
         self._collector_start(with_data=False)
         
     def _stage_test_move_cycle(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             self._pumping()
 
     def _exit_test_move_cycle(self):
@@ -726,8 +728,7 @@ class Controller:
 
     def _stage_pumping(self):
         type_test = self.model.data_test.type_test
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             if type_test == 'conv':
                 self.signals.conv_win_test.emit()
                 self._test_on_two_speed(1)
@@ -749,8 +750,7 @@ class Controller:
         self._collector_start(with_data=True)
 
     def _stage_test_speed_one(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             type_test = self.model.data_test.type_test
             self.model.save_result_cycle()
             if type_test == 'conv':
@@ -765,8 +765,7 @@ class Controller:
         self._collector_start(with_data=True)
 
     def _stage_test_speed_two(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             type_test = self.model.data_test.type_test
             self.model.save_result_cycle()
             if type_test == 'conv':
@@ -784,8 +783,7 @@ class Controller:
         self._collector_start(with_data=True)
 
     def _stage_test_lab_hand_speed(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             self.model.save_result_cycle()
             self.set_stage(Stage.WAIT)
             self.model.flag_fill_graph = False
@@ -800,8 +798,7 @@ class Controller:
         self._collector_start(with_data=True)
 
     def _stage_test_lab_cascade(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             self.model.save_result_cycle()
             if self.count_cascade < self.max_cascade:
                 speed = self.model.data_test.speed_list[self.count_cascade]
@@ -826,8 +823,7 @@ class Controller:
         self._collector_start(with_data=True)
 
     def _stage_test_temper(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             if self.model.data_test.max_temperature != self.last_max_temper:
                 self.last_max_temper = self.model.data_test.max_temperature
                 if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
@@ -869,8 +865,7 @@ class Controller:
         self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
-        if self.flag_collect_done:
-            self.restart_flag_collect()
+        if self._collect_done():
             print('Congratelations! 3 cycles is done')
             self.set_stage(Stage.WAIT)
 
