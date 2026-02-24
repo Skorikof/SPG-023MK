@@ -87,6 +87,7 @@ class Steps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/step_move_gear_set_pos - {e}')
 
+    # FIXME Флагов больш нет, нужна другая логика
     def stage_pos_set_gear(self):
         try:
             if self.model.gear_referent:
@@ -106,39 +107,6 @@ class Steps:
             self.logger.error(e)
             self.model.status_bar_msg(f'ERROR in Steps/stage_pos_set_gear - {e}')
 
-    def step_stop_gear_min_pos(self):
-        """Снижение скорости и остановка привода в нижней точке"""
-        try:
-            self.model.reader_stop_test()
-            self.model.write_bit_force_cycle(0)
-
-            speed = self.definition_speed_by_hod('slow')
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.model.fc_control(**{'tag': 'up', 'adr': 1})
-
-            self.signals.stage_from_logic.emit(Stage.STOP_GEAR_MIN_POS)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/step_stop_gear_min_pos - {e}')
-
-    def stage_stop_gear_min_pos(self):
-        try:
-            if self.model.move_now < self.model.min_point + 1:
-                self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-
-                self.signals.stage_from_logic.emit(Stage.WAIT)
-                if self.model.flag_test:
-                    self.model.flag_test = False
-
-                return True
-
-            return False
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/stage_stop_gear_min_pos - {e}')
-
     def step_traverse_referent_point(self):
         """Подъём траверсы до концевика для определения референтной точки"""
         try:
@@ -154,8 +122,6 @@ class Steps:
         try:
             if self.model.switch_dict.get('highest_position', False) is True:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
-
-                self.model.traverse_referent = True
                 self.model.init_timer_koef_force()
 
                 return True

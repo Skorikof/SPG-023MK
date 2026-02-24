@@ -74,9 +74,6 @@ class AlarmSteps:
 
         except Exception:
             self.logger.error(traceback.format_exc())
-            self.model.status_bar_msg(
-                "ERROR in alarm_steps/_trigger_alarm"
-            )
 
     def step_lost_control(self):
         """Handle lost control alarm."""
@@ -116,7 +113,6 @@ class AlarmSteps:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in alarm_steps/step_alarm_traverse_position - {e}')
 
     def reset_traverse_alarm_flag(self):
         self.flag_alarm_traverse = False

@@ -28,7 +28,6 @@ class TestFlow:
     
     def test_on_two_speed(self, ind: int):
         if ind == 1:
-                self.model.flag_fill_graph = True
                 speed = self.model.data_test.amort.speed_one
                 self.model.data_test.speed_test = speed
                 self.ctrl.transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed)
@@ -43,7 +42,6 @@ class TestFlow:
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
-        self.model.flag_fill_graph = True
         speed = self.model.data_test.speed_test
         self.ctrl.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed)
 
@@ -52,7 +50,6 @@ class TestFlow:
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_cascade(self):
-        self.model.flag_fill_graph = True
         self.count_cascade = 1
         self.max_cascade = len(self.model.data_test.speed_list)
         speed = self.model.data_test.speed_list[0]
@@ -64,7 +61,6 @@ class TestFlow:
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
             
     def test_temper(self):
-        self.model.flag_fill_graph = True
         speed = self.model.data_test.speed_test
         self.ctrl.transition_via_buffer(Stage.TEST_TEMPER, speed=speed)
 

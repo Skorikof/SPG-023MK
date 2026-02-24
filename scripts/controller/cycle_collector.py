@@ -18,6 +18,8 @@ class Mode(Enum):
     DETECT_ONLY = 0
     COLLECT = 1
     STROKE_ONLY = 2
+    NMT_CAPTURE = 3      # Режим 1: захват позиции НМТ на скорости
+    NMT_FINAL = 4        # Режим 2: доворот до НМТ на малой скорости
 
 
 class CycleCollector:
@@ -87,6 +89,18 @@ class CycleCollector:
         # -------- стабильность периода --------
         self.cycle_times = deque(maxlen=5)
         self.last_cycle_time = None
+        
+        # -------- Для определения НМТ --------
+        self.nmt_captured_pos = None        # Захваченная позиция НМТ
+        self.nmt_capture_cycle = None       # Цикл, в котором захватили
+        self.nmt_approach_direction = 0     # Направление подхода к НМТ (+1 или -1)
+        self.nmt_approach_active = False    # Флаг активного доворота
+        self.nmt_capture_result = {
+            'position': None,      # позиция НМТ
+            'direction_to_nmt': None,  # направление к НМТ (+1 вверх, -1 вниз)
+            'current_pos': None,   # текущая позиция при захвате (опционально)
+            'timestamp': None      # время захвата
+        }
 
     def load_program(self, program):
         try:
@@ -259,7 +273,85 @@ class CycleCollector:
                                             self.cycle_max_pos,
                                             stroke
                                         ))
-
+                                        
+                                elif mode == Mode.NMT_CAPTURE:
+                                    # При развороте мы в крайней точке - это НМТ
+                                    current_nmt = self.cycle_min_pos if self.cycle_min_pos != float("inf") else None
+                                    
+                                    if current_nmt is not None:
+                                        # Захватываем позицию НМТ
+                                        self.nmt_captured_pos = current_nmt
+                                        # Определяем направление к НМТ на основе знака после разворота
+                                        # После разворота в НМТ знак становится положительным (движение вверх)
+                                        # Значит, чтобы вернуться в НМТ, нужно двигаться вниз (отрицательное направление)
+                                        direction_to_nmt = -self.prev_sign if self.prev_sign != 0 else 0
+                                        self.nmt_capture_result = {
+                                            'position': current_nmt,
+                                            'direction_to_nmt': direction_to_nmt,
+                                            'current_pos': self.prev_pos,
+                                            'timestamp': time.perf_counter()
+                                        }
+                                        self.logger.info(
+                                            f"NMT captured: pos={current_nmt:.3f}, "
+                                            f"direction to NMT={direction_to_nmt} "
+                                            f"({'вниз' if direction_to_nmt < 0 else 'вверх'})"
+                                        )
+                                        # Переходим к следующему шагу программы (NMT_FINAL)
+                                        self.program_index += 1
+                                        self.program_cycle_counter = 0
+                                        
+                                        # Сбрасываем накопленные данные цикла, так как переходим в режим доворота
+                                        self.current_pos.clear()
+                                        self.current_force.clear()
+                                        self.cycle_min_pos = float("inf")
+                                        self.cycle_max_pos = float("-inf")
+                                        
+                                elif mode == Mode.NMT_FINAL:
+                                    if self.nmt_captured_pos is None:
+                                        self.logger.error("NMT_FINAL mode but no captured position")
+                                        self.phase_state = PhaseState.ERROR
+                                        return self.phase_state
+                                        
+                                    target_direction = self.nmt_capture_result.get('direction_to_nmt', 0)
+    
+                                    if target_direction == 0:
+                                        self.logger.error("Invalid direction to NMT")
+                                        self.phase_state = PhaseState.ERROR
+                                        return self.phase_state
+    
+                                    # Определяем направление движения
+                                    current_sign = self._sign(v)
+                                    
+                                    # Если еще не активны, инициируем доворот
+                                    if not self.nmt_approach_active:
+                                        self.nmt_approach_active = True
+                                        self.logger.info(
+                                            f"Starting NMT approach: current={pos:.3f}, "
+                                            f"target={self.nmt_captured_pos:.3f}, "
+                                            f"direction={target_direction} ({'вниз' if target_direction < 0 else 'вверх'})"
+                                        )
+                                    
+                                        # Проверяем достижение НМТ с учетом нужного направления
+                                        if target_direction > 0:  # Нужно двигаться вверх
+                                            # Достигли, если перешли через НМТ снизу вверх
+                                            if current_sign > 0 and pos >= self.nmt_captured_pos:
+                                                self.nmt_detected = True
+                                                self.logger.info(f"NMT reached at {pos:.3f} while moving up")
+                                                
+                                                self.program_index += 1
+                                                self.program_cycle_counter = 0
+                                                self.nmt_approach_active = False
+                                                
+                                        else:  # Нужно двигаться вниз
+                                            # Достигли, если перешли через НМТ сверху вниз
+                                            if current_sign < 0 and pos <= self.nmt_captured_pos:
+                                                self.nmt_detected = True
+                                                self.logger.info(f"NMT reached at {pos:.3f} while moving down")
+                                                
+                                                self.program_index += 1
+                                                self.program_cycle_counter = 0
+                                                self.nmt_approach_active = False
+                                    
                                 self.program_cycle_counter += 1
 
                                 if self.program_cycle_counter >= target_cycles:
@@ -305,6 +397,28 @@ class CycleCollector:
     
     def motor_stopped(self):
         return self.stop_detector.stopped
+    
+    def is_nmt_reached(self):
+        """Проверить, достигнута ли целевая НМТ в режиме доворота"""
+        return self.nmt_detected
+
+    def get_nmt_target(self):
+        """Получить целевую позицию НМТ (для внешнего управления ПЧ)"""
+        return self.nmt_captured_pos
+    
+    def get_nmt_capture_info(self):
+        """Получить информацию о захваченной НМТ"""
+        if self.nmt_capture_result['position'] is None:
+            return None
+        return self.nmt_capture_result.copy()
+
+    def get_nmt_direction(self):
+        """Получить направление к НМТ (+1 вверх, -1 вниз, 0 неизвестно)"""
+        return self.nmt_capture_result.get('direction_to_nmt', 0)
+
+    def get_nmt_position(self):
+        """Получить позицию НМТ"""
+        return self.nmt_capture_result.get('position', None)
 
     def reset(self):
         try:
@@ -337,6 +451,17 @@ class CycleCollector:
 
             self.last_turn_time = None
             self.watchdog_timeout_sec = self.watchdog_max_sec
+            
+            self.nmt_captured_pos = None
+            self.nmt_capture_cycle = None
+            self.nmt_approach_direction = 0
+            self.nmt_approach_active = False
+            self.nmt_capture_result = {
+                'position': None,
+                'direction_to_nmt': None,
+                'current_pos': None,
+                'timestamp': None
+            }
             
         except Exception as e:
             self.logger.error(e)

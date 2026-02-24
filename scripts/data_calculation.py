@@ -191,6 +191,7 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
             
+    # FIXME
     def full_circle_done(self):
         try:
             self.logger.debug('Full circle is done')

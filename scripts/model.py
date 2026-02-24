@@ -73,61 +73,32 @@ class Model:
         
         self.buffer_state = ['null', 'null']
 
+        self.counter = 0
+        self.move_now = 0
+        self.move_traverse = 0
         self.force_clear = 0
         self.force_correct = 0
         self.force_koef_offset = 0
         self.koef_force_list = []
         self.force_offset = 0
-        
         self.min_point = 0
         self.max_point = 0
         self.stroke = 0
-        
 
-        self.force_list = []
-        self.move_list = []
-        self.force = []
-        self.move = []
-        self.temper_graph = []
-        self.temper_recoil_graph = []
-        self.temper_comp_graph = []
-
-        self.counter = 0
-        self.move_now = 0
-        self.move_traverse = 0
-        self.hod_measure = 0
-        
-        self.start_direction = False
-        self.current_direction = False
-
-        
         self.timer_add_koef = None
         self.timer_calc_koef = None
-
         self.timer_yellow = None
         self.time_push_yellow = None
 
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        self.dynamic_push_force = 0
-        self.max_recoil = 0
-        self.max_comp = 0
-
-        self.power_amort = 0
-        self.freq_piston = 0
         
-        self.list_lab_result = []
+        # self.list_lab_result = []
 
     def _init_flags(self):
         self.lbl_push_force = ''
-        self.min_pos = False
-        self.max_pos = False
-        self.gear_referent = False
-        self.traverse_referent = False
 
-        self.flag_fill_graph = False
         self.flag_test = False
-        self.flag_test_lunch = False
+        self.flag_test_launch = False
         self.yellow_rattle = False
         self.flag_repeat = False
         self.flag_search_hod = False
@@ -428,6 +399,18 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
+            
+    def run_collector_find_nmt(self):
+        try:
+            self.flag_collect_done = False
+            self.flag_collect_error = False
+            self.collector.load_program([
+                (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
+                (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
+            ])
+
+        except Exception as e:
+            self.logger.error(e)
 
     def _send_data_in_set_win(self, data):
         try:
@@ -596,18 +579,19 @@ class Model:
             
     def save_result_cycle(self):
         try:
-            if not self.move or not self.force:
-                pass
-            else:
-                type_test = self.data_test.type_test
-                if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
-                    data_dict = {'speed': self.data_test.speed_test,
-                                 'move': self.move[:],
-                                 'force': self.force[:]}
+            pass
+            # if not self.move or not self.force:
+            #     pass
+            # else:
+            #     type_test = self.data_test.type_test
+            #     if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
+            #         data_dict = {'speed': self.data_test.speed_test,
+            #                      'move': self.move[:],
+            #                      'force': self.force[:]}
 
-                    self.list_lab_result.append(data_dict)
+            #         self.list_lab_result.append(data_dict)
                         
-                self.save_data_in_archive()
+            #     self.save_data_in_archive()
                     
         except Exception as e:
             self.logger.error(e)
@@ -622,23 +606,24 @@ class Model:
             
     def save_data_in_archive(self):
         try:
-            data_dict = {'move_graph': self.move[:],
-                         'force_graph': self.force[:],
-                         'temper_graph': self.temper_graph[:],
-                         'temper_recoil_graph': self.temper_recoil_graph[:],
-                         'temper_comp_graph': self.temper_comp_graph[:],
-                         'type_test': self.data_test.type_test,
-                         'speed': self.data_test.speed_test,
-                         'operator_name': self.data_test.operator.name,
-                         'operator_rank': self.data_test.operator.rank,
-                         'serial': self.data_test.serial,
-                         'amort': self.data_test.amort,
-                         'flag_push_force': int(self.data_test.flag_push_force),
-                         'static_push_force': self.data_test.static_push_force,
-                         'dynamic_push_force': self.dynamic_push_force,
-                         'max_temperature': self.data_test.max_temperature}
+            pass
+            # data_dict = {'move_graph': self.move[:],
+            #              'force_graph': self.force[:],
+            #              'temper_graph': self.temper_graph[:],
+            #              'temper_recoil_graph': self.temper_recoil_graph[:],
+            #              'temper_comp_graph': self.temper_comp_graph[:],
+            #              'type_test': self.data_test.type_test,
+            #              'speed': self.data_test.speed_test,
+            #              'operator_name': self.data_test.operator.name,
+            #              'operator_rank': self.data_test.operator.rank,
+            #              'serial': self.data_test.serial,
+            #              'amort': self.data_test.amort,
+            #              'flag_push_force': int(self.data_test.flag_push_force),
+            #              'static_push_force': self.data_test.static_push_force,
+            #              'dynamic_push_force': self.dynamic_push_force,
+            #              'max_temperature': self.data_test.max_temperature}
             
-            self.write_data_in_archive('data', data_dict)
+            # self.write_data_in_archive('data', data_dict)
 
         except Exception as e:
             self.logger.error(e)
@@ -646,7 +631,8 @@ class Model:
             
     def write_end_test_in_archive(self):
         try:
-            self.write_data_in_archive('end_test')
+            pass
+            # self.write_data_in_archive('end_test')
 
         except Exception as e:
             self.logger.error(e)
