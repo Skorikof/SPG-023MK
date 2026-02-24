@@ -12,7 +12,7 @@ from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
 from scripts.modbus.client import Client
-from scripts.freq_ctrl.eura.freq_control import FreqControl
+from scripts.freq_ctrl.freq_control import FreqControl
 
 from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 

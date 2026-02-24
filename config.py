@@ -38,6 +38,10 @@ class Config:
         return int(os.getenv("CONST_TRAV", "760"))
     
     @property
+    def freq_select(self) -> str:
+        return os.getenv("FREQ", "E")
+    
+    @property
     def log_level(self) -> int:
         return int(os.getenv("LOG_LEVEL", "20"))
     

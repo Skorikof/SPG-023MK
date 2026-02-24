@@ -68,6 +68,10 @@ class TestFlow:
             self.model.flag_repeat = False
             self.model.fc_control(**{'tag': 'up', 'adr': 1})
     
-    # FIXME Заменить следующий шаг, сейчас тестово
     def stop_gear_end_test(self):
-        self.ctrl.transition_via_buffer(Stage.TEST_PROGRAM, extra_fc={'tag': 'stop', 'adr': 1})
+        self.ctrl.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
+
+    def stop_gear_min_pos(self):
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.calc.definition_speed_by_hod('medium', hod)
+        self.ctrl.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed)

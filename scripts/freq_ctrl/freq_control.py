@@ -1,24 +1,35 @@
 import crcmod
 from enum import Enum
 
+from config import config
 from scripts.logger import my_logger
 
 
-class MotorCommand(Enum):
-    """Команды управления двигателем"""
+class MotorCommandEvra(Enum):
+    """Команды управления двигателем Evra"""
     UP = '0620000002'
     DOWN = '0620000001'
     STOP = '0620000003'
+    SPEED = '06010D'
+    MAX_FREQ = '06010B'
 
 
-class FreqControl:
-    # Константы для команд
-    COMMAND_MAX_FREQ = '06010B'
-    COMMAND_SPEED = '06010D'
+class MotorCommandDelta(Enum):
+    """Команды управления двигателем Delta"""
+    UP = '0620000012'
+    DOWN = '0620000022'
+    STOP = '0620000001'
+    SPEED = '062001'
     
+class FreqControl:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
         
+        if config.freq_select == 'D':
+            self.motor_control = MotorCommandDelta
+        else:
+            self.motor_control = MotorCommandEvra
+
     def freq_command(self, tag, adr, speed=None, freq=None, hod=None):
         """
         Главный метод для отправки команд частотнику
@@ -36,9 +47,9 @@ class FreqControl:
             self.logger.debug(f'FC command: {tag=}, {adr=}, {speed=}, {freq=}, {hod=}')
             
             command_map = {
-                'up': lambda: self._motor_command(adr, MotorCommand.UP),
-                'down': lambda: self._motor_command(adr, MotorCommand.DOWN),
-                'stop': lambda: self._motor_command(adr, MotorCommand.STOP),
+                'up': lambda: self._motor_command(adr, self.motor_control.UP),
+                'down': lambda: self._motor_command(adr, self.motor_control.DOWN),
+                'stop': lambda: self._motor_command(adr, self.motor_control.STOP),
                 'speed': lambda: self._get_speed_motor(adr, speed, freq, hod),
                 'max': lambda: self._get_max_frequency(adr, freq),
             }
@@ -54,7 +65,7 @@ class FreqControl:
             self.logger.error(f'Ошибка в freq_command: {e}')
             raise
 
-    def _motor_command(self, adr: int, command: MotorCommand):
+    def _motor_command(self, adr: int, command: MotorCommandEvra):
         """Универсальный метод для команд управления двигателем"""
         try:
             com_hex = f'0{adr}{command.value}'
@@ -72,7 +83,7 @@ class FreqControl:
                 
             freq = int(freq * 100)
             freq_hex = hex(freq)[2:].zfill(4)
-            com_hex = f'0{adr}{self.COMMAND_MAX_FREQ}{freq_hex}'
+            com_hex = f'0{adr}{MotorCommandEvra.MAX_FREQ}{freq_hex}'
             com_crc = com_hex + self._calc_crc(com_hex)
             return self._values_freq_command(com_crc)
 
@@ -97,7 +108,7 @@ class FreqControl:
                 raise ValueError('Должны быть заданы speed или freq')
 
             freq_hex = hex(value)[2:].zfill(4)
-            com_hex = f'0{adr}{self.COMMAND_SPEED}{freq_hex}'
+            com_hex = f'0{adr}{self.motor_control.SPEED}{freq_hex}'
             com_crc = com_hex + self._calc_crc(com_hex)
             return self._values_freq_command(com_crc)
 

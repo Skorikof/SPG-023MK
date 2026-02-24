@@ -37,7 +37,7 @@ class CollectorService:
         self.model.run_collector_find_stroke()
         self.model.reader_start_test()
         
-    def start_ntm_poition(self):
+    def start_nmt_poition(self):
         self.flag_collect_done = False
         self.model.run_collector_find_nmt()
         self.model.reader_start_test()
@@ -706,14 +706,14 @@ class Controller:
 
     def _stage_stop_gear_end_test(self):
         if self.model.collector.motor_stopped():
-            self.set_stage(Stage.WAIT)
+            self.test_flow.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
         self.collect_srv.stop()
         self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS)
         
     def _enter_stop_gear_min_pos(self):
-        self.collect_srv.start_ntm_poition()
+        self.collect_srv.start_nmt_poition()
 
     def _stage_stop_gear_min_pos(self):
         if self.model.collector.get_nmt_capture_info():
