@@ -4,7 +4,7 @@ from enum import Enum
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
-from scripts.controller.stages import Stage
+from .stages import Stage
 
 
 @dataclass
@@ -116,3 +116,27 @@ class AlarmSteps:
 
     def reset_traverse_alarm_flag(self):
         self.flag_alarm_traverse = False
+    
+    def control_alarm_state(self):
+        """Check for alarm conditions and return alarm tag or None."""
+        try:
+            # Check state_dict alarms first (higher priority)
+            alarm_checks = [
+                ('lost_control', self.model.state_dict.get('lost_control', False)),
+                ('excess_force', self.model.state_dict.get('excess_force', False)),
+                ('safety_fence', self.model.state_dict.get('safety_fence', False)),
+            ]
+            
+            for alarm_tag, is_triggered in alarm_checks:
+                if is_triggered:
+                    return alarm_tag
+            
+            # Check temperature alarm (only if not in temperature test)
+            if self.model.data_test.type_test != 'temper':
+                if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
+                    return 'excess_temperature'
+            
+            return None
+
+        except Exception as e:
+            self.logger.error(e)

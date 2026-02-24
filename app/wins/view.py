@@ -95,6 +95,7 @@ class AppWindow(QMainWindow):
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
         self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
+        self.model.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
@@ -104,7 +105,6 @@ class AppWindow(QMainWindow):
         self.controller.signals.conv_test_stop.connect(self.slot_conv_test_stop)
         self.controller.signals.search_hod_msg.connect(self.slot_search_hod)
         self.controller.signals.reset_ui.connect(self._start_page)
-        self.controller.steps.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
 
         self.win_exec.signals.closed.connect(self.close_win_operator)
         self.win_exec.signals.operator_select.connect(self.operator_select)

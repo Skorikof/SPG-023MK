@@ -108,7 +108,7 @@ class FreqControl:
                 raise ValueError('Должны быть заданы speed или freq')
 
             freq_hex = hex(value)[2:].zfill(4)
-            com_hex = f'0{adr}{self.motor_control.SPEED}{freq_hex}'
+            com_hex = f'0{adr}{self.motor_control.SPEED.value}{freq_hex}'
             com_crc = com_hex + self._calc_crc(com_hex)
             return self._values_freq_command(com_crc)
 

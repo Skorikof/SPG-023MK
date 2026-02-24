@@ -4,7 +4,7 @@ from collections import deque
 from enum import Enum
 
 from scripts.logger import my_logger
-from scripts.controller.stop_detector import StopDetector
+from .stop_detector import StopDetector
 
 
 class PhaseState(Enum):

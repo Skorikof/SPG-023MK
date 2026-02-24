@@ -29,6 +29,7 @@ class ModelSignals(QObject):
     read_finish = Signal()
     
     collect_done = Signal(bool)
+    conv_result_lamp = Signal(str, str)
 
 
 class Model:
@@ -576,6 +577,32 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             self.status_bar_msg(f'ERROR in model/lamp_red_switch_on - {e}')
+            
+    def result_conveyor_test(self, step):
+        """Включение индикаторов, зелёный - в допусках, красный - нет"""
+        try:
+            amort = self.data_test.amort
+            min_comp, max_comp = 0, 2000
+            min_recoil, max_recoil = 0, 2000
+
+            if step == 'one':
+                min_comp, max_comp = amort.min_comp, amort.max_comp
+                min_recoil, max_recoil = amort.min_recoil, amort.max_recoil
+
+            elif step == 'two':
+                min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
+                min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
+
+            if min_comp < self.max_comp < max_comp and min_recoil < self.max_recoil < max_recoil:
+                self.lamp_green_switch_on()
+                self.signals.conv_result_lamp.emit(step, 'green')
+
+            else:
+                self.lamp_red_switch_on()
+                self.signals.conv_result_lamp.emit(step, 'red')
+
+        except Exception as e:
+            self.logger.error(e)
             
     def save_result_cycle(self):
         try:

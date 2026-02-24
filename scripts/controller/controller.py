@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-from PySide6.QtCore import QTimer, QObject, Signal
+from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
 from scripts.logger import my_logger
 from scripts.data_calculation import CalcData
-from scripts.controller.alarm_steps import AlarmSteps
-from scripts.controller.stages import Stage
-from scripts.controller.steps_logic import Steps
-from scripts.controller.test_flow import TestFlow
-from scripts.controller.traverse_service import TraverseService
+from .alarm_steps import AlarmSteps
+from .stages import Stage
+from .test_flow import TestFlow
+from .traverse_service import TraverseService
 
 
 class CollectorService:
@@ -65,11 +64,10 @@ class Controller:
             self.signals = ControlSignals()
             self.model = model
             self.collect_srv = CollectorService(model)
-            self.steps = Steps(model)
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
-            self.test_flow = TestFlow(Controller)
-            self.trav_serv = TraverseService(Controller)
+            self.test_flow = TestFlow(model)
+            self.trav_serv = TraverseService(model)
 
             self._init_variables()
             self._init_flags()
@@ -78,7 +76,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/__init__ - {e}')
             
     def _init_variables(self):
         self.stage = Stage.WAIT
@@ -170,17 +167,24 @@ class Controller:
 
             self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
             self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
-
-            self.steps.signals.stage_from_logic.connect(self.set_stage)
-            self.steps.signals.next_stage_from_logic.connect(self.set_next_stage)
+            
+            self.test_flow.signals.set_stage.connect(self.set_stage)
+            self.test_flow.signals.set_next_stage.connect(self.set_next_stage)
+            
+            self.trav_serv.signals.set_stage.connect(self.set_stage)
+            self.trav_serv.signals.control_msg.connect(self._signal_control_msg)
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_init_signals - {e}')
+            
+    @Slot(str)
+    def _signal_control_msg(self, text):
+        self.signals.control_msg.emit(text)
 
     def _alarm_traverse_position(self, pos):
         self.signals.control_msg.emit(f'alarm_traverse_{pos}')
         
+    @Slot(object)
     def set_stage(self, new_stage: Stage):
         if new_stage == self.stage:
             return
@@ -216,7 +220,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/init_timer - {e}')
             
     def _update_stage_on_timer(self):
         try:
@@ -224,7 +227,7 @@ class Controller:
 
             if self.model.flag_test:
                 self._select_alarm_state(
-                    self.steps.stage_control_alarm_state()
+                    self.alarm_steps.control_alarm_state()
                 )
 
             handler = self._stage_handlers.get(self.stage)
@@ -237,9 +240,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(
-                f'ERROR in controller/_update_stage_on_timer - {e}'
-            )
 
     def _select_alarm_state(self, tag):
         try:
@@ -261,7 +261,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_select_alarm_state - {e}')
 
     def work_interrupted_operator(self):
         self.set_stage(Stage.WAIT)
@@ -314,7 +313,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/_yellow_btn_push - {e}')
 
     # FIXME Пока закоммичено в тестовом режиме
     def start_test_clicked(self):
@@ -335,7 +333,7 @@ class Controller:
 
             #     else:
             #         if self.model.move_traverse < 10:
-            #             self.steps.step_traverse_referent_point()
+            #             self.trav_serv.step_traverse_referent_point()
 
             #         else:
             #             self.trav_serv.traverse_install_point('install')
@@ -345,7 +343,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/start_test_clicked - {e}')
             
     def _check_max_temper_test(self):
         first = self.model.data_test.first_temperature
@@ -389,7 +386,6 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/stop_test_clicked - {e}')
             
     def step_stop_test(self):
         try:
@@ -399,52 +395,14 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
 
-    # FIXME Пока не реализован
-    def move_gear_set_pos(self):
-        try:
-            self.steps.step_move_gear_set_pos()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in controller/move_gear_set_pos - {e}')
-            
-    def transition_via_buffer(
-        self,
-        next_stage: Stage,
-        *,
-        speed=None,
-        adr=1,
-        force_cycle=True,
-        extra_fc=None
-    ):
-        """
-        Унифицированный переход через WAIT_BUFFER.
-        Parameters
-        ----------
-        next_stage : Stage
-            Куда перейти после buffer_on
-        speed : int | None
-            Если задан — отправим fc_control speed
-        adr : int
-            Адрес привода
-        force_cycle : bool
-            Нужно ли включать force_cycle
-        extra_fc : dict | None
-            Любая дополнительная команда fc_control
-        """
-        if force_cycle:
-            self.model.write_bit_force_cycle(1)
-        if speed is not None:
-            self.model.fc_control(tag='speed', adr=adr, speed=speed)
-        if extra_fc:
-            self.model.fc_control(**extra_fc)
-
-        self.set_next_stage(next_stage)
-        self.set_stage(Stage.WAIT_BUFFER)
-
     def search_hod(self):
         """Блок определения хода шатуна"""
         self.test_flow.search_hod()
+        
+    # FIXME Пока не реализован
+    def move_gear_set_pos(self):
+        """Блок доворота шатуна для регулировки хода"""
+        self.test_flow.move_gear_set_pos()
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -497,7 +455,7 @@ class Controller:
         pass
 
     def _stage_alarm_traverse(self):
-        if self.steps.step_control_traverse_move(self.set_trav_point):
+        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.write_bit_red_light(0)
             self.alarm_steps.flag_alarm_traverse = False
@@ -509,13 +467,21 @@ class Controller:
     def _exit_alarm_traverse(self):
         pass
 
+    # FIXME Пока не реализован
     def _enter_pos_set_gear(self):
         self.signals.control_msg.emit('gear_set_pos')
 
     def _stage_pos_set_gear(self):
-        if self.steps.stage_pos_set_gear():
-            self.set_stage(Stage.WAIT)
-            self.signals.reset_ui.emit()
+        if self.model.gear_referent:
+            if self.model.max_pos:
+                if abs(14 - self.model.move_now) < 5:
+                    self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+                    self.model.reader_stop_test()
+                    self.model.write_bit_force_cycle(0)
+                    self.model.min_pos = False
+                    self.model.max_pos = False
+                    self.set_stage(Stage.WAIT)
+                    self.signals.reset_ui.emit()
 
     def _exit_pos_set_gear(self):
         pass
@@ -524,7 +490,7 @@ class Controller:
         self.signals.control_msg.emit('traverse_referent')
 
     def _stage_traverse_referent(self):
-        if self.steps.stage_traverse_referent():
+        if self.trav_serv.stage_traverse_referent():
             self.set_stage(Stage.WAIT)
             self.trav_serv.traverse_install_point('install')
 
@@ -535,7 +501,7 @@ class Controller:
         self.signals.control_msg.emit('pos_traverse')
 
     def _stage_install_amort(self):
-        if self.steps.step_control_traverse_move(self.set_trav_point):
+        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
             self.set_stage(Stage.WAIT)
             self.signals.control_msg.emit('yellow_btn')
 
@@ -547,7 +513,7 @@ class Controller:
             self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_stop_test(self):
-        if self.steps.step_control_traverse_move(self.set_trav_point):
+        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
             self.set_stage(Stage.WAIT)
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
@@ -570,7 +536,7 @@ class Controller:
         self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_start_point_amort(self):
-        if self.steps.step_control_traverse_move(self.set_trav_point):
+        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
             self.test_flow.test_move_cycle()
 
     def _exit_start_point_amort(self):
@@ -619,7 +585,7 @@ class Controller:
             type_test = self.model.data_test.type_test
             self.model.save_result_cycle()
             if type_test == 'conv':
-                self.steps.step_result_conveyor_test('one')
+                self.model.step_result_conveyor_test('one')
             self.model.write_end_test_in_archive()
             self.test_flow.test_on_two_speed(2)
 
@@ -634,7 +600,7 @@ class Controller:
             type_test = self.model.data_test.type_test
             self.model.save_result_cycle()
             if type_test == 'conv':
-                self.steps.step_result_conveyor_test('two')
+                self.model.step_result_conveyor_test('two')
             self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
             self.test_flow.stop_gear_end_test()
@@ -710,7 +676,7 @@ class Controller:
 
     def _exit_stop_gear_end_test(self):
         self.collect_srv.stop()
-        self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS)
+        self.test_flow.transition_via_buffer(Stage.STOP_GEAR_MIN_POS)
         
     def _enter_stop_gear_min_pos(self):
         self.collect_srv.start_nmt_poition()
@@ -750,7 +716,7 @@ class Controller:
     
     #--------- testing ---------#
     def _test_program(self):
-        self.transition_via_buffer(Stage.TEST_PROGRAM)
+        self.test_flow.transition_via_buffer(Stage.TEST_PROGRAM)
 
     def _enter_testing_prog(self):
         print('enter test stage')
