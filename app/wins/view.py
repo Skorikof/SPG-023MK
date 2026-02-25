@@ -13,6 +13,7 @@ from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
+from scripts.controller.stages import Stage
 from scripts.logger import my_logger
 
 
@@ -243,7 +244,7 @@ class AppWindow(QMainWindow):
 
     def btn_cancel_message_clicked(self):
         try:
-            self.controller.change_stage_controller('wait')
+            self.controller.set_stage(Stage.WAIT)
             self.model.flag_test_launch = False
 
             self.model.lamp_all_switch_off()
@@ -423,20 +424,20 @@ class AppWindow(QMainWindow):
         self.select_type_test()
         self.select_amort()
     
-    # FIXME Доделать отображение и рассовывание данных
     @Slot(object)
     def update_graph_view_lab(self, data):
         self._update_lab_graph(data)
         self._update_lab_data()
-    
+
     @Slot(object)
     def update_graph_view_conv(self, data):
-        self._update_conv_graph()
+        self._update_conv_graph(data)
         self._update_conv_data()
-        
+
+    # FIXME Доделать отображение и рассовывание данных
     @Slot(object)
     def update_graph_view_temper(self, data):
-        self._update_temper_graph()
+        self._update_temper_graph(data)
         self._update_lab_data()
 
     def select_type_test(self):
@@ -977,11 +978,10 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/conv_test_lamp_slot - {e}')
 
-    def _update_conv_graph(self):
+    def _update_conv_graph(self, data):
         try:
             self.ui.conv_GraphWidget.clear()
-            self.graph.fill_graph(self.model.move,
-                                  self.model.force,
+            self.graph.fill_graph(data[0], data[1],
                                   name=f'{self.model.data_test.speed_test} м/с')
 
         except Exception as e:
@@ -993,15 +993,16 @@ class AppWindow(QMainWindow):
             self.ui.conv_temperture_le.setText(f'{self.model.data_test.temperature}')
             self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
+            # FIXME уточнить по поводу stage
             if self.controller.stage == 'test_speed_one':
                 self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
-                self.ui.conv_comp_le.setText(f'{self.model.max_comp}')
-                self.ui.conv_recoil_le.setText(f'{self.model.max_recoil}')
+                self.ui.conv_comp_le.setText(f'{self.model.data_test.max_comp}')
+                self.ui.conv_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
             if self.controller.stage == 'test_speed_two':
                 self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
-                self.ui.conv_comp_le_2.setText(f'{self.model.max_comp}')
-                self.ui.conv_recoil_le_2.setText(f'{self.model.max_recoil}')
+                self.ui.conv_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+                self.ui.conv_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
 
             else:
                 pass
@@ -1013,15 +1014,14 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self, data):
         try:
             self.ui.lab_GraphWidget.clear()
-            self.graph.fill_graph(data[0],
-                                  data[1],
+            self.graph.fill_graph(data[0], data[1],
                                   name=f'{self.model.data_test.speed_test} м/с')
 
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_lab_graph - {e}')
 
-    def _update_temper_graph(self):
+    def _update_temper_graph(self, data):
         try:
             self.ui.lab_GraphWidget.clear()
             if len(self.model.temper_graph) > 1:
@@ -1040,16 +1040,17 @@ class AppWindow(QMainWindow):
     def _update_lab_data(self):
         try:
             if self.model.data_test.type_test == 'lab':
+                # FIXME уточнить по поводу stage
                 if self.controller.stage == 'test_speed_one':
-                    self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
-                    self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
+                    self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
+                    self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
                 elif self.controller.stage == 'test_speed_two':
-                    self.ui.lab_comp_le_2.setText(f'{self.model.max_comp}')
-                    self.ui.lab_recoil_le_2.setText(f'{self.model.max_recoil}')
+                    self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+                    self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
             else:
-                self.ui.lab_comp_le.setText(f'{self.model.max_comp}')
-                self.ui.lab_recoil_le.setText(f'{self.model.max_recoil}')
+                self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
+                self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
             self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
             self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')

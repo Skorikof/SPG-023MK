@@ -462,6 +462,20 @@ class Model:
         self.signals.update_lab_graph.emit(avg)
             
     def _pars_relust_conv_test(self, avg):
+        move, force = avg[0], avg[1]
+        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
+        
+        if self.data_test.flag_push_force:
+            push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
+                                                                      self.data_test.static_push_force)
+            self.data_test.dynamic_push_force = push_force
+        else:
+            push_force = self.data_test.static_push_force
+            self.data_test.dynamic_push_force = 0
+        
+        self.data_test.max_recoil = rec_clear + push_force
+        self.data_test.max_comp = comp_clear - push_force
+
         self.signals.update_conv_graph.emit(avg)
         
     def _pars_result_temper_test(self, avg):
