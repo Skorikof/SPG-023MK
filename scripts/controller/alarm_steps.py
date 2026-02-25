@@ -70,7 +70,6 @@ class AlarmSteps:
                 self.signals.stage_from_alarm.emit(Stage.WAIT)
 
             self.logger.warning(config.tag.value)
-            self.model.status_bar_msg(config.tag.value)
 
         except Exception:
             self.logger.error(traceback.format_exc())

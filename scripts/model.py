@@ -20,8 +20,6 @@ from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
-    win_set_update = Signal(str)
-    update_data_graph = Signal(object)
     test_launch = Signal(bool)
     save_koef_force = Signal(str)
     
@@ -29,6 +27,11 @@ class ModelSignals(QObject):
     read_finish = Signal()
     
     collect_done = Signal(bool)
+    win_set_update = Signal(str)
+    update_lab_graph = Signal(object)
+    update_conv_graph = Signal(object)
+    update_temper_graph = Signal(object)
+    
     conv_result_lamp = Signal(str, str)
 
 
@@ -86,6 +89,7 @@ class Model:
         self.max_point = 0
         self.stroke = 0
 
+        self.timer_clear_statusbar = None
         self.timer_add_koef = None
         self.timer_calc_koef = None
         self.timer_yellow = None
@@ -118,6 +122,7 @@ class Model:
 
     def _start_param_model(self):
         try:
+            self.init_timer_clear_statusbar()
             self.client.connect_client()
             # FIXME таймер жёлтой кнопки
             # self._init_timer_yellow_btn()
@@ -142,6 +147,11 @@ class Model:
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
+        self.timer_clear_statusbar.start()
+        
+    def clear_status_bar(self):
+        self.signals.stbar_msg.emit(' ')
+        self.timer_clear_statusbar.stop()
 
     def log_error_thread(self, txt_log):
         self.logger.error(txt_log)
@@ -176,7 +186,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_update_switch_dict - {e}')
 
     def _update_state_dict(self, data):
         try:
@@ -185,7 +194,11 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_update_state_dict - {e}')
+            
+    def init_timer_clear_statusbar(self):
+        self.timer_clear_statusbar = QTimer()
+        self.timer_clear_statusbar.setInterval(2000)
+        self.timer_clear_statusbar.timeout.connect(self.clear_status_bar)
 
     def init_timer_koef_force(self):
         self.write_bit_force_cycle(1)
@@ -221,7 +234,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_calc_and_save_force_koef - {e}')
 
     def cancel_koef_force(self):
         try:
@@ -229,7 +241,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/cancel_koef_force - {e}')
             
     def _init_timer_yellow_btn(self):
         try:
@@ -239,7 +250,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_init_timer_yellow_btn - {e}')
 
     def yellow_btn_click(self):
         try:
@@ -263,7 +273,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_yellow_btn_click - {e}')
 
     def _reader_result(self, response, tag):
         try:
@@ -281,7 +290,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_reader_result - {e}')
 
     def _pars_regs_result(self, res):
         try:
@@ -323,38 +331,31 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_regs_result - {e}')
 
     # FIXME Тестирую чтение буфера
     def _pars_buffer_result(self, res):
         try:
             data = self.parser.pars_response_from_buffer(res)
-
             if data is None:
                 if not self.flag_non_buffer:
                     self.flag_non_buffer = True
                     self.logger.debug('Response from force sensor is None')
-
             else:
                 self.flag_non_buffer = False
                 if self.data_test.type_test == 'hand':
                     self._send_data_in_set_win(data)
-
                 else:
                     state = self.collector.add_stream_dict(data)
-                    
                     if state == PhaseState.DONE and not self.flag_collect_done:
                         self.flag_collect_done = True
                         self.signals.collect_done.emit(True)
                         if Mode.STROKE_ONLY:
                             cycles = self.collector.get_cycles()
                             self.min_point, self.max_point, self.stroke = cycles[0]
-                            
                         elif Mode.COLLECT:
                             cycles = self.collector.get_cycles()
                             avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
-                            self.signals.update_data_graph.emit(avg)
-
+                            self._pars_result_avarage_cycles(avg)
                     elif state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
                         txt = 'Error in collector/add_stream_dict'
@@ -362,7 +363,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_pars_buffer_result - {e}')
                 
     def run_collector_without_data(self, count_det: int=1):
         try:
@@ -429,6 +429,25 @@ class Model:
         except Exception as e:
             self.logger.error(e)
 
+    def _pars_result_avarage_cycles(self, avg):
+        if self.data_test.type_test == 'conv':
+            self._pars_relust_conv_test(avg)
+        
+        elif self.data_test.type_test == 'temper':
+            self._pars_result_temper_test(avg)
+            
+        else:
+            self._pars_result_lab_test(avg)
+            
+    def _pars_result_lab_test(self, avg):
+        self.signals.update_lab_graph.emit(avg)
+            
+    def _pars_relust_conv_test(self, avg):
+        self.signals.update_conv_graph.emit(avg)
+        
+    def _pars_result_temper_test(self, avg):
+        self.signals.update_temper_graph.emit(avg)
+        
     def _write_reg_state(self, bit, value, command=None):
         try:
             com_list = self.state_list[:]
@@ -446,7 +465,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/_write_reg_state - {e}')
 
     def write_bit_force_cycle(self, value):
         try:
@@ -460,7 +478,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_force_cycle - {e}')
 
     def write_bit_red_light(self, value):
         try:
@@ -469,7 +486,6 @@ class Model:
                 self._write_reg_state(1, value, command='red_light')
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_red_light - {e}')
 
     def write_bit_green_light(self, value):
         try:
@@ -479,7 +495,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_green_light - {e}')
 
     def write_bit_unblock_control(self):
         try:
@@ -487,7 +502,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_unblock_control - {e}')
 
     def write_bit_emergency_force(self):
         try:
@@ -495,7 +509,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_emergency_force - {e}')
 
     def write_bit_select_temper(self, value):
         try:
@@ -505,7 +518,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_bit_select_temper - {e}')
 
     def write_emergency_force(self, value):
         try:
@@ -515,7 +527,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_emergency_force - {e}')
             
     def fc_control(self, tag: str, adr: int, speed: float = None, freq: int = None, hod: int = None):
         try:
@@ -536,47 +547,46 @@ class Model:
             
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/fc_control - {e}')
 
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
         try:
             self.write_bit_green_light(1)
+            time.sleep(0.1)
             self.write_bit_red_light(1)
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/lamp_all_switch_on - {e}')
 
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
         try:
             self.write_bit_green_light(0)
+            time.sleep(0.1)
             self.write_bit_red_light(0)
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/lamp_all_switch_off - {e}')
 
     def lamp_green_switch_on(self):
         """Включение зелёного индикатора"""
         try:
             self.write_bit_green_light(1)
+            time.sleep(0.1)
             self.write_bit_red_light(0)
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/lamp_green_switch_on - {e}')
 
     def lamp_red_switch_on(self):
         """Включение красного индикатора"""
         try:
             self.write_bit_green_light(0)
+            time.sleep(0.1)
             self.write_bit_red_light(1)
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/lamp_red_switch_on - {e}')
             
     def result_conveyor_test(self, step):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
@@ -629,7 +639,6 @@ class Model:
             
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_data_in_archive - {e}')
             
     def save_data_in_archive(self):
         try:
@@ -654,7 +663,6 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/save_data_in_archive - {e}')
             
     def write_end_test_in_archive(self):
         try:
@@ -663,4 +671,3 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            self.status_bar_msg(f'ERROR in model/write_end_test_in_archive - {e}')

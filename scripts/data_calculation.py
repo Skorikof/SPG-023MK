@@ -27,40 +27,38 @@ class CalcData:
 
         except Exception as e:
             self.logger.error(e)
-            self.model.status_bar_msg(f'ERROR in Steps/definition_speed_by_hod - {e}')
             return 0.03  # Safe default on error
         
     def _normalize_cycle(self, x, y, target_len=1000):
+        """
+        Интерполирует цикл к заданному количеству точек target_len.
+        Тут же в return переворачиваю y_new, пожелания заказчика на такой конечный вид графика
+        """
         try:
             t_old = np.linspace(0, 1, len(x))
             t_new = np.linspace(0, 1, target_len)
-
             x_new = np.interp(t_new, t_old, x)
             y_new = np.interp(t_new, t_old, y)
-
-            return x_new, y_new
+            return x_new, -y_new
         
         except Exception as e:
             self.logger.error(e)
 
     def average_cycles(self, cycles, target_len=1000):
+        """Усредняет несколько циклов, предварительно нормализуя их длинну"""
         try:
             if not cycles:
                 return None, None
-
             xs = []
             ys = []
-
             for pos, force in cycles:
-                # x_n, y_n = self._normalize_cycle(pos, force, target_len)
-                # xs.append(x_n)
-                # ys.append(y_n)
-                xs.append(pos)
-                ys.append(force)
-
+                x_n, y_n = self._normalize_cycle(pos, force, target_len)
+                xs.append(x_n)
+                ys.append(y_n)
+                # xs.append(pos)
+                # ys.append(force)
             mean_x = np.mean(xs, axis=0)
             mean_y = np.mean(ys, axis=0)
-
             return mean_x, mean_y
 
         except Exception as e:
@@ -202,22 +200,18 @@ class CalcData:
                 # self.move = [round(x + offset_p, 2) for x in self.move_list]
                 self.move = self.move_list[:]
 
-                max_recoil, max_comp = self.calc_data.middle_min_and_max_force(self.force)
+                max_recoil, max_comp = self.middle_min_and_max_force(self.force)
                 self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
                 
-                push_force = self._choice_push_force()
+                push_force = self.choice_push_force()
                 self.max_recoil = round(max_recoil + push_force, 1)
                 self.max_comp = round(max_comp - push_force, 1)
                 self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
 
-                self.power_amort = self.calc_data.power_amort(self.force, self.move)
-                self.freq_piston = self.calc_data.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
+                self.power_amort = self.power_amort(self.force, self.move)
+                self.freq_piston = self.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
                 
                 self.logger.debug('Full circle response parsing is done')
-
-                self.signals.update_data_graph.emit()
-
-            self.signals.full_cycle_count.emit('+1')
 
         except Exception as e:
             self.logger.error(e)

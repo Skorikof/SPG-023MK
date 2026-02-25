@@ -2,6 +2,7 @@
 import time
 import pyqtgraph as pg
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PySide6.QtCore import Slot
 
 from app import glob_var
 from app.ui_py.mainui import Ui_MainWindow
@@ -48,7 +49,6 @@ class AppWindow(QMainWindow):
 
     def _start_param_view(self):
         self._init_start_view()
-
         self._init_variables()
         self._init_buttons()
         self._init_signals()
@@ -93,8 +93,10 @@ class AppWindow(QMainWindow):
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)
         self.model.signals.stbar_msg.connect(self.status_bar_ui)
-        self.model.signals.update_data_graph.connect(self.update_graph_view)
         self.model.signals.save_koef_force.connect(self.btn_correct_force_slot)
+        self.model.signals.update_lab_graph.connect(self.update_graph_view_lab)
+        self.model.signals.update_conv_graph.connect(self.update_graph_view_conv)
+        self.model.signals.update_temper_graph.connect(self.update_graph_view_temper)
         self.model.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
@@ -420,28 +422,22 @@ class AppWindow(QMainWindow):
         self.index_type_test = index
         self.select_type_test()
         self.select_amort()
-
-    def update_graph_view(self, data):
-        try:
-            type_test = self.model.data_test.type_test
-            if type_test == 'hand':
-                pass
-
-            elif type_test == 'conv':
-                self._update_conv_graph()
-                self._update_conv_data()
-
-            elif type_test == 'temper':
-                self._update_temper_graph()
-                self._update_lab_data()
-
-            else:
-                self._update_lab_graph(data)
-                # self._update_lab_data()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/update_graph - {e}')
+    
+    # FIXME Доделать отображение и рассовывание данных
+    @Slot(object)
+    def update_graph_view_lab(self, data):
+        self._update_lab_graph(data)
+        self._update_lab_data()
+    
+    @Slot(object)
+    def update_graph_view_conv(self, data):
+        self._update_conv_graph()
+        self._update_conv_data()
+        
+    @Slot(object)
+    def update_graph_view_temper(self, data):
+        self._update_temper_graph()
+        self._update_lab_data()
 
     def select_type_test(self):
         try:
