@@ -42,10 +42,10 @@ class MoveGraph(AbstractGraph):
             max_recoil = round(recoil + push_force, 2)
             max_comp = round(comp - push_force, 2)
 
-            power = CalcData().power_amort(data.move_list, data.force_list)
+            power = CalcData().calc_power_amort(data.move_list, data.force_list)
 
             speed = float(data.speed)
-            freq = CalcData().freq_piston_amort(speed, data.hod)
+            freq = CalcData().calc_freq_piston_amort(speed, data.hod)
 
             return {'recoil': max_recoil,
                     'comp': max_comp,

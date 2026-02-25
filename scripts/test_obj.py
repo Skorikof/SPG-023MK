@@ -88,6 +88,11 @@ class DataTest:
         self.force_alarm = 0
         self.flag_push_force = False
         self.static_push_force = 0
+        self.dynamic_push_force = 0
+        self.max_recoil = 0
+        self.max_comp = 0
+        self.power_amort = 0
+        self.freq_piston = 0
         self.temperature = 0
         self.first_temperature = 0
         self.second_temperature = 0

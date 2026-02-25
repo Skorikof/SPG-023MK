@@ -119,7 +119,11 @@ class CalcData:
             
         finally:
             return max_rec, max_comp
-
+        
+    def middle_min_and_max_force_array(self, force: np.array):
+        """Вычисление и усреднение максимального и инимального усилия из массива"""
+        return np.max(force[1]), abs(min(force[1]))
+        
     def offset_move_by_hod(self, amort, min_p):
         """Смещение хода на графике от хода поршня"""
         try:
@@ -128,7 +132,7 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
 
-    def power_amort(self, move, force):
+    def calc_power_amort(self, move, force):
         """Расчёт мощности"""
         try:
             temp = 0
@@ -142,8 +146,22 @@ class CalcData:
 
         except Exception as e:
             self.logger.error(e)
+            
+    def calc_power_amort_array(self, move: np.array, force: np.array):
+        """Расчёт мощности из массивов"""
+        try:
+            steps = np.abs(np.abs(move[1:]) - np.abs(move[:-1]))
+            mask = steps > 0
+            if not np.any(mask):
+                return 0.0
+            temp = np.dot(steps[mask], np.abs(force[:-1])[mask])
+            return round((temp * 0.009807) / 1000, 3)
 
-    def freq_piston_amort(self, speed, hod):
+        except Exception as e:
+            self.logger.error(e)
+            return 0.0
+
+    def calc_freq_piston_amort(self, speed, hod):
         """Частота поршня"""
         try:
             return round(speed / (int(hod) * 0.002 * 3.14), 3)
@@ -176,46 +194,15 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
             
-    def choice_push_force(self, flag, force, move, static):
-        """Выбор выталкивающей силы для расчётов и архива"""
+    def calc_dynamic_push_force_array(self, move, force, static):
         try:
-            if flag:
-                return self.calc_dynamic_push_force(force, move, static)
-
-            else:
-                dynamic = 0
-                return static, dynamic
-
-        except Exception as e:
-            self.logger.error(e)
+            force_min = abs(force[np.argmin(move)])
+            force_max = abs(force[np.argmax(move)])
+            force_avg = (force_min + force_max) / 2
+            dynamic = (force_avg + static) / 2
             
-    # FIXME
-    def full_circle_done(self):
-        try:
-            self.logger.debug('Full circle is done')
-            if self.flag_fill_graph:
-                # offset_p = self.calc_data.offset_move_by_hod(self.data_test.amort, self.min_point)
-                
-                self.force = [round(x * (-1), 2) for x in self.force_list]
-                # self.move = [round(x + offset_p, 2) for x in self.move_list]
-                self.move = self.move_list[:]
-
-                max_recoil, max_comp = self.middle_min_and_max_force(self.force)
-                self.logger.debug(f'Clear recoil --> {max_recoil}, clear comp --> {max_comp}')
-                
-                push_force = self.choice_push_force()
-                self.max_recoil = round(max_recoil + push_force, 1)
-                self.max_comp = round(max_comp - push_force, 1)
-                self.logger.debug(f'Correct recoil --> {self.max_recoil}, correct comp --> {self.max_comp}')
-
-                self.power_amort = self.power_amort(self.force, self.move)
-                self.freq_piston = self.freq_piston_amort(self.data_test.speed_test, self.data_test.amort.hod)
-                
-                self.logger.debug('Full circle response parsing is done')
-
-        except Exception as e:
-            self.logger.error(e)
+            return dynamic
             
-        finally:
-            self.min_pos = False
-            self.max_pos = False
+        except Exception as e:
+            self.logger.error(f"Error calculating dynamic force: {e}")
+            return None

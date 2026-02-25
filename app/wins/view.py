@@ -1054,8 +1054,8 @@ class AppWindow(QMainWindow):
             self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
             self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
             self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
-            self.ui.lab_power_le.setText(f'{self.model.power_amort}')
-            self.ui.lab_freq_le.setText(f'{self.model.freq_piston}')
+            self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
+            self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
             self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
 
         except Exception as e:
@@ -1065,7 +1065,7 @@ class AppWindow(QMainWindow):
     def _fill_push_force(self):
         try:
             if self.model.data_test.flag_push_force:
-                return self.model.dynamic_push_force
+                return self.model.data_test.dynamic_push_force
 
             else:
                 return self.model.data_test.static_push_force
