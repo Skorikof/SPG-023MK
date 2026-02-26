@@ -28,7 +28,7 @@ class CollectorService:
         if with_data:
             self.model.run_collector_with_data()
         else:
-            self.model.run_collector_without_data()
+            self.model.run_collector_without_stable()
         self.model.reader_start_test()
 
     def start_find_stroke(self):

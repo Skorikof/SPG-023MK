@@ -61,6 +61,7 @@ class CycleCollector:
 
         # -------- состояния --------
         self.phase_state = PhaseState.ACCEL
+        self.skip_accel = False
 
         # -------- программа --------
         self.program = []
@@ -101,12 +102,16 @@ class CycleCollector:
             'current_pos': None,   # текущая позиция при захвате (опционально)
             'timestamp': None      # время захвата
         }
-
-    def load_program(self, program):
+            
+    def load_program(self, program, skip_accel=False):
         try:
             self.reset()
             self.program = program
-            
+            self.skip_accel = skip_accel
+
+            if self.skip_accel:
+                self.phase_state = PhaseState.RUN
+
         except Exception as e:
             self.logger.error(e)
 

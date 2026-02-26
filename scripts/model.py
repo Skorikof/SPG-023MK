@@ -363,55 +363,35 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-                
-    def run_collector_without_data(self, count_det: int=1):
-        try:
-            self.flag_collect_done = False
-            self.flag_collect_error = False
-            self.collector.load_program([
-                (Mode.DETECT_ONLY, count_det),
+            
+    def run_collector_without_stable(self, count_det: int=1):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.load_program([(Mode.DETECT_ONLY, count_det)], skip_accel=True)
+            
+    def run_collector_with_data(self, count_det: int=1, count_col: int=3):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.load_program([
+            (Mode.DETECT_ONLY, count_det),
+            (Mode.COLLECT, count_col),
             ])
-            
-        except Exception as e:
-            self.logger.error(e)
-            
-    def run_collector_with_data(self, count_det: int=1, count_col: int=1):
-        try:
-            self.flag_collect_done = False
-            self.flag_collect_error = False
-            self.collector.load_program([
-                (Mode.DETECT_ONLY, count_det),
-                (Mode.COLLECT, count_col),
-            ])
-            
-        except Exception as e:
-            self.logger.error(e)
             
     def run_collector_find_stroke(self, count_str: int=1):
-        try:
-            self.min_point = 0
-            self.max_point = 0
-            self.stroke = 0
-            self.flag_collect_done = False
-            self.flag_collect_error = False
-            self.collector.load_program([
-                (Mode.STROKE_ONLY, count_str),
-            ])
-
-        except Exception as e:
-            self.logger.error(e)
+        self.min_point = 0
+        self.max_point = 0
+        self.stroke = 0
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.load_program([(Mode.STROKE_ONLY, count_str)])
             
     def run_collector_find_nmt(self):
-        try:
-            self.flag_collect_done = False
-            self.flag_collect_error = False
-            self.collector.load_program([
-                (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
-                (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
-            ])
-
-        except Exception as e:
-            self.logger.error(e)
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.load_program([
+            (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
+            (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
+        ])
 
     def _send_data_in_set_win(self, data):
         try:
