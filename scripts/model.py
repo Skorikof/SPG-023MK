@@ -97,7 +97,8 @@ class Model:
 
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         
-        # self.list_lab_result = []
+        self.list_lab_result = []
+        self.list_conv_result = []
 
     def _init_flags(self):
         self.lbl_push_force = ''
@@ -427,6 +428,7 @@ class Model:
             
     def _calc_result_lab_and_conv(self, move, force):
         try:
+            # FIXME Нужно добавить корректировку усилия по коэффициенту обнуления
             rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
             if self.data_test.flag_push_force:
                 push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
@@ -475,20 +477,33 @@ class Model:
             self.logger.error(e)
             
     def _pars_result_lab_test(self, avg):
-        move, force = avg[0], avg[1]
-        self._calc_result_lab_and_conv(move, force)
+        self.data_test.move = avg[0]
+        self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
+                                                                      config.force_koef,
+                                                                      self.force_koef_offset)
+        
+        self.list_lab_result.append((self.data_test.move, self.data_test.force))
+        self._calc_result_lab_and_conv(self.data_test.move, self.data_test.force)
 
         self.signals.update_lab_graph.emit(avg)
             
     def _pars_relust_conv_test(self, avg):
-        move, force = avg[0], avg[1]
-        self._calc_result_lab_and_conv(move, force)
+        self.data_test.move = avg[0]
+        self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
+                                                                      config.force_koef,
+                                                                      self.force_koef_offset)
+        
+        self.list_conv_result.append((self.data_test.move, self.data_test.force))
+        self._calc_result_lab_and_conv(self.data_test.move, self.data_test.force)
 
         self.signals.update_conv_graph.emit(avg)
         
-    # FIXME Додумать расчёты для температурного испытания (прилетают два массива)
     def _pars_result_temper_test(self, pos_np, force_np):
-        max_recoil, max_comp = self._calc_result_temper_test(pos_np, force_np)
+        force = self.calc_data.correct_force_with_koef(force_np,
+                                                       config.force_koef,
+                                                       self.force_koef_offset)
+        
+        max_recoil, max_comp = self._calc_result_temper_test(pos_np, force)
         self.data_test.recoil_list.append(max_recoil)
         self.data_test.comp_list.append(max_comp)
         self.data_test.temper_list.append(self.data_test.max_temperature)
@@ -665,19 +680,14 @@ class Model:
             
     def save_result_cycle(self):
         try:
-            pass
-            # if not self.move or not self.force:
-            #     pass
-            # else:
-            #     type_test = self.data_test.type_test
-            #     if type_test == 'lab' or type_test == 'lab_cascade' or type_test == 'conv':
-            #         data_dict = {'speed': self.data_test.speed_test,
-            #                      'move': self.move[:],
-            #                      'force': self.force[:]}
+            if self.data_test.type_test in ('lab', 'lab_cascade'):
+                data_dict = {'speed': self.data_test.speed_test,
+                             'move': self.move[:],
+                             'force': self.force[:]}
 
-            #         self.list_lab_result.append(data_dict)
-                        
-            #     self.save_data_in_archive()
+                self.list_lab_result.append(data_dict)
+                    
+            self.save_data_in_archive()
                     
         except Exception as e:
             self.logger.error(e)
@@ -691,32 +701,43 @@ class Model:
             
     def save_data_in_archive(self):
         try:
-            pass
-            # data_dict = {'move_graph': self.move[:],
-            #              'force_graph': self.force[:],
-            #              'temper_graph': self.temper_graph[:],
-            #              'temper_recoil_graph': self.temper_recoil_graph[:],
-            #              'temper_comp_graph': self.temper_comp_graph[:],
-            #              'type_test': self.data_test.type_test,
-            #              'speed': self.data_test.speed_test,
-            #              'operator_name': self.data_test.operator.name,
-            #              'operator_rank': self.data_test.operator.rank,
-            #              'serial': self.data_test.serial,
-            #              'amort': self.data_test.amort,
-            #              'flag_push_force': int(self.data_test.flag_push_force),
-            #              'static_push_force': self.data_test.static_push_force,
-            #              'dynamic_push_force': self.dynamic_push_force,
-            #              'max_temperature': self.data_test.max_temperature}
+            if self.data_test.type_test != 'temper':
+                data_dict = {'move_graph': self.data_test.move,
+                            'force_graph': self.data_test.force,
+                            'type_test': self.data_test.type_test,
+                            'speed': self.data_test.speed_test,
+                            'operator_name': self.data_test.operator.name,
+                            'operator_rank': self.data_test.operator.rank,
+                            'serial': self.data_test.serial,
+                            'amort': self.data_test.amort,
+                            'flag_push_force': int(self.data_test.flag_push_force),
+                            'static_push_force': self.data_test.static_push_force,
+                            'dynamic_push_force': self.data_test.dynamic_push_force,
+                            'max_temperature': self.data_test.max_temperature}
+                
+            else:
+                data_dict = {'temper_graph': self.data_test.temper_list,
+                            'temper_recoil_graph': self.data_test.recoil_list,
+                            'temper_comp_graph': self.data_test.comp_list,
+                            'type_test': self.data_test.type_test,
+                            'speed': self.data_test.speed_test,
+                            'operator_name': self.data_test.operator.name,
+                            'operator_rank': self.data_test.operator.rank,
+                            'serial': self.data_test.serial,
+                            'amort': self.data_test.amort,
+                            'flag_push_force': int(self.data_test.flag_push_force),
+                            'static_push_force': self.data_test.static_push_force,
+                            'dynamic_push_force': self.data_test.dynamic_push_force,
+                            'max_temperature': self.data_test.max_temperature}
             
-            # self.write_data_in_archive('data', data_dict)
+            self.write_data_in_archive('data', data_dict)
 
         except Exception as e:
             self.logger.error(e)
             
     def write_end_test_in_archive(self):
         try:
-            pass
-            # self.write_data_in_archive('end_test')
+            self.write_data_in_archive('end_test')
 
         except Exception as e:
             self.logger.error(e)

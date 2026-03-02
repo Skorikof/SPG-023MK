@@ -583,7 +583,7 @@ class Controller:
     def _stage_test_speed_one(self):
         if self.collect_srv.consume_done():
             type_test = self.model.data_test.type_test
-            self.model.save_result_cycle()
+            # self.model.save_result_cycle() # FIXME
             if type_test == 'conv':
                 self.model.step_result_conveyor_test('one')
             self.model.write_end_test_in_archive()
@@ -598,7 +598,7 @@ class Controller:
     def _stage_test_speed_two(self):
         if self.collect_srv.consume_done():
             type_test = self.model.data_test.type_test
-            self.model.save_result_cycle()
+            # self.model.save_result_cycle() # FIXME
             if type_test == 'conv':
                 self.model.step_result_conveyor_test('two')
             self.set_stage(Stage.WAIT)
@@ -614,7 +614,7 @@ class Controller:
 
     def _stage_test_lab_hand_speed(self):
         if self.collect_srv.consume_done():
-            self.model.save_result_cycle()
+            # self.model.save_result_cycle() # FIXME
             self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
             self.test_flow.stop_gear_end_test()
@@ -628,7 +628,7 @@ class Controller:
 
     def _stage_test_lab_cascade(self):
         if self.collect_srv.consume_done():
-            self.model.save_result_cycle()
+            # self.model.save_result_cycle() # FIXME
             if self.count_cascade < self.max_cascade:
                 speed = self.model.data_test.speed_list[self.count_cascade]
                 self.model.data_test.speed_test = speed
@@ -658,7 +658,7 @@ class Controller:
                     self.model.temper_recoil_graph.append(self.model.max_recoil)
                     self.model.temper_comp_graph.append(self.model.max_comp)
                 else:
-                    self.model.save_result_cycle()
+                    # self.model.save_result_cycle() # FIXME
                     self.set_stage(Stage.WAIT)
                     self.model.write_end_test_in_archive()
                     self.test_flow.stop_gear_end_test()

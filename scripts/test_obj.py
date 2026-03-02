@@ -98,6 +98,8 @@ class DataTest:
         self.second_temperature = 0
         self.max_temperature = 0
         self.finish_temperature = config.finish_temper
+        self.move = None
+        self.force = None
         self.recoil_list = []
         self.comp_list = []
         self.temper_list = []

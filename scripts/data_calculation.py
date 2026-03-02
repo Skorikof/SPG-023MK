@@ -63,6 +63,13 @@ class CalcData:
 
         except Exception as e:
             self.logger.error(e)
+            
+    def correct_force_with_koef(self, force, koef, offset):
+        try:
+            return force * koef - offset
+            
+        except Exception as e:
+            self.logger.error(e)
 
     def max_speed(self, hod, freq=119):
         """Расчёт максимальной скорости от хода поршня"""

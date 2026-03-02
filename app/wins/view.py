@@ -737,7 +737,6 @@ class AppWindow(QMainWindow):
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
                                         self.model.data_test.finish_temperature = temper
-                                        self.model.data_test.reset_temper_test()
                                         self._init_temp_graph()
                                         self.begin_test()
 
@@ -866,6 +865,9 @@ class AppWindow(QMainWindow):
             # self.main_btn_state(False)
 
             if self.model.data_test.type_test != 'conv':
+                if self.model.data_test.type_test == 'temper':
+                    self.model.data_test.reset_temper_test()
+                    
                 self.model.list_lab_result = []
                 self.ui.test_repeat_btn.setVisible(False)
                 self.ui.lab_speed_le.setReadOnly(True)
@@ -874,6 +876,7 @@ class AppWindow(QMainWindow):
                 self.ui.test_cancel_btn.setEnabled(True)
 
             else:
+                self.model.list_conv_result = []
                 self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
                 self.ui.test_conv_cancel_btn.setEnabled(True)
 
