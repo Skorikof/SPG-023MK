@@ -61,7 +61,9 @@ class CycleCollector:
 
         # -------- состояния --------
         self.phase_state = PhaseState.ACCEL
+        self.cycle_completed = False
         self.skip_accel = False
+        self.cycle_callback = None
 
         # -------- программа --------
         self.program = []
@@ -92,6 +94,7 @@ class CycleCollector:
         self.last_cycle_time = None
         
         # -------- Для определения НМТ --------
+        self.nmt_detected = False
         self.nmt_captured_pos = None        # Захваченная позиция НМТ
         self.nmt_capture_cycle = None       # Цикл, в котором захватили
         self.nmt_approach_direction = 0     # Направление подхода к НМТ (+1 или -1)
@@ -223,7 +226,7 @@ class CycleCollector:
                 if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
 
                     if self.points_after_turn > self.min_halfcycle_points:
-
+                        self.cycle_completed = False
                         self.turn_count += 1
                         self.points_after_turn = 0
 
@@ -263,12 +266,16 @@ class CycleCollector:
                                     return self.phase_state
 
                                 mode, target_cycles = step
-
                                 if mode == Mode.COLLECT:
                                     pos_np = np.array(self.current_pos, dtype=np.float32)
                                     force_np = np.array(self.current_force, dtype=np.float32)
                                     pos_np, force_np = self._normalize_cycle(pos_np, force_np)
                                     self.cycles.append((pos_np, force_np))
+                                    
+                                    if self.cycle_callback is not None:
+                                        self.cycle_callback(pos_np, force_np)
+                                        
+                                    self.cycle_completed = True
 
                                 elif mode == Mode.STROKE_ONLY:
                                     if self.cycle_min_pos is not None:
@@ -278,6 +285,8 @@ class CycleCollector:
                                             self.cycle_max_pos,
                                             stroke
                                         ))
+                                        
+                                        self.cycle_completed = True
                                         
                                 elif mode == Mode.NMT_CAPTURE:
                                     # При развороте мы в крайней точке - это НМТ
@@ -310,7 +319,33 @@ class CycleCollector:
                                         self.current_force.clear()
                                         self.cycle_min_pos = float("inf")
                                         self.cycle_max_pos = float("-inf")
+                          
+                                    # current_nmt = self.cycle_min_pos if self.cycle_min_pos != float("inf") else None
+            
+                                    # if current_nmt is not None and self.prev_sign != 0:
+                                    #     direction_to_nmt = -self.prev_sign
+                                    #     self.nmt_capture_result = {
+                                    #         'position': current_nmt,
+                                    #         'direction_to_nmt': direction_to_nmt,
+                                    #         'current_pos': self.prev_pos,
+                                    #         'timestamp': time.perf_counter()
+                                    #     }
+                                    #     self.nmt_captured_pos = current_nmt
+                                    #     self.logger.info(
+                                    #                 f"NMT captured: pos={current_nmt:.3f}, "
+                                    #                 f"direction to NMT={direction_to_nmt} "
+                                    #                 f"({'вниз' if direction_to_nmt < 0 else 'вверх'})"
+                                    #             )
+                                    #     self.program_index += 1
                                         
+                                    #     # Сохраняем цикл, если нужно
+                                    #     if len(self.current_pos) > 0:
+                                    #         pos_np = np.array(self.current_pos, dtype=np.float32)
+                                    #         force_np = np.array(self.current_force, dtype=np.float32)
+                                    #         self.cycles.append((pos_np, force_np))
+
+                                        self.cycle_completed = True
+
                                 elif mode == Mode.NMT_FINAL:
                                     if self.nmt_captured_pos is None:
                                         self.logger.error("NMT_FINAL mode but no captured position")
@@ -356,16 +391,18 @@ class CycleCollector:
                                                 self.program_index += 1
                                                 self.program_cycle_counter = 0
                                                 self.nmt_approach_active = False
-                                    
-                                self.program_cycle_counter += 1
-
-                                if self.program_cycle_counter >= target_cycles:
-                                    self.program_index += 1
-                                    self.program_cycle_counter = 0
-
-                                    if self.program_index >= len(self.program):
-                                        self.phase_state = PhaseState.DONE
-                                        return self.phase_state
+                                                
+                                        self.cycle_completed = True
+                                
+                                if self.cycle_completed and target_cycles is not None:
+                                    self.program_cycle_counter += 1
+                                    if self.program_cycle_counter >= target_cycles:
+                                        self.program_index += 1
+                                        self.program_cycle_counter = 0
+                                        if self.program_index >= len(self.program):
+                                            self.phase_state = PhaseState.DONE
+                                            return self.phase_state
+                            
 
                             self.current_pos.clear()
                             self.current_force.clear()
@@ -396,6 +433,10 @@ class CycleCollector:
             
         finally:
             return self.phase_state
+        
+    def set_cycle_callback(self, callback):
+        """Задать функцию, которая будет получать каждый завершённый цикл"""
+        self.cycle_callback = callback
             
     def get_cycles(self):
         return list(self.cycles)
@@ -457,6 +498,7 @@ class CycleCollector:
             self.last_turn_time = None
             self.watchdog_timeout_sec = self.watchdog_max_sec
             
+            self.nmt_detected = False
             self.nmt_captured_pos = None
             self.nmt_capture_cycle = None
             self.nmt_approach_direction = 0
@@ -467,6 +509,9 @@ class CycleCollector:
                 'current_pos': None,
                 'timestamp': None
             }
+            
+            self.cycle_completed = False
+            self.cycle_callback = None
             
         except Exception as e:
             self.logger.error(e)

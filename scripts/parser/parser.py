@@ -33,7 +33,7 @@ class ParserSPG023MK:
                 return
             
             result = {
-                'count': res.get('count'),
+                'count': res.get('count')[-1],
                 'force': [self._parse_float(a, b) for a, b in zip(res.get('force_big'), res.get('force_low'))],
                 'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
                 'state': self._register_state(res.get('state')[-1]),
@@ -42,7 +42,6 @@ class ParserSPG023MK:
             }
 
             return result
-            # return self._discard_left_data(result) # Убрал для отладки, контроллер на столе
             
         except Exception as e:
             self.logger.error(e)

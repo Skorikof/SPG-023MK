@@ -332,7 +332,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
 
-    # FIXME Тестирую чтение буфера
     def _pars_buffer_result(self, res):
         try:
             data = self.parser.pars_response_from_buffer(res)
@@ -376,6 +375,12 @@ class Model:
             (Mode.DETECT_ONLY, count_det),
             (Mode.COLLECT, count_col),
             ])
+        
+    def run_collector_without_end_cycle(self):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.load_program([(Mode.COLLECT, None)], skip_accel=False)
+        self.collector.set_cycle_callback(self._pars_result_temper_test)
             
     def run_collector_find_stroke(self, count_str: int=1):
         self.min_point = 0
@@ -400,8 +405,9 @@ class Model:
             self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
             self.move_now = data.get('move')[-1]
-            self.counter = data.get('count')[-1]
+            self.counter = data.get('count')
             self.state_list = data.get('state_list')
+            self.data_test.first_temperature = data.get('temper') * 0.01 # FIXME Проверить вот этот момент
             self._update_state_dict(data.get('state'))
 
             self.signals.win_set_update.emit('buf')
@@ -414,52 +420,82 @@ class Model:
             self._pars_relust_conv_test(avg)
         
         elif self.data_test.type_test == 'temper':
-            self._pars_result_temper_test(avg)
+            pass
             
         else:
             self._pars_result_lab_test(avg)
             
+    def _calc_result_lab_and_conv(self, move, force):
+        try:
+            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
+            if self.data_test.flag_push_force:
+                push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
+                                                                        self.data_test.static_push_force)
+                self.data_test.dynamic_push_force = push_force
+            else:
+                push_force = self.data_test.static_push_force
+                self.data_test.dynamic_push_force = 0
+            
+            self.data_test.max_recoil = rec_clear + push_force
+            self.data_test.max_comp = comp_clear - push_force
+
+            self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
+            
+            self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
+                                                                        self.data_test.amort.hod)
+            
+        except Exception as e:
+            self.logger.error(e)
+            
+    def _calc_result_temper_test(self, move, force):
+        try:
+            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
+            if self.data_test.flag_push_force:
+                push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
+                                                                        self.data_test.static_push_force)
+                self.data_test.dynamic_push_force = push_force
+            else:
+                push_force = self.data_test.static_push_force
+                self.data_test.dynamic_push_force = 0
+            
+            max_recoil = rec_clear + push_force
+            max_comp = comp_clear - push_force
+            
+            self.data_test.max_recoil = max_recoil
+            self.data_test.max_comp = max_comp
+
+            self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
+            
+            self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
+                                                                        self.data_test.amort.hod)
+            
+            return max_recoil, max_comp
+            
+        except Exception as e:
+            self.logger.error(e)
+            
     def _pars_result_lab_test(self, avg):
         move, force = avg[0], avg[1]
-        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
-        
-        if self.data_test.flag_push_force:
-            push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
-                                                                      self.data_test.static_push_force)
-            self.data_test.dynamic_push_force = push_force
-        else:
-            push_force = self.data_test.static_push_force
-            self.data_test.dynamic_push_force = 0
-        
-        self.data_test.max_recoil = rec_clear + push_force
-        self.data_test.max_comp = comp_clear - push_force
-
-        self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
-        
-        self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
-                                                                      self.data_test.amort.hod)
+        self._calc_result_lab_and_conv(move, force)
 
         self.signals.update_lab_graph.emit(avg)
             
     def _pars_relust_conv_test(self, avg):
         move, force = avg[0], avg[1]
-        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
-        
-        if self.data_test.flag_push_force:
-            push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
-                                                                      self.data_test.static_push_force)
-            self.data_test.dynamic_push_force = push_force
-        else:
-            push_force = self.data_test.static_push_force
-            self.data_test.dynamic_push_force = 0
-        
-        self.data_test.max_recoil = rec_clear + push_force
-        self.data_test.max_comp = comp_clear - push_force
+        self._calc_result_lab_and_conv(move, force)
 
         self.signals.update_conv_graph.emit(avg)
         
-    def _pars_result_temper_test(self, avg):
-        self.signals.update_temper_graph.emit(avg)
+    # FIXME Додумать расчёты для температурного испытания (прилетают два массива)
+    def _pars_result_temper_test(self, pos_np, force_np):
+        max_recoil, max_comp = self._calc_result_temper_test(pos_np, force_np)
+        self.data_test.recoil_list.append(max_recoil)
+        self.data_test.comp_list.append(max_comp)
+        self.data_test.temper_list.append(self.data_test.max_temperature)
+        
+        self.signals.update_temper_graph.emit((self.data_test.recoil_list,
+                                               self.data_test.comp_list,
+                                               self.data_test.temper_list))
         
     def _write_reg_state(self, bit, value, command=None):
         try:

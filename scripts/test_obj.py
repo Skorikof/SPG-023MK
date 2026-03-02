@@ -98,5 +98,11 @@ class DataTest:
         self.second_temperature = 0
         self.max_temperature = 0
         self.finish_temperature = config.finish_temper
-
-        self.data_test = {}
+        self.recoil_list = []
+        self.comp_list = []
+        self.temper_list = []
+        
+    def reset_temper_test(self):
+        self.recoil_list = []
+        self.comp_list = []
+        self.temper_list = []

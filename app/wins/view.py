@@ -434,11 +434,10 @@ class AppWindow(QMainWindow):
         self._update_conv_graph(data)
         self._update_conv_data()
 
-    # FIXME Доделать отображение и рассовывание данных
     @Slot(object)
     def update_graph_view_temper(self, data):
         self._update_temper_graph(data)
-        self._update_lab_data()
+        self._update_temper_data()
 
     def select_type_test(self):
         try:
@@ -738,6 +737,7 @@ class AppWindow(QMainWindow):
                                     temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                     if temper:
                                         self.model.data_test.finish_temperature = temper
+                                        self.model.data_test.reset_temper_test()
                                         self._init_temp_graph()
                                         self.begin_test()
 
@@ -993,13 +993,12 @@ class AppWindow(QMainWindow):
             self.ui.conv_temperture_le.setText(f'{self.model.data_test.temperature}')
             self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
-            # FIXME уточнить по поводу stage
-            if self.controller.stage == 'test_speed_one':
+            if self.controller.stage == Stage.TEST_SPEED_ONE:
                 self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
                 self.ui.conv_comp_le.setText(f'{self.model.data_test.max_comp}')
                 self.ui.conv_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
-            if self.controller.stage == 'test_speed_two':
+            if self.controller.stage == Stage.TEST_SPEED_TWO:
                 self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
                 self.ui.conv_comp_le_2.setText(f'{self.model.data_test.max_comp}')
                 self.ui.conv_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
@@ -1021,17 +1020,20 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_lab_graph - {e}')
 
-    def _update_temper_graph(self, data):
+    def _update_temper_graph(self, data: tuple):
         try:
             self.ui.lab_GraphWidget.clear()
-            if len(self.model.temper_graph) > 1:
-                pen_recoil = pg.mkPen(color='black', width=3)
-                pen_comp = pg.mkPen(color='blue', width=3)
+            recoil = data[0]
+            comp = data[1]
+            temper = data[2]
+            
+            pen_recoil = pg.mkPen(color='black', width=3)
+            pen_comp = pg.mkPen(color='blue', width=3)
 
-                self.graph.fill_graph(self.model.temper_graph, self.model.temper_recoil_graph,
-                                      pen=pen_recoil, name='Отбой')
-                self.graph.fill_graph(self.model.temper_graph, self.model.temper_comp_graph,
-                                      pen=pen_comp, name='Сжатие')
+            self.graph.fill_graph(temper, recoil,
+                                    pen=pen_recoil, name='Отбой')
+            self.graph.fill_graph(temper, comp,
+                                    pen=pen_comp, name='Сжатие')
 
         except Exception as e:
             self.logger.error(e)
@@ -1039,18 +1041,13 @@ class AppWindow(QMainWindow):
 
     def _update_lab_data(self):
         try:
-            if self.model.data_test.type_test == 'lab':
-                # FIXME уточнить по поводу stage
-                if self.controller.stage == 'test_speed_one':
-                    self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
-                    self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
-
-                elif self.controller.stage == 'test_speed_two':
-                    self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
-                    self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
-            else:
+            if self.controller.stage == Stage.TEST_SPEED_ONE:
                 self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
                 self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
+
+            elif self.controller.stage == Stage.TEST_SPEED_TWO:
+                self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+                self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
 
             self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
             self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
@@ -1062,6 +1059,21 @@ class AppWindow(QMainWindow):
         except Exception as e:
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/_update_lab_data - {e}')
+            
+    def _update_temper_data(self):
+        try:
+            self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
+            self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
+            
+            self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
+            self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
+            self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
+            self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
+            self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
+            self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
+            
+        except Exception as e:
+            self.logger.error(e)
 
     def _fill_push_force(self):
         try:
@@ -1081,9 +1093,7 @@ class AppWindow(QMainWindow):
 
     def cancel_test_clicked(self):
         try:
-
             temp = self.ui.test_cancel_btn.text()
-
             if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
                 self.ui.test_cancel_btn.setEnabled(False)
                 self.controller.stop_test_clicked()
@@ -1131,7 +1141,6 @@ class AppWindow(QMainWindow):
     def cancel_test_conv_clicked(self):
         try:
             temp = self.ui.test_conv_cancel_btn.text()
-
             if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
                 self.ui.test_conv_cancel_btn.setEnabled(False)
                 self.controller.stop_test_clicked()
