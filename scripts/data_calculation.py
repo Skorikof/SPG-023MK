@@ -55,8 +55,6 @@ class CalcData:
                 x_n, y_n = self._normalize_cycle(pos, force, target_len)
                 xs.append(x_n)
                 ys.append(y_n)
-                # xs.append(pos)
-                # ys.append(force)
             mean_x = np.mean(xs, axis=0)
             mean_y = np.mean(ys, axis=0)
             return mean_x, mean_y
@@ -185,19 +183,6 @@ class CalcData:
             else:
                 return 1500
 
-        except Exception as e:
-            self.logger.error(e)
-
-    def calc_dynamic_push_force(self, force, move, static):
-        """Расчёт динамической выталкивающей силы"""
-        try:
-            force_min = force[move.index(min(move))]
-            force_max = force[move.index(max(move))]
-            force_mid = (force_min + force_max) / 2
-            dynamic = round((force_mid - static) / 2 + static, 2)
-            
-            return dynamic
-        
         except Exception as e:
             self.logger.error(e)
             

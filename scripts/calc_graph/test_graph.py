@@ -87,7 +87,7 @@ class TestGraph(AbstractGraph):
                                width=3,
                                style=self._select_line_style(ind))
 
-                self.widget.plot(graph['move'], graph['force'], pen=pen, name=name)
+                self.widget.plot(graph[0], graph[1], pen=pen, name=name)
             
         except Exception as e:
             self.logger.error(e)

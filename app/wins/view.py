@@ -41,7 +41,6 @@ class AppWindow(QMainWindow):
             self.controller.timer_process.stop()
         
         self.model.reader_exit()
-        self.controller.timer_process.stop()
         self.model.writer.timer_writer_stop()
         self.model.save_arch.timer_writer_arch_stop()
         self.model.reader.threadpool.waitForDone()
@@ -49,10 +48,10 @@ class AppWindow(QMainWindow):
         event.accept()
 
     def _start_param_view(self):
-        self._init_start_view()
         self._init_variables()
         self._init_buttons()
         self._init_signals()
+        self._init_start_view()
 
         self._start_page()
 
@@ -115,145 +114,117 @@ class AppWindow(QMainWindow):
         self.win_amort.signals.closed.connect(self.close_win_amort)
         self.win_set.signals.closed.connect(self.close_win_settings)
         self.win_archive.signals.closed.connect(self.close_win_archive)
+        
+    def log_exceptions(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                args[0].logger.error(
+                    f'ERROR in {func.__name__}: {e}'
+                )
+        return wrapper
 
     def _init_lab_graph(self):
-        try:
-            self.graph = TestGraph(self.ui.lab_GraphWidget, 'move')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_init_lab_graph - {e}')
+        self.graph = TestGraph(self.ui.lab_GraphWidget, 'move')
 
     def _init_conv_graph(self):
-        try:
-            self.graph = TestGraph(self.ui.conv_GraphWidget, 'move')
+        self.graph = TestGraph(self.ui.conv_GraphWidget, 'move')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_init_conv_graph - {e}')
-            
     def _init_temp_graph(self):
-        try:
-            self.graph = TestGraph(self.ui.lab_GraphWidget, 'temper')
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_init_temp_graph - {e}')
-            
+        self.graph = TestGraph(self.ui.lab_GraphWidget, 'temper')
+
+    @log_exceptions
     def status_bar_ui(self, txt_bar):
-        try:
-            self.ui.statusbar.showMessage(txt_bar)
+        self.ui.statusbar.showMessage(txt_bar)
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def controller_msg_slot(self, msg):
-        try:
-            txt_btn = ''
-            if msg == 'yellow_btn':
-                txt_btn = 'ЗАПУСК'
-            elif msg == 'alarm_traverse_up':
-                txt_btn = 'ОПУСТИТЬ'
-            elif msg == 'alarm_traverse_down':
-                txt_btn = 'ПОДНЯТЬ'
-            else:
-                txt_btn = 'OK'
-            self.ui.ok_message_btn.setText(txt_btn)
-            self.main_ui_msg(*TextMsg.msg_from_controller(msg))
+        txt_btn = ''
+        if msg == 'yellow_btn':
+            txt_btn = 'ЗАПУСК'
+        elif msg == 'alarm_traverse_up':
+            txt_btn = 'ОПУСТИТЬ'
+        elif msg == 'alarm_traverse_down':
+            txt_btn = 'ПОДНЯТЬ'
+        else:
+            txt_btn = 'OK'
+        self.ui.ok_message_btn.setText(txt_btn)
+        self.main_ui_msg(*TextMsg.msg_from_controller(msg))
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/controller_msg_slot - {e}')
-
+    @log_exceptions
     def main_ui_msg(self, tag, txt):
-        try:
-            if tag is not None or txt is not None:
-                backcolor = ''
-                color = glob_var.COLOR_BLACK
+        if tag is not None or txt is not None:
+            backcolor = ''
+            color = glob_var.COLOR_BLACK
 
-                if tag == 'info':
-                    self.ui.message_btn_frame.setVisible(False)
+            if tag == 'info':
+                self.ui.message_btn_frame.setVisible(False)
 
-                if tag == 'question':
-                    backcolor = glob_var.COLOR_ORANGE
-                    self.ui.message_btn_frame.setVisible(True)
-                    self.ui.ok_message_btn.setVisible(True)
-                    self.ui.cancel_message_btn.setVisible(True)
+            if tag == 'question':
+                backcolor = glob_var.COLOR_ORANGE
+                self.ui.message_btn_frame.setVisible(True)
+                self.ui.ok_message_btn.setVisible(True)
+                self.ui.cancel_message_btn.setVisible(True)
 
-                elif tag == 'attention':
-                    backcolor = glob_var.COLOR_ORANGE
-                    self.ui.message_btn_frame.setVisible(False)
+            elif tag == 'attention':
+                backcolor = glob_var.COLOR_ORANGE
+                self.ui.message_btn_frame.setVisible(False)
 
-                elif tag == 'warning':
-                    backcolor = glob_var.COLOR_RED
-                    color = glob_var.COLOR_LYELLOW
-                    self.ui.message_btn_frame.setVisible(True)
-                    self.main_ui_state(True)
-                    self.ui.ok_message_btn.setVisible(True)
-                    self.ui.ok_message_btn.setEnabled(True)
-                    self.ui.cancel_message_btn.setVisible(False)
-                    self.main_btn_state(False)
-                self.ui.main_stackedWidget.setCurrentIndex(0)
-                self.ui.stack_start_label.setText(txt)
-                self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
-                                                        "color: " + color + ";")
+            elif tag == 'warning':
+                backcolor = glob_var.COLOR_RED
+                color = glob_var.COLOR_LYELLOW
+                self.ui.message_btn_frame.setVisible(True)
+                self.main_ui_state(True)
+                self.ui.ok_message_btn.setVisible(True)
+                self.ui.ok_message_btn.setEnabled(True)
+                self.ui.cancel_message_btn.setVisible(False)
+                self.main_btn_state(False)
+            self.ui.main_stackedWidget.setCurrentIndex(0)
+            self.ui.stack_start_label.setText(txt)
+            self.ui.stack_start_label.setStyleSheet("background-color: " + backcolor + ";\n" +
+                                                    "color: " + color + ";")
 
-                self.tag_msg = tag
-                
-            else:
-                pass
+            self.tag_msg = tag
+            
+        else:
+            pass
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/main_ui_msg - {e}')
-
+    @log_exceptions
     def btn_main_stop_clicked(self):
-        try:
-            self.main_ui_msg(*TextMsg.msg_from_controller('red_btn'))
-            self.controller.work_interrupted_operator()
-            self.logger.info(f'PUSH BIG RED BUTTON')
+        self.main_ui_msg(*TextMsg.msg_from_controller('red_btn'))
+        self.controller.work_interrupted_operator()
+        self.logger.info(f'PUSH BIG RED BUTTON')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/btn_main_stop_clicked - {e}')
-
+    @log_exceptions
     def btn_ok_message_clicked(self):
-        try:
-            if self.tag_msg == 'warning':
-                if self.model.alarm_tag == 'alarm_traverse_up':
-                    self.controller.trav_serv.traverse_move_out_alarm('up')
+        if self.tag_msg == 'warning':
+            if self.model.alarm_tag == 'alarm_traverse_up':
+                self.controller.trav_serv.traverse_move_out_alarm('up')
 
-                elif self.model.alarm_tag == 'alarm_traverse_down':
-                    self.controller.trav_serv.traverse_move_out_alarm('down')
+            elif self.model.alarm_tag == 'alarm_traverse_down':
+                self.controller.trav_serv.traverse_move_out_alarm('down')
 
-                else:
-                    self.model.lamp_all_switch_off()
-                    time.sleep(0.1)
-                    self._start_page()
-
-            elif self.tag_msg == 'question':
+            else:
                 self.model.lamp_all_switch_off()
                 time.sleep(0.1)
-                self.main_btn_state(False)
-                self.main_stop_state(True)
-                self.model.signals.test_launch.emit(True)
+                self._start_page()
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/btn_ok_message_clicked - {e}')
-
-    def btn_cancel_message_clicked(self):
-        try:
-            self.controller.set_stage(Stage.WAIT)
-            self.model.flag_test_launch = False
-
+        elif self.tag_msg == 'question':
             self.model.lamp_all_switch_off()
             time.sleep(0.1)
-            self._start_page()
+            self.main_btn_state(False)
+            self.main_stop_state(True)
+            self.model.signals.test_launch.emit(True)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/btn_cancel_message_clicked - {e}')
+    @log_exceptions
+    def btn_cancel_message_clicked(self):
+        self.controller.set_stage(Stage.WAIT)
+        self.model.flag_test_launch = False
+
+        self.model.lamp_all_switch_off()
+        time.sleep(0.1)
+        self._start_page()
 
     def main_ui_state(self, state):
         self.ui.main_stackedWidget.setEnabled(state)
@@ -272,21 +243,17 @@ class AppWindow(QMainWindow):
     def main_stop_state(self, state):
         self.ui.main_STOP_btn.setEnabled(state)
 
+    @log_exceptions
     def _start_page(self):
-        try:
-            self.main_stop_state(False)
-            if self.model.client:
-                self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
-                self.main_btn_state(True)
-                self.main_ui_state(True)
+        self.main_stop_state(False)
+        if self.model.client:
+            self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
+            self.main_btn_state(True)
+            self.main_ui_state(True)
 
-            else:
-                self.main_ui_msg(*TextMsg.msg_from_controller('connect_lost'))
-                self.main_ui_state(False)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_start_page - {e}')
+        else:
+            self.main_ui_msg(*TextMsg.msg_from_controller('connect_lost'))
+            self.main_ui_state(False)
 
     def open_win_operator(self):
         self.main_ui_state(False)
@@ -316,53 +283,36 @@ class AppWindow(QMainWindow):
         self.win_amort.hide()
         self.specif_page()
 
+    @log_exceptions
     def btn_search_hod_clicked(self):
-        try:
-            self.main_ui_state(False)
-            self.main_btn_state(False)
-            self.main_stop_state(True)
-            self.controller.search_hod()
+        self.main_ui_state(False)
+        self.main_btn_state(False)
+        self.main_stop_state(True)
+        self.controller.search_hod()
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/btn_search_hod_clicked - {e}')
-
+    @log_exceptions
     def slot_search_hod(self):
-        try:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Ход шатуна равен '
-                                          f'{self.model.stroke}</b>'
-                                          )
-            self.main_ui_state(True)
-            self.main_btn_state(True)
-            self.main_stop_state(False)
-            self._start_page()
+        msg = QMessageBox.information(self,
+                                        'Внимание',
+                                        f'<b style="color: #f00;">Ход шатуна равен '
+                                        f'{self.model.stroke}</b>'
+                                        )
+        self.main_ui_state(True)
+        self.main_btn_state(True)
+        self.main_stop_state(False)
+        self._start_page()
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/slot_search_hod - {e}')
-
+    @log_exceptions
     def btn_gear_set_pos(self):
-        try:
-            self.main_ui_state(False)
-            self.main_btn_state(False)
-            self.main_stop_state(True)
-            self.controller.move_gear_set_pos()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/btn_gear_set_pos - {e}')
+        self.main_ui_state(False)
+        self.main_btn_state(False)
+        self.main_stop_state(True)
+        self.controller.move_gear_set_pos()
 
     def btn_correct_force_clicked(self):
-        try:
-            self.main_ui_state(False)
-            self.main_btn_state(False)
-            self.model.init_timer_koef_force()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'btn_correct_force_clicked - {e}')
+        self.main_ui_state(False)
+        self.main_btn_state(False)
+        self.model.init_timer_koef_force()
 
     def btn_correct_force_slot(self, tag):
         txt_msg = 'Неудачная попытка откорректировать датчик, повторите пожалуйста'
@@ -381,19 +331,14 @@ class AppWindow(QMainWindow):
             self.main_btn_state(True)
 
     def btn_cancel_correct_force_clicked(self):
-        try:
-            self.model.cancel_koef_force()
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Корректировка датчика усилия сброшена</b>'
-                                          )
+        self.model.cancel_koef_force()
+        msg = QMessageBox.information(self,
+                                        'Внимание',
+                                        f'<b style="color: #f00;">Корректировка датчика усилия сброшена</b>'
+                                        )
 
-            self.main_ui_state(True)
-            self.main_btn_state(True)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'btn_cancel_correct_force_clicked - {e}')
+        self.main_ui_state(True)
+        self.main_btn_state(True)
 
     def specif_page(self):
         self.specif_ui_clear()
@@ -439,32 +384,28 @@ class AppWindow(QMainWindow):
         self._update_temper_graph(data)
         self._update_temper_data()
 
+    @log_exceptions
     def select_type_test(self):
-        try:
-            ind = self.index_type_test
-            if ind == 0:
-                self.model.data_test.type_test = 'lab'
-                self.specif_enable_gui(True, True, False, True)
+        ind = self.index_type_test
+        if ind == 0:
+            self.model.set_type_test('lab')
+            self.specif_enable_gui(True, True, False, True)
 
-            elif ind == 1:
-                self.model.data_test.type_test = 'lab_hand'
-                self.specif_enable_gui(False, False, False, True)
+        elif ind == 1:
+            self.model.set_type_test('lab_hand')
+            self.specif_enable_gui(False, False, False, True)
 
-            elif ind == 2:
-                self.model.data_test.type_test = 'lab_cascade'
-                self.specif_enable_gui(False, False, True, True)
+        elif ind == 2:
+            self.model.set_type_test('lab_cascade')
+            self.specif_enable_gui(False, False, True, True)
 
-            elif ind == 3:
-                self.model.data_test.type_test = 'temper'
-                self.specif_enable_gui(False, False, False, False)
+        elif ind == 3:
+            self.model.set_type_test('temper')
+            self.specif_enable_gui(False, False, False, False)
 
-            elif ind == 4:
-                self.model.data_test.type_test = 'conv'
-                self.specif_enable_gui(True, True, False, True)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/select_type_test - {e}')
+        elif ind == 4:
+            self.model.set_type_test('conv')
+            self.specif_enable_gui(True, True, False, True)
 
     def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade, flag_temper):
         self.ui.specif_speed_one_lineEdit.setReadOnly(flag_change_speed)
@@ -481,66 +422,53 @@ class AppWindow(QMainWindow):
         self.ui.btn_reduce_speed.setVisible(flag_cascade)
         self.ui.specif_lab_cascade_speed_table.setVisible(flag_cascade)
 
+    @log_exceptions
     def select_amort(self):
-        try:
-            amort = self.win_amort.amorts.struct.amorts[self.index_amort]
-            self.model.data_test.amort = amort
-            self.specif_ui_fill(amort)
+        amort = self.win_amort.amorts.struct.amorts[self.index_amort]
+        self.model.set_amort(amort)
+        self.specif_ui_fill(amort)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/select_amort - {e}')
-
+    @log_exceptions
     def specif_ui_fill(self, obj):
-        try:
-            self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
-            self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
-            self.ui.specif_hod_lineEdit.setText(str(obj.hod))
-            self.ui.specif_speed_one_lineEdit.setText(str(obj.speed_one))
-            self.ui.specif_speed_two_lineEdit.setText(str(obj.speed_two))
-            self.ui.specif_min_comp_lineEdit.setText(str(obj.min_comp))
-            self.ui.specif_min_comp_lineEdit_2.setText(str(obj.min_comp_2))
-            self.ui.specif_max_comp_lineEdit.setText(str(obj.max_comp))
-            self.ui.specif_max_comp_lineEdit_2.setText(str(obj.max_comp_2))
-            self.ui.specif_min_recoil_lineEdit.setText(str(obj.min_recoil))
-            self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
-            self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
-            self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
-            if self.model.data_test.type_test == 'temper':
-                max_temper = self.model.data_test.finish_temperature
-            else:
-                max_temper = obj.max_temper
-            self.ui.specif_max_temp_lineEdit.setText(str(max_temper))
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_ui_fill - {e}')
+        self.ui.specif_min_length_lineEdit.setText(str(obj.min_length))
+        self.ui.specif_max_length_lineEdit.setText(str(obj.max_length))
+        self.ui.specif_hod_lineEdit.setText(str(obj.hod))
+        self.ui.specif_speed_one_lineEdit.setText(str(obj.speed_one))
+        self.ui.specif_speed_two_lineEdit.setText(str(obj.speed_two))
+        self.ui.specif_min_comp_lineEdit.setText(str(obj.min_comp))
+        self.ui.specif_min_comp_lineEdit_2.setText(str(obj.min_comp_2))
+        self.ui.specif_max_comp_lineEdit.setText(str(obj.max_comp))
+        self.ui.specif_max_comp_lineEdit_2.setText(str(obj.max_comp_2))
+        self.ui.specif_min_recoil_lineEdit.setText(str(obj.min_recoil))
+        self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
+        self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
+        self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
+        if self.model.data_test.type_test == 'temper':
+            max_temper = self.model.data_test.finish_temperature
+        else:
+            max_temper = obj.max_temper
+        self.ui.specif_max_temp_lineEdit.setText(str(max_temper))
 
     def specif_ui_clear(self):
-        try:
-            self.ui.specif_choice_comboBox.clear()
-            self.ui.specif_serial_lineEdit.clear()
-            self.ui.specif_min_length_lineEdit.clear()
-            self.ui.specif_max_length_lineEdit.clear()
-            self.ui.specif_hod_lineEdit.clear()
-            self.ui.specif_speed_one_lineEdit.clear()
-            self.ui.specif_speed_two_lineEdit.clear()
-            self.ui.specif_min_comp_lineEdit.clear()
-            self.ui.specif_min_comp_lineEdit_2.clear()
-            self.ui.specif_max_comp_lineEdit.clear()
-            self.ui.specif_max_comp_lineEdit_2.clear()
-            self.ui.specif_min_recoil_lineEdit.clear()
-            self.ui.specif_min_recoil_lineEdit_2.clear()
-            self.ui.specif_max_recoil_lineEdit.clear()
-            self.ui.specif_max_recoil_lineEdit_2.clear()
-            self.ui.specif_max_temp_lineEdit.clear()
-            self.ui.specif_static_push_force_lineEdit.clear()
+        self.ui.specif_choice_comboBox.clear()
+        self.ui.specif_serial_lineEdit.clear()
+        self.ui.specif_min_length_lineEdit.clear()
+        self.ui.specif_max_length_lineEdit.clear()
+        self.ui.specif_hod_lineEdit.clear()
+        self.ui.specif_speed_one_lineEdit.clear()
+        self.ui.specif_speed_two_lineEdit.clear()
+        self.ui.specif_min_comp_lineEdit.clear()
+        self.ui.specif_min_comp_lineEdit_2.clear()
+        self.ui.specif_max_comp_lineEdit.clear()
+        self.ui.specif_max_comp_lineEdit_2.clear()
+        self.ui.specif_min_recoil_lineEdit.clear()
+        self.ui.specif_min_recoil_lineEdit_2.clear()
+        self.ui.specif_max_recoil_lineEdit.clear()
+        self.ui.specif_max_recoil_lineEdit_2.clear()
+        self.ui.specif_max_temp_lineEdit.clear()
+        self.ui.specif_static_push_force_lineEdit.clear()
 
-            self.ui.specif_lab_cascade_speed_table.setRowCount(0)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_ui_clear - {e}')
+        self.ui.specif_lab_cascade_speed_table.setRowCount(0)
 
     def specif_lab_input_speed(self, obj):
         try:
@@ -580,56 +508,43 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/specif_lab_input_speed - {e}')
 
+    @log_exceptions
     def specif_add_lab_cascade_table(self):
-        try:
-            count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
-            if count_rows < 30:
-                self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
-                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                if speed:
-                    self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
+        count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+        if count_rows < 30:
+            self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
+            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+            if speed:
+                self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
 
-                    self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
+                self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
 
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'<b style="color: #f00;">Введено максимальное количество скоростей '
-                                              f'для испытания</b>'
-                                              )
+        else:
+            msg = QMessageBox.information(self,
+                                            'Внимание',
+                                            f'<b style="color: #f00;">Введено максимальное количество скоростей '
+                                            f'для испытания</b>'
+                                            )
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_add_lab_cascade_table - {e}')
-
-
+    @log_exceptions
     def specif_reduce_lab_cascade_table(self):
-        try:
             count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
             if count_rows > 0:
                 self.ui.specif_lab_cascade_speed_table.removeRow(count_rows - 1)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_reduce_lab_cascade_table - {e}')
-
+    @log_exceptions
     def specif_read_lab_cascade_table(self):
-        try:
-            list_speed = []
-            count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
-            if count_rows == 0:
-                return False
+        list_speed = []
+        count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
+        if count_rows == 0:
+            return False
 
-            else:
-                for i in range(count_rows):
-                    list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
+        else:
+            for i in range(count_rows):
+                list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
 
-                self.model.data_test.speed_list = list_speed[:]
-                return True
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_read_lab_cascade_table - {e}')
+            self.model.data_test.speed_list = list_speed[:]
+            return True
 
     def specif_msg_none_cascade_speed(self):
         msg = QMessageBox.information(self,
@@ -668,89 +583,77 @@ class AppWindow(QMainWindow):
             self.logger.error(e)
             self.status_bar_ui(f'ERROR in view/specif_lab_input_temper - {e}')
 
+    @log_exceptions
     def change_temper_sensor_btn(self):
-        try:
-            if self.model.state_list[6] == 0:
-                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
-            else:
-                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
+        if self.model.state_list[6] == 0:
+            self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
+        else:
+            self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/change_temper_sensor_btn - {e}')
-
+    @log_exceptions
     def select_temper_sensor(self):
-        try:
-            btn = self.ui.select_temp_sensor_btn.text()
-            if 'Бесконтактный' in btn:
-                self.model.write_bit_select_temper(1)
-                self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
+        btn = self.ui.select_temp_sensor_btn.text()
+        if 'Бесконтактный' in btn:
+            self.model.write_bit_select_temper(1)
+            self.ui.select_temp_sensor_btn.setText('Контактный датчик температуры')
 
-            else:
-                self.model.write_bit_select_temper(0)
-                self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
+        else:
+            self.model.write_bit_select_temper(0)
+            self.ui.select_temp_sensor_btn.setText('Бесконтактный датчик температуры')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/select_temper_sensor - {e}')
-
+    @log_exceptions
     def specif_continue_btn_click(self):
-        try:
-            if self.model.data_test.operator.name != '' and self.model.data_test.operator.rank != '':
-                self.flag_push_force_set()
-                self.ui.test_change_speed_btn.setVisible(False)
-                self.ui.lab_speed_le.setReadOnly(True)
+        if self.model.data_test.operator.name != '' and self.model.data_test.operator.rank != '':
+            self.flag_push_force_set()
+            self.ui.test_change_speed_btn.setVisible(False)
+            self.ui.lab_speed_le.setReadOnly(True)
 
-                flag = self.static_push_force_editing()
+            flag = self.static_push_force_editing()
+            if flag:
+                flag = self.serial_editing_finished()
                 if flag:
-                    flag = self.serial_editing_finished()
-                    if flag:
-                        self.model.data_test.serial = self.ui.specif_serial_lineEdit.text()
-                        self.lab_test_second_force_gui(False)
-                        if self.model.data_test.type_test == 'conv':
-                            self._init_conv_graph()
-                            self._conv_win_clear()
-                            self.conv_test_fill_template()
-                            self.begin_test()
+                    self.model.data_test.serial = self.ui.specif_serial_lineEdit.text()
+                    self.lab_test_second_force_gui(False)
+                    if self.model.data_test.type_test == 'conv':
+                        self._init_conv_graph()
+                        self._conv_win_clear()
+                        self.conv_test_fill_template()
+                        self.begin_test()
 
-                        else:
-                            self._lab_win_clear()
-                            self.fill_gui_lab_test()
-                            if self.model.data_test.type_test == 'lab_cascade':
-                                flag = self.specif_read_lab_cascade_table()
-                                if flag:
-                                    self._init_lab_graph()
-                                    self.begin_test()
-                                else:
-                                    self.specif_msg_none_cascade_speed()
-
-                            elif self.model.data_test.type_test == 'lab_hand':
-                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                if speed:
-                                    self.model.data_test.speed_test = speed
-                                    self._init_lab_graph()
-                                    self.begin_test()
-                            elif self.model.data_test.type_test == 'temper':
-                                speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
-                                if speed:
-                                    self.model.data_test.speed_test = speed
-                                    temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
-                                    if temper:
-                                        self.model.data_test.finish_temperature = temper
-                                        self._init_temp_graph()
-                                        self.begin_test()
-
-                            else:
-                                self.lab_test_second_force_gui(True)
+                    else:
+                        self._lab_win_clear()
+                        self.fill_gui_lab_test()
+                        if self.model.data_test.type_test == 'lab_cascade':
+                            flag = self.specif_read_lab_cascade_table()
+                            if flag:
                                 self._init_lab_graph()
                                 self.begin_test()
+                            else:
+                                self.specif_msg_none_cascade_speed()
 
-            else:
-                self.open_win_operator()
+                        elif self.model.data_test.type_test == 'lab_hand':
+                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                            if speed:
+                                self.model.data_test.speed_test = speed
+                                self._init_lab_graph()
+                                self.begin_test()
+                        elif self.model.data_test.type_test == 'temper':
+                            speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+                            if speed:
+                                self.model.data_test.speed_test = speed
+                                temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
+                                if temper:
+                                    self.model.data_test.finish_temperature = temper
+                                    self._init_temp_graph()
+                                    self.begin_test()
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/specif_continue_btn_click - {e}')
+                        else:
+                            self.lab_test_second_force_gui(True)
+                            self._init_lab_graph()
+                            self.begin_test()
+
+        else:
+            self.open_win_operator()
 
     def lab_test_second_force_gui(self, flag):
         self.ui.lab_recoil_le_2.setVisible(flag)
@@ -790,337 +693,256 @@ class AppWindow(QMainWindow):
                                           f'Статическая выталкивающая сила</b>'
                                           )
 
+    @log_exceptions
     def flag_push_force_set(self):
-        try:
-            if self.ui.push_force_chb.isChecked():
-                self.model.data_test.flag_push_force = True
-                self.model.lbl_push_force = 'Динамическая выталкивающая сила'
+        if self.ui.push_force_chb.isChecked():
+            self.model.data_test.flag_push_force = True
+            self.model.lbl_push_force = 'Динамическая выталкивающая сила'
 
-            else:
-                self.model.data_test.flag_push_force = False
-                self.model.lbl_push_force = 'Статическая выталкивающая сила'
+        else:
+            self.model.data_test.flag_push_force = False
+            self.model.lbl_push_force = 'Статическая выталкивающая сила'
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/flag_push_force_set - {e}')
-
+    @log_exceptions
     def save_log_begin_test(self):
-        try:
-            type_test = self.model.data_test.type_test
-            amort = self.model.data_test.amort
-            if type_test == 'lab_hand' or type_test == 'temper':
-                speed = self.model.data_test.speed_test
-            elif type_test == 'lab_cascade':
-                speed = self.model.data_test.speed_list
-            else:
-                speed = amort.speed_one
+        type_test = self.model.data_test.type_test
+        amort = self.model.data_test.amort
+        if type_test == 'lab_hand' or type_test == 'temper':
+            speed = self.model.data_test.speed_test
+        elif type_test == 'lab_cascade':
+            speed = self.model.data_test.speed_list
+        else:
+            speed = amort.speed_one
 
-            dimensions = f'{amort.min_length}~{amort.max_length}'
-            limit_comp_one = f'{amort.min_comp}~{amort.max_comp}'
-            limit_comp_two = f'{amort.min_comp_2}~{amort.max_comp_2}'
-            limit_recoil_one = f'{amort.min_recoil}~{amort.max_recoil}'
-            limit_recoil_two = f'{amort.min_recoil_2}~{amort.max_recoil_2}'
+        dimensions = f'{amort.min_length}~{amort.max_length}'
+        limit_comp_one = f'{amort.min_comp}~{amort.max_comp}'
+        limit_comp_two = f'{amort.min_comp_2}~{amort.max_comp_2}'
+        limit_recoil_one = f'{amort.min_recoil}~{amort.max_recoil}'
+        limit_recoil_two = f'{amort.min_recoil_2}~{amort.max_recoil_2}'
 
-            txt_log = (f'Start {type_test} --> n={amort.name}, s={speed}, '
-                       f'dim={dimensions}, h={amort.hod}, '
-                       f's_o={amort.speed_one}, s_t={amort.speed_two}, '
-                       f'l_c_o={limit_comp_one}, l_c_t={limit_comp_two}, '
-                       f'l_r_o={limit_recoil_one}, l_r_t={limit_recoil_two}, '
-                       f'm_t={amort.max_temper}')
+        txt_log = (f'Start {type_test} --> n={amort.name}, s={speed}, '
+                    f'dim={dimensions}, h={amort.hod}, '
+                    f's_o={amort.speed_one}, s_t={amort.speed_two}, '
+                    f'l_c_o={limit_comp_one}, l_c_t={limit_comp_two}, '
+                    f'l_r_o={limit_recoil_one}, l_r_t={limit_recoil_two}, '
+                    f'm_t={amort.max_temper}')
 
-            self.logger.info(txt_log)
+        self.logger.info(txt_log)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/save_log_begin_test - {e}')
-
+    @log_exceptions
     def fill_gui_lab_test(self):
-        try:
-            amort = self.model.data_test.amort
-            limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
-            limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
-            limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
-            limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
+        amort = self.model.data_test.amort
+        limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
+        limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
+        limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
+        limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
 
-            self.ui.lab_name_le.setText(amort.name)
-            self.ui.lab_speed_set_1_le.setText(f'{amort.speed_one}')
-            self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
-            self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
-            self.ui.lab_speed_set_2_le.setText(f'{amort.speed_two}')
-            self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
-            self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
-            self.ui.lab_hod_le.setText(f'{amort.hod}')
+        self.ui.lab_name_le.setText(amort.name)
+        self.ui.lab_speed_set_1_le.setText(f'{amort.speed_one}')
+        self.ui.lab_limit_comp_1_le.setText(limit_comp_one)
+        self.ui.lab_limit_recoil_1_le.setText(limit_recoil_one)
+        self.ui.lab_speed_set_2_le.setText(f'{amort.speed_two}')
+        self.ui.lab_limit_comp_2_le.setText(limit_comp_two)
+        self.ui.lab_limit_recoil_2_le.setText(limit_recoil_two)
+        self.ui.lab_hod_le.setText(f'{amort.hod}')
 
-            self.ui.lbl_push_force_lab.setText(self.model.lbl_push_force)
-            self.ui.lab_serial_le.setText(f'{self.model.data_test.serial}')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/fill_gui_lab_test - {e}')
+        self.ui.lbl_push_force_lab.setText(self.model.lbl_push_force)
+        self.ui.lab_serial_le.setText(f'{self.model.data_test.serial}')
 
     def begin_test(self):
-        try:
-            # FIXME закоммичено для тестов на столе
-            # self.main_stop_state(True)
-            # self.main_btn_state(False)
+        # FIXME закоммичено для тестов на столе
+        # self.main_stop_state(True)
+        # self.main_btn_state(False)
 
-            if self.model.data_test.type_test != 'conv':
-                if self.model.data_test.type_test == 'temper':
-                    self.model.data_test.reset_temper_test()
-                    
-                self.model.list_lab_result = []
-                self.ui.test_repeat_btn.setVisible(False)
-                self.ui.lab_speed_le.setReadOnly(True)
-                self.ui.test_change_speed_btn.setVisible(False)
-                self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
-                self.ui.test_cancel_btn.setEnabled(True)
+        if self.model.data_test.type_test != 'conv':
+            if self.model.data_test.type_test == 'temper':
+                self.model.data_test.reset_temper_test()
+                
+            self.model.list_lab_result = []
+            self.ui.test_repeat_btn.setVisible(False)
+            self.ui.lab_speed_le.setReadOnly(True)
+            self.ui.test_change_speed_btn.setVisible(False)
+            self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+            self.ui.test_cancel_btn.setEnabled(True)
 
-            else:
-                self.model.list_conv_result = []
-                self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
-                self.ui.test_conv_cancel_btn.setEnabled(True)
+        else:
+            self.model.list_conv_result = []
+            self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+            self.ui.test_conv_cancel_btn.setEnabled(True)
 
-            self.save_log_begin_test()
+        self.save_log_begin_test()
 
-            self.controller.start_test_clicked()
+        self.controller.start_test_clicked()
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/begin_test - {e}')
-
+    @log_exceptions
     def _lab_win_clear(self):
-        try:
-            self.ui.lab_GraphWidget.clear()
-            self.ui.lab_recoil_le.clear()
-            self.ui.lab_comp_le.clear()
-            self.ui.lab_speed_le.clear()
-            self.ui.lab_now_temp_le.clear()
-            self.ui.lab_max_temp_le.clear()
-            self.ui.lab_serial_le.clear()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_lab_win_clear - {e}')
+        self.ui.lab_GraphWidget.clear()
+        self.ui.lab_recoil_le.clear()
+        self.ui.lab_comp_le.clear()
+        self.ui.lab_speed_le.clear()
+        self.ui.lab_now_temp_le.clear()
+        self.ui.lab_max_temp_le.clear()
+        self.ui.lab_serial_le.clear()
 
     def lab_test_win(self):
-        try:
-            self.ui.main_stackedWidget.setCurrentIndex(2)
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/lab_test_win - {e}')
+        self.ui.main_stackedWidget.setCurrentIndex(2)
 
     def _conv_win_clear(self):
-        try:
-            self.ui.conv_comp_le.clear()
-            self.ui.conv_comp_le_2.clear()
-            self.ui.conv_recoil_le.clear()
-            self.ui.conv_recoil_le_2.clear()
-            self.ui.conv_speed_one_le.clear()
-            self.ui.conv_speed_two_le.clear()
-            self.ui.conv_comp_limit_le.clear()
-            self.ui.conv_comp_limit_le_2.clear()
-            self.ui.conv_recoil_limit_le.clear()
-            self.ui.conv_recoil_limit_le_2.clear()
-            self.ui.conv_temperture_le.clear()
-            self.ui.conv_push_force_le.clear()
-            self.conv_test_lamp_slot('one', 'white')
-            self.conv_test_lamp_slot('two', 'white')
-            
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_conv_win_clear - {e}')
+        self.ui.conv_comp_le.clear()
+        self.ui.conv_comp_le_2.clear()
+        self.ui.conv_recoil_le.clear()
+        self.ui.conv_recoil_le_2.clear()
+        self.ui.conv_speed_one_le.clear()
+        self.ui.conv_speed_two_le.clear()
+        self.ui.conv_comp_limit_le.clear()
+        self.ui.conv_comp_limit_le_2.clear()
+        self.ui.conv_recoil_limit_le.clear()
+        self.ui.conv_recoil_limit_le_2.clear()
+        self.ui.conv_temperture_le.clear()
+        self.ui.conv_push_force_le.clear()
+        self.conv_test_lamp_slot('one', 'white')
+        self.conv_test_lamp_slot('two', 'white')
 
     def conv_test_win(self):
-        try:
-            self.ui.main_stackedWidget.setCurrentIndex(3)
+        self.ui.main_stackedWidget.setCurrentIndex(3)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/conv_test_win - {e}')
-
+    @log_exceptions
     def conv_test_fill_template(self):
-        try:
-            amort = self.model.data_test.amort
-            self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
-            self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
-            self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
-            self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+        amort = self.model.data_test.amort
+        self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
+        self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
+        self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
+        self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
 
-            self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
+        self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/conv_test_fill_sample - {e}')
-
+    @log_exceptions
     def conv_color_lamp(self, color):
-        try:
-            border = "border-color: rgb(0, 0, 0);"
-            if color == 'white':
-                res = f"background-color: rgb(255, 255, 255);\n{border}"
-            elif color == 'red':
-                res = f"background-color: rgb(255, 0, 0);\n{border}"
-            elif color == 'green':
-                res = f"background-color: rgb(0, 255, 0);\n{border}"
-            else:
-                res = f"background-color: rgb(0, 0, 0);\n{border}"
+        border = "border-color: rgb(0, 0, 0);"
+        if color == 'white':
+            res = f"background-color: rgb(255, 255, 255);\n{border}"
+        elif color == 'red':
+            res = f"background-color: rgb(255, 0, 0);\n{border}"
+        elif color == 'green':
+            res = f"background-color: rgb(0, 255, 0);\n{border}"
+        else:
+            res = f"background-color: rgb(0, 0, 0);\n{border}"
 
-            return res
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/conv_color_lamp - {e}')
+        return res
 
+    @log_exceptions
     def conv_test_lamp_slot(self, step, color):
-        try:
-            if step == 'one':
-                self.ui.first_signal.setStyleSheet(self.conv_color_lamp(color))
-            elif step == 'two':
-                self.ui.second_signal.setStyleSheet(self.conv_color_lamp(color))
+        if step == 'one':
+            self.ui.first_signal.setStyleSheet(self.conv_color_lamp(color))
+        elif step == 'two':
+            self.ui.second_signal.setStyleSheet(self.conv_color_lamp(color))
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/conv_test_lamp_slot - {e}')
-
+    @log_exceptions
     def _update_conv_graph(self, data):
-        try:
-            self.ui.conv_GraphWidget.clear()
-            self.graph.fill_graph(data[0], data[1],
-                                  name=f'{self.model.data_test.speed_test} м/с')
+        self.ui.conv_GraphWidget.clear()
+        self.graph.fill_graph(data[0], data[1],
+                                name=f'{self.model.data_test.speed_test} м/с')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_conv_graph - {e}')
-
+    @log_exceptions
     def _update_conv_data(self):
-        try:
-            self.ui.conv_temperture_le.setText(f'{self.model.data_test.temperature}')
-            self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
+        self.ui.conv_temperture_le.setText(f'{self.model.data_test.temperature}')
+        self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
-            if self.controller.stage == Stage.TEST_SPEED_ONE:
-                self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
-                self.ui.conv_comp_le.setText(f'{self.model.data_test.max_comp}')
-                self.ui.conv_recoil_le.setText(f'{self.model.data_test.max_recoil}')
+        if self.controller.stage == Stage.TEST_SPEED_ONE:
+            self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
+            self.ui.conv_comp_le.setText(f'{self.model.data_test.max_comp}')
+            self.ui.conv_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
-            if self.controller.stage == Stage.TEST_SPEED_TWO:
-                self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
-                self.ui.conv_comp_le_2.setText(f'{self.model.data_test.max_comp}')
-                self.ui.conv_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
+        elif self.controller.stage == Stage.TEST_SPEED_TWO:
+            self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
+            self.ui.conv_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+            self.ui.conv_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
 
-            else:
-                pass
+        else:
+            pass
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_conv_data - {e}')
-
+    @log_exceptions
     def _update_lab_graph(self, data):
-        try:
-            self.ui.lab_GraphWidget.clear()
-            self.graph.fill_graph(data[0], data[1],
-                                  name=f'{self.model.data_test.speed_test} м/с')
+        self.ui.lab_GraphWidget.clear()
+        self.graph.fill_graph(data[0], data[1],
+                                name=f'{self.model.data_test.speed_test} м/с')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_lab_graph - {e}')
-
+    @log_exceptions
     def _update_temper_graph(self, data: tuple):
-        try:
-            self.ui.lab_GraphWidget.clear()
-            recoil = data[0]
-            comp = data[1]
-            temper = data[2]
-            
-            pen_recoil = pg.mkPen(color='black', width=3)
-            pen_comp = pg.mkPen(color='blue', width=3)
+        self.ui.lab_GraphWidget.clear()
+        recoil = data[0]
+        comp = data[1]
+        temper = data[2]
+        
+        pen_recoil = pg.mkPen(color='black', width=3)
+        pen_comp = pg.mkPen(color='blue', width=3)
 
-            self.graph.fill_graph(temper, recoil,
-                                    pen=pen_recoil, name='Отбой')
-            self.graph.fill_graph(temper, comp,
-                                    pen=pen_comp, name='Сжатие')
+        self.graph.fill_graph(temper, recoil,
+                                pen=pen_recoil, name='Отбой')
+        self.graph.fill_graph(temper, comp,
+                                pen=pen_comp, name='Сжатие')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_temper_graph - {e}')
-
+    @log_exceptions
     def _update_lab_data(self):
-        try:
-            if self.controller.stage == Stage.TEST_SPEED_ONE:
-                self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
-                self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
-
-            elif self.controller.stage == Stage.TEST_SPEED_TWO:
-                self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
-                self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
-
-            self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
-            self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
-            self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
-            self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
-            self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
-            self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_update_lab_data - {e}')
-            
-    def _update_temper_data(self):
-        try:
+        if self.controller.stage == Stage.TEST_SPEED_ONE:
             self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
             self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
-            
-            self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
-            self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
-            self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
-            self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
-            self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
-            self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
-            
-        except Exception as e:
-            self.logger.error(e)
 
+        elif self.controller.stage == Stage.TEST_SPEED_TWO:
+            self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+            self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
+
+        self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
+        self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
+        self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
+        self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
+        self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
+        self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
+
+    @log_exceptions
+    def _update_temper_data(self):
+        self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
+        self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
+        
+        self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
+        self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
+        self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
+        self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
+        self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
+        self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
+
+    @log_exceptions
     def _fill_push_force(self):
-        try:
-            if self.model.data_test.flag_push_force:
-                return self.model.data_test.dynamic_push_force
+        if self.model.data_test.flag_push_force:
+            return self.model.data_test.dynamic_push_force
 
-            else:
-                return self.model.data_test.static_push_force
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/_fill_push_force - {e}')
+        else:
+            return self.model.data_test.static_push_force
 
     def repeat_test_clicked_slot(self):
         self.model.flag_repeat = True
         self.begin_test()
 
+    @log_exceptions
     def cancel_test_clicked(self):
-        try:
-            temp = self.ui.test_cancel_btn.text()
-            if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
-                self.ui.test_cancel_btn.setEnabled(False)
-                self.controller.stop_test_clicked()
+        temp = self.ui.test_cancel_btn.text()
+        if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
+            self.ui.test_cancel_btn.setEnabled(False)
+            self.controller.stop_test_clicked()
 
-            elif temp == 'НАЗАД':
-                self.controller.step_stop_test()
-                self.model.flag_test_launch = False
-                self.controller.trav_serv.traverse_install_point('stop_test')
-                self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
+        elif temp == 'НАЗАД':
+            self.controller.step_stop_test()
+            self.model.flag_test_launch = False
+            self.controller.trav_serv.traverse_install_point('stop_test')
+            self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/cancel_test_clicked - {e}')
-
+    @log_exceptions
     def change_speed_lab_test(self):
-        try:
-            speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
-            if speed:
-                self.model.data_test.speed_test = speed
+        speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
+        if speed:
+            self.model.data_test.speed_test = speed
 
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/change_speed_lab_test - {e}')
-
+    @Slot()
     def slot_lab_test_stop(self):
         type_test = self.model.data_test.type_test
         self.ui.test_cancel_btn.setEnabled(True)
@@ -1135,39 +957,31 @@ class AppWindow(QMainWindow):
             self.ui.lab_GraphWidget.clear()
             self.graph.fill_compare_graph(self.model.list_lab_result)
 
+    @Slot()
     def slot_conv_test_stop(self):
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
         self.ui.conv_GraphWidget.clear()
-        self.graph.fill_compare_graph(self.model.list_lab_result)
+        self.graph.fill_compare_graph(self.model.list_conv_result)
 
+    @log_exceptions
     def cancel_test_conv_clicked(self):
-        try:
-            temp = self.ui.test_conv_cancel_btn.text()
-            if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
-                self.ui.test_conv_cancel_btn.setEnabled(False)
-                self.controller.stop_test_clicked()
+        temp = self.ui.test_conv_cancel_btn.text()
+        if temp == 'ПРЕРВАТЬ ИСПЫТАНИЕ':
+            self.ui.test_conv_cancel_btn.setEnabled(False)
+            self.controller.stop_test_clicked()
 
-            elif temp == 'НАЗАД':
-                self.controller.step_stop_test()
-                self.model.flag_test_launch = False
-                self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
-                self.controller.trav_serv.traverse_install_point('stop_test')
-                self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/cancel_test_conv_clicked - {e}')
+        elif temp == 'НАЗАД':
+            self.controller.step_stop_test()
+            self.model.flag_test_launch = False
+            self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
+            self.controller.trav_serv.traverse_install_point('stop_test')
+            self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
     def cancel_test_slot(self):
-        try:
-            self.main_stop_state(False)
-            self.main_btn_state(True)
-            self.specif_page()
-
-        except Exception as e:
-            self.logger.error(e)
-            self.status_bar_ui(f'ERROR in view/cancel_test_slot - {e}')
+        self.main_stop_state(False)
+        self.main_btn_state(True)
+        self.specif_page()
 
     def open_win_archive(self):
         self.main_ui_state(False)

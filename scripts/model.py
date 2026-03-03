@@ -120,6 +120,12 @@ class Model:
         self.reader.signals.result.connect(self._reader_result)
         self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
+        
+    def set_amort(self, amort):
+        self.data_test.amort = amort
+
+    def set_type_test(self, type_test):
+        self.data_test.type_test = type_test
 
     def _start_param_model(self):
         try:
