@@ -22,36 +22,43 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
             self.setWindowIcon(QIcon('icon/shock-absorber.png'))
             self.signals = AmortSignals()
             self.calc_data = CalcData()
+            self.response = self._get_empty_response()
             self._init_buttons()
-            self.response = {}
             self.hide()
+            
         except Exception as e:
             self.logger.error(e)
+            
+    def _get_empty_response(self):
+        return {
+            'tag': 'new',
+            'name': '',
+            'min_length': '',
+            'max_length': '',
+            'hod': '',
+            'speed_one': '',
+            'speed_two': '',
+            'min_comp': '',
+            'min_comp_2': '',
+            'max_comp': '',
+            'max_comp_2': '',
+            'min_recoil': '',
+            'min_recoil_2': '',
+            'max_recoil': '',
+            'max_recoil_2': '',
+            'max_temper': '',
+            'adapter': '',
+            'adapter_len': 0
+        }
 
     def _init_buttons(self):
         self.btn_save.clicked.connect(self._save_amort)
-
+            
     def start_param_new_amort(self, tag, amort=None):
-        self.response = {'tag': 'new',
-                         'name': '',
-                         'min_length': '',
-                         'max_length': '',
-                         'hod': '',
-                         'speed_one': '',
-                         'speed_two': '',
-                         'min_comp': '',
-                         'min_comp_2': '',
-                         'max_comp': '',
-                         'max_comp_2': '',
-                         'min_recoil': '',
-                         'min_recoil_2': '',
-                         'max_recoil': '',
-                         'max_recoil_2': '',
-                         'max_temper': '',
-                         }
+        self.response = self._get_empty_response()
+        self.response['tag'] = tag
 
-        if tag == 'change':
-            self.response['tag'] = 'change'
+        if tag == 'change' and amort:
             self._fill_dict_change_amort(amort)
 
     def _fill_dict_change_amort(self, amort):
@@ -72,8 +79,36 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
         self.le_temper.setText(f'{amort.max_temper}')
 
         self.adapter_cb.setCurrentText(f'{amort.adapter}')
+        
+    def _validate_float(self, widget, key, min_val, max_val, field_name):
+        try:
+            text = widget.text()
 
-    def name_editing_finished(self):
+            if not text:
+                QMessageBox.information(self, 'Внимание', f'Заполните поле -> {field_name}')
+                self.response[key] = ''
+                return
+
+            try:
+                value = float(text.replace(',', '.'))
+            except ValueError:
+                QMessageBox.information(self, 'Внимание',
+                                        f'Некорректное значение в поле -> {field_name}')
+                self.response[key] = ''
+                return
+
+            if not (min_val <= value <= max_val):
+                QMessageBox.information(self, 'Внимание',
+                                        f'{field_name} -> ({value}) вне диапазона')
+                self.response[key] = ''
+                return
+
+            self.response[key] = value
+            
+        except Exception as e:
+            self.logger.error(e)
+
+    def _name_editing_finished(self):
         text = self.lineEdit_name.text()
         if not text:
             msg = QMessageBox.information(self,
@@ -84,496 +119,169 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
 
         else:
             self.response['name'] = text
+            
+    def _len_min_editing_finished(self):
+        self._validate_float(
+            self.le_length_min,
+            'min_length',
+            100,
+            1000,
+            'Длина в сжатом состоянии'
+        )
 
-    def len_min_editing_finished(self):
-        try:
-            text = self.le_length_min.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле длины в сжатом состоянии'
-                                              )
-                self.response['min_length'] = ''
+    def _len_max_editing_finished(self):
+        self._validate_float(
+            self.le_length_max,
+            'max_length',
+            100,
+            1000,
+            'Длина в разжатом состоянии'
+        )
 
-            temp = float(text.replace(',', '.'))
-            if 100 <= temp <= 1000:
-                self.response['min_length'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
-                                              )
-                self.response['min_length'] = ''
+    def _hod_editing_finished(self):
+        self._validate_float(
+            self.le_hod,
+            'hod',
+            40,
+            120,
+            'Испытательный ход'
+        )
 
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено некорректное значение в поле -->\n'
-                                          f'длина в сжатом состоянии</b>'
-                                          )
-            self.response['min_length'] = ''
+    def _one_speed_editing_finished(self):
+        hod = self.response.get('hod') or 40
+        max_speed = self.calc_data.max_speed(hod)
+        self._validate_float(
+            self.le_speed_one,
+            'speed_one',
+            0.02,
+            max_speed,
+            'Первая скорость испытания'
+        )
+        
+    def _two_speed_editing_finished(self):
+        hod = self.response.get('hod') or 40
+        max_speed = self.calc_data.max_speed(hod)
+        self._validate_float(
+            self.le_speed_two,
+            'speed_two',
+            0.02,
+            max_speed,
+            'Вторая скорость испытания'
+        )
 
-        except Exception as e:
-            pass
+    def _comp_min_editing_finished(self):
+        self._validate_float(
+            self.le_comp_min,
+            'min_comp',
+            0,
+            2000,
+            'Минимальное усилие сжатия'
+        )
+        
+    def _two_comp_min_editing_finished(self):
+        self._validate_float(
+            self.le_comp_min_two,
+            'min_comp_2',
+            0,
+            2000,
+            'Минимальное усилие сжатия второй скорости'
+        )
+        
+    def _comp_max_editing_finished(self):
+        self._validate_float(
+            self.le_comp_max,
+            'max_comp',
+            0,
+            2000,
+            'Максимальное усилие сжатия'
+        )
+        
+    def _two_comp_max_editing_finished(self):
+        self._validate_float(
+            self.le_comp_max_two,
+            'max_comp_2',
+            0,
+            2000,
+            'Максимальное усилие сжатия второй скорости'
+        )
 
-    def len_max_editing_finished(self):
-        try:
-            text = self.le_length_max.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле длины в разжатом состоянии'
-                                              )
-                self.response['max_length'] = ''
+    def _recoil_min_editing_finished(self):
+        self._validate_float(
+            self.le_recoil_min,
+            'min_recoil',
+            0,
+            2000,
+            'Минимальное усилие отбоя'
+        )
+        
+    def _two_recoil_min_editing_finished(self):
+        self._validate_float(
+            self.le_recoil_min_two,
+            'min_recoil_2',
+            0,
+            2000,
+            'Минимальное усилие отбоя второй скорости'
+        )
+        
+    def _recoil_max_editing_finished(self):
+        self._validate_float(
+            self.le_recoil_max,
+            'max_recoil',
+            0,
+            2000,
+            'Максимальное усилие отбоя'
+        )
 
-            temp = float(text.replace(',', '.'))
-            if 100 <= temp <= 1000:
-                self.response['max_length'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Длина (<b style="color: #f00;">{temp}</b>) введена некорректно'
-                                              )
-                self.response['max_length'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Длина в разжатом состоянии</b>'
-                                          )
-            self.response['max_length'] = ''
-
-        except Exception as e:
-            pass
-
-    def hod_editing_finished(self):
-        try:
-            text = self.le_hod.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле испытательного хода'
-                                              )
-                self.response['hod'] = ''
-
-            hod = int(text)
-            if 40 <= hod <= 120:
-                self.response['hod'] = hod
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Ход (<b style="color: #f00;">{hod}</b>) или меньше 40 или больше 120'
-                                              )
-                self.response['hod'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле --> Ход</b>'
-                                          )
-            self.response['hod'] = ''
-
-        except Exception as e:
-            pass
-
-    def one_speed_editing_finished(self):
-        try:
-            text = self.le_speed_one.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле первой скорости испытания'
-                                              )
-                self.response['speed_one'] = ''
-
-            temp = float(text.replace(',', '.'))
-
-            hod = int(self.response.get('hod', 40))
-            max_speed = self.calc_data.max_speed(hod)
-
-            if 0.02 <= temp <= max_speed:
-                self.response['speed_one'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Первая скорость (<b style="color: #f00;">{temp}</b>)'
-                                              f'не попадает в диапазон от 0.02 до {max_speed}'
-                                              )
-                self.response['speed_one'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Первая скорость испытания</b>'
-                                          )
-            self.response['speed_one'] = ''
-
-        except Exception as e:
-            pass
-
-    def two_speed_editing_finished(self):
-        try:
-            text = self.le_speed_two.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле второй скорости испытания'
-                                              )
-                self.response['speed_two'] = ''
-
-            temp = float(text.replace(',', '.'))
-
-            hod = int(self.response.get('hod', 40))
-            max_speed = self.calc_data.max_speed(hod)
-
-            if 0.02 <= temp <= max_speed:
-                self.response['speed_two'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Вторая скорость (<b style="color: #f00;">{temp}</b>)'
-                                              f'не попадает в диапазон от 0.02 до {max_speed}'
-                                              )
-                self.response['speed_two'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Вторая скорость испытания</b>'
-                                          )
-            self.response['speed_two'] = ''
-
-        except Exception as e:
-            pass
-
-    def comp_min_editing_finished(self):
-        try:
-            text = self.le_comp_min.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле минимального усилия сжатия'
-                                              )
-                self.response['min_comp'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['min_comp'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Минимальное усилие сжатия --> (<b style="color: #f00;">{temp}</b>) '
-                                              f'введено неверное значение'
-                                              )
-                self.response['min_comp'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Минимальное усилие сжатия</b>'
-                                          )
-            self.response['min_comp'] = ''
-
-        except Exception as e:
-            pass
-
-    def two_comp_min_editing_finished(self):
-        try:
-            text = self.le_comp_min_two.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле минимального усилия сжатия для второй скорости'
-                                              )
-                self.response['min_comp_2'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['min_comp_2'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Минимальное усилие сжатия для второй скорости --> (<b style="color: #f00;">{temp}</b>)'
-                                              f'введено неверное значение'
-                                              )
-                self.response['min_comp_2'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Минимальное усилие сжатия для второй скорости</b>'
-                                          )
-            self.response['min_comp_2'] = ''
-
-        except Exception as e:
-            pass
-
-    def comp_max_editing_finished(self):
-        try:
-            text = self.le_comp_max.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле максимального усилия сжатия'
-                                              )
-                self.response['max_comp'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['max_comp'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Максимальное усилие сжатия (<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неверное число'
-                                              )
-                self.response['max_comp'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Максимальное усилие сжатия</b>'
-                                          )
-            self.response['max_comp'] = ''
-
-        except Exception as e:
-            pass
-
-    def two_comp_max_editing_finished(self):
-        try:
-            text = self.le_comp_max_two.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле максимального усилия сжатия для второй скорости'
-                                              )
-                self.response['max_comp_2'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['max_comp_2'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Максимальное усилие сжатия для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неверное число'
-                                              )
-                self.response['max_comp_2'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Максимальное усилие сжатия для второй скорости</b>'
-                                          )
-            self.response['max_comp_2'] = ''
-
-        except Exception as e:
-            pass
-
-    def recoil_min_editing_finished(self):
-        try:
-            text = self.le_recoil_min.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле минимального усилия отбоя'
-                                              )
-                self.response['min_recoil'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['min_recoil'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Минимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неправильное число'
-                                              )
-                self.response['min_recoil'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Минимальное усилие отбоя</b>'
-                                          )
-            self.response['min_recoil'] = ''
-
-        except Exception as e:
-            pass
-
-    def two_recoil_min_editing_finished(self):
-        try:
-            text = self.le_recoil_min_two.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле минимального усилия отбоя для второй скорости'
-                                              )
-                self.response['min_recoil_2'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['min_recoil_2'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Минимальное усилие отбоя для второй скорости(<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неправильное число'
-                                              )
-                self.response['min_recoil_2'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Минимальное усилие отбоя для второй скорости</b>'
-                                          )
-            self.response['min_recoil_2'] = ''
-
-        except Exception as e:
-            pass
-
-    def recoil_max_editing_finished(self):
-        try:
-            text = self.le_recoil_max.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле максимального усилия отбоя'
-                                              )
-                self.response['max_recoil'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['max_recoil'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неправильное значение'
-                                              )
-                self.response['max_recoil'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Максимальное усилие отбоя</b>'
-                                          )
-            self.response['max_recoil'] = ''
-
-        except Exception as e:
-            pass
-
-    def two_recoil_max_editing_finished(self):
-        try:
-            text = self.le_recoil_max_two.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле максимального усилия отбоя'
-                                              )
-                self.response['max_recoil_2'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 2000:
-                self.response['max_recoil_2'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Максимальное усилие отбоя (<b style="color: #f00;">{temp}</b>)\n'
-                                              f'введено неправильное значение'
-                                              )
-                self.response['max_recoil_2'] = ''
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Максимальное усилие отбоя</b>'
-                                          )
-            self.response['max_recoil_2'] = ''
-
-        except Exception as e:
-            pass
-
-    def temper_editing_finished(self):
-        try:
-            text = self.le_temper.text()
-            if not text:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              'Заполните поле максимальной температуры'
-                                              )
-                self.response['max_temper'] = ''
-
-            temp = float(text.replace(',', '.'))
-            if 0 <= temp <= 120:
-                self.response['max_temper'] = temp
-            else:
-                msg = QMessageBox.information(self,
-                                              'Внимание',
-                                              f'Максимальная температура (<b style="color: #f00;">{temp}</b>) '
-                                              f'или меньше 0 или больше 120'
-                                              )
-
-        except ValueError:
-            msg = QMessageBox.information(self,
-                                          'Внимание',
-                                          f'<b style="color: #f00;">Введено не корректное значение в поле -->\n'
-                                          f'Максимальная температура</b>'
-                                          )
-            self.response['max_temper'] = ''
-
-        except Exception as e:
-            pass
+    def _two_recoil_max_editing_finished(self):
+        self._validate_float(
+            self.le_recoil_max_two,
+            'max_recoil_2',
+            0,
+            2000,
+            'Максимальное усилие отбоя второй скорости'
+        )
+        
+    def _temper_editing_finished(self):
+        self._validate_float(
+            self.le_temper,
+            'max_temper',
+            0,
+            120,
+            'Максимальная температура'
+        )
         
     def _convert_adapter(self, name: str):
         """Перевод номера адаптера в его длинну"""
-        try:
-            if name == '069' or name == '069-01':
-                return 25
-
-            elif name == '069-02' or name == '069-03' or name == '069-04':
-                return 34
-
-            elif name == '072':
-                return 41
-
-            else:
-                return 0
-
-        except Exception as e:
-            self.logger.error(e)
+        mapping = {
+            '069': 25,
+            '069-01': 25,
+            '069-02': 34,
+            '069-03': 34,
+            '069-04': 34,
+            '072': 41
+        }
+        return mapping.get(name, 0)
 
     def closeEvent(self, event):
         self.signals.closed.emit()
 
     def _read_data_from_gui(self):
         try:
-            self.name_editing_finished()
-            self.len_min_editing_finished()
-            self.len_max_editing_finished()
-            self.hod_editing_finished()
-            self.one_speed_editing_finished()
-            self.two_speed_editing_finished()
-            self.comp_min_editing_finished()
-            self.two_comp_min_editing_finished()
-            self.comp_max_editing_finished()
-            self.two_comp_max_editing_finished()
-            self.recoil_min_editing_finished()
-            self.two_recoil_min_editing_finished()
-            self.recoil_max_editing_finished()
-            self.two_recoil_max_editing_finished()
-            self.temper_editing_finished()
+            self._name_editing_finished()
+            self._len_min_editing_finished()
+            self._len_max_editing_finished()
+            self._hod_editing_finished()
+            self._one_speed_editing_finished()
+            self._two_speed_editing_finished()
+            self._comp_min_editing_finished()
+            self._two_comp_min_editing_finished()
+            self._comp_max_editing_finished()
+            self._two_comp_max_editing_finished()
+            self._recoil_min_editing_finished()
+            self._two_recoil_min_editing_finished()
+            self._recoil_max_editing_finished()
+            self._two_recoil_max_editing_finished()
+            self._temper_editing_finished()
 
         except Exception as e:
             self.logger.error(e)
@@ -598,22 +306,16 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
     def _save_amort(self):
         try:
             self._read_data_from_gui()
-            flag = True
-            for key, value in self.response.items():
-                if value != '':
-                    pass
-                else:
-                    flag = False
-                    break
+            self.response['adapter'] = self.adapter_cb.currentText()
+            self.response['adapter_len'] = self._convert_adapter(
+                self.adapter_cb.currentText()
+            )
+            
+            if any(value == '' for value in self.response.values()):
+                return
 
-            if flag:
-                self.response['adapter'] = self.adapter_cb.currentText()
-                self.response['adapter_len'] = self._convert_adapter(self.adapter_cb.currentText())
-                self._clear_data_on_gui()
-                self.signals.save_amort.emit(self.response)
-
-            else:
-                pass
+            self._clear_data_on_gui()
+            self.signals.save_amort.emit(self.response)
 
         except Exception as e:
             self.logger.error(e)
