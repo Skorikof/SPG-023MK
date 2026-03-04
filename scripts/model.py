@@ -351,25 +351,33 @@ class Model:
                 if self.data_test.type_test == 'hand':
                     self._send_data_in_set_win(data)
                 else:
-                    state = self.collector.add_stream_dict(data)
-                    if state == PhaseState.DONE and not self.flag_collect_done:
+                    event_state = self.collector.add_stream_dict(data)
+                    if event_state == PhaseState.DONE and not self.flag_collect_done:
                         self.flag_collect_done = True
-                        self.signals.collect_done.emit(True)
-                        if self.collector.current_mode == Mode.STROKE_ONLY: # FIXME Пока этого метода нет в коллекторе
-                            cycles = self.collector.get_cycles()
-                            self.min_point, self.max_point, self.stroke = cycles[0]
-                        elif self.collector.current_mode == Mode.COLLECT: # FIXME Пока этого метода нет в коллекторе
-                            cycles = self.collector.get_cycles()
-                            avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
-                            self._pars_result_avarage_cycles(avg)
-                    elif state == PhaseState.ERROR and not self.flag_collect_error:
+                        self._handle_program_done()
+                    elif event_state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
-                        txt = 'Error in collector/add_stream_dict'
-                        self.logger.error(txt)
-
+                        self.logger.error('Error in collector/add_stream_dict')
+                        
         except Exception as e:
             self.logger.error(e)
-            
+
+    def _handle_program_done(self):
+        step = self.collector.get_last_completed_step()
+        result = self.collector.get_last_step_result()
+        if step is None:
+            return
+        mode, _ = step
+        if mode == Mode.STROKE_ONLY:
+            self.min_point, self.max_point, self.stroke = result[0]
+        elif mode == Mode.COLLECT:
+            avg = self.calc_data.average_cycles(result)
+            self._pars_result_avarage_cycles(avg)
+        elif mode == Mode.NMT_CAPTURE:
+            # можно передать в UI если нужно
+            pass
+        self.signals.collect_done.emit(True)
+
     def run_collector_without_stable(self, count_det: int=1):
         self.flag_collect_done = False
         self.flag_collect_error = False
@@ -434,7 +442,6 @@ class Model:
             
     def _calc_result_lab_and_conv(self, move, force):
         try:
-            # FIXME Нужно добавить корректировку усилия по коэффициенту обнуления
             rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
             if self.data_test.flag_push_force:
                 push_force = self.calc_data.calc_dynamic_push_force_array(move, force,

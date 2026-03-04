@@ -4,7 +4,27 @@ from collections import deque
 from enum import Enum
 
 from scripts.logger import my_logger
-from .stop_detector import StopDetector
+
+
+class StopDetector:
+    def __init__(self, vel_threshold=0.02, confirm_time=0.5):
+        self.vel_threshold = vel_threshold
+        self.confirm_time = confirm_time
+        self.below_since = None
+        self.stopped = False
+
+    def update(self, velocity, phase_state, now):
+        if abs(velocity) < self.vel_threshold:
+            if self.below_since is None:
+                self.below_since = now
+            elif (now - self.below_since) >= self.confirm_time:
+                self.stopped = True
+        else:
+            self.below_since = None
+            self.stopped = False
+
+    def is_stopped(self):
+        return self.stopped
 
 
 class PhaseState(Enum):
@@ -20,10 +40,10 @@ class Mode(Enum):
     STROKE_ONLY = 2
     NMT_CAPTURE = 3      # Режим 1: захват позиции НМТ на скорости
     NMT_FINAL = 4        # Режим 2: доворот до НМТ на малой скорости
+    WAIT_STOP = 5
 
 
 class CycleCollector:
-
     def __init__(
         self,
         sample_rate=1000,
@@ -34,20 +54,14 @@ class CycleCollector:
         watchdog_cycles_factor=3.5,
         watchdog_min_sec=0.5,
         watchdog_max_sec=10.0,
-    ):
+        ):
 
         self.logger = my_logger.get_logger(__name__)
-        
-        self.stop_detector = StopDetector(
-            vel_threshold_getter=lambda: self.vel_threshold,
-            stop_ratio=0.05,
-            confirm_time_sec=0.25, # Если ложные срабатывния увеличить, если медленно реагирует - уменьшить
-        )
+        self.stop_detector = StopDetector()
 
         # -------- параметры --------
         self.sample_rate = sample_rate
         self.min_halfcycle_points = int(sample_rate * min_halfcycle_fraction)
-
         self.period_stability_threshold = period_stability_threshold
         self.min_stable_cycles = min_stable_cycles
 
@@ -56,7 +70,6 @@ class CycleCollector:
         self.watchdog_min_sec = watchdog_min_sec
         self.watchdog_max_sec = watchdog_max_sec
         self.watchdog_timeout_sec = watchdog_max_sec
-
         self.last_turn_time = None
 
         # -------- состояния --------
@@ -64,6 +77,8 @@ class CycleCollector:
         self.cycle_completed = False
         self.skip_accel = False
         self.cycle_callback = None
+        self.last_completed_step = None
+        self.last_step_result = None
 
         # -------- программа --------
         self.program = []
@@ -73,16 +88,12 @@ class CycleCollector:
         # -------- поток --------
         self.prev_pos = None
         self.prev_sign = 0
-
         self.turn_count = 0
         self.points_after_turn = 0
-        
         self.cycle_min_pos = float("inf")
         self.cycle_max_pos = float("-inf")
-
         self.current_pos = []
         self.current_force = []
-
         self.cycles = []
 
         # -------- скорость --------
@@ -105,7 +116,7 @@ class CycleCollector:
             'current_pos': None,   # текущая позиция при захвате (опционально)
             'timestamp': None      # время захвата
         }
-            
+
     def load_program(self, program, skip_accel=False):
         try:
             self.reset()
@@ -130,7 +141,6 @@ class CycleCollector:
     def _update_threshold(self, v):
         try:
             self.vel_hist.append(abs(v))
-
             if len(self.vel_hist) >= 5:
                 noise = np.median(self.vel_hist)
                 self.vel_threshold = max(noise * 3, 1e-6)
@@ -151,12 +161,10 @@ class CycleCollector:
         try:
             if len(self.cycle_times) < self.min_stable_cycles:
                 return False
-
             arr = np.array(self.cycle_times)
             mean = np.mean(arr)
             if mean < 1e-9:
                 return False
-            
             return np.std(arr) / mean < self.period_stability_threshold
         
         except Exception as e:
@@ -166,13 +174,10 @@ class CycleCollector:
         try:
             if len(self.cycle_times) == 0:
                 return
-
             mean_period = np.mean(self.cycle_times)
-
             timeout = mean_period * self.watchdog_cycles_factor
             timeout = max(timeout, self.watchdog_min_sec)
             timeout = min(timeout, self.watchdog_max_sec)
-
             self.watchdog_timeout_sec = timeout
             
         except Exception as e:
@@ -181,12 +186,9 @@ class CycleCollector:
     def _normalize_cycle(self, pos_arr, force_arr):
         if len(pos_arr) == 0:
             return pos_arr, force_arr
-
         start_idx = np.argmin(pos_arr)
-
         pos_arr = np.roll(pos_arr, -start_idx)
         force_arr = np.roll(force_arr, -start_idx)
-
         return pos_arr, force_arr
     
     def add_stream_dict(self, data):
@@ -265,6 +267,8 @@ class CycleCollector:
             return self._handle_nmt_capture()
         if mode == Mode.NMT_FINAL:
             return self._handle_nmt_final()
+        if mode == Mode.WAIT_STOP:
+            return self._handle_wait_stop()
         return False
 
     def _append_data_if_needed(self, pos, force):
@@ -286,15 +290,17 @@ class CycleCollector:
         self.current_force.clear()
         self.cycle_min_pos = float("inf")
         self.cycle_max_pos = float("-inf")
-        
+    
     def _handle_collect(self) -> bool:
         if len(self.current_pos) == 0:
             return False
         pos_np = np.array(self.current_pos, dtype=np.float32)
         force_np = np.array(self.current_force, dtype=np.float32)
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
-        self.cycles.append((pos_np, force_np))
-        if self.cycle_callback is not None:
+        result = (pos_np, force_np)
+        self.cycles.append(result)
+        self.last_step_result = self.cycles.copy()
+        if self.cycle_callback:
             self.cycle_callback(pos_np, force_np)
         self._reset_cycle_buffers()
         return True
@@ -302,12 +308,13 @@ class CycleCollector:
     def _handle_stroke(self) -> bool:
         if self.cycle_min_pos == float("inf"):
             return False
-        stroke = self.cycle_max_pos - self.cycle_min_pos
-        self.cycles.append((
+        result = (
             self.cycle_min_pos,
             self.cycle_max_pos,
-            stroke
-        ))
+            self.cycle_max_pos - self.cycle_min_pos
+        )
+        self.cycles.append(result)
+        self.last_step_result = self.cycles.copy()
         self._reset_cycle_buffers()
         return True
 
@@ -331,7 +338,9 @@ class CycleCollector:
             f"NMT captured: pos={current_nmt:.3f}, "
             f"direction to NMT={direction_to_nmt}"
         )
+        self.last_step_result = self.nmt_capture_result
         # переход к следующему шагу
+        self.last_completed_step = self.program[self.program_index]
         self.program_index += 1
         self.program_cycle_counter = 0
         self._reset_cycle_buffers()
@@ -365,17 +374,30 @@ class CycleCollector:
                 self.nmt_detected = True
         if self.nmt_detected:
             self.logger.info(f"NMT reached at {current_pos:.3f}")
+            self.last_completed_step = self.program[self.program_index]
             self.program_index += 1
             self.program_cycle_counter = 0
             self.nmt_approach_active = False
             return True
         return False
     
+    def _handle_wait_stop(self) -> bool:
+        """Завершает шаг, когда движение устойчиво остановилось"""
+        # StopDetector уже обновляется в _process_sample
+        if not self.stop_detector.is_stopped():
+            return False
+        self.logger.info("WAIT_STOP: motion stopped confirmed")
+        self.last_completed_step = self.program[self.program_index]
+        self.program_index += 1
+        self.program_cycle_counter = 0
+        return True
+
     def _advance_program_if_needed(self, target_cycles):
         if target_cycles is None:
             return
         self.program_cycle_counter += 1
         if self.program_cycle_counter >= target_cycles:
+            self.last_completed_step = self.program[self.program_index]
             self.program_index += 1
             self.program_cycle_counter = 0
             if self.program_index >= len(self.program):
@@ -384,6 +406,16 @@ class CycleCollector:
     def set_cycle_callback(self, callback):
         """Задать функцию, которая будет получать каждый завершённый цикл"""
         self.cycle_callback = callback
+        
+    def get_last_completed_step(self):
+        result = self.last_completed_step
+        self.last_completed_step = None
+        return result
+
+    def get_last_step_result(self):
+        result = self.last_step_result
+        self.last_step_result = None
+        return result
             
     def get_cycles(self):
         return list(self.cycles)
@@ -444,6 +476,8 @@ class CycleCollector:
 
             self.last_turn_time = None
             self.watchdog_timeout_sec = self.watchdog_max_sec
+            self.last_completed_step = None
+            self.last_step_result = None
             
             self.nmt_detected = False
             self.nmt_captured_pos = None
