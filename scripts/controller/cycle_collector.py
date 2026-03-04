@@ -188,252 +188,199 @@ class CycleCollector:
         force_arr = np.roll(force_arr, -start_idx)
 
         return pos_arr, force_arr
-
+    
     def add_stream_dict(self, data):
-        try:
-            if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
-                return self.phase_state
-            
-            now = time.perf_counter()
-
-            # # -------- watchdog --------
-            # if self.last_turn_time is not None:
-            #     if now - self.last_turn_time > self.watchdog_timeout_sec:
-            #         self.logger.warning("Watchdog timeout: motion stopped")
-            #         self.phase_state = PhaseState.ERROR
-            #         return self.phase_state
-
-            pos_arr = data.get("move")
-            force_arr = data.get("force")
-
-            if pos_arr is None or force_arr is None:
-                return self.phase_state
-
-            for pos, force in zip(pos_arr, force_arr):
-
-                if self.prev_pos is None:
-                    self.prev_pos = pos
-                    continue
-
-                v = pos - self.prev_pos
-                self._update_threshold(v)
-                
-                self.stop_detector.update(v, self.phase_state, now)
-
-                sign = self._sign(v)
-                self.points_after_turn += 1
-
-                if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
-
-                    if self.points_after_turn > self.min_halfcycle_points:
-                        self.cycle_completed = False
-                        self.turn_count += 1
-                        self.points_after_turn = 0
-
-                        self.last_turn_time = time.perf_counter()
-
-                        if self.turn_count % 2 == 0:
-
-                            now_cycle = time.perf_counter()
-
-                            if self.last_cycle_time is not None:
-                                self.cycle_times.append(now_cycle - self.last_cycle_time)
-
-                            self.last_cycle_time = now_cycle
-
-                            # -------- ACCEL --------
-                            if self.phase_state == PhaseState.ACCEL:
-
-                                if self._is_period_stable():
-                                    self.phase_state = PhaseState.RUN
-                                    # self._update_watchdog_timeout()
-
-                                    self.current_pos.clear()
-                                    self.current_force.clear()
-                                    
-                                    self.cycle_min_pos = float("inf")
-                                    self.cycle_max_pos = float("-inf")
-
-                            # -------- RUN --------
-                            elif self.phase_state == PhaseState.RUN:
-
-                                # self._update_watchdog_timeout()
-
-                                step = self._current_program_step()
-
-                                if step is None:
-                                    self.phase_state = PhaseState.DONE
-                                    return self.phase_state
-
-                                mode, target_cycles = step
-                                if mode == Mode.COLLECT:
-                                    pos_np = np.array(self.current_pos, dtype=np.float32)
-                                    force_np = np.array(self.current_force, dtype=np.float32)
-                                    pos_np, force_np = self._normalize_cycle(pos_np, force_np)
-                                    self.cycles.append((pos_np, force_np))
-                                    
-                                    if self.cycle_callback is not None:
-                                        self.cycle_callback(pos_np, force_np)
-                                        
-                                    self.cycle_completed = True
-
-                                elif mode == Mode.STROKE_ONLY:
-                                    if self.cycle_min_pos is not None:
-                                        stroke = self.cycle_max_pos - self.cycle_min_pos
-                                        self.cycles.append((
-                                            self.cycle_min_pos,
-                                            self.cycle_max_pos,
-                                            stroke
-                                        ))
-                                        
-                                        self.cycle_completed = True
-                                        
-                                elif mode == Mode.NMT_CAPTURE:
-                                    # При развороте мы в крайней точке - это НМТ
-                                    current_nmt = self.cycle_min_pos if self.cycle_min_pos != float("inf") else None
-                                    
-                                    if current_nmt is not None:
-                                        # Захватываем позицию НМТ
-                                        self.nmt_captured_pos = current_nmt
-                                        # Определяем направление к НМТ на основе знака после разворота
-                                        # После разворота в НМТ знак становится положительным (движение вверх)
-                                        # Значит, чтобы вернуться в НМТ, нужно двигаться вниз (отрицательное направление)
-                                        direction_to_nmt = -self.prev_sign if self.prev_sign != 0 else 0
-                                        self.nmt_capture_result = {
-                                            'position': current_nmt,
-                                            'direction_to_nmt': direction_to_nmt,
-                                            'current_pos': self.prev_pos,
-                                            'timestamp': time.perf_counter()
-                                        }
-                                        self.logger.info(
-                                            f"NMT captured: pos={current_nmt:.3f}, "
-                                            f"direction to NMT={direction_to_nmt} "
-                                            f"({'вниз' if direction_to_nmt < 0 else 'вверх'})"
-                                        )
-                                        # Переходим к следующему шагу программы (NMT_FINAL)
-                                        self.program_index += 1
-                                        self.program_cycle_counter = 0
-                                        
-                                        # Сбрасываем накопленные данные цикла, так как переходим в режим доворота
-                                        self.current_pos.clear()
-                                        self.current_force.clear()
-                                        self.cycle_min_pos = float("inf")
-                                        self.cycle_max_pos = float("-inf")
-                          
-                                    # current_nmt = self.cycle_min_pos if self.cycle_min_pos != float("inf") else None
-            
-                                    # if current_nmt is not None and self.prev_sign != 0:
-                                    #     direction_to_nmt = -self.prev_sign
-                                    #     self.nmt_capture_result = {
-                                    #         'position': current_nmt,
-                                    #         'direction_to_nmt': direction_to_nmt,
-                                    #         'current_pos': self.prev_pos,
-                                    #         'timestamp': time.perf_counter()
-                                    #     }
-                                    #     self.nmt_captured_pos = current_nmt
-                                    #     self.logger.info(
-                                    #                 f"NMT captured: pos={current_nmt:.3f}, "
-                                    #                 f"direction to NMT={direction_to_nmt} "
-                                    #                 f"({'вниз' if direction_to_nmt < 0 else 'вверх'})"
-                                    #             )
-                                    #     self.program_index += 1
-                                        
-                                    #     # Сохраняем цикл, если нужно
-                                    #     if len(self.current_pos) > 0:
-                                    #         pos_np = np.array(self.current_pos, dtype=np.float32)
-                                    #         force_np = np.array(self.current_force, dtype=np.float32)
-                                    #         self.cycles.append((pos_np, force_np))
-
-                                        self.cycle_completed = True
-
-                                elif mode == Mode.NMT_FINAL:
-                                    if self.nmt_captured_pos is None:
-                                        self.logger.error("NMT_FINAL mode but no captured position")
-                                        self.phase_state = PhaseState.ERROR
-                                        return self.phase_state
-                                        
-                                    target_direction = self.nmt_capture_result.get('direction_to_nmt', 0)
-    
-                                    if target_direction == 0:
-                                        self.logger.error("Invalid direction to NMT")
-                                        self.phase_state = PhaseState.ERROR
-                                        return self.phase_state
-    
-                                    # Определяем направление движения
-                                    current_sign = self._sign(v)
-                                    
-                                    # Если еще не активны, инициируем доворот
-                                    if not self.nmt_approach_active:
-                                        self.nmt_approach_active = True
-                                        self.logger.info(
-                                            f"Starting NMT approach: current={pos:.3f}, "
-                                            f"target={self.nmt_captured_pos:.3f}, "
-                                            f"direction={target_direction} ({'вниз' if target_direction < 0 else 'вверх'})"
-                                        )
-                                    
-                                        # Проверяем достижение НМТ с учетом нужного направления
-                                        if target_direction > 0:  # Нужно двигаться вверх
-                                            # Достигли, если перешли через НМТ снизу вверх
-                                            if current_sign > 0 and pos >= self.nmt_captured_pos:
-                                                self.nmt_detected = True
-                                                self.logger.info(f"NMT reached at {pos:.3f} while moving up")
-                                                
-                                                self.program_index += 1
-                                                self.program_cycle_counter = 0
-                                                self.nmt_approach_active = False
-                                                
-                                        else:  # Нужно двигаться вниз
-                                            # Достигли, если перешли через НМТ сверху вниз
-                                            if current_sign < 0 and pos <= self.nmt_captured_pos:
-                                                self.nmt_detected = True
-                                                self.logger.info(f"NMT reached at {pos:.3f} while moving down")
-                                                
-                                                self.program_index += 1
-                                                self.program_cycle_counter = 0
-                                                self.nmt_approach_active = False
-                                                
-                                        self.cycle_completed = True
-                                
-                                if self.cycle_completed and target_cycles is not None:
-                                    self.program_cycle_counter += 1
-                                    if self.program_cycle_counter >= target_cycles:
-                                        self.program_index += 1
-                                        self.program_cycle_counter = 0
-                                        if self.program_index >= len(self.program):
-                                            self.phase_state = PhaseState.DONE
-                                            return self.phase_state
-                            
-
-                            self.current_pos.clear()
-                            self.current_force.clear()
-                            
-                            self.cycle_min_pos = float("inf")
-                            self.cycle_max_pos = float("-inf")
-
-                if sign != 0:
-                    self.prev_sign = sign
-                    
-                if self.phase_state == PhaseState.RUN:
-                    step = self._current_program_step()
-                    mode, _ = step
-
-                    if mode == Mode.COLLECT:
-                        self.current_pos.append(pos)
-                        self.current_force.append(force)
-
-                    elif mode == Mode.STROKE_ONLY:
-                        self.cycle_min_pos = min(self.cycle_min_pos, pos)
-                        self.cycle_max_pos = max(self.cycle_max_pos, pos)
-
-                self.prev_pos = pos
-        
-        except Exception as e:
-            self.logger.error(e)
-            self.phase_state = PhaseState.ERROR
-            
-        finally:
+        if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
             return self.phase_state
+        pos_arr = data.get("move")
+        force_arr = data.get("force")
+        if pos_arr is None or force_arr is None:
+            return self.phase_state
+        now = time.perf_counter()
+        for pos, force in zip(pos_arr, force_arr):
+            self._process_sample(pos, force, now)
+            if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
+                break
+        return self.phase_state
+    
+    def _process_sample(self, pos, force, now):
+        if self.prev_pos is None:
+            self.prev_pos = pos
+            return
+        v = pos - self.prev_pos
+        self._update_threshold(v)
+        self.stop_detector.update(v, self.phase_state, now)
+        sign = self._sign(v)
+        self.points_after_turn += 1
+        turn_detected = self._detect_turn(sign)
+        if turn_detected:
+            self._process_turn(now)
+        self._append_data_if_needed(pos, force)
+        if sign != 0:
+            self.prev_sign = sign
+        self.prev_pos = pos
         
+    def _detect_turn(self, sign):
+        if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
+            if self.points_after_turn > self.min_halfcycle_points:
+                self.points_after_turn = 0
+                self.turn_count += 1
+                return True
+        return False
+    
+    def _process_turn(self, now):
+        self.last_turn_time = now
+        if self.turn_count % 2 != 0:
+            return  # только полный цикл
+        now_cycle = time.perf_counter()
+        if self.last_cycle_time is not None:
+            self.cycle_times.append(now_cycle - self.last_cycle_time)
+        self.last_cycle_time = now_cycle
+        if self.phase_state == PhaseState.ACCEL:
+            self._handle_accel_phase()
+        elif self.phase_state == PhaseState.RUN:
+            self._handle_run_phase()
+            
+    def _handle_accel_phase(self):
+        if self._is_period_stable():
+            self.phase_state = PhaseState.RUN
+            self._reset_cycle_buffers()
+            
+    def _handle_run_phase(self):
+        step = self._current_program_step()
+        if step is None:
+            self.phase_state = PhaseState.DONE
+            return
+        mode, target_cycles = step
+        cycle_completed = self._execute_mode(mode)
+        if cycle_completed:
+            self._advance_program_if_needed(target_cycles)
+            
+    def _execute_mode(self, mode):
+        if mode == Mode.COLLECT:
+            return self._handle_collect()
+        if mode == Mode.STROKE_ONLY:
+            return self._handle_stroke()
+        if mode == Mode.NMT_CAPTURE:
+            return self._handle_nmt_capture()
+        if mode == Mode.NMT_FINAL:
+            return self._handle_nmt_final()
+        return False
+
+    def _append_data_if_needed(self, pos, force):
+        if self.phase_state != PhaseState.RUN:
+            return
+        step = self._current_program_step()
+        if step is None:
+            return
+        mode, _ = step
+        if mode == Mode.COLLECT:
+            self.current_pos.append(pos)
+            self.current_force.append(force)
+        elif mode == Mode.STROKE_ONLY:
+            self.cycle_min_pos = min(self.cycle_min_pos, pos)
+            self.cycle_max_pos = max(self.cycle_max_pos, pos)
+        
+    def _reset_cycle_buffers(self):
+        self.current_pos.clear()
+        self.current_force.clear()
+        self.cycle_min_pos = float("inf")
+        self.cycle_max_pos = float("-inf")
+        
+    def _handle_collect(self) -> bool:
+        if len(self.current_pos) == 0:
+            return False
+        pos_np = np.array(self.current_pos, dtype=np.float32)
+        force_np = np.array(self.current_force, dtype=np.float32)
+        pos_np, force_np = self._normalize_cycle(pos_np, force_np)
+        self.cycles.append((pos_np, force_np))
+        if self.cycle_callback is not None:
+            self.cycle_callback(pos_np, force_np)
+        self._reset_cycle_buffers()
+        return True
+    
+    def _handle_stroke(self) -> bool:
+        if self.cycle_min_pos == float("inf"):
+            return False
+        stroke = self.cycle_max_pos - self.cycle_min_pos
+        self.cycles.append((
+            self.cycle_min_pos,
+            self.cycle_max_pos,
+            stroke
+        ))
+        self._reset_cycle_buffers()
+        return True
+
+    def _handle_nmt_capture(self) -> bool:
+        current_nmt = (
+            self.cycle_min_pos
+            if self.cycle_min_pos != float("inf")
+            else None
+        )
+        if current_nmt is None:
+            return False
+        self.nmt_captured_pos = current_nmt
+        direction_to_nmt = -self.prev_sign if self.prev_sign != 0 else 0
+        self.nmt_capture_result = {
+            'position': current_nmt,
+            'direction_to_nmt': direction_to_nmt,
+            'current_pos': self.prev_pos,
+            'timestamp': time.perf_counter()
+        }
+        self.logger.info(
+            f"NMT captured: pos={current_nmt:.3f}, "
+            f"direction to NMT={direction_to_nmt}"
+        )
+        # переход к следующему шагу
+        self.program_index += 1
+        self.program_cycle_counter = 0
+        self._reset_cycle_buffers()
+        return True
+
+    def _handle_nmt_final(self) -> bool:
+        if self.nmt_captured_pos is None:
+            self.logger.error("NMT_FINAL but no captured position")
+            self.phase_state = PhaseState.ERROR
+            return False
+        target_direction = self.nmt_capture_result.get('direction_to_nmt', 0)
+        if target_direction == 0:
+            self.logger.error("Invalid direction to NMT")
+            self.phase_state = PhaseState.ERROR
+            return False
+        # активируем режим один раз
+        if not self.nmt_approach_active:
+            self.nmt_approach_active = True
+            self.logger.info(
+                f"Starting NMT approach: target={self.nmt_captured_pos:.3f}, "
+                f"direction={target_direction}"
+            )
+        # ---- проверка достижения НМТ выполняется ВСЕГДА ----
+        current_sign = self.prev_sign
+        current_pos = self.prev_pos
+        if target_direction > 0:
+            if current_sign > 0 and current_pos >= self.nmt_captured_pos:
+                self.nmt_detected = True
+        else:
+            if current_sign < 0 and current_pos <= self.nmt_captured_pos:
+                self.nmt_detected = True
+        if self.nmt_detected:
+            self.logger.info(f"NMT reached at {current_pos:.3f}")
+            self.program_index += 1
+            self.program_cycle_counter = 0
+            self.nmt_approach_active = False
+            return True
+        return False
+    
+    def _advance_program_if_needed(self, target_cycles):
+        if target_cycles is None:
+            return
+        self.program_cycle_counter += 1
+        if self.program_cycle_counter >= target_cycles:
+            self.program_index += 1
+            self.program_cycle_counter = 0
+            if self.program_index >= len(self.program):
+                self.phase_state = PhaseState.DONE
+
     def set_cycle_callback(self, callback):
         """Задать функцию, которая будет получать каждый завершённый цикл"""
         self.cycle_callback = callback

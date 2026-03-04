@@ -301,7 +301,7 @@ class Model:
     def _pars_regs_result(self, res):
         try:
             if not res:
-                pass
+                return
             else:
                 result = self.parser.pars_response_from_regs(res)
                 
@@ -355,10 +355,10 @@ class Model:
                     if state == PhaseState.DONE and not self.flag_collect_done:
                         self.flag_collect_done = True
                         self.signals.collect_done.emit(True)
-                        if Mode.STROKE_ONLY:
+                        if self.collector.current_mode == Mode.STROKE_ONLY: # FIXME Пока этого метода нет в коллекторе
                             cycles = self.collector.get_cycles()
                             self.min_point, self.max_point, self.stroke = cycles[0]
-                        elif Mode.COLLECT:
+                        elif self.collector.current_mode == Mode.COLLECT: # FIXME Пока этого метода нет в коллекторе
                             cycles = self.collector.get_cycles()
                             avg = self.calc_data.average_cycles(cycles) # возвращает список с 2 массивами - pos, force
                             self._pars_result_avarage_cycles(avg)
@@ -424,7 +424,7 @@ class Model:
 
     def _pars_result_avarage_cycles(self, avg):
         if self.data_test.type_test == 'conv':
-            self._pars_relust_conv_test(avg)
+            self._pars_result_conv_test(avg)
         
         elif self.data_test.type_test == 'temper':
             pass
@@ -493,7 +493,7 @@ class Model:
 
         self.signals.update_lab_graph.emit(avg)
             
-    def _pars_relust_conv_test(self, avg):
+    def _pars_result_conv_test(self, avg):
         self.data_test.move = avg[0]
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
@@ -622,8 +622,7 @@ class Model:
         """Включение всех индикаторов"""
         try:
             self.write_bit_green_light(1)
-            time.sleep(0.1)
-            self.write_bit_red_light(1)
+            QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
 
         except Exception as e:
             self.logger.error(e)
@@ -632,8 +631,7 @@ class Model:
         """Выключение всех индикаторов"""
         try:
             self.write_bit_green_light(0)
-            time.sleep(0.1)
-            self.write_bit_red_light(0)
+            QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
 
         except Exception as e:
             self.logger.error(e)
@@ -642,8 +640,7 @@ class Model:
         """Включение зелёного индикатора"""
         try:
             self.write_bit_green_light(1)
-            time.sleep(0.1)
-            self.write_bit_red_light(0)
+            QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
 
         except Exception as e:
             self.logger.error(e)
@@ -652,8 +649,7 @@ class Model:
         """Включение красного индикатора"""
         try:
             self.write_bit_green_light(0)
-            time.sleep(0.1)
-            self.write_bit_red_light(1)
+            QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
 
         except Exception as e:
             self.logger.error(e)
@@ -673,7 +669,7 @@ class Model:
                 min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
                 min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
 
-            if min_comp < self.max_comp < max_comp and min_recoil < self.max_recoil < max_recoil:
+            if min_comp < self.data_test.max_comp < max_comp and min_recoil < self.data_test.max_recoil < max_recoil:
                 self.lamp_green_switch_on()
                 self.signals.conv_result_lamp.emit(step, 'green')
 
