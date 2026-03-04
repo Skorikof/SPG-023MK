@@ -9,43 +9,6 @@ from .test_flow import TestFlow
 from .traverse_service import TraverseService
 
 
-class CollectorService:
-    def __init__(self, model):
-        self.model = model
-        self.flag_collect_done = False
-
-    def set_done(self, flag: bool):
-        self.flag_collect_done = flag
-
-    def consume_done(self) -> bool:
-        if self.flag_collect_done:
-            self.flag_collect_done = False
-            return True
-        return False
-
-    def start(self, with_data: bool):
-        self.flag_collect_done = False
-        if with_data:
-            self.model.run_collector_with_data()
-        else:
-            self.model.run_collector_without_stable()
-        self.model.reader_start_test()
-
-    def start_find_stroke(self):
-        self.flag_collect_done = False
-        self.model.run_collector_find_stroke()
-        self.model.reader_start_test()
-        
-    def start_nmt_poition(self):
-        self.flag_collect_done = False
-        self.model.run_collector_find_nmt()
-        self.model.reader_start_test()
-
-    def stop(self):
-        self.model.reader_stop_test()
-        self.model.write_bit_force_cycle(0)
-
-
 class ControlSignals(QObject):
     control_msg = Signal(str)
     conv_win_test = Signal()
@@ -64,7 +27,6 @@ class Controller:
             self.model = model
             self.signals = ControlSignals()
             
-            self.collect_srv = CollectorService(model)
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
             self.test_flow = TestFlow(model)
@@ -165,7 +127,6 @@ class Controller:
     def _init_signals(self):
         try:
             self.model.signals.test_launch.connect(self._yellow_btn_push)
-            self.model.signals.collect_done.connect(self.collect_srv.set_done)
 
             self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
             self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
@@ -509,14 +470,14 @@ class Controller:
 
     def _enter_search_hod(self):
         self.signals.control_msg.emit(f'move_detection')
-        self.collect_srv.start_find_stroke()
+        self.model.start_find_stroke()
 
     def _stage_search_hod(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             self.test_flow.stop_gear_end_test()
 
     def _exit_search_hod(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_start_point_amort(self):
         self.signals.control_msg.emit(f'pos_traverse')
@@ -530,22 +491,22 @@ class Controller:
         
     def _enter_test_move_cycle(self):
         self.signals.control_msg.emit(f'move_detection')
-        self.collect_srv.start(with_data=False)
+        self.model.start_collect(with_data=False)
         
     def _stage_test_move_cycle(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             self.test_flow.pumping()
 
     def _exit_test_move_cycle(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_pumping(self):
         self.signals.control_msg.emit('pumping')
-        self.collect_srv.start(with_data=False)
+        self.model.start_collect(with_data=False)
 
     def _stage_pumping(self):
         type_test = self.model.data_test.type_test
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             if type_test == 'conv':
                 self.signals.conv_win_test.emit()
                 self.test_flow.test_on_two_speed(1)
@@ -561,13 +522,13 @@ class Controller:
                     self.test_flow.test_on_two_speed(1)
 
     def _exit_pumping(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_test_speed_one(self):
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect(with_data=True)
 
     def _stage_test_speed_one(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             type_test = self.model.data_test.type_test
             # self.model.save_result_cycle() # FIXME
             if type_test == 'conv':
@@ -576,13 +537,13 @@ class Controller:
             self.test_flow.test_on_two_speed(2)
 
     def _exit_test_speed_one(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_test_speed_two(self):
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect(with_data=True)
 
     def _stage_test_speed_two(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             type_test = self.model.data_test.type_test
             # self.model.save_result_cycle() # FIXME
             if type_test == 'conv':
@@ -592,34 +553,34 @@ class Controller:
             self.test_flow.stop_gear_end_test()
 
     def _exit_test_speed_two(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_test_lab_hand_speed(self):
         self.signals.lab_win_test.emit()
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect(with_data=True)
 
     def _stage_test_lab_hand_speed(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             # self.model.save_result_cycle() # FIXME
             self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
             self.test_flow.stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
     def _enter_test_lab_cascade(self):
         self.signals.lab_win_test.emit()
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect(with_data=True)
 
     def _stage_test_lab_cascade(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             # self.model.save_result_cycle() # FIXME
             if self.count_cascade < self.max_cascade:
                 speed = self.model.data_test.speed_list[self.count_cascade]
                 self.model.data_test.speed_test = speed
                 self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-                self.collect_srv.start(with_data=True)
+                self.model.start_collect(with_data=True)
                 self.count_cascade += 1
             else:
                 self.set_stage(Stage.WAIT)
@@ -628,15 +589,16 @@ class Controller:
                 self.test_flow.stop_gear_end_test()
 
     def _exit_test_lab_cascade(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         
+    # FIXME Испытание пока со старой реализацией, переделать
     def _enter_test_temper(self):
         self.last_max_temper = -100
         self.signals.lab_win_test.emit()
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect_inf_cycle()
 
     def _stage_test_temper(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             if self.model.data_test.max_temperature != self.last_max_temper:
                 self.last_max_temper = self.model.data_test.max_temperature
                 if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
@@ -651,7 +613,7 @@ class Controller:
 
     def _exit_test_temper(self):
         self.model.stop_cycle_collection()
-        self.collect_srv.stop()
+        self.model.stop_collect()
 
     def _enter_stop_gear_end_test(self):
         self.flag_collect_done = False
@@ -662,11 +624,11 @@ class Controller:
             self.test_flow.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
         self.test_flow.transition_via_buffer(Stage.STOP_GEAR_MIN_POS)
         
     def _enter_stop_gear_min_pos(self):
-        self.collect_srv.start_nmt_poition()
+        self.model.start_nmt_poition()
 
     def _stage_stop_gear_min_pos(self):
         if self.model.get_nmt_info():
@@ -699,7 +661,7 @@ class Controller:
                         self.signals.lab_test_stop.emit()
 
     def _exit_stop_gear_min_pos(self):
-        self.collect_srv.stop()
+        self.model.stop_collect()
     
     #--------- testing ---------#
     def _test_program(self):
@@ -707,16 +669,16 @@ class Controller:
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        self.collect_srv.start(with_data=True)
+        self.model.start_collect(with_data=True)
         print('enter stage buffer start')
         self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
-        if self.collect_srv.consume_done():
+        if self.model.is_collect_done():
             print('Congratelations! 3 cycles is done')
             self.set_stage(Stage.WAIT)
 
     def _exit_testing_prog(self):
         print('exit test stage')
-        self.collect_srv.stop()
+        self.model.stop_collect()
         print('exit stage off sensor')

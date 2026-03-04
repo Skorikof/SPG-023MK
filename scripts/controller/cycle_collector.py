@@ -312,10 +312,10 @@ class CycleCollector:
         pos_np = np.array(self.current_pos, dtype=np.float32)
         force_np = np.array(self.current_force, dtype=np.float32)
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
+        result = (pos_np, force_np)
         if self.cycle_callback:
-            self.cycle_callback(pos_np, force_np)
+            self.cycle_callback(result)
         else:
-            result = (pos_np, force_np)
             self.cycles.append(result)
             self.last_step_result = self.cycles.copy()
         self._reset_cycle_buffers()

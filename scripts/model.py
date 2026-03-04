@@ -45,7 +45,6 @@ class ModelSignals(QObject):
     connect_ctrl = Signal()
     read_finish = Signal()
     
-    collect_done = Signal(bool)
     win_set_update = Signal(str)
     update_lab_graph = Signal(object)
     update_conv_graph = Signal(object)
@@ -137,7 +136,6 @@ class Model:
         
     def _init_signals(self):
         self.reader.signals.result.connect(self._reader_result)
-        self.reader.signals.error.connect(self.log_error_thread)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
         
     def set_amort(self, amort):
@@ -148,7 +146,7 @@ class Model:
 
     def _start_param_model(self):
         try:
-            self.init_timer_clear_statusbar()
+            self._init_timer_clear_statusbar()
             self.client.connect_client()
             # FIXME таймер жёлтой кнопки
             # self._init_timer_yellow_btn()
@@ -178,10 +176,6 @@ class Model:
     def clear_status_bar(self):
         self.signals.stbar_msg.emit(' ')
         self.timer_clear_statusbar.stop()
-
-    def log_error_thread(self, txt_log):
-        self.logger.error(txt_log)
-        self.status_bar_msg(txt_log)
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
@@ -221,7 +215,7 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             
-    def init_timer_clear_statusbar(self):
+    def _init_timer_clear_statusbar(self):
         self.timer_clear_statusbar = QTimer()
         self.timer_clear_statusbar.setInterval(2000)
         self.timer_clear_statusbar.timeout.connect(self.clear_status_bar)
@@ -312,6 +306,9 @@ class Model:
         else:
             return False
         
+    def is_collect_done(self):
+        return self.flag_collect_done
+
     def stop_cycle_collection(self):
         self.collector.set_reset_active_collate()
         
@@ -396,7 +393,6 @@ class Model:
                 else:
                     event_state = self.collector.add_stream_dict(data)
                     if event_state == PhaseState.DONE and not self.flag_collect_done:
-                        self.flag_collect_done = True
                         self._handle_program_done()
                     elif event_state == PhaseState.ERROR and not self.flag_collect_error:
                         self.flag_collect_error = True
@@ -419,42 +415,47 @@ class Model:
         elif mode == Mode.NMT_CAPTURE:
             # можно передать в UI если нужно
             pass
-        self.signals.collect_done.emit(True)
-
-    def run_collector_without_stable(self, count_det: int=1):
+        self.flag_collect_done = True
+        
+    def start_collect(self, with_data: bool, *, count_det: int=1, count_col: int=1):
         self.flag_collect_done = False
         self.flag_collect_error = False
-        self.collector.load_program([(Mode.DETECT_ONLY, count_det)], skip_accel=True)
-            
-    def run_collector_with_data(self, count_det: int=1, count_col: int=3):
-        self.flag_collect_done = False
-        self.flag_collect_error = False
-        self.collector.load_program([
+        if with_data:
+            self.collector.load_program([
             (Mode.DETECT_ONLY, count_det),
             (Mode.COLLECT, count_col),
             ])
+        else:
+            self.collector.load_program([(Mode.DETECT_ONLY, count_det)], skip_accel=True)
+        self.reader_start_test()
         
-    def run_collector_without_end_cycle(self):
+    def start_collect_inf_cycle(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([(Mode.COLLECT, None)], skip_accel=False)
-        self.collector.set_cycle_callback(self._pars_result_temper_test)
-            
-    def run_collector_find_stroke(self, count_str: int=1):
+        self.collector.set_cycle_callback(self._pars_result_inf_cycles)
+        
+    def start_find_stroke(self, count_str: int=1):
         self.min_point = 0
         self.max_point = 0
         self.stroke = 0
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([(Mode.STROKE_ONLY, count_str)])
-            
-    def run_collector_find_nmt(self):
+        self.reader_start_test()
+        
+    def start_nmt_poition(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([
             (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
             (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
         ])
+        self.reader_start_test()
+        
+    def stop_collect(self):
+        self.reader_stop_test()
+        self.write_bit_force_cycle(0)
 
     def _send_data_in_set_win(self, data):
         try:
@@ -472,6 +473,10 @@ class Model:
             
         except Exception as e:
             self.logger.error(e)
+            
+    def _pars_result_inf_cycles(self, result):
+        if self.data_test.type_test == 'temper':
+            self._pars_result_temper_test(result)
 
     def _pars_result_avarage_cycles(self, avg):
         if self.data_test.type_test == 'conv':
@@ -554,12 +559,13 @@ class Model:
 
         self.signals.update_conv_graph.emit(avg)
         
-    def _pars_result_temper_test(self, pos_np, force_np):
-        force = self.calc_data.correct_force_with_koef(force_np,
+    def _pars_result_temper_test(self, result):
+        move, force = result[0], result[1]
+        force = self.calc_data.correct_force_with_koef(force,
                                                        config.force_koef,
                                                        self.force_koef_offset)
         
-        max_recoil, max_comp = self._calc_result_temper_test(pos_np, force)
+        max_recoil, max_comp = self._calc_result_temper_test(move, force)
         self.data_test.recoil_list.append(max_recoil)
         self.data_test.comp_list.append(max_comp)
         self.data_test.temper_list.append(self.data_test.max_temperature)

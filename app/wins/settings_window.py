@@ -277,8 +277,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
 
     def _btn_test_clicked(self):
         if self.btn_test.isChecked():
-            self.model.run_collector_with_data(1)
-            self.model.reader_start_test()
+            self.model.start_collect(with_data=True)
 
         else:
             self.model.reader_stop_test()
