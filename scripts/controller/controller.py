@@ -61,8 +61,9 @@ class Controller:
     def __init__(self, model):
         try:
             self.logger = my_logger.get_logger(__name__)
-            self.signals = ControlSignals()
             self.model = model
+            self.signals = ControlSignals()
+            
             self.collect_srv = CollectorService(model)
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
@@ -71,6 +72,7 @@ class Controller:
 
             self._init_variables()
             self._init_flags()
+            self._init_stage_handlers()
             self._init_signals()
             self._init_timer_test()
 
@@ -80,8 +82,17 @@ class Controller:
     def _init_variables(self):
         self.stage = Stage.WAIT
         self.next_stage = Stage.WAIT
-        
         self.timer_process = None
+        self.set_trav_point = 0
+        self.count_cascade = 1
+        self.max_cascade = 0
+        self.last_max_temper = -100
+        
+    def _init_flags(self):
+        self.flag_alarm_traverse = True
+        self.flag_collect_done = False
+        
+    def _init_stage_handlers(self):
         self._stage_handlers = {
             Stage.WAIT: self._stage_wait,
             Stage.WAIT_BUFFER: self._stage_wait_buffer,
@@ -150,15 +161,6 @@ class Controller:
             Stage.STOP_TEST: self._exit_stop_test,
             Stage.TEST_PROGRAM: self._exit_testing_prog,
         }
-        
-        self.set_trav_point = 0
-        self.count_cascade = 1
-        self.max_cascade = 0
-        self.last_max_temper = -100
-        
-    def _init_flags(self):
-        self.flag_alarm_traverse = True
-        self.flag_collect_done = False
 
     def _init_signals(self):
         try:
@@ -177,6 +179,12 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
             
+    def _init_timer_test(self):
+        self.timer_process = QTimer()
+        self.timer_process.setInterval(100)
+        self.timer_process.timeout.connect(self._update_stage_on_timer)
+        self.timer_process.start()
+
     @Slot(str)
     def _signal_control_msg(self, text):
         self.signals.control_msg.emit(text)
@@ -197,29 +205,19 @@ class Controller:
         self.stage = new_stage
         self._on_enter_stage(new_stage)
 
-    def _on_exit_stage(self, stage):
-        handler = self._exit_handlers.get(stage)
-        if handler:
-            handler()
-
     def _on_enter_stage(self, stage: Stage):
         handler = self._enter_handlers.get(stage)
+        if handler:
+            handler()
+            
+    def _on_exit_stage(self, stage):
+        handler = self._exit_handlers.get(stage)
         if handler:
             handler()
 
     def set_next_stage(self, stage):
         self.logger.debug(f'Next stage {self.next_stage} -> {stage}')
         self.next_stage = stage
-
-    def _init_timer_test(self):
-        try:
-            self.timer_process = QTimer()
-            self.timer_process.setInterval(100)
-            self.timer_process.timeout.connect(self._update_stage_on_timer)
-            self.timer_process.start()
-
-        except Exception as e:
-            self.logger.error(e)
             
     def _update_stage_on_timer(self):
         try:
@@ -322,7 +320,7 @@ class Controller:
         """
         try:
             self._test_program()
-            # if self._check_max_temper_test():
+            # if self.model.check_max_temper_test():
             #     self.step_start_test()
 
             #     self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
@@ -339,23 +337,11 @@ class Controller:
             #             self.trav_serv.traverse_install_point('install')
 
             # else:
+            #     self.signals.control_msg.emit('excess_temperature')
             #     self.step_stop_test()
 
         except Exception as e:
             self.logger.error(e)
-            
-    def _check_max_temper_test(self):
-        first = self.model.data_test.first_temperature
-        second = self.model.data_test.second_temperature
-        if self.model.data_test.type_test == 'temper':
-            finish_temp = self.model.data_test.finish_temperature
-        else:
-            finish_temp = self.model.data_test.amort.max_temper
-        if first < finish_temp and second < finish_temp:
-            return True
-        else:
-            self.signals.control_msg.emit('excess_temperature')
-            return False
         
     def step_start_test(self):
         try:
@@ -664,6 +650,7 @@ class Controller:
                     self.test_flow.stop_gear_end_test()
 
     def _exit_test_temper(self):
+        self.model.stop_cycle_collection()
         self.collect_srv.stop()
 
     def _enter_stop_gear_end_test(self):
@@ -671,7 +658,7 @@ class Controller:
         self.model.reader_start_test()
 
     def _stage_stop_gear_end_test(self):
-        if self.model.collector.motor_stopped():
+        if self.model.is_motor_stopped():
             self.test_flow.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
@@ -682,8 +669,8 @@ class Controller:
         self.collect_srv.start_nmt_poition()
 
     def _stage_stop_gear_min_pos(self):
-        if self.model.collector.get_nmt_capture_info():
-            info = self.model.collector.get_nmt_capture_info()
+        if self.model.get_nmt_info():
+            info = self.model.get_nmt_info()
             tag = 'down'
             if info['direction_to_nmt'] > 0:
                 tag = 'down'
@@ -694,7 +681,7 @@ class Controller:
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
             self.model.fc_control(**{'tag': tag, 'adr': 1})
             
-            if self.model.collector.is_nmt_reached():
+            if self.model.is_nmt_reached():
                 self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
                 self.set_stage(Stage.WAIT)

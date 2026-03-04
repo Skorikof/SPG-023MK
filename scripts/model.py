@@ -17,6 +17,25 @@ from scripts.freq_ctrl.freq_control import FreqControl
 from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 
 
+# Запуск ступени
+# 1. collector.reset()
+# 2. collector.load_program()
+# 3. включить чтение буфера
+# 4. включить датчик
+# 5. запустить двигатель
+
+# ⚠ Важно: программа должна быть загружена ДО начала потока.
+
+# Завершение ступени
+
+# Когда Collector сказал DONE:
+
+# 1. остановить двигатель
+# 2. выключить чтение буфера
+# 3. выключить датчик
+
+# Collector при этом уже в DONE и не реагирует.
+
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
@@ -280,6 +299,30 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
+            
+    def check_max_temper_test(self):
+        first = self.data_test.first_temperature
+        second = self.data_test.second_temperature
+        if self.data_test.type_test == 'temper':
+            finish_temp = self.data_test.finish_temperature
+        else:
+            finish_temp = self.data_test.amort.max_temper
+        if first < finish_temp and second < finish_temp:
+            return True
+        else:
+            return False
+        
+    def stop_cycle_collection(self):
+        self.collector.set_reset_active_collate()
+        
+    def is_motor_stopped(self):
+        return self.collector.motor_stopped()
+
+    def get_nmt_info(self):
+        return self.collector.get_nmt_capture_info()
+    
+    def is_nmt_reached(self):
+        return self.collector.is_nmt_reached()
 
     def _reader_result(self, response, tag):
         try:

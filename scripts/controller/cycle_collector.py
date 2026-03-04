@@ -73,6 +73,7 @@ class CycleCollector:
         self.last_turn_time = None
 
         # -------- состояния --------
+        self.active = False
         self.phase_state = PhaseState.ACCEL
         self.cycle_completed = False
         self.skip_accel = False
@@ -125,6 +126,8 @@ class CycleCollector:
 
             if self.skip_accel:
                 self.phase_state = PhaseState.RUN
+            
+            self.active = True
 
         except Exception as e:
             self.logger.error(e)
@@ -192,6 +195,8 @@ class CycleCollector:
         return pos_arr, force_arr
     
     def add_stream_dict(self, data):
+        if not self.active:
+            return self.phase_state
         if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
             return self.phase_state
         pos_arr = data.get("move")
@@ -252,6 +257,7 @@ class CycleCollector:
         step = self._current_program_step()
         if step is None:
             self.phase_state = PhaseState.DONE
+            self.active = False
             return
         mode, target_cycles = step
         cycle_completed = self._execute_mode(mode)
@@ -259,6 +265,8 @@ class CycleCollector:
             self._advance_program_if_needed(target_cycles)
             
     def _execute_mode(self, mode):
+        if mode == Mode.DETECT_ONLY:
+            return self._handle_detect_only()
         if mode == Mode.COLLECT:
             return self._handle_collect()
         if mode == Mode.STROKE_ONLY:
@@ -290,6 +298,13 @@ class CycleCollector:
         self.current_force.clear()
         self.cycle_min_pos = float("inf")
         self.cycle_max_pos = float("-inf")
+        
+    def _handle_detect_only(self) -> bool:
+        """
+        Завершает один шаг на каждый полный оборот.
+        Никакие данные не сохраняются.
+        """
+        return True
     
     def _handle_collect(self) -> bool:
         if len(self.current_pos) == 0:
@@ -297,11 +312,12 @@ class CycleCollector:
         pos_np = np.array(self.current_pos, dtype=np.float32)
         force_np = np.array(self.current_force, dtype=np.float32)
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
-        result = (pos_np, force_np)
-        self.cycles.append(result)
-        self.last_step_result = self.cycles.copy()
         if self.cycle_callback:
             self.cycle_callback(pos_np, force_np)
+        else:
+            result = (pos_np, force_np)
+            self.cycles.append(result)
+            self.last_step_result = self.cycles.copy()
         self._reset_cycle_buffers()
         return True
     
@@ -350,11 +366,13 @@ class CycleCollector:
         if self.nmt_captured_pos is None:
             self.logger.error("NMT_FINAL but no captured position")
             self.phase_state = PhaseState.ERROR
+            self.active = False
             return False
         target_direction = self.nmt_capture_result.get('direction_to_nmt', 0)
         if target_direction == 0:
             self.logger.error("Invalid direction to NMT")
             self.phase_state = PhaseState.ERROR
+            self.active = False
             return False
         # активируем режим один раз
         if not self.nmt_approach_active:
@@ -402,7 +420,11 @@ class CycleCollector:
             self.program_cycle_counter = 0
             if self.program_index >= len(self.program):
                 self.phase_state = PhaseState.DONE
+                self.active = False
 
+    def set_reset_active_collate(self):
+        self.active = False
+        
     def set_cycle_callback(self, callback):
         """Задать функцию, которая будет получать каждый завершённый цикл"""
         self.cycle_callback = callback
@@ -416,7 +438,7 @@ class CycleCollector:
         result = self.last_step_result
         self.last_step_result = None
         return result
-            
+
     def get_cycles(self):
         return list(self.cycles)
     
@@ -447,38 +469,28 @@ class CycleCollector:
 
     def reset(self):
         try:
+            self.active = False
             self.phase_state = PhaseState.ACCEL
-            
             self.stop_detector.reset()
-
             self.program_index = 0
             self.program_cycle_counter = 0
-
             self.prev_pos = None
             self.prev_sign = 0
-
             self.turn_count = 0
             self.points_after_turn = 0
-
             self.current_pos.clear()
             self.current_force.clear()
-            
             self.cycle_min_pos = float("inf")
             self.cycle_max_pos = float("-inf")
-
             self.cycles.clear()
-
             self.vel_hist.clear()
             self.vel_threshold = 0.0
-
             self.cycle_times.clear()
             self.last_cycle_time = None
-
             self.last_turn_time = None
             self.watchdog_timeout_sec = self.watchdog_max_sec
             self.last_completed_step = None
             self.last_step_result = None
-            
             self.nmt_detected = False
             self.nmt_captured_pos = None
             self.nmt_capture_cycle = None
@@ -490,7 +502,6 @@ class CycleCollector:
                 'current_pos': None,
                 'timestamp': None
             }
-            
             self.cycle_completed = False
             self.cycle_callback = None
             
