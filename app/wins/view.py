@@ -13,12 +13,14 @@ from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
+from scripts.controller.controller import Controller
 from scripts.controller.stages import Stage
 from scripts.logger import my_logger
+from scripts.model import Model
 
 
 class AppWindow(QMainWindow):
-    def __init__(self, model, controller):
+    def __init__(self, model: Model, controller: Controller):
         super(AppWindow, self).__init__()
         self.logger = my_logger.get_logger(__name__)
         self.ui = Ui_MainWindow()
@@ -34,7 +36,8 @@ class AppWindow(QMainWindow):
         self._start_param_view()
 
     def closeEvent(self, event):
-        if self.model.buffer_state[1] == 'buffer_on':
+        _, state = self.model.get_buffer_state()
+        if state == 'buffer_on':
             self.model.write_bit_force_cycle(0)
             
         if self.controller.timer_process is not None:
@@ -288,7 +291,7 @@ class AppWindow(QMainWindow):
         self.main_ui_state(False)
         self.main_btn_state(False)
         self.main_stop_state(True)
-        self.controller.search_hod()
+        self.model.search_hod()
 
     @log_exceptions
     def slot_search_hod(self):
@@ -307,7 +310,7 @@ class AppWindow(QMainWindow):
         self.main_ui_state(False)
         self.main_btn_state(False)
         self.main_stop_state(True)
-        self.controller.move_gear_set_pos()
+        self.model.move_gear_set_pos()
 
     def btn_correct_force_clicked(self):
         self.main_ui_state(False)
@@ -931,7 +934,7 @@ class AppWindow(QMainWindow):
             self.controller.stop_test_clicked()
 
         elif temp == 'НАЗАД':
-            self.controller.step_stop_test()
+            self.model.flag_reset_stop_test()
             self.model.flag_test_launch = False
             self.controller.trav_serv.traverse_install_point('stop_test')
             self.ui.test_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
@@ -972,7 +975,7 @@ class AppWindow(QMainWindow):
             self.controller.stop_test_clicked()
 
         elif temp == 'НАЗАД':
-            self.controller.step_stop_test()
+            self.model.flag_reset_stop_test()
             self.model.flag_test_launch = False
             self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
             self.controller.trav_serv.traverse_install_point('stop_test')

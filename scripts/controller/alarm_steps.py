@@ -90,6 +90,7 @@ class AlarmSteps:
         """Handle excess temperature alarm."""
         self._trigger_alarm(self.ALARM_CONFIGS[AlarmType.EXCESS_TEMPERATURE])
 
+    # FIXME Проверить вот этот моент
     def step_alarm_traverse_position(self):
         """Check and handle traverse position alarms."""
         try:

@@ -11,6 +11,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
+from scripts.controller.stages import Stage
 from scripts.modbus.client import Client
 from scripts.freq_ctrl.freq_control import FreqControl
 
@@ -20,8 +21,8 @@ from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 # Запуск ступени
 # 1. collector.reset()
 # 2. collector.load_program()
-# 3. включить чтение буфера
-# 4. включить датчик
+# 3. включить датчик
+# 4. включить чтение буфера
 # 5. запустить двигатель
 
 # ⚠ Важно: программа должна быть загружена ДО начала потока.
@@ -51,6 +52,8 @@ class ModelSignals(QObject):
     update_temper_graph = Signal(object)
     
     conv_result_lamp = Signal(str, str)
+    set_stage = Signal(object)
+    set_next_stage = Signal(object)
 
 
 class Model:
@@ -70,9 +73,7 @@ class Model:
         self.parser = ParserSPG023MK()
         self.calc_data = CalcData()
         self.collector = CycleCollector()
-
         self.data_test = DataTest()
-
         self.state_dict = {'cycle_force': False,
                            'red_light': False,
                            'green_light': False,
@@ -92,7 +93,6 @@ class Model:
                             'highest_position': False,
                             'lowest_position': False,
                             }
-        
         self.buffer_state = ['null', 'null']
 
         self.counter = 0
@@ -112,11 +112,13 @@ class Model:
         self.timer_calc_koef = None
         self.timer_yellow = None
         self.time_push_yellow = None
-
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         
         self.list_lab_result = []
         self.list_conv_result = []
+        self.count_cascade = 0
+        self.max_cascade = 0
+        self.last_max_temper = -100
 
     def _init_flags(self):
         self.lbl_push_force = ''
@@ -126,6 +128,7 @@ class Model:
         self.yellow_rattle = False
         self.flag_repeat = False
         self.flag_search_hod = False
+        self.flag_cascade_done = False
 
         self.alarm_tag = ''
         self.flag_alarm = False
@@ -179,6 +182,28 @@ class Model:
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
+        
+    def get_buffer_state(self):
+        res = self.buffer_state[0]
+        state = self.buffer_state[1]
+        return res, state
+    
+    def reset_buffer_state(self):
+        self.buffer_state = ['null', 'null']
+        
+    def reset_cascade_speed(self):
+        self.flag_cascade_done = False
+        self.count_cascade = 0
+        self.max_cascade = len(self.data_test.speed_list)
+
+    def set_next_step_count_cascade(self):
+        self.count_cascade += 1
+        
+    def get_flag_cascade_done(self):
+        return self.flag_cascade_done
+    
+    def reset_last_max_temper(self):
+        self.last_max_temper = -100
 
     def reader_start(self):
         self.reader.reader_start()
@@ -310,7 +335,7 @@ class Model:
         return self.flag_collect_done
 
     def stop_cycle_collection(self):
-        self.collector.set_reset_active_collate()
+        self.collector.reset_active_collate()
         
     def is_motor_stopped(self):
         return self.collector.motor_stopped()
@@ -391,6 +416,13 @@ class Model:
                 if self.data_test.type_test == 'hand':
                     self._send_data_in_set_win(data)
                 else:
+                    self.state_list = data.get('state_list')
+                    self._update_state_dict(data.get('state'))
+                    temperature = data.get('temper') * 0.01 # FIXME Проверить вот этот момент
+                    self.data_test.temperature = temperature
+                    self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
+                                                                                      self.data_test.max_temperature)
+                    
                     event_state = self.collector.add_stream_dict(data)
                     if event_state == PhaseState.DONE and not self.flag_collect_done:
                         self._handle_program_done()
@@ -434,6 +466,13 @@ class Model:
         self.flag_collect_error = False
         self.collector.load_program([(Mode.COLLECT, None)], skip_accel=False)
         self.collector.set_cycle_callback(self._pars_result_inf_cycles)
+        
+    # FIXME Проверить этот момент
+    def start_collect_wait_stop(self):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.collector.set_active_collate()
+        self.collector.load_program([(Mode.WAIT_STOP, None)], skip_accel=True)
         
     def start_find_stroke(self, count_str: int=1):
         self.min_point = 0
@@ -488,7 +527,7 @@ class Model:
         else:
             self._pars_result_lab_test(avg)
             
-    def _calc_result_lab_and_conv(self, move, force):
+    def _calc_result_cycle(self, move, force):
         try:
             rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
             if self.data_test.flag_push_force:
@@ -510,33 +549,6 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             
-    def _calc_result_temper_test(self, move, force):
-        try:
-            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
-            if self.data_test.flag_push_force:
-                push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
-                                                                        self.data_test.static_push_force)
-                self.data_test.dynamic_push_force = push_force
-            else:
-                push_force = self.data_test.static_push_force
-                self.data_test.dynamic_push_force = 0
-            
-            max_recoil = rec_clear + push_force
-            max_comp = comp_clear - push_force
-            
-            self.data_test.max_recoil = max_recoil
-            self.data_test.max_comp = max_comp
-
-            self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
-            
-            self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
-                                                                        self.data_test.amort.hod)
-            
-            return max_recoil, max_comp
-            
-        except Exception as e:
-            self.logger.error(e)
-            
     def _pars_result_lab_test(self, avg):
         self.data_test.move = avg[0]
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
@@ -544,7 +556,7 @@ class Model:
                                                                       self.force_koef_offset)
         
         self.list_lab_result.append((self.data_test.move, self.data_test.force))
-        self._calc_result_lab_and_conv(self.data_test.move, self.data_test.force)
+        self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_lab_graph.emit(avg)
             
@@ -555,7 +567,7 @@ class Model:
                                                                       self.force_koef_offset)
         
         self.list_conv_result.append((self.data_test.move, self.data_test.force))
-        self._calc_result_lab_and_conv(self.data_test.move, self.data_test.force)
+        self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_conv_graph.emit(avg)
         
@@ -565,9 +577,9 @@ class Model:
                                                        config.force_koef,
                                                        self.force_koef_offset)
         
-        max_recoil, max_comp = self._calc_result_temper_test(move, force)
-        self.data_test.recoil_list.append(max_recoil)
-        self.data_test.comp_list.append(max_comp)
+        self._calc_result_cycle(move, force)
+        self.data_test.recoil_list.append(self.data_test.max_recoil)
+        self.data_test.comp_list.append(self.data_test.max_comp)
         self.data_test.temper_list.append(self.data_test.max_temperature)
         
         self.signals.update_temper_graph.emit((self.data_test.recoil_list,
@@ -594,7 +606,7 @@ class Model:
 
     def write_bit_force_cycle(self, value):
         try:
-            self.buffer_state = ['null', 'null']
+            self.reset_buffer_state()
             if value == 1:
                 command = 'buffer_on'
             else:
@@ -736,6 +748,183 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             
+    def flag_reset_start_test(self):
+        try:
+            if self.state_dict.get('excess_force', False) is True:
+                self.write_bit_emergency_force()
+
+            if self.state_dict.get('lost_control', False) is True:
+                self.write_bit_unblock_control()
+
+            self.lamp_all_switch_off()
+
+            self.data_test.max_temperature = 0
+            self.flag_test_launch = True
+            self.alarm_tag = ''
+            self.flag_alarm = False
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def flag_reset_stop_test(self):
+        try:
+            self.flag_test_launch = False
+            self.flag_test = False
+
+        except Exception as e:
+            self.logger.error(e)
+            
+    def write_emergency_force_start_test(self):
+        self.write_emergency_force(self.calc_data.excess_force(self.data_test.amort))
+
+    def transition_via_buffer(
+        self,
+        next_stage: Stage,
+        *,
+        speed=None,
+        adr=1,
+        force_cycle=True,
+        extra_fc=None
+    ):
+        """
+        Унифицированный переход через WAIT_BUFFER.
+        Parameters
+        ----------
+        next_stage : Stage
+            Куда перейти после buffer_on
+        speed : int | None
+            Если задан — отправим fc_control speed
+        adr : int
+            Адрес привода
+        force_cycle : bool
+            Нужно ли включать force_cycle
+        extra_fc : dict | None
+            Любая дополнительная команда fc_control
+        """
+        if force_cycle:
+            self.write_bit_force_cycle(1)
+        if speed is not None:
+            self.fc_control(tag='speed', adr=adr, speed=speed)
+        if extra_fc:
+            self.fc_control(**extra_fc)
+
+        self.signals.set_next_stage.emit(next_stage)
+        self.signals.set_stage.emit(Stage.WAIT_BUFFER)
+        
+    def test_move_cycle(self):
+        self.start_collect(with_data=False, count_det=2)
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('slow', hod)
+        self.transition_via_buffer(Stage.TEST_MOVE_CYCLE, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+        
+    def pumping(self):
+        self.start_collect(with_data=False, count_det=3)
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('fast', hod)
+        self.transition_via_buffer(Stage.PUMPING, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+    
+    def test_on_two_speed(self, ind: int):
+        if ind == 1:
+            self.start_collect(with_data=True, count_col=3)
+            speed = self.data_test.amort.speed_one
+            self.data_test.speed_test = speed
+            self.transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed,
+                                       extra_fc={'tag': 'up', 'adr': 1})
+
+        elif ind == 2:
+            self.start_collect(with_data=True, count_col=3)
+            speed = self.data_test.amort.speed_two
+            self.data_test.speed_test = speed
+            self.transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed,
+                                       extra_fc={'tag': 'up', 'adr': 1})
+
+        # FIXME Повтор испытания пока не реализован
+        if self.flag_repeat:
+            self.flag_repeat = False
+            self.fc_control(**{'tag': 'up', 'adr': 1})
+    
+    def test_lab_hand_speed(self):
+        self.start_collect(with_data=True, count_col=3)
+        speed = self.data_test.speed_test
+        self.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+
+        # FIXME Повтор испытания пока не реализован
+        if self.flag_repeat:
+            self.flag_repeat = False
+            self.fc_control(**{'tag': 'up', 'adr': 1})
+    
+    def test_lab_cascade(self):
+        if self.count_cascade < self.max_cascade:
+            self.flag_cascade_done = False
+            self.start_collect(with_data=True, count_col=3)
+            speed = self.data_test.speed_list[self.count_cascade]
+            self.data_test.speed_test = speed            
+            self.transition_via_buffer(Stage.TEST_LAB_CASCADE, speed=speed,
+                                       extra_fc={'tag': 'up', 'adr': 1})
+        
+        else:
+            self.flag_cascade_done = True
+        
+        # FIXME Повтор испытания пока не реализован
+        if self.flag_repeat:
+            self.flag_repeat = False
+            self.fc_control(**{'tag': 'up', 'adr': 1})
+
+    def test_temper(self):
+        self.start_collect_inf_cycle()
+        speed = self.data_test.speed_test
+        self.transition_via_buffer(Stage.TEST_TEMPER, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+
+        # FIXME Повтор испытания пока не реализован
+        if self.flag_repeat:
+            self.flag_repeat = False
+            self.fc_control(**{'tag': 'up', 'adr': 1})
+    
+    def check_finish_temper_test(self):
+        if self.data_test.max_temperature != self.last_max_temper:
+            self.last_max_temper = self.data_test.max_temperature
+            if self.data_test.max_temperature <= self.data_test.finish_temperature:
+                return False
+            else:
+                return True
+
+    # FIXME Проверить этот момент
+    def stop_gear_end_test(self):
+        self.start_collect_wait_stop()
+        self.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
+
+    def stop_gear_min_pos(self):
+        self.start_nmt_poition()
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+        
+    def search_hod(self):
+        self.alarm_tag = ''
+        self.flag_alarm = False
+        self.flag_search_hod = True
+        
+        self.start_find_stroke()
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        self.transition_via_buffer(Stage.SEARCH_HOD, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+        
+    def move_gear_set_pos(self):
+        self.alarm_tag = ''
+        self.flag_alarm = False
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('slow', hod)
+        self.transition_via_buffer(Stage.POS_SET_GEAR, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
+
+
+    # FIXME Переделать под новую реализацию
     def save_result_cycle(self):
         try:
             if self.data_test.type_test in ('lab', 'lab_cascade'):

@@ -422,7 +422,10 @@ class CycleCollector:
                 self.phase_state = PhaseState.DONE
                 self.active = False
 
-    def set_reset_active_collate(self):
+    def set_active_collate(self):
+        self.active = True
+        
+    def reset_active_collate(self):
         self.active = False
         
     def set_cycle_callback(self, callback):

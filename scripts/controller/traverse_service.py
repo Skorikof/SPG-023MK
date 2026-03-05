@@ -3,6 +3,7 @@ from PySide6.QtCore import QObject, Signal
 from .stages import Stage
 from config import config
 from scripts.logger import my_logger
+from scripts.model import Model
 
 
 class TraverseServiceSignals(QObject):
@@ -11,10 +12,14 @@ class TraverseServiceSignals(QObject):
 
 
 class TraverseService:
-    def __init__(self, model):
+    def __init__(self, model: Model):
         self.model = model
         self.logger = my_logger.get_logger(__name__)
         self.signals = TraverseServiceSignals()
+        self.set_trav_point = 0
+        
+    def set_traverse_position(self, point):
+        self.set_trav_point = point
     
     def traverse_install_point(self, tag):
         """Позционирование траверсы"""
@@ -26,23 +31,20 @@ class TraverseService:
             mid_point = (len_max - len_min) / 2
             adapter = self.model.data_test.amort.adapter_len
             if tag == 'install':
-                install_point = round((stock_point + hod / 2) - len_max - adapter, 1)
-                if abs(abs(self.model.move_traverse) - abs(install_point)) < 0.5:
+                self.set_trav_point = round((stock_point + hod / 2) - len_max - adapter, 1)
+                if abs(abs(self.model.move_traverse) - abs(self.set_trav_point)) < 0.5:
                     self.signals.control_msg.emit('yellow_btn')
                 else:
                     self.signals.set_stage.emit(Stage.INSTALL_AMORT)
-                    self.set_trav_point = install_point
-                    self._traverse_move_position(install_point)
+                    self._traverse_move_position()
             elif tag == 'start_test':
-                start_point = int(stock_point - len_max - adapter + mid_point)
+                self.set_trav_point = int(stock_point - len_max - adapter + mid_point)
                 self.signals.set_stage.emit(Stage.START_POINT_AMORT)
-                self.set_trav_point = start_point
-                self._traverse_move_position(start_point)
+                self._traverse_move_position()
             elif tag == 'stop_test':
-                end_point = int((stock_point + hod / 2) - len_max - adapter)
+                self.set_trav_point = int((stock_point + hod / 2) - len_max - adapter)
                 self.signals.set_stage.emit(Stage.STOP_TEST)
-                self.set_trav_point = end_point
-                self._traverse_move_position(end_point)
+                self._traverse_move_position()
 
         except Exception as e:
             self.logger.error(e)
@@ -50,19 +52,19 @@ class TraverseService:
     def traverse_move_out_alarm(self, pos):
         try:
             if pos == 'up':
-                self.set_trav_point = 20
+                self.set_trav_point = 50
             elif pos == 'down':
-                self.set_trav_point = 550
+                self.set_trav_point = 500
             self.signals.set_stage.emit(Stage.ALARM_TRAVERSE)
-            self._traverse_move_position(self.set_trav_point)
+            self._traverse_move_position()
 
         except Exception as e:
             self.logger.error(e)
             
-    def _traverse_move_position(self, set_point):
+    def _traverse_move_position(self):
         """Непосредственно включение и перемещение траверсы"""
         try:
-            val = abs(set_point - self.model.move_traverse)
+            val = abs(self.set_trav_point - self.model.move_traverse)
             if val > 0.3:
                 if val <= 10:
                     freq = 5
@@ -74,9 +76,8 @@ class TraverseService:
                 self.flag_freq_1_step = False
                 self.flag_freq_2_step = False
                 self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': freq})
-                pos_trav = self.model.move_traverse
 
-                if pos_trav > set_point:
+                if self.model.move_traverse > self.set_trav_point:
                     tag = 'up'
                 else:
                     tag = 'down'
@@ -85,40 +86,25 @@ class TraverseService:
         except Exception as e:
             self.logger.error(e)
 
-    def step_control_traverse_move(self, point) -> bool:
+    def step_control_traverse_move(self) -> bool:
         """Функция отслеживания траверсы, при достижении точки останов"""
         try:
-            if 8 < abs(point - self.model.move_traverse) <= 15:
+            if 8 < abs(self.set_trav_point - self.model.move_traverse) <= 15:
                 if not self.flag_freq_1_step:
                     self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 15})
                     self.flag_freq_1_step = True
 
-            if 2 < abs(point - self.model.move_traverse) <= 8:
+            if 2 < abs(self.set_trav_point - self.model.move_traverse) <= 8:
                 if not self.flag_freq_2_step:
                     self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 5})
                     self.flag_freq_2_step = True
 
-            if abs(point - self.model.move_traverse) <= 0.3:
+            if abs(self.set_trav_point - self.model.move_traverse) <= 0.3:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
                 # print(f'Остановился -- {self.model.move_traverse}')
                 return True
 
             return False
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def step_move_traverse_out_alarm(self, pos):
-        try:
-            tag = 'down'
-            self.flag_freq_1_step = False
-            self.flag_freq_2_step = False
-            self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': 30})
-            if pos == 'up':
-                tag = 'down'
-            elif pos == 'down':
-                tag = 'up'
-            self.model.fc_control(**{'tag': tag, 'adr': 2})
 
         except Exception as e:
             self.logger.error(e)
@@ -133,11 +119,12 @@ class TraverseService:
         except Exception as e:
             self.logger.error(e)
     
-    def stage_traverse_referent(self):
+    def flag_traverse_referent(self):
         try:
             if self.model.switch_dict.get('highest_position', False) is True:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
-                self.model.init_timer_koef_force()
+                
+                self.model.init_timer_koef_force() # FIXME Тут происходит запуск обнудения датчика усилия
 
                 return True
             return False

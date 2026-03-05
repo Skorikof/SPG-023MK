@@ -2,10 +2,10 @@
 from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
 from scripts.logger import my_logger
+from scripts.model import Model
 from scripts.data_calculation import CalcData
 from .alarm_steps import AlarmSteps
 from .stages import Stage
-from .test_flow import TestFlow
 from .traverse_service import TraverseService
 
 
@@ -21,7 +21,7 @@ class ControlSignals(QObject):
 
 
 class Controller:
-    def __init__(self, model):
+    def __init__(self, model: Model):
         try:
             self.logger = my_logger.get_logger(__name__)
             self.model = model
@@ -29,7 +29,6 @@ class Controller:
             
             self.alarm_steps = AlarmSteps(model)
             self.calc_data = CalcData()
-            self.test_flow = TestFlow(model)
             self.trav_serv = TraverseService(model)
 
             self._init_variables()
@@ -52,7 +51,6 @@ class Controller:
         
     def _init_flags(self):
         self.flag_alarm_traverse = True
-        self.flag_collect_done = False
         
     def _init_stage_handlers(self):
         self._stage_handlers = {
@@ -127,12 +125,11 @@ class Controller:
     def _init_signals(self):
         try:
             self.model.signals.test_launch.connect(self._yellow_btn_push)
+            self.model.signals.set_stage.connect(self.set_stage)
+            self.model.signals.set_next_stage.connect(self.set_next_stage)
 
             self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
             self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
-            
-            self.test_flow.signals.set_stage.connect(self.set_stage)
-            self.test_flow.signals.set_next_stage.connect(self.set_next_stage)
             
             self.trav_serv.signals.set_stage.connect(self.set_stage)
             self.trav_serv.signals.control_msg.connect(self._signal_control_msg)
@@ -213,7 +210,7 @@ class Controller:
                 self.alarm_steps.step_safety_fence()
 
             elif tag == 'excess_temperature':
-                self.test_flow.stop_gear_end_test()
+                self.model.stop_gear_end_test()
                 self.alarm_steps.step_excess_temperature()
             else:
                 pass
@@ -249,7 +246,6 @@ class Controller:
 
                 if self.model.state_dict.get('excess_force'):
                     self.model.write_bit_emergency_force()
-
                 return 'start'
 
             else:
@@ -273,51 +269,32 @@ class Controller:
         except Exception as e:
             self.logger.error(e)
 
-    # FIXME Пока закоммичено в тестовом режиме
     def start_test_clicked(self):
         """
         Точка входа в испытание, определение референтной точки траверсы, если известна,
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            self._test_program()
-            # if self.model.check_max_temper_test():
-            #     self.step_start_test()
+            # self._test_program() # FIXME
+            if self.model.check_max_temper_test():
+                self.model.flag_reset_start_test()
+                self.model.write_emergency_force_start_test()
 
-            #     self.model.write_emergency_force(self.calc_data.excess_force(self.model.data_test.amort))
+                # FIXME Пока не реализовано под новую логику
+                if self.model.flag_repeat:
+                    self.set_stage(Stage.WAIT_BUFFER)
+                    self.set_next_stage(Stage.REPEAT_TEST)
 
-            #     if self.model.flag_repeat:
-            #         self.set_stage(Stage.WAIT_BUFFER)
-            #         self.set_next_stage(Stage.REPEAT_TEST)
+                else:
+                    if self.model.move_traverse < 10:
+                        self.trav_serv.step_traverse_referent_point()
 
-            #     else:
-            #         if self.model.move_traverse < 10:
-            #             self.trav_serv.step_traverse_referent_point()
+                    else:
+                        self.trav_serv.traverse_install_point('install')
 
-            #         else:
-            #             self.trav_serv.traverse_install_point('install')
-
-            # else:
-            #     self.signals.control_msg.emit('excess_temperature')
-            #     self.step_stop_test()
-
-        except Exception as e:
-            self.logger.error(e)
-        
-    def step_start_test(self):
-        try:
-            if self.model.state_dict.get('excess_force', False) is True:
-                self.model.write_bit_emergency_force()
-
-            if self.model.state_dict.get('lost_control', False) is True:
-                self.model.write_bit_unblock_control()
-
-            self.model.lamp_all_switch_off()
-
-            self.model.data_test.max_temperature = 0
-            self.model.flag_test_launch = True
-            self.model.alarm_tag = ''
-            self.model.flag_alarm = False
+            else:
+                self.signals.control_msg.emit('excess_temperature')
+                self.model.flag_reset_stop_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -328,28 +305,11 @@ class Controller:
         иначе моментальная остановка
         """
         try:
-            self.step_stop_test()
-            self.test_flow.stop_gear_end_test()
+            self.model.flag_reset_stop_test()
+            self.model.stop_gear_end_test()
 
         except Exception as e:
             self.logger.error(e)
-            
-    def step_stop_test(self):
-        try:
-            self.model.flag_test_launch = False
-            self.model.flag_test = False
-
-        except Exception as e:
-            self.logger.error(e)
-
-    def search_hod(self):
-        """Блок определения хода шатуна"""
-        self.test_flow.search_hod()
-        
-    # FIXME Пока не реализован
-    def move_gear_set_pos(self):
-        """Блок доворота шатуна для регулировки хода"""
-        self.test_flow.move_gear_set_pos()
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -360,26 +320,31 @@ class Controller:
 
     def _exit_wait(self):
         pass
+    
+    #==========
 
     def _enter_wait_buffer(self):
         pass
 
     def _stage_wait_buffer(self):
         """Блок ожидания включения записи в буфер и переключение на следующий шаг"""
-        if self.model.buffer_state[0] == 'OK!':
-            if self.model.buffer_state[1] == 'buffer_on':
-                self.model.buffer_state = ['null', 'null']
-                self.model.fc_control(tag='up', adr=1)
+        res, state = self.model.get_buffer_state()
+        if res == 'OK!':
+            if state == 'buffer_on':
+                self.model.reader_start_test()
                 self.set_stage(self.next_stage)
-            elif self.model.buffer_state[1] == 'buffer_off':
+            elif state == 'buffer_off':
                 pass
-        elif self.model.buffer_state[0] == 'ERROR!':
-            self.model.buffer_state = ['null', 'null']
+        elif res == 'ERROR!':
+            self.model.reset_buffer_state()
             self.model.write_bit_force_cycle(1)
 
     def _exit_wait_buffer(self):
         pass
+    
+    #==========
 
+    # FIXME Пока не реализовано под новую логику
     def _enter_repeat_test(self):
         pass
 
@@ -387,248 +352,220 @@ class Controller:
         type_test = self.model.data_test.type_test
         self.set_stage(Stage.WAIT)
         if type_test == 'lab_hand':
-            self.test_flow.test_lab_hand_speed()
+            self.model.test_lab_hand_speed()
         elif type_test == 'temper':
-            self.test_flow.test_temper()
+            self.model.reset_last_max_temper()
+            self.model.test_temper()
         elif type_test == 'lab_cascade':
-            self.test_flow.test_lab_cascade()
+            self.model.reset_cascade_speed()
+            self.model.test_lab_cascade()
         else:
-            self.test_flow.test_on_two_speed(1)
+            self.model.test_on_two_speed(1)
 
     def _exit_repeat_test(self):
         pass
+    
+    #==========
 
+    # FIXME Проверить этот момент
     def _enter_alarm_traverse(self):
         pass
 
     def _stage_alarm_traverse(self):
-        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
-            self.model.fc_control(**{'tag': 'stop', 'adr': 2})
+        if self.trav_serv.step_control_traverse_move():
             self.model.write_bit_red_light(0)
             self.alarm_steps.flag_alarm_traverse = False
-            self.set_stage(Stage.WAIT)
             self.model.alarm_tag = ''
             self.model.flag_alarm = False
-            self.signals.reset_ui.emit()
+            self.set_stage(Stage.WAIT)
 
     def _exit_alarm_traverse(self):
-        pass
+        self.signals.reset_ui.emit()
 
-    # FIXME Пока не реализован
-    def _enter_pos_set_gear(self):
-        self.signals.control_msg.emit('gear_set_pos')
-
-    def _stage_pos_set_gear(self):
-        if self.model.gear_referent:
-            if self.model.max_pos:
-                if abs(14 - self.model.move_now) < 5:
-                    self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-                    self.model.reader_stop_test()
-                    self.model.write_bit_force_cycle(0)
-                    self.model.min_pos = False
-                    self.model.max_pos = False
-                    self.set_stage(Stage.WAIT)
-                    self.signals.reset_ui.emit()
-
-    def _exit_pos_set_gear(self):
-        pass
+    #==========
 
     def _enter_traverse_referent(self):
         self.signals.control_msg.emit('traverse_referent')
 
     def _stage_traverse_referent(self):
-        if self.trav_serv.stage_traverse_referent():
-            self.set_stage(Stage.WAIT)
+        if self.trav_serv.flag_traverse_referent():
             self.trav_serv.traverse_install_point('install')
 
     def _exit_traverse_referent(self):
         pass
+    
+    #==========
 
     def _enter_install_amort(self):
         self.signals.control_msg.emit('pos_traverse')
 
     def _stage_install_amort(self):
-        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
-            self.set_stage(Stage.WAIT)
+        if self.trav_serv.step_control_traverse_move():
             self.signals.control_msg.emit('yellow_btn')
 
     def _exit_install_amort(self):
         pass
-
-    def _enter_stop_test(self):
-        if not self.model.flag_alarm:
-            self.signals.control_msg.emit(f'pos_traverse')
-
-    def _stage_stop_test(self):
-        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
-            self.set_stage(Stage.WAIT)
-            if not self.model.flag_alarm:
-                self.signals.cancel_test.emit()
-
-    def _exit_stop_test(self):
-        pass
-
-    def _enter_search_hod(self):
-        self.signals.control_msg.emit(f'move_detection')
-        self.model.start_find_stroke()
-
-    def _stage_search_hod(self):
-        if self.model.is_collect_done():
-            self.test_flow.stop_gear_end_test()
-
-    def _exit_search_hod(self):
-        self.model.stop_collect()
-        
+    
+    #==========
+    
     def _enter_start_point_amort(self):
         self.signals.control_msg.emit(f'pos_traverse')
 
     def _stage_start_point_amort(self):
-        if self.trav_serv.step_control_traverse_move(self.set_trav_point):
-            self.test_flow.test_move_cycle()
+        if self.trav_serv.step_control_traverse_move():
+            self.model.test_move_cycle()
 
     def _exit_start_point_amort(self):
         pass
-        
+    
+    #==========
+    
     def _enter_test_move_cycle(self):
         self.signals.control_msg.emit(f'move_detection')
-        self.model.start_collect(with_data=False)
         
     def _stage_test_move_cycle(self):
         if self.model.is_collect_done():
-            self.test_flow.pumping()
+            self.model.stop_collect()
+            self.model.pumping()
 
     def _exit_test_move_cycle(self):
-        self.model.stop_collect()
+        pass
         
+    #==========
+
     def _enter_pumping(self):
         self.signals.control_msg.emit('pumping')
-        self.model.start_collect(with_data=False)
 
     def _stage_pumping(self):
         type_test = self.model.data_test.type_test
         if self.model.is_collect_done():
+            self.model.stop_collect()
             if type_test == 'conv':
                 self.signals.conv_win_test.emit()
-                self.test_flow.test_on_two_speed(1)
+                self.model.test_on_two_speed(1)
             else:
                 self.signals.lab_win_test.emit()
                 if type_test == 'lab_hand':
-                    self.test_flow.test_lab_hand_speed()
-                elif type_test == 'temper':
-                    self.test_flow.test_temper()
+                    self.model.test_lab_hand_speed()
                 elif type_test == 'lab_cascade':
-                    self.test_flow.test_lab_cascade()
+                    self.model.reset_cascade_speed()
+                    self.model.test_lab_cascade()
+                elif type_test == 'temper':
+                    self.model.reset_last_max_temper()
+                    self.model.test_temper()
                 else:
-                    self.test_flow.test_on_two_speed(1)
+                    self.model.test_on_two_speed(1)
 
     def _exit_pumping(self):
-        self.model.stop_collect()
-        
+        pass
+    
+    #==========
+
     def _enter_test_speed_one(self):
-        self.model.start_collect(with_data=True)
+        pass
 
     def _stage_test_speed_one(self):
         if self.model.is_collect_done():
-            type_test = self.model.data_test.type_test
+            self.model.stop_collect()
             # self.model.save_result_cycle() # FIXME
-            if type_test == 'conv':
-                self.model.step_result_conveyor_test('one')
+            if self.model.data_test.type_test == 'conv':
+                self.model.result_conveyor_test('one')
             self.model.write_end_test_in_archive()
-            self.test_flow.test_on_two_speed(2)
+            self.model.test_on_two_speed(2)
 
     def _exit_test_speed_one(self):
-        self.model.stop_collect()
-        
+        pass
+    
+    #==========
+    
     def _enter_test_speed_two(self):
-        self.model.start_collect(with_data=True)
+        pass
 
     def _stage_test_speed_two(self):
         if self.model.is_collect_done():
-            type_test = self.model.data_test.type_test
+            self.model.stop_collect()
             # self.model.save_result_cycle() # FIXME
-            if type_test == 'conv':
-                self.model.step_result_conveyor_test('two')
-            self.set_stage(Stage.WAIT)
+            if self.model.data_test.type_test == 'conv':
+                self.model.result_conveyor_test('two')
+            # self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
-            self.test_flow.stop_gear_end_test()
+            self.model.stop_gear_end_test()
 
     def _exit_test_speed_two(self):
-        self.model.stop_collect()
-        
+        pass
+    
+    #==========
+    
     def _enter_test_lab_hand_speed(self):
-        self.signals.lab_win_test.emit()
-        self.model.start_collect(with_data=True)
+        pass
 
     def _stage_test_lab_hand_speed(self):
         if self.model.is_collect_done():
+            self.model.stop_collect()
             # self.model.save_result_cycle() # FIXME
-            self.set_stage(Stage.WAIT)
+            # self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
-            self.test_flow.stop_gear_end_test()
+            self.model.stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
-        self.model.stop_collect()
-        
+        pass
+    
+    #==========
+
     def _enter_test_lab_cascade(self):
-        self.signals.lab_win_test.emit()
-        self.model.start_collect(with_data=True)
+        pass
 
     def _stage_test_lab_cascade(self):
         if self.model.is_collect_done():
+            self.model.stop_collect()
             # self.model.save_result_cycle() # FIXME
-            if self.count_cascade < self.max_cascade:
-                speed = self.model.data_test.speed_list[self.count_cascade]
-                self.model.data_test.speed_test = speed
-                self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-                self.model.start_collect(with_data=True)
-                self.count_cascade += 1
-            else:
-                self.set_stage(Stage.WAIT)
-                self.count_cascade = 1
+            self.model.set_next_step_count_cascade()
+            self.model.test_lab_cascade()
+            if self.model.get_flag_cascade_done:
+                # self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
-                self.test_flow.stop_gear_end_test()
+                self.model.stop_gear_end_test()
 
     def _exit_test_lab_cascade(self):
-        self.model.stop_collect()
-        
-    # FIXME Испытание пока со старой реализацией, переделать
+        pass
+    
+    #==========
+
     def _enter_test_temper(self):
-        self.last_max_temper = -100
-        self.signals.lab_win_test.emit()
-        self.model.start_collect_inf_cycle()
+        pass
 
     def _stage_test_temper(self):
-        if self.model.is_collect_done():
-            if self.model.data_test.max_temperature != self.last_max_temper:
-                self.last_max_temper = self.model.data_test.max_temperature
-                if self.model.data_test.max_temperature <= self.model.data_test.finish_temperature:
-                    self.model.temper_graph.append(self.model.data_test.max_temperature)
-                    self.model.temper_recoil_graph.append(self.model.max_recoil)
-                    self.model.temper_comp_graph.append(self.model.max_comp)
-                else:
-                    # self.model.save_result_cycle() # FIXME
-                    self.set_stage(Stage.WAIT)
-                    self.model.write_end_test_in_archive()
-                    self.test_flow.stop_gear_end_test()
+        if self.model.check_finish_temper_test():
+            # self.model.save_result_cycle() # FIXME
+            # self.set_stage(Stage.WAIT)
+            self.model.stop_cycle_collection()
+            self.model.stop_collect()
+            self.model.write_end_test_in_archive()
+            self.model.stop_gear_end_test()
 
     def _exit_test_temper(self):
-        self.model.stop_cycle_collection()
-        self.model.stop_collect()
+        pass
+    
+    #==========
 
+    # FIXME Проверить этот момент
     def _enter_stop_gear_end_test(self):
-        self.flag_collect_done = False
-        self.model.reader_start_test()
+        pass
 
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
-            self.test_flow.stop_gear_min_pos()
+            self.model.stop_cycle_collection()
+            self.model.stop_collect()
+            self.model.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
-        self.model.stop_collect()
-        self.test_flow.transition_via_buffer(Stage.STOP_GEAR_MIN_POS)
-        
+        pass
+
+    #==========
+    
+    # FIXME Пока не реализовано под новую логику
     def _enter_stop_gear_min_pos(self):
-        self.model.start_nmt_poition()
+        pass
 
     def _stage_stop_gear_min_pos(self):
         if self.model.get_nmt_info():
@@ -662,10 +599,59 @@ class Controller:
 
     def _exit_stop_gear_min_pos(self):
         self.model.stop_collect()
+
+    #==========
+
+    def _enter_stop_test(self):
+        if not self.model.flag_alarm:
+            self.signals.control_msg.emit(f'pos_traverse')
+
+    def _stage_stop_test(self):
+        if self.trav_serv.step_control_traverse_move():
+            self.set_stage(Stage.WAIT)
+            if not self.model.flag_alarm:
+                self.signals.cancel_test.emit()
+
+    def _exit_stop_test(self):
+        pass
+    
+    #==========
+
+    # FIXME Пока не реализовано под новую логику
+    def _enter_search_hod(self):
+        self.signals.control_msg.emit(f'move_detection')
+
+    def _stage_search_hod(self):
+        if self.model.is_collect_done():
+            self.model.stop_gear_end_test()
+
+    def _exit_search_hod(self):
+        self.model.stop_collect()
+        
+    #==========
+
+    # FIXME Пока не реализован
+    def _enter_pos_set_gear(self):
+        self.signals.control_msg.emit('gear_set_pos')
+
+    def _stage_pos_set_gear(self):
+        if self.model.gear_referent:
+            if self.model.max_pos:
+                if abs(14 - self.model.move_now) < 5:
+                    self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+                    self.model.reader_stop_test()
+                    self.model.write_bit_force_cycle(0)
+                    self.set_stage(Stage.WAIT)
+                    self.signals.reset_ui.emit()
+
+    def _exit_pos_set_gear(self):
+        pass
+
+    #==========
     
     #--------- testing ---------#
     def _test_program(self):
-        self.test_flow.transition_via_buffer(Stage.TEST_PROGRAM)
+        self.model.transition_via_buffer(Stage.TEST_PROGRAM)
 
     def _enter_testing_prog(self):
         print('enter test stage')
