@@ -465,7 +465,6 @@ class Model:
         self.collector.load_program([(Mode.COLLECT, None)], skip_accel=False)
         self.collector.set_cycle_callback(self._pars_result_inf_cycles)
         
-    # FIXME Проверить этот момент
     def start_collect_wait_stop(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
@@ -478,7 +477,6 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([(Mode.STROKE_ONLY, count_str)])
-        # self.reader_start_test()
         
     def start_nmt_poition(self):
         self.flag_collect_done = False
@@ -796,12 +794,12 @@ class Model:
         extra_fc : dict | None
             Любая дополнительная команда fc_control
         """
-        if force_cycle:
-            self.write_bit_force_cycle(1)
         if speed is not None:
             self.fc_control(tag='speed', adr=adr, speed=speed)
         if extra_fc:
             self.fc_control(**extra_fc)
+        if force_cycle:
+            self.write_bit_force_cycle(1)
 
         self.signals.set_next_stage.emit(next_stage)
         self.signals.set_stage.emit(Stage.WAIT_BUFFER)
@@ -887,11 +885,11 @@ class Model:
             else:
                 return True
 
-    # FIXME Проверить этот момент
     def stop_gear_end_test(self):
         self.start_collect_wait_stop()
         self.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
 
+    # FIXME Проверить этот момент
     def stop_gear_min_pos(self):
         self.start_nmt_poition()
         hod = self.data_test.amort.hod if self.data_test.amort else 120
@@ -906,7 +904,7 @@ class Model:
         
         self.start_find_stroke()
         hod = self.data_test.amort.hod if self.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        speed = self.calc_data.definition_speed_by_hod('fast', hod)
         self.transition_via_buffer(Stage.SEARCH_HOD, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
         

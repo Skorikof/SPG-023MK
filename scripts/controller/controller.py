@@ -274,26 +274,25 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            # self._test_program() # FIXME
-            if self.model.check_max_temper_test():
-                self.model.flag_reset_start_test()
-                self.model.write_emergency_force_start_test()
+            self._test_program()
+            # if self.model.check_max_temper_test():
+            #     self.model.flag_reset_start_test()
+            #     self.model.write_emergency_force_start_test()
 
-                # FIXME Пока не реализовано под новую логику
-                if self.model.flag_repeat:
-                    self.set_stage(Stage.WAIT_BUFFER)
-                    self.set_next_stage(Stage.REPEAT_TEST)
+            #     if self.model.flag_repeat:
+            #         self.set_stage(Stage.WAIT_BUFFER)
+            #         self.set_next_stage(Stage.REPEAT_TEST)
 
-                else:
-                    if self.model.move_traverse < 10:
-                        self.trav_serv.step_traverse_referent_point()
+            #     else:
+            #         if self.model.move_traverse < 10:
+            #             self.trav_serv.step_traverse_referent_point()
 
-                    else:
-                        self.trav_serv.traverse_install_point('install')
+            #         else:
+            #             self.trav_serv.traverse_install_point('install')
 
-            else:
-                self.signals.control_msg.emit('excess_temperature')
-                self.model.flag_reset_stop_test()
+            # else:
+            #     self.signals.control_msg.emit('excess_temperature')
+            #     self.model.flag_reset_stop_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -549,7 +548,6 @@ class Controller:
     
     #==========
 
-    # FIXME Проверить этот момент
     def _enter_stop_gear_end_test(self):
         pass
 
@@ -613,18 +611,16 @@ class Controller:
     
     #==========
 
-    # FIXME Пока не реализовано под новую логику
     def _enter_search_hod(self):
         self.signals.control_msg.emit('move_detection')
 
     def _stage_search_hod(self):
         if self.model.is_collect_done():
-            txt = f'{self.model.min_point=}, {self.model.max_point=}, {self.model.stroke=}'
-            self.logger.debug(txt)
+            self.model.stop_collect()
             self.model.stop_gear_end_test()
 
     def _exit_search_hod(self):
-        self.model.stop_collect()
+        pass
         
     #==========
 
@@ -649,17 +645,22 @@ class Controller:
     
     #--------- testing ---------#
     def _test_program(self):
-        self.model.transition_via_buffer(Stage.TEST_PROGRAM)
+        self.model.start_find_stroke()
+        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('fast', hod)
+        self.model.transition_via_buffer(Stage.TEST_PROGRAM, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
 
     def _enter_testing_prog(self):
         print('enter test stage')
-        self.model.start_collect(with_data=True)
         print('enter stage buffer start')
-        self.signals.lab_win_test.emit()
+        # self.signals.lab_win_test.emit()
 
     def _stage_testing_prog(self):
         if self.model.is_collect_done():
-            print('Congratelations! 3 cycles is done')
+            print('Congratelations! stroke is done')
+            print(f'{self.model.min_point=}, {self.model.max_point=}, {self.model.stroke=}')
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
             self.set_stage(Stage.WAIT)
 
     def _exit_testing_prog(self):

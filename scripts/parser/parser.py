@@ -30,7 +30,7 @@ class ParserSPG023MK:
     def pars_response_from_buffer(self, res):
         try:
             if res.get('count') == []:
-                return
+                return None
             
             result = {
                 'count': res.get('count')[-1],
@@ -44,6 +44,7 @@ class ParserSPG023MK:
             
         except Exception as e:
             self.logger.error(e)
+            return None
         
     def _discard_left_data(self, request):
         """Filter out invalid force data points (value -100000) from request."""
