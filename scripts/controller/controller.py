@@ -44,10 +44,6 @@ class Controller:
         self.stage = Stage.WAIT
         self.next_stage = Stage.WAIT
         self.timer_process = None
-        self.set_trav_point = 0
-        self.count_cascade = 1
-        self.max_cascade = 0
-        self.last_max_temper = -100
         
     def _init_flags(self):
         self.flag_alarm_traverse = True
@@ -196,27 +192,30 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
-
+            
     def _select_alarm_state(self, tag):
         try:
+            if not tag:
+                return
             self.signals.control_msg.emit(tag)
-            if tag == 'lost_control':
-                self.alarm_steps.step_lost_control()
-
-            elif tag == 'excess_force':
-                self.alarm_steps.step_excess_force()
-
-            elif tag == 'safety_fence':
-                self.alarm_steps.step_safety_fence()
-
-            elif tag == 'excess_temperature':
-                self.model.stop_gear_end_test()
-                self.alarm_steps.step_excess_temperature()
+            handlers = {
+                'lost_control': self.alarm_steps.step_lost_control,
+                'excess_force': self.alarm_steps.step_excess_force,
+                'safety_fence': self.alarm_steps.step_safety_fence,
+                'excess_temperature': self._handle_excess_temperature,
+            }
+            handler = handlers.get(tag)
+            if handler:
+                handler()
             else:
-                pass
+                self.logger.warning(f'Unknown alarm tag: {tag}')
 
         except Exception as e:
             self.logger.error(e)
+            
+    def _handle_excess_temperature(self):
+        self.model.stop_gear_end_test()
+        self.alarm_steps.step_excess_temperature()
 
     def work_interrupted_operator(self):
         self.set_stage(Stage.WAIT)
@@ -225,14 +224,14 @@ class Controller:
 
         self.model.lamp_all_switch_off()
 
-        if self.model.client.client_connect:
+        if self.model.client.flag_connect:
             self.model.fc_control(**{'tag': 'stop', 'adr': 1})
             self.model.fc_control(**{'tag': 'stop', 'adr': 2})
             self.model.reader_stop_test()
             self.model.write_bit_force_cycle(0)
             
     # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание, соответственно пока отключена кнопка
-    def step_yellow_btn_push(self):
+    def _step_yellow_btn_push(self):
         try:
             if self.model.flag_test is False:
                 if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
@@ -259,7 +258,7 @@ class Controller:
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
         try:
             if state:
-                tag = self.step_yellow_btn_push()
+                tag = self._step_yellow_btn_push()
                 if tag == 'start':
                     self.trav_serv.traverse_install_point('start_test')
 
@@ -310,6 +309,34 @@ class Controller:
 
         except Exception as e:
             self.logger.error(e)
+            
+    def _dispatch_test_by_type(self):
+        type_test = self.model.data_test.type_test
+        if type_test == 'conv':
+            self.signals.conv_win_test.emit()
+            self.model.test_on_two_speed(1)
+            return
+        
+        self.signals.lab_win_test.emit()
+        handlers = {
+            'lab': self.model.test_on_two_speed(1),
+            'lab_hand': self.model.test_lab_hand_speed,
+            'lab_cascade': self._start_cascade_test,
+            'temper': self._start_temper_test,
+        }
+        handler = handlers.get(type_test)
+        if handler:
+            handler()
+        else:
+            self.logger.warning(f'Unknown type tese: {type_test}')
+        
+    def _start_cascade_test(self):
+        self.model.reset_cascade_speed()
+        self.model.test_lab_cascade()
+        
+    def _start_temper_test(self):
+        self.model.reset_last_max_temper()
+        self.model.test_temper()
 
     ##### STAGES #####
     def _enter_wait(self):
@@ -344,23 +371,11 @@ class Controller:
     
     #==========
 
-    # FIXME Пока не реализовано под новую логику
     def _enter_repeat_test(self):
         pass
 
     def _stage_repeat_test(self):
-        type_test = self.model.data_test.type_test
-        self.set_stage(Stage.WAIT)
-        if type_test == 'lab_hand':
-            self.model.test_lab_hand_speed()
-        elif type_test == 'temper':
-            self.model.reset_last_max_temper()
-            self.model.test_temper()
-        elif type_test == 'lab_cascade':
-            self.model.reset_cascade_speed()
-            self.model.test_lab_cascade()
-        else:
-            self.model.test_on_two_speed(1)
+        self._dispatch_test_by_type()
 
     def _exit_repeat_test(self):
         pass
@@ -409,7 +424,7 @@ class Controller:
     #==========
     
     def _enter_start_point_amort(self):
-        self.signals.control_msg.emit(f'pos_traverse')
+        self.signals.control_msg.emit('pos_traverse')
 
     def _stage_start_point_amort(self):
         if self.trav_serv.step_control_traverse_move():
@@ -421,7 +436,7 @@ class Controller:
     #==========
     
     def _enter_test_move_cycle(self):
-        self.signals.control_msg.emit(f'move_detection')
+        self.signals.control_msg.emit('move_detection')
         
     def _stage_test_move_cycle(self):
         if self.model.is_collect_done():
@@ -437,24 +452,10 @@ class Controller:
         self.signals.control_msg.emit('pumping')
 
     def _stage_pumping(self):
-        type_test = self.model.data_test.type_test
-        if self.model.is_collect_done():
-            self.model.stop_collect()
-            if type_test == 'conv':
-                self.signals.conv_win_test.emit()
-                self.model.test_on_two_speed(1)
-            else:
-                self.signals.lab_win_test.emit()
-                if type_test == 'lab_hand':
-                    self.model.test_lab_hand_speed()
-                elif type_test == 'lab_cascade':
-                    self.model.reset_cascade_speed()
-                    self.model.test_lab_cascade()
-                elif type_test == 'temper':
-                    self.model.reset_last_max_temper()
-                    self.model.test_temper()
-                else:
-                    self.model.test_on_two_speed(1)
+        if not self.model.is_collect_done():
+            return
+        self.model.stop_collect()
+        self._dispatch_test_by_type()
 
     def _exit_pumping(self):
         pass
@@ -554,7 +555,6 @@ class Controller:
 
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
-            self.model.stop_cycle_collection()
             self.model.stop_collect()
             self.model.stop_gear_min_pos()
 
@@ -568,13 +568,9 @@ class Controller:
         pass
 
     def _stage_stop_gear_min_pos(self):
-        if self.model.get_nmt_info():
-            info = self.model.get_nmt_info()
-            tag = 'down'
-            if info['direction_to_nmt'] > 0:
-                tag = 'down'
-            else:
-                tag = 'up'
+        info = self.model.get_nmt_info()
+        if info:
+            tag = 'down' if info['direction_to_nmt'] > 0 else 'up'
             
             speed = self.calc_data.definition_speed_by_hod('slow')
             self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
@@ -604,7 +600,7 @@ class Controller:
 
     def _enter_stop_test(self):
         if not self.model.flag_alarm:
-            self.signals.control_msg.emit(f'pos_traverse')
+            self.signals.control_msg.emit('pos_traverse')
 
     def _stage_stop_test(self):
         if self.trav_serv.step_control_traverse_move():
@@ -619,10 +615,12 @@ class Controller:
 
     # FIXME Пока не реализовано под новую логику
     def _enter_search_hod(self):
-        self.signals.control_msg.emit(f'move_detection')
+        self.signals.control_msg.emit('move_detection')
 
     def _stage_search_hod(self):
         if self.model.is_collect_done():
+            txt = f'{self.model.min_point=}, {self.model.max_point=}, {self.model.stroke=}'
+            self.logger.debug(txt)
             self.model.stop_gear_end_test()
 
     def _exit_search_hod(self):

@@ -38,9 +38,8 @@ class ParserSPG023MK:
                 'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
                 'state': self._register_state(res.get('state')[-1]),
                 'state_list': self._bits16(res.get('state')[-1]),
-                'temper': res.get('temper')[-1],
+                'temper': res.get('temper')[-1] * 0.01,
             }
-
             return result
             
         except Exception as e:
@@ -91,7 +90,7 @@ class ParserSPG023MK:
             if tag == 'pos':
                 return -0.1 * value
             elif tag == 'traverse':
-                return -0.5 * value
+                return -0.05 * value
 
         except Exception as e:
             self.logger.error(e)

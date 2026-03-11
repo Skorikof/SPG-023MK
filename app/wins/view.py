@@ -249,7 +249,7 @@ class AppWindow(QMainWindow):
     @log_exceptions
     def _start_page(self):
         self.main_stop_state(False)
-        if self.model.client:
+        if self.model.client.flag_connect:
             self.main_ui_msg(*TextMsg.msg_from_controller('welcome'))
             self.main_btn_state(True)
             self.main_ui_state(True)

@@ -393,8 +393,7 @@ class Model:
                     self.data_test.temperature
                 )
 
-                # FIXME Пока отключено, так как у макета нет концевиков траверсы
-                # self._update_switch_dict(result.get('switch'))
+                self._update_switch_dict(result.get('switch'))
                 self._update_state_dict(result.get('state'))
                 self.state_list = result.get('state_list')
 
@@ -410,19 +409,18 @@ class Model:
             if data is None:
                 if not self.flag_non_buffer:
                     self.flag_non_buffer = True
-                    self.logger.debug('Response from force sensor is None')
+                self.logger.debug('Response from force sensor is None')
             else:
                 self.flag_non_buffer = False
+                self.state_list = data.get('state_list')
+                self._update_state_dict(data.get('state'))
+                temperature = data.get('temper')
+                self.data_test.temperature = temperature
+                self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
+                                                                                    self.data_test.max_temperature)
                 if self.data_test.type_test == 'hand':
                     self._send_data_in_set_win(data)
                 else:
-                    self.state_list = data.get('state_list')
-                    self._update_state_dict(data.get('state'))
-                    temperature = data.get('temper') * 0.01 # FIXME Проверить вот этот момент
-                    self.data_test.temperature = temperature
-                    self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
-                                                                                      self.data_test.max_temperature)
-                    
                     event_state = self.collector.add_stream_dict(data)
                     if event_state == PhaseState.DONE and not self.flag_collect_done:
                         self._handle_program_done()
@@ -471,7 +469,6 @@ class Model:
     def start_collect_wait_stop(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
-        self.collector.set_active_collate()
         self.collector.load_program([(Mode.WAIT_STOP, None)], skip_accel=True)
         
     def start_find_stroke(self, count_str: int=1):
@@ -481,7 +478,7 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([(Mode.STROKE_ONLY, count_str)])
-        self.reader_start_test()
+        # self.reader_start_test()
         
     def start_nmt_poition(self):
         self.flag_collect_done = False
@@ -490,7 +487,7 @@ class Model:
             (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
             (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
         ])
-        self.reader_start_test()
+        # self.reader_start_test()
         
     def stop_collect(self):
         self.reader_stop_test()
@@ -504,9 +501,7 @@ class Model:
 
             self.move_now = data.get('move')[-1]
             self.counter = data.get('count')
-            self.state_list = data.get('state_list')
-            self.data_test.first_temperature = data.get('temper') * 0.01 # FIXME Проверить вот этот момент
-            self._update_state_dict(data.get('state'))
+            self.data_test.first_temperature = self.data_test.temperature
 
             self.signals.win_set_update.emit('buf')
             
@@ -841,9 +836,9 @@ class Model:
                                        extra_fc={'tag': 'up', 'adr': 1})
 
         # FIXME Повтор испытания пока не реализован
-        if self.flag_repeat:
-            self.flag_repeat = False
-            self.fc_control(**{'tag': 'up', 'adr': 1})
+        # if self.flag_repeat:
+        #     self.flag_repeat = False
+        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
         self.start_collect(with_data=True, count_col=3)
@@ -852,9 +847,9 @@ class Model:
                                    extra_fc={'tag': 'up', 'adr': 1})
 
         # FIXME Повтор испытания пока не реализован
-        if self.flag_repeat:
-            self.flag_repeat = False
-            self.fc_control(**{'tag': 'up', 'adr': 1})
+        # if self.flag_repeat:
+        #     self.flag_repeat = False
+        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_cascade(self):
         if self.count_cascade < self.max_cascade:
@@ -869,9 +864,9 @@ class Model:
             self.flag_cascade_done = True
         
         # FIXME Повтор испытания пока не реализован
-        if self.flag_repeat:
-            self.flag_repeat = False
-            self.fc_control(**{'tag': 'up', 'adr': 1})
+        # if self.flag_repeat:
+        #     self.flag_repeat = False
+        #     self.fc_control(**{'tag': 'up', 'adr': 1})
 
     def test_temper(self):
         self.start_collect_inf_cycle()
@@ -880,9 +875,9 @@ class Model:
                                    extra_fc={'tag': 'up', 'adr': 1})
 
         # FIXME Повтор испытания пока не реализован
-        if self.flag_repeat:
-            self.flag_repeat = False
-            self.fc_control(**{'tag': 'up', 'adr': 1})
+        # if self.flag_repeat:
+        #     self.flag_repeat = False
+        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def check_finish_temper_test(self):
         if self.data_test.max_temperature != self.last_max_temper:

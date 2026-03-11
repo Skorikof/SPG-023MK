@@ -5,6 +5,7 @@ from PySide6.QtCore import QObject, Signal, QSignalMapper, Slot
 from PySide6.QtGui import QIcon
 
 from scripts.logger import my_logger
+from scripts.model import Model
 from scripts.data_calculation import CalcData
 from app.ui_py.settings_ui import UiSettingsWindow
 
@@ -16,7 +17,7 @@ class WinSignals(QObject):
 class SetWindow(QMainWindow, UiSettingsWindow):
     signals = WinSignals()
 
-    def __init__(self, model):
+    def __init__(self, model: Model):
         super(SetWindow, self).__init__()
         try:
             self.logger = my_logger.get_logger(__name__)
@@ -83,7 +84,6 @@ class SetWindow(QMainWindow, UiSettingsWindow):
     def _update_win(self, tag):
         if tag == 'reg':
             self.lcdH_T.display(self.model.move_traverse)
-            self.lcdTemp_1.display(self.model.data_test.first_temperature)
             self.lcdTemp_2.display(self.model.data_test.second_temperature)
             self.lineEdit_F_alarm.setText(f'{self.model.data_test.force_alarm}')
             
@@ -94,6 +94,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.lcdTime.display(self.model.counter)
         self.clear_force_lcd.display(self.model.force_clear)
         self.lcdH.display(self.model.move_now)
+        self.lcdTemp_1.display(self.model.data_test.first_temperature)
         
         self._update_color_switch(tag)
         

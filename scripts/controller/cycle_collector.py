@@ -25,6 +25,10 @@ class StopDetector:
 
     def is_stopped(self):
         return self.stopped
+    
+    def reset(self):
+        self.below_since = None
+        self.stopped = False
 
 
 class PhaseState(Enum):
@@ -421,9 +425,6 @@ class CycleCollector:
             if self.program_index >= len(self.program):
                 self.phase_state = PhaseState.DONE
                 self.active = False
-
-    def set_active_collate(self):
-        self.active = True
         
     def reset_active_collate(self):
         self.active = False

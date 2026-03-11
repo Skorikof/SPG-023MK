@@ -26,10 +26,6 @@ class ReaderThread(QRunnable):
 
         self.flag_start_test: bool = False
         self.current_rec: int = -1
-        
-        # self._last_move: None | int = None
-        # self.flag_add_data: bool = False
-        # self.flag_send_res: bool = False
 
         self.result: dict[str, tuple | list[int]] = {}
 
@@ -53,7 +49,7 @@ class ReaderThread(QRunnable):
                         result = {'regs': rr.registers}
                         self.signals.read_result.emit(result, self.read_tag)
                         
-                    time.sleep(self.PAUSE_REG)
+                    # time.sleep(self.PAUSE_REG)
 
                 except Exception as e:
                     self.signals.thread_err.emit(f'ERROR in thread reader reg - {e}')
@@ -87,28 +83,15 @@ class ReaderThread(QRunnable):
                                         flag_add = True
 
                                 if flag_add:
-                                    # if rr[ind] is not None and rr[ind] != 0:
                                     self.current_rec = rr.registers[ind]
                                     self.reg_buffer += 6
-                                    
-                                    # if self._last_move is None:
-                                    #     self._last_move = rr.registers[ind + 3]
-                                    #     self.flag_add_data = True
-                                        
-                                    # else:
-                                    #     if self._last_move != rr.registers[ind + 3]:
-                                    #         self.flag_add_data = True
-                                            
-                                    # if self.flag_add_data:
+
                                     self.result['count'].append(rr.registers[ind])
                                     self.result['force_big'].append(rr.registers[ind+1])
                                     self.result['force_low'].append(rr.registers[ind+2])
                                     self.result['move'].append(rr.registers[ind+3])
                                     self.result['state'].append(rr.registers[ind + 4])
                                     self.result['temper'].append(rr.registers[ind + 5])
-                                        
-                                        # self.flag_send_res = True
-                                        # self.flag_add_data = True
 
                                 else:
                                     # txt = (f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr.registers[ind]}\n')
@@ -129,9 +112,7 @@ class ReaderThread(QRunnable):
                                 else:
                                     self.buffer_count = int(delta_r / 6)
                                     
-                            # if self.flag_send_res:
                             self.signals.read_result.emit(self.result, self.read_tag)
-                                # self.flag_send_res = False       
                         
                     # time.sleep(self.PAUSE_BUF)
 
@@ -141,9 +122,6 @@ class ReaderThread(QRunnable):
     @Slot()
     def start_test(self):
         self.reg_buffer = 0x4000
-        # self._last_move = None
-        # self.flag_add_data = False
-        # self.flag_send_res = False
         self.flag_start_test = True
         self.read_tag = 'buffer'
 
