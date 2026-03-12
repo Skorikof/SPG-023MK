@@ -128,6 +128,16 @@ class Controller:
         self.timer_process.setInterval(100)
         self.timer_process.timeout.connect(self._update_stage_on_timer)
         self.timer_process.start()
+        
+    def log_exceptions(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                args[0].logger.error(
+                    f'ERROR in {func.__name__}: {e}'
+                )
+        return wrapper
 
     @Slot(str)
     def _signal_control_msg(self, text):
@@ -162,125 +172,106 @@ class Controller:
     def set_next_stage(self, stage):
         self.logger.debug(f'Next stage {self.next_stage} -> {stage}')
         self.next_stage = stage
-            
+    
+    @log_exceptions     
     def _update_stage_on_timer(self):
-        try:
-            self.alarm_steps.step_alarm_traverse_position()
-            if self.model.flag_test:
-                self._select_alarm_state(
-                    self.alarm_steps.control_alarm_state()
-                )
-            handler = self._stage_handlers.get(self.stage)
-            if handler is None:
-                self.logger.error(f'No handler for stage {self.stage}')
-                return
-            handler()
-
-        except Exception as e:
-            self.logger.error(e)
+        self.alarm_steps.step_alarm_traverse_position()
+        if self.model.flag_test:
+            self._select_alarm_state(
+                self.alarm_steps.control_alarm_state()
+            )
+        handler = self._stage_handlers.get(self.stage)
+        if handler is None:
+            self.logger.error(f'No handler for stage {self.stage}')
+            return
+        handler()
             
+    @log_exceptions
     def _select_alarm_state(self, tag):
-        try:
-            if not tag:
-                return
-            self.signals.control_msg.emit(tag)
-            handlers = {
-                'lost_control': self.alarm_steps.step_lost_control,
-                'excess_force': self.alarm_steps.step_excess_force,
-                'safety_fence': self.alarm_steps.step_safety_fence,
-                'excess_temperature': self._handle_excess_temperature,
-            }
-            handler = handlers.get(tag)
-            if handler:
-                handler()
-            else:
-                self.logger.warning(f'Unknown alarm tag: {tag}')
-
-        except Exception as e:
-            self.logger.error(e)
+        if not tag:
+            return
+        self.signals.control_msg.emit(tag)
+        handlers = {
+            'lost_control': self.alarm_steps.step_lost_control,
+            'excess_force': self.alarm_steps.step_excess_force,
+            'safety_fence': self.alarm_steps.step_safety_fence,
+            'excess_temperature': self._handle_excess_temperature,
+        }
+        handler = handlers.get(tag)
+        if handler:
+            handler()
+        else:
+            self.logger.warning(f'Unknown alarm tag: {tag}')
             
     def _handle_excess_temperature(self):
         self.model.stop_gear_end_test()
         self.alarm_steps.step_excess_temperature()
             
     # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание, соответственно пока отключена кнопка
+    @log_exceptions 
     def _step_yellow_btn_push(self):
-        try:
-            if self.model.flag_test is False:
-                if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
-                    self.model.lamp_all_switch_off()
-                self.model.flag_test = True
-                self.model.alarm_tag = ''
-                self.model.flag_alarm = False
+        if self.model.flag_test is False:
+            if self.model.state_dict.get('green_light') or self.model.state_dict.get('red_light'):
+                self.model.lamp_all_switch_off()
+            self.model.flag_test = True
+            self.model.alarm_tag = ''
+            self.model.flag_alarm = False
 
-                if self.model.state_dict.get('lost_control'):
-                    self.model.write_bit_unblock_control()
+            if self.model.state_dict.get('lost_control'):
+                self.model.write_bit_unblock_control()
 
-                if self.model.state_dict.get('excess_force'):
-                    self.model.write_bit_emergency_force()
-                return 'start'
+            if self.model.state_dict.get('excess_force'):
+                self.model.write_bit_emergency_force()
+            return 'start'
 
-            else:
-                self.model.flag_test = False
-                return 'stop'
+        else:
+            self.model.flag_test = False
+            return 'stop'
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions 
     def _yellow_btn_push(self, state: bool):
         """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
-        try:
-            if state:
-                tag = self._step_yellow_btn_push()
-                if tag == 'start':
-                    self.trav_serv.traverse_install_point('start_test')
+        if state:
+            tag = self._step_yellow_btn_push()
+            if tag == 'start':
+                self.trav_serv.traverse_install_point('start_test')
+            elif tag == 'stop':
+                self.stop_test_clicked()
 
-                elif tag == 'stop':
-                    self.stop_test_clicked()
-
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def start_test_clicked(self):
         """
         Точка входа в испытание, определение референтной точки траверсы, если известна,
         то сразу запуск позиционирования для установки амортизатора
         """
-        try:
-            # self._test_program()
-            if self.model.check_max_temper_test():
-                self.model.flag_reset_start_test()
-                self.model.write_emergency_force_start_test()
+        # self._test_program()
+        if self.model.check_max_temper_test():
+            self.model.flag_reset_start_test()
+            self.model.write_emergency_force_start_test()
 
-                if self.model.flag_repeat:
-                    self.set_next_stage(Stage.REPEAT_TEST)
-
-                else:
-                    if self.model.move_traverse < 10:
-                        self.trav_serv.step_traverse_referent_point()
-
-                    else:
-                        self.trav_serv.traverse_install_point('install')
+            if self.model.flag_repeat:
+                self.set_next_stage(Stage.REPEAT_TEST)
 
             else:
-                self.signals.control_msg.emit('excess_temperature')
-                self.model.flag_reset_stop_test()
+                if self.model.move_traverse < 10:
+                    self.trav_serv.step_traverse_referent_point()
 
-        except Exception as e:
-            self.logger.error(e)
+                else:
+                    self.trav_serv.traverse_install_point('install')
 
+        else:
+            self.signals.control_msg.emit('excess_temperature')
+            self.model.flag_reset_stop_test()
+
+    @log_exceptions 
     def stop_test_clicked(self):
         """
         Завершение теста, если определена референтная точка коленвала, то остановка в нижней точке,
         иначе моментальная остановка
         """
-        try:
-            self.model.flag_reset_stop_test()
-            self.model.stop_gear_end_test()
+        self.model.flag_reset_stop_test()
+        self.model.stop_gear_end_test()
 
-        except Exception as e:
-            self.logger.error(e)
-            
     def _dispatch_test_by_type(self):
         type_test = self.model.data_test.type_test
         if type_test == 'conv':
@@ -553,30 +544,31 @@ class Controller:
         pass
 
     def _stage_stop_gear_min_pos(self):
-        info = self.model.get_nmt_info()
-        if info:
-            tag = 'down' if info['direction_to_nmt'] > 0 else 'up'
+        pass
+        # info = self.model.get_nmt_info()
+        # if info:
+        #     tag = 'down' if info['direction_to_nmt'] > 0 else 'up'
             
-            speed = self.calc_data.definition_speed_by_hod('slow')
-            self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-            self.model.fc_control(**{'tag': tag, 'adr': 1})
+        #     speed = self.calc_data.definition_speed_by_hod('slow')
+        #     self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
+        #     self.model.fc_control(**{'tag': tag, 'adr': 1})
             
-            if self.model.is_nmt_reached():
-                self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+        #     if self.model.is_nmt_reached():
+        #         self.model.fc_control(**{'tag': 'stop', 'adr': 1})
 
-                self.set_stage(Stage.WAIT)
-                if self.model.flag_test:
-                    self.model.flag_test = False
+        #         self.set_stage(Stage.WAIT)
+        #         if self.model.flag_test:
+        #             self.model.flag_test = False
             
-                type_test = self.model.data_test.type_test
-                if self.model.flag_search_hod:
-                    self.model.flag_search_hod = False
-                    self.signals.search_hod_msg.emit()
-                else:
-                    if type_test == 'conv':
-                        self.signals.conv_test_stop.emit()
-                    else:
-                        self.signals.lab_test_stop.emit()
+        #         type_test = self.model.data_test.type_test
+        #         if self.model.flag_search_hod:
+        #             self.model.flag_search_hod = False
+        #             self.signals.search_hod_msg.emit()
+        #         else:
+        #             if type_test == 'conv':
+        #                 self.signals.conv_test_stop.emit()
+        #             else:
+        #                 self.signals.lab_test_stop.emit()
 
     def _exit_stop_gear_min_pos(self):
         self.model.stop_collect()

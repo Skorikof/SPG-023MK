@@ -18,25 +18,6 @@ from scripts.freq_ctrl.freq_control import FreqControl
 from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
 
 
-# Запуск ступени
-# 1. collector.reset()
-# 2. collector.load_program()
-# 3. включить датчик
-# 4. включить чтение буфера
-# 5. запустить двигатель
-
-# ⚠ Важно: программа должна быть загружена ДО начала потока.
-
-# Завершение ступени
-
-# Когда Collector сказал DONE:
-
-# 1. остановить двигатель
-# 2. выключить чтение буфера
-# 3. выключить датчик
-
-# Collector при этом уже в DONE и не реагирует.
-
 class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
@@ -141,36 +122,37 @@ class Model:
         self.reader.signals.result.connect(self._reader_result)
         self.writer.signals.check_buffer.connect(self.check_buffer_state)
         
-    def set_amort(self, amort):
-        self.data_test.amort = amort
+    def log_exceptions(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                args[0].logger.error(
+                    f'ERROR in {func.__name__}: {e}'
+                )
+        return wrapper
 
-    def set_type_test(self, type_test):
-        self.data_test.type_test = type_test
-
+    @log_exceptions
     def _start_param_model(self):
-        try:
-            self._init_timer_clear_statusbar()
-            self.client.connect_client()
-            # FIXME таймер жёлтой кнопки
-            # self._init_timer_yellow_btn()
+        self._init_timer_clear_statusbar()
+        self.client.connect_client()
+        # FIXME таймер жёлтой кнопки
+        # self._init_timer_yellow_btn()
 
-            if self.client.flag_connect:
-                self.writer = Writer(self.client.client)
-                self.writer.timer_writer_start()
+        if self.client.flag_connect:
+            self.writer = Writer(self.client.client)
+            self.writer.timer_writer_start()
 
-                self.reader.init_reader(self.client.client)
-                self._init_signals()
-                self.reader_start()
+            self.reader.init_reader(self.client.client)
+            self._init_signals()
+            self.reader_start()
 
-                self.save_arch = WriterArch()
-                self.save_arch.timer_writer_arch_start()
+            self.save_arch = WriterArch()
+            self.save_arch.timer_writer_arch_start()
 
-            else:
-                self.status_bar_msg(f'Нет подключения к контроллеру')
-                self.logger.warning(f'Нет подключения к контроллеру')
-                
-        except Exception as e:
-            self.logger.error(e)
+        else:
+            self.status_bar_msg(f'Нет подключения к контроллеру')
+            self.logger.warning(f'Нет подключения к контроллеру')
 
     def status_bar_msg(self, txt_bar):
         self.signals.stbar_msg.emit(txt_bar)
@@ -179,6 +161,12 @@ class Model:
     def clear_status_bar(self):
         self.signals.stbar_msg.emit(' ')
         self.timer_clear_statusbar.stop()
+        
+    def set_amort(self, amort):
+        self.data_test.amort = amort
+
+    def set_type_test(self, type_test):
+        self.data_test.type_test = type_test
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
@@ -224,21 +212,15 @@ class Model:
     def reader_exit(self):
         self.reader.reader_exit()
         
+    @log_exceptions
     def _update_switch_dict(self, data):
-        try:
-            if data is not None:
-                self.switch_dict.update(data)
+        if data is not None:
+            self.switch_dict.update(data)
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def _update_state_dict(self, data):
-        try:
-            if data is not None:
-                self.state_dict.update(data)
-
-        except Exception as e:
-            self.logger.error(e)
+        if data is not None:
+            self.state_dict.update(data)
             
     def _init_timer_clear_statusbar(self):
         self.timer_clear_statusbar = QTimer()
@@ -263,61 +245,45 @@ class Model:
         else:
             pass
 
+    @log_exceptions
     def _calc_and_save_force_koef(self):
-        try:
-            self.timer_add_koef.stop()
-            self.timer_calc_koef.stop()
-            self.write_bit_force_cycle(0)
+        self.timer_add_koef.stop()
+        self.timer_calc_koef.stop()
+        self.write_bit_force_cycle(0)
 
-            if self.koef_force_list:
-                self.force_koef_offset = round(statistics.fmean(self.koef_force_list), 1)
-                self.koef_force_list.clear()
-                self.signals.save_koef_force.emit('done')
+        if self.koef_force_list:
+            self.force_koef_offset = round(statistics.fmean(self.koef_force_list), 1)
+            self.koef_force_list.clear()
+            self.signals.save_koef_force.emit('done')
 
-            else:
-                self.signals.save_koef_force.emit('bad')
-
-        except Exception as e:
-            self.logger.error(e)
+        else:
+            self.signals.save_koef_force.emit('bad')
 
     def cancel_koef_force(self):
-        try:
-            self.force_koef_offset = 0
-
-        except Exception as e:
-            self.logger.error(e)
+        self.force_koef_offset = 0
             
     def _init_timer_yellow_btn(self):
-        try:
-            self.timer_yellow = QTimer()
-            self.timer_yellow.setInterval(1000)
-            self.timer_yellow.timeout.connect(self.yellow_btn_click)
+        self.timer_yellow = QTimer()
+        self.timer_yellow.setInterval(1000)
+        self.timer_yellow.timeout.connect(self.yellow_btn_click)
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def yellow_btn_click(self):
-        try:
-            if self.state_dict.get('yellow_btn', True) is False:
-                if self.yellow_rattle is False:
+        if self.state_dict.get('yellow_btn', True) is False:
+            if self.yellow_rattle is False:
+                self.time_push_yellow = time.monotonic()
+                self.signals.test_launch.emit(True)
+                self.yellow_rattle = True
+            else:
+                time_signal = time.monotonic() - self.time_push_yellow
+                if 2 < time_signal:
                     self.time_push_yellow = time.monotonic()
                     self.signals.test_launch.emit(True)
                     self.yellow_rattle = True
-
                 else:
-                    time_signal = time.monotonic() - self.time_push_yellow
-                    if 2 < time_signal:
-                        self.time_push_yellow = time.monotonic()
-                        self.signals.test_launch.emit(True)
-                        self.yellow_rattle = True
-
-                    else:
-                        pass
-            else:
-                self.timer_yellow.stop()
-
-        except Exception as e:
-            self.logger.error(e)
+                    pass
+        else:
+            self.timer_yellow.stop()
             
     def check_max_temper_test(self):
         first = self.data_test.first_temperature
@@ -340,96 +306,89 @@ class Model:
     def is_motor_stopped(self):
         return self.collector.motor_stopped()
 
+    # FIXME
     def get_nmt_info(self):
-        return self.collector.get_nmt_capture_info()
+        pass
     
+    # FIXME
     def is_nmt_reached(self):
-        return self.collector.is_nmt_reached()
+        pass
 
+    @log_exceptions
     def _reader_result(self, response, tag):
-        try:
-            if tag == 'reg':
-                self._pars_regs_result(response.get('regs'))
-            else:
-                self._pars_buffer_result(response)
+        if tag == 'reg':
+            self._pars_regs_result(response.get('regs'))
+        else:
+            self._pars_buffer_result(response)
 
-            # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
-            # if self.flag_test_launch is True:
-            #     if not self.timer_yellow.isActive():
-            #         self.timer_yellow.start()
-            #     else:
-            #         pass
+        # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
+        # if self.flag_test_launch is True:
+        #     if not self.timer_yellow.isActive():
+        #         self.timer_yellow.start()
+        #     else:
+        #         pass
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def _pars_regs_result(self, res):
-        try:
-            if not res:
-                return
-            else:
-                result = self.parser.pars_response_from_regs(res)
-                
-                if result.get('force', None) is not None:
-                    self.force_clear = result.get('force', 0)
-                    self.force_correct = round(self.force_clear * config.force_koef, 1)
-                    self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+        if not res:
+            return
+        else:
+            result = self.parser.pars_response_from_regs(res)
+            
+            if result.get('force', None) is not None:
+                self.force_clear = result.get('force', 0)
+                self.force_correct = round(self.force_clear * config.force_koef, 1)
+                self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-                self.move_now = result.get('move')
-                self.move_traverse = result.get('traverse')
-                self.counter = result.get('counter')
-                self.data_test.force_alarm = result.get('force_a')
+            self.move_now = result.get('move')
+            self.move_traverse = result.get('traverse')
+            self.counter = result.get('counter')
+            self.data_test.force_alarm = result.get('force_a')
 
-                self.data_test.first_temperature = result.get('first_t')
-                self.data_test.second_temperature = result.get('second_t')
-                
-                self.data_test.temperature = max(
-                    self.data_test.first_temperature,
-                    self.data_test.second_temperature
-                )
+            self.data_test.first_temperature = result.get('first_t')
+            self.data_test.second_temperature = result.get('second_t')
+            
+            self.data_test.temperature = max(
+                self.data_test.first_temperature,
+                self.data_test.second_temperature
+            )
 
-                self.data_test.max_temperature = max(
-                    self.data_test.max_temperature,
-                    self.data_test.temperature
-                )
+            self.data_test.max_temperature = max(
+                self.data_test.max_temperature,
+                self.data_test.temperature
+            )
 
-                self._update_switch_dict(result.get('switch'))
-                self._update_state_dict(result.get('state'))
-                self.state_list = result.get('state_list')
+            self._update_switch_dict(result.get('switch'))
+            self._update_state_dict(result.get('state'))
+            self.state_list = result.get('state_list')
 
-                if self.data_test.type_test == 'hand':
-                    self.signals.win_set_update.emit('reg')
+            if self.data_test.type_test == 'hand':
+                self.signals.win_set_update.emit('reg')
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def _pars_buffer_result(self, res):
-        try:
-            data = self.parser.pars_response_from_buffer(res)
-            if data is None:
-                if not self.flag_non_buffer:
-                    self.flag_non_buffer = True
-                self.logger.debug('Response from force sensor is None')
+        data = self.parser.pars_response_from_buffer(res)
+        if data is None:
+            if not self.flag_non_buffer:
+                self.flag_non_buffer = True
+            self.logger.debug('Response from force sensor is None')
+        else:
+            self.flag_non_buffer = False
+            self.state_list = data.get('state_list')
+            self._update_state_dict(data.get('state'))
+            temperature = data.get('temper')
+            self.data_test.temperature = temperature
+            self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
+                                                                                self.data_test.max_temperature)
+            if self.data_test.type_test == 'hand':
+                self._send_data_in_set_win(data)
             else:
-                self.flag_non_buffer = False
-                self.state_list = data.get('state_list')
-                self._update_state_dict(data.get('state'))
-                temperature = data.get('temper')
-                self.data_test.temperature = temperature
-                self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
-                                                                                    self.data_test.max_temperature)
-                if self.data_test.type_test == 'hand':
-                    self._send_data_in_set_win(data)
-                else:
-                    event_state = self.collector.add_stream_dict(data)
-                    if event_state == PhaseState.DONE and not self.flag_collect_done:
-                        self._handle_program_done()
-                    elif event_state == PhaseState.ERROR and not self.flag_collect_error:
-                        self.flag_collect_error = True
-                        self.logger.error('Error in collector/add_stream_dict')
-                        
-        except Exception as e:
-            self.logger.error(e)
+                event_state = self.collector.add_stream_dict(data)
+                if event_state == PhaseState.DONE and not self.flag_collect_done:
+                    self._handle_program_done()
+                elif event_state == PhaseState.ERROR and not self.flag_collect_error:
+                    self.flag_collect_error = True
+                    self.logger.error('Error in collector/add_stream_dict')
 
     def _handle_program_done(self):
         step = self.collector.get_last_completed_step()
@@ -442,9 +401,6 @@ class Model:
         elif mode == Mode.COLLECT:
             avg = self.calc_data.average_cycles(result)
             self._pars_result_avarage_cycles(avg)
-        elif mode == Mode.NMT_CAPTURE:
-            # можно передать в UI если нужно
-            pass
         self.flag_collect_done = True
         
     def start_collect(self, with_data: bool, *, count_det: int=1, count_col: int=1):
@@ -477,34 +433,32 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.collector.load_program([(Mode.STROKE_ONLY, count_str)], skip_accel=True)
-        
-    def start_nmt_poition(self):
-        self.flag_collect_done = False
-        self.flag_collect_error = False
-        self.collector.load_program([
-            (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
-            (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
-        ])
-        # self.reader_start_test()
+
+    # FIXME        
+    # def start_nmt_poition(self):
+    #     self.flag_collect_done = False
+    #     self.flag_collect_error = False
+    #     self.collector.load_program([
+    #         (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
+    #         (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
+    #     ])
+    #     # self.reader_start_test()
         
     def stop_collect(self):
         self.reader_stop_test()
         self.write_bit_force_cycle(0)
 
+    @log_exceptions
     def _send_data_in_set_win(self, data):
-        try:
-            self.force_clear = data.get('force')[-1]
-            self.force_correct = round(self.force_clear * config.force_koef, 1)
-            self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
+        self.force_clear = data.get('force')[-1]
+        self.force_correct = round(self.force_clear * config.force_koef, 1)
+        self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
-            self.move_now = data.get('move')[-1]
-            self.counter = data.get('count')
-            self.data_test.first_temperature = self.data_test.temperature
+        self.move_now = data.get('move')[-1]
+        self.counter = data.get('count')
+        self.data_test.first_temperature = self.data_test.temperature
 
-            self.signals.win_set_update.emit('buf')
-            
-        except Exception as e:
-            self.logger.error(e)
+        self.signals.win_set_update.emit('buf')
             
     def _pars_result_inf_cycles(self, result):
         if self.data_test.type_test == 'temper':
@@ -519,29 +473,27 @@ class Model:
             
         else:
             self._pars_result_lab_test(avg)
-            
-    def _calc_result_cycle(self, move, force):
-        try:
-            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
-            if self.data_test.flag_push_force:
-                push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
-                                                                        self.data_test.static_push_force)
-                self.data_test.dynamic_push_force = push_force
-            else:
-                push_force = self.data_test.static_push_force
-                self.data_test.dynamic_push_force = 0
-            
-            self.data_test.max_recoil = rec_clear + push_force
-            self.data_test.max_comp = comp_clear - push_force
 
-            self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
-            
-            self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
-                                                                        self.data_test.amort.hod)
-            
-        except Exception as e:
-            self.logger.error(e)
-            
+    @log_exceptions
+    def _calc_result_cycle(self, move, force):
+        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
+        if self.data_test.flag_push_force:
+            push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
+                                                                    self.data_test.static_push_force)
+            self.data_test.dynamic_push_force = push_force
+        else:
+            push_force = self.data_test.static_push_force
+            self.data_test.dynamic_push_force = 0
+        
+        self.data_test.max_recoil = rec_clear + push_force
+        self.data_test.max_comp = comp_clear - push_force
+
+        self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
+        
+        self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
+                                                                    self.data_test.amort.hod)
+    
+    @log_exceptions
     def _pars_result_lab_test(self, avg):
         self.data_test.move = avg[0]
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
@@ -552,7 +504,8 @@ class Model:
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_lab_graph.emit(avg)
-            
+    
+    @log_exceptions
     def _pars_result_conv_test(self, avg):
         self.data_test.move = avg[0]
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
@@ -564,6 +517,7 @@ class Model:
 
         self.signals.update_conv_graph.emit(avg)
         
+    @log_exceptions
     def _pars_result_temper_test(self, result):
         move, force = result[0], result[1]
         force = self.calc_data.correct_force_with_koef(force,
@@ -579,206 +533,149 @@ class Model:
                                                self.data_test.comp_list,
                                                self.data_test.temper_list))
         
+    @log_exceptions
     def _write_reg_state(self, bit, value, command=None):
-        try:
-            com_list = self.state_list[:]
-            com_list[bit] = value
+        com_list = self.state_list[:]
+        com_list[bit] = value
 
-            res = 0
+        res = 0
 
-            for i in range(16):
-                res = res + com_list[i] * 2 ** i
+        for i in range(16):
+            res = res + com_list[i] * 2 ** i
 
-            self.writer.write_out('reg',
-                                  values=[res],
-                                  reg_write=0x2003,
-                                  command=command)
+        self.writer.write_out('reg',
+                                values=[res],
+                                reg_write=0x2003,
+                                command=command)
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_bit_force_cycle(self, value):
-        try:
-            self.reset_buffer_state()
-            if value == 1:
-                command = 'buffer_on'
-            else:
-                command = 'buffer_off'
+        self.reset_buffer_state()
+        if value == 1:
+            command = 'buffer_on'
+        else:
+            command = 'buffer_off'
 
-            self._write_reg_state(0, value, command)
+        self._write_reg_state(0, value, command)
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_bit_red_light(self, value):
-        try:
-            bit = self.state_dict.get('red_light', 0)
-            if int(bit) != value:
-                self._write_reg_state(1, value, command='red_light')
-        except Exception as e:
-            self.logger.error(e)
+        bit = self.state_dict.get('red_light', 0)
+        if int(bit) != value:
+            self._write_reg_state(1, value, command='red_light')
 
+    @log_exceptions
     def write_bit_green_light(self, value):
-        try:
-            bit = self.state_dict.get('green_light', 0)
-            if int(bit) != value:
-                self._write_reg_state(2, value, command='green_light')
+        bit = self.state_dict.get('green_light', 0)
+        if int(bit) != value:
+            self._write_reg_state(2, value, command='green_light')
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_bit_unblock_control(self):
-        try:
-            self._write_reg_state(3, 1, command='unblock_control')
+        self._write_reg_state(3, 1, command='unblock_control')
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_bit_emergency_force(self):
-        try:
-            self._write_reg_state(4, 1, command='reset_emergency_force')
+        self._write_reg_state(4, 1, command='reset_emergency_force')
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_bit_select_temper(self, value):
-        try:
-            bit = self.state_dict.get('select_temper', 0)
-            if int(bit) != value:
-                self._write_reg_state(6, value, command='select_temper')
+        bit = self.state_dict.get('select_temper', 0)
+        if int(bit) != value:
+            self._write_reg_state(6, value, command='select_temper')
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def write_emergency_force(self, value):
-        try:
-            arr = self.calc_data.emergency_force(value)
-
-            self.writer.write_out('reg', values=arr, reg_write=0x200a)
-
-        except Exception as e:
-            self.logger.error(e)
-            
+        arr = self.calc_data.emergency_force(value)
+        self.writer.write_out('reg', values=arr, reg_write=0x200a)
+    
+    @log_exceptions
     def fc_control(self, tag: str, adr: int, speed: float = None, freq: int = None, hod: int = None):
-        try:
-            if self.state_dict.get('lost_control'):
-                self.write_bit_unblock_control()
+        if self.state_dict.get('lost_control'):
+            self.write_bit_unblock_control()
 
-            if self.state_dict.get('excess_force'):
-                self.write_bit_emergency_force()
-                
-            if hod is None:
-                if self.data_test.amort is None:
-                    hod = 120
-                else:
-                    hod = self.data_test.amort.hod
-                
-            values, comm = self.fc.freq_command(tag, adr, speed, freq, hod)
-            self.writer.write_out('FC', freq_command=values, command=comm)
+        if self.state_dict.get('excess_force'):
+            self.write_bit_emergency_force()
             
-        except Exception as e:
-            self.logger.error(e)
+        if hod is None:
+            if self.data_test.amort is None:
+                hod = 120
+            else:
+                hod = self.data_test.amort.hod
+            
+        values, comm = self.fc.freq_command(tag, adr, speed, freq, hod)
+        self.writer.write_out('FC', freq_command=values, command=comm)
 
+    @log_exceptions
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
-        try:
-            self.write_bit_green_light(1)
-            QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
+        self.write_bit_green_light(1)
+        QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
-        try:
-            self.write_bit_green_light(0)
-            QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
+        self.write_bit_green_light(0)
+        QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def lamp_green_switch_on(self):
         """Включение зелёного индикатора"""
-        try:
-            self.write_bit_green_light(1)
-            QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
+        self.write_bit_green_light(1)
+        QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
 
-        except Exception as e:
-            self.logger.error(e)
-
+    @log_exceptions
     def lamp_red_switch_on(self):
         """Включение красного индикатора"""
-        try:
-            self.write_bit_green_light(0)
-            QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
-
-        except Exception as e:
-            self.logger.error(e)
+        self.write_bit_green_light(0)
+        QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
             
+    @log_exceptions
     def result_conveyor_test(self, step):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
-        try:
-            amort = self.data_test.amort
-            min_comp, max_comp = 0, 2000
-            min_recoil, max_recoil = 0, 2000
-
-            if step == 'one':
-                min_comp, max_comp = amort.min_comp, amort.max_comp
-                min_recoil, max_recoil = amort.min_recoil, amort.max_recoil
-
-            elif step == 'two':
-                min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
-                min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
-
-            if min_comp < self.data_test.max_comp < max_comp and min_recoil < self.data_test.max_recoil < max_recoil:
-                self.lamp_green_switch_on()
-                self.signals.conv_result_lamp.emit(step, 'green')
-
-            else:
-                self.lamp_red_switch_on()
-                self.signals.conv_result_lamp.emit(step, 'red')
-
-        except Exception as e:
-            self.logger.error(e)
+        amort = self.data_test.amort
+        min_comp, max_comp = 0, 2000
+        min_recoil, max_recoil = 0, 2000
+        if step == 'one':
+            min_comp, max_comp = amort.min_comp, amort.max_comp
+            min_recoil, max_recoil = amort.min_recoil, amort.max_recoil
+        elif step == 'two':
+            min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
+            min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
+            
+        if min_comp < self.data_test.max_comp < max_comp and min_recoil < self.data_test.max_recoil < max_recoil:
+            self.lamp_green_switch_on()
+            self.signals.conv_result_lamp.emit(step, 'green')
+        else:
+            self.lamp_red_switch_on()
+            self.signals.conv_result_lamp.emit(step, 'red')
             
     def work_interrupted_operator(self):
         self.signals.set_stage.emit(Stage.WAIT)
         self.flag_test_launch = False
         self.flag_test = False
-
         self.lamp_all_switch_off()
-
         if self.client.flag_connect:
             self.fc_control(**{'tag': 'stop', 'adr': 1})
             self.fc_control(**{'tag': 'stop', 'adr': 2})
             self.reader_stop_test()
             self.write_bit_force_cycle(0)
-            
+    
+    @log_exceptions
     def flag_reset_start_test(self):
-        try:
-            if self.state_dict.get('excess_force', False) is True:
-                self.write_bit_emergency_force()
-
-            if self.state_dict.get('lost_control', False) is True:
-                self.write_bit_unblock_control()
-
-            self.lamp_all_switch_off()
-
-            self.data_test.max_temperature = 0
-            self.flag_test_launch = True
-            self.alarm_tag = ''
-            self.flag_alarm = False
-
-        except Exception as e:
-            self.logger.error(e)
+        if self.state_dict.get('excess_force', False) is True:
+            self.write_bit_emergency_force()
+        if self.state_dict.get('lost_control', False) is True:
+            self.write_bit_unblock_control()
+        self.lamp_all_switch_off()
+        self.data_test.max_temperature = 0
+        self.flag_test_launch = True
+        self.alarm_tag = ''
+        self.flag_alarm = False
             
     def flag_reset_stop_test(self):
-        try:
-            self.flag_test_launch = False
-            self.flag_test = False
-
-        except Exception as e:
-            self.logger.error(e)
+        self.flag_test_launch = False
+        self.flag_test = False
 
     def write_emergency_force_start_test(self):
         self.write_emergency_force(self.calc_data.excess_force(self.data_test.amort))
@@ -884,11 +781,12 @@ class Model:
 
     # FIXME Проверить этот момент
     def stop_gear_min_pos(self):
-        self.start_nmt_poition()
-        hod = self.data_test.amort.hod if self.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,
-                                   extra_fc={'tag': 'up', 'adr': 1})
+        pass
+        # self.start_nmt_poition()
+        # hod = self.data_test.amort.hod if self.data_test.amort else 120
+        # speed = self.calc_data.definition_speed_by_hod('medium', hod)
+        # self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,
+        #                            extra_fc={'tag': 'up', 'adr': 1})
         
     def search_hod(self):
         self.alarm_tag = ''
@@ -911,66 +809,49 @@ class Model:
 
 
     # FIXME Переделать под новую реализацию
+    @log_exceptions
     def save_result_cycle(self):
-        try:
-            if self.data_test.type_test in ('lab', 'lab_cascade'):
-                data_dict = {'speed': self.data_test.speed_test,
-                             'move': self.move[:],
-                             'force': self.force[:]}
-
-                self.list_lab_result.append(data_dict)
-                    
-            self.save_data_in_archive()
-                    
-        except Exception as e:
-            self.logger.error(e)
+        if self.data_test.type_test in ('lab', 'lab_cascade'):
+            data_dict = {'speed': self.data_test.speed_test,
+                            'move': self.move[:],
+                            'force': self.force[:]}
+            self.list_lab_result.append(data_dict)
+        self.save_data_in_archive()
             
     def write_data_in_archive(self, tag, data=None):
-        try:
-            self.save_arch.write_arch_out(tag, data)
+        self.save_arch.write_arch_out(tag, data)
             
-        except Exception as e:
-            self.logger.error(e)
-            
+    @log_exceptions
     def save_data_in_archive(self):
-        try:
-            if self.data_test.type_test != 'temper':
-                data_dict = {'move_graph': self.data_test.move,
-                            'force_graph': self.data_test.force,
-                            'type_test': self.data_test.type_test,
-                            'speed': self.data_test.speed_test,
-                            'operator_name': self.data_test.operator.name,
-                            'operator_rank': self.data_test.operator.rank,
-                            'serial': self.data_test.serial,
-                            'amort': self.data_test.amort,
-                            'flag_push_force': int(self.data_test.flag_push_force),
-                            'static_push_force': self.data_test.static_push_force,
-                            'dynamic_push_force': self.data_test.dynamic_push_force,
-                            'max_temperature': self.data_test.max_temperature}
-                
-            else:
-                data_dict = {'temper_graph': self.data_test.temper_list,
-                            'temper_recoil_graph': self.data_test.recoil_list,
-                            'temper_comp_graph': self.data_test.comp_list,
-                            'type_test': self.data_test.type_test,
-                            'speed': self.data_test.speed_test,
-                            'operator_name': self.data_test.operator.name,
-                            'operator_rank': self.data_test.operator.rank,
-                            'serial': self.data_test.serial,
-                            'amort': self.data_test.amort,
-                            'flag_push_force': int(self.data_test.flag_push_force),
-                            'static_push_force': self.data_test.static_push_force,
-                            'dynamic_push_force': self.data_test.dynamic_push_force,
-                            'max_temperature': self.data_test.max_temperature}
-            
-            self.write_data_in_archive('data', data_dict)
-
-        except Exception as e:
-            self.logger.error(e)
+        if self.data_test.type_test != 'temper':
+            data_dict = {'move_graph': self.data_test.move,
+                        'force_graph': self.data_test.force,
+                        'type_test': self.data_test.type_test,
+                        'speed': self.data_test.speed_test,
+                        'operator_name': self.data_test.operator.name,
+                        'operator_rank': self.data_test.operator.rank,
+                        'serial': self.data_test.serial,
+                        'amort': self.data_test.amort,
+                        'flag_push_force': int(self.data_test.flag_push_force),
+                        'static_push_force': self.data_test.static_push_force,
+                        'dynamic_push_force': self.data_test.dynamic_push_force,
+                        'max_temperature': self.data_test.max_temperature}
+        else:
+            data_dict = {'temper_graph': self.data_test.temper_list,
+                        'temper_recoil_graph': self.data_test.recoil_list,
+                        'temper_comp_graph': self.data_test.comp_list,
+                        'type_test': self.data_test.type_test,
+                        'speed': self.data_test.speed_test,
+                        'operator_name': self.data_test.operator.name,
+                        'operator_rank': self.data_test.operator.rank,
+                        'serial': self.data_test.serial,
+                        'amort': self.data_test.amort,
+                        'flag_push_force': int(self.data_test.flag_push_force),
+                        'static_push_force': self.data_test.static_push_force,
+                        'dynamic_push_force': self.data_test.dynamic_push_force,
+                        'max_temperature': self.data_test.max_temperature}
+        
+        self.write_data_in_archive('data', data_dict)
             
     def write_end_test_in_archive(self):
-        try:
-            self.write_data_in_archive('end_test')
-
-        except Exception as e:
-            self.logger.error(e)
+        self.write_data_in_archive('end_test')
