@@ -8,7 +8,6 @@ from scripts.logger import my_logger
 class Client:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
-
         self.client = None
         self.flag_connect = False
 

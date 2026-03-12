@@ -196,7 +196,7 @@ class AppWindow(QMainWindow):
     @log_exceptions
     def btn_main_stop_clicked(self):
         self.main_ui_msg(*TextMsg.msg_from_controller('red_btn'))
-        self.controller.work_interrupted_operator()
+        self.model.work_interrupted_operator()
         self.logger.info(f'PUSH BIG RED BUTTON')
 
     @log_exceptions

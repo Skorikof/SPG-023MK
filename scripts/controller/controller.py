@@ -22,23 +22,19 @@ class ControlSignals(QObject):
 
 class Controller:
     def __init__(self, model: Model):
-        try:
-            self.logger = my_logger.get_logger(__name__)
-            self.model = model
-            self.signals = ControlSignals()
-            
-            self.alarm_steps = AlarmSteps(model)
-            self.calc_data = CalcData()
-            self.trav_serv = TraverseService(model)
+        self.logger = my_logger.get_logger(__name__)
+        self.model = model
+        self.signals = ControlSignals()
+        
+        self.alarm_steps = AlarmSteps(model)
+        self.calc_data = CalcData()
+        self.trav_serv = TraverseService(model)
 
-            self._init_variables()
-            self._init_flags()
-            self._init_stage_handlers()
-            self._init_signals()
-            self._init_timer_test()
-
-        except Exception as e:
-            self.logger.error(e)
+        self._init_variables()
+        self._init_flags()
+        self._init_stage_handlers()
+        self._init_signals()
+        self._init_timer_test()
             
     def _init_variables(self):
         self.stage = Stage.WAIT
@@ -119,19 +115,13 @@ class Controller:
         }
 
     def _init_signals(self):
-        try:
-            self.model.signals.test_launch.connect(self._yellow_btn_push)
-            self.model.signals.set_stage.connect(self.set_stage)
-            self.model.signals.set_next_stage.connect(self.set_next_stage)
-
-            self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
-            self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
-            
-            self.trav_serv.signals.set_stage.connect(self.set_stage)
-            self.trav_serv.signals.control_msg.connect(self._signal_control_msg)
-
-        except Exception as e:
-            self.logger.error(e)
+        self.model.signals.test_launch.connect(self._yellow_btn_push)
+        self.model.signals.set_stage.connect(self.set_stage)
+        self.model.signals.set_next_stage.connect(self.set_next_stage)
+        self.alarm_steps.signals.stage_from_alarm.connect(self.set_stage)
+        self.alarm_steps.signals.alarm_traverse.connect(self._alarm_traverse_position)
+        self.trav_serv.signals.set_stage.connect(self.set_stage)
+        self.trav_serv.signals.control_msg.connect(self._signal_control_msg)
             
     def _init_timer_test(self):
         self.timer_process = QTimer()
@@ -176,18 +166,14 @@ class Controller:
     def _update_stage_on_timer(self):
         try:
             self.alarm_steps.step_alarm_traverse_position()
-
             if self.model.flag_test:
                 self._select_alarm_state(
                     self.alarm_steps.control_alarm_state()
                 )
-
             handler = self._stage_handlers.get(self.stage)
-            
             if handler is None:
                 self.logger.error(f'No handler for stage {self.stage}')
                 return
-            
             handler()
 
         except Exception as e:
@@ -216,19 +202,6 @@ class Controller:
     def _handle_excess_temperature(self):
         self.model.stop_gear_end_test()
         self.alarm_steps.step_excess_temperature()
-
-    def work_interrupted_operator(self):
-        self.set_stage(Stage.WAIT)
-        self.model.flag_test_launch = False
-        self.model.flag_test = False
-
-        self.model.lamp_all_switch_off()
-
-        if self.model.client.flag_connect:
-            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-            self.model.fc_control(**{'tag': 'stop', 'adr': 2})
-            self.model.reader_stop_test()
-            self.model.write_bit_force_cycle(0)
             
     # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание, соответственно пока отключена кнопка
     def _step_yellow_btn_push(self):
@@ -274,25 +247,24 @@ class Controller:
         то сразу запуск позиционирования для установки амортизатора
         """
         try:
-            self._test_program()
-            # if self.model.check_max_temper_test():
-            #     self.model.flag_reset_start_test()
-            #     self.model.write_emergency_force_start_test()
+            # self._test_program()
+            if self.model.check_max_temper_test():
+                self.model.flag_reset_start_test()
+                self.model.write_emergency_force_start_test()
 
-            #     if self.model.flag_repeat:
-            #         self.set_stage(Stage.WAIT_BUFFER)
-            #         self.set_next_stage(Stage.REPEAT_TEST)
+                if self.model.flag_repeat:
+                    self.set_next_stage(Stage.REPEAT_TEST)
 
-            #     else:
-            #         if self.model.move_traverse < 10:
-            #             self.trav_serv.step_traverse_referent_point()
+                else:
+                    if self.model.move_traverse < 10:
+                        self.trav_serv.step_traverse_referent_point()
 
-            #         else:
-            #             self.trav_serv.traverse_install_point('install')
+                    else:
+                        self.trav_serv.traverse_install_point('install')
 
-            # else:
-            #     self.signals.control_msg.emit('excess_temperature')
-            #     self.model.flag_reset_stop_test()
+            else:
+                self.signals.control_msg.emit('excess_temperature')
+                self.model.flag_reset_stop_test()
 
         except Exception as e:
             self.logger.error(e)
@@ -371,7 +343,7 @@ class Controller:
     #==========
 
     def _enter_repeat_test(self):
-        pass
+        self.model.flag_repeat = False
 
     def _stage_repeat_test(self):
         self._dispatch_test_by_type()
@@ -451,10 +423,9 @@ class Controller:
         self.signals.control_msg.emit('pumping')
 
     def _stage_pumping(self):
-        if not self.model.is_collect_done():
-            return
-        self.model.stop_collect()
-        self._dispatch_test_by_type()
+        if self.model.is_collect_done():
+            self.model.stop_collect()
+            self._dispatch_test_by_type()
 
     def _exit_pumping(self):
         pass
@@ -554,7 +525,23 @@ class Controller:
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
             self.model.stop_collect()
-            self.model.stop_gear_min_pos()
+            
+            if self.model.flag_test:
+                self.model.flag_test = False
+        
+            type_test = self.model.data_test.type_test
+            if self.model.flag_search_hod:
+                self.model.flag_search_hod = False
+                self.signals.search_hod_msg.emit()
+            else:
+                if type_test == 'conv':
+                    self.signals.conv_test_stop.emit()
+                else:
+                    self.signals.lab_test_stop.emit()
+            
+            self.set_stage(Stage.WAIT)
+            
+            # self.model.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
         pass
@@ -602,9 +589,9 @@ class Controller:
 
     def _stage_stop_test(self):
         if self.trav_serv.step_control_traverse_move():
-            self.set_stage(Stage.WAIT)
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
+            self.set_stage(Stage.WAIT)
 
     def _exit_stop_test(self):
         pass

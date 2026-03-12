@@ -470,13 +470,13 @@ class Model:
         self.flag_collect_error = False
         self.collector.load_program([(Mode.WAIT_STOP, None)], skip_accel=True)
         
-    def start_find_stroke(self, count_str: int=1):
+    def start_find_stroke(self, count_str: int=2):
         self.min_point = 0
         self.max_point = 0
         self.stroke = 0
         self.flag_collect_done = False
         self.flag_collect_error = False
-        self.collector.load_program([(Mode.STROKE_ONLY, count_str)])
+        self.collector.load_program([(Mode.STROKE_ONLY, count_str)], skip_accel=True)
         
     def start_nmt_poition(self):
         self.flag_collect_done = False
@@ -741,6 +741,19 @@ class Model:
         except Exception as e:
             self.logger.error(e)
             
+    def work_interrupted_operator(self):
+        self.signals.set_stage.emit(Stage.WAIT)
+        self.flag_test_launch = False
+        self.flag_test = False
+
+        self.lamp_all_switch_off()
+
+        if self.client.flag_connect:
+            self.fc_control(**{'tag': 'stop', 'adr': 1})
+            self.fc_control(**{'tag': 'stop', 'adr': 2})
+            self.reader_stop_test()
+            self.write_bit_force_cycle(0)
+            
     def flag_reset_start_test(self):
         try:
             if self.state_dict.get('excess_force', False) is True:
@@ -766,7 +779,7 @@ class Model:
 
         except Exception as e:
             self.logger.error(e)
-            
+
     def write_emergency_force_start_test(self):
         self.write_emergency_force(self.calc_data.excess_force(self.data_test.amort))
 
@@ -832,22 +845,12 @@ class Model:
             self.data_test.speed_test = speed
             self.transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
-
-        # FIXME Повтор испытания пока не реализован
-        # if self.flag_repeat:
-        #     self.flag_repeat = False
-        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
         self.start_collect(with_data=True, count_col=3)
         speed = self.data_test.speed_test
         self.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
-
-        # FIXME Повтор испытания пока не реализован
-        # if self.flag_repeat:
-        #     self.flag_repeat = False
-        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def test_lab_cascade(self):
         if self.count_cascade < self.max_cascade:
@@ -860,22 +863,12 @@ class Model:
         
         else:
             self.flag_cascade_done = True
-        
-        # FIXME Повтор испытания пока не реализован
-        # if self.flag_repeat:
-        #     self.flag_repeat = False
-        #     self.fc_control(**{'tag': 'up', 'adr': 1})
 
     def test_temper(self):
         self.start_collect_inf_cycle()
         speed = self.data_test.speed_test
         self.transition_via_buffer(Stage.TEST_TEMPER, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
-
-        # FIXME Повтор испытания пока не реализован
-        # if self.flag_repeat:
-        #     self.flag_repeat = False
-        #     self.fc_control(**{'tag': 'up', 'adr': 1})
     
     def check_finish_temper_test(self):
         if self.data_test.max_temperature != self.last_max_temper:
