@@ -117,6 +117,7 @@ class Model:
 
         self.flag_collect_done = False
         self.flag_collect_error = False
+        self.flag_nmt_reached = False
         
     def _init_signals(self):
         self.reader.signals.result.connect(self._reader_result)
@@ -305,14 +306,14 @@ class Model:
         
     def is_motor_stopped(self):
         return self.collector.motor_stopped()
-
-    # FIXME
-    def get_nmt_info(self):
-        pass
+    
+    def reset_nmt(self):
+        """Сбросить сохранённую НМТ в коллекторе."""
+        self.collector.clear_nmt()
     
     # FIXME
     def is_nmt_reached(self):
-        pass
+        return self.flag_nmt_reached
 
     @log_exceptions
     def _reader_result(self, response, tag):
@@ -401,11 +402,15 @@ class Model:
         elif mode == Mode.COLLECT:
             avg = self.calc_data.average_cycles(result)
             self._pars_result_avarage_cycles(avg)
+        elif mode == Mode.NMT_FINAL:
+            self.flag_nmt_reached = True
         self.flag_collect_done = True
         
     def start_collect(self, with_data: bool, *, count_det: int=1, count_col: int=1):
         self.flag_collect_done = False
         self.flag_collect_error = False
+        self.flag_nmt_reached = False
+        self.reset_nmt()
         if with_data:
             self.collector.load_program([
             (Mode.DETECT_ONLY, count_det),
@@ -418,12 +423,14 @@ class Model:
     def start_collect_inf_cycle(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
+        self.flag_nmt_reached = False
         self.collector.load_program([(Mode.COLLECT, None)], skip_accel=False)
         self.collector.set_cycle_callback(self._pars_result_inf_cycles)
         
     def start_collect_wait_stop(self):
         self.flag_collect_done = False
         self.flag_collect_error = False
+        self.flag_nmt_reached = False
         self.collector.load_program([(Mode.WAIT_STOP, None)], skip_accel=True)
         
     def start_find_stroke(self, count_str: int=2):
@@ -432,18 +439,17 @@ class Model:
         self.stroke = 0
         self.flag_collect_done = False
         self.flag_collect_error = False
+        self.flag_nmt_reached = False
+        self.reset_nmt()
         self.collector.load_program([(Mode.STROKE_ONLY, count_str)], skip_accel=True)
-
-    # FIXME        
-    # def start_nmt_poition(self):
-    #     self.flag_collect_done = False
-    #     self.flag_collect_error = False
-    #     self.collector.load_program([
-    #         (Mode.NMT_CAPTURE, 1),      # 1 оборот для захвата НМТ на скорости
-    #         (Mode.NMT_FINAL, 1),        # Режим доворота до НМТ
-    #     ])
-    #     # self.reader_start_test()
         
+    def start_nmt_position(self, *, tolerance_mm: float = 1.0, confirm_points: int = 2):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.flag_nmt_reached = False
+        self.collector.set_nmt_params(tolerance=tolerance_mm, confirm_points=confirm_points)
+        self.collector.load_program([(Mode.NMT_FINAL, None)], skip_accel=True, preserve_nmt=True)
+
     def stop_collect(self):
         self.reader_stop_test()
         self.write_bit_force_cycle(0)
@@ -779,14 +785,12 @@ class Model:
         self.start_collect_wait_stop()
         self.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
 
-    # FIXME Проверить этот момент
     def stop_gear_min_pos(self):
-        pass
-        # self.start_nmt_poition()
-        # hod = self.data_test.amort.hod if self.data_test.amort else 120
-        # speed = self.calc_data.definition_speed_by_hod('medium', hod)
-        # self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,
-        #                            extra_fc={'tag': 'up', 'adr': 1})
+        self.start_nmt_position()
+        hod = self.data_test.amort.hod if self.data_test.amort else 120
+        speed = self.calc_data.definition_speed_by_hod('slow', hod)
+        self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,
+                                   extra_fc={'tag': 'up', 'adr': 1})
         
     def search_hod(self):
         self.alarm_tag = ''

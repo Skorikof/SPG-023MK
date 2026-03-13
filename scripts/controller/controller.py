@@ -403,7 +403,7 @@ class Controller:
     def _stage_test_move_cycle(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            self.model.pumping()
+            QTimer.singleShot(100, lambda: self.model.pumping())
 
     def _exit_test_move_cycle(self):
         pass
@@ -416,6 +416,7 @@ class Controller:
     def _stage_pumping(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
+            QTimer.singleShot(100, lambda: self._dispatch_test_by_type())
             self._dispatch_test_by_type()
 
     def _exit_pumping(self):
@@ -433,7 +434,7 @@ class Controller:
             if self.model.data_test.type_test == 'conv':
                 self.model.result_conveyor_test('one')
             self.model.write_end_test_in_archive()
-            self.model.test_on_two_speed(2)
+            QTimer.singleShot(100, lambda: self.model.test_on_two_speed(2))
 
     def _exit_test_speed_one(self):
         pass
@@ -451,7 +452,7 @@ class Controller:
                 self.model.result_conveyor_test('two')
             # self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
-            self.model.stop_gear_end_test()
+            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
 
     def _exit_test_speed_two(self):
         pass
@@ -467,13 +468,14 @@ class Controller:
             # self.model.save_result_cycle() # FIXME
             # self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
-            self.model.stop_gear_end_test()
+            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
 
     def _exit_test_lab_hand_speed(self):
         pass
     
     #==========
 
+    # FIXME QTimer.singleShot(100, lambda: func) after stop_collect()
     def _enter_test_lab_cascade(self):
         pass
 
@@ -483,7 +485,7 @@ class Controller:
             # self.model.save_result_cycle() # FIXME
             self.model.set_next_step_count_cascade()
             self.model.test_lab_cascade()
-            if self.model.get_flag_cascade_done:
+            if self.model.get_flag_cascade_done():
                 # self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
                 self.model.stop_gear_end_test()
@@ -503,7 +505,7 @@ class Controller:
             self.model.stop_cycle_collection()
             self.model.stop_collect()
             self.model.write_end_test_in_archive()
-            self.model.stop_gear_end_test()
+            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
 
     def _exit_test_temper(self):
         pass
@@ -516,10 +518,22 @@ class Controller:
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
             self.model.stop_collect()
-            
+            QTimer.singleShot(100, lambda: self.model.stop_gear_min_pos())
+
+    def _exit_stop_gear_end_test(self):
+        pass
+
+    #==========
+    
+    def _enter_stop_gear_min_pos(self):
+        pass
+
+    def _stage_stop_gear_min_pos(self):
+        if self.model.is_nmt_reached():
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+            self.model.stop_collect()
             if self.model.flag_test:
                 self.model.flag_test = False
-        
             type_test = self.model.data_test.type_test
             if self.model.flag_search_hod:
                 self.model.flag_search_hod = False
@@ -529,49 +543,10 @@ class Controller:
                     self.signals.conv_test_stop.emit()
                 else:
                     self.signals.lab_test_stop.emit()
-            
             self.set_stage(Stage.WAIT)
-            
-            # self.model.stop_gear_min_pos()
-
-    def _exit_stop_gear_end_test(self):
-        pass
-
-    #==========
-    
-    # FIXME Пока не реализовано под новую логику
-    def _enter_stop_gear_min_pos(self):
-        pass
-
-    def _stage_stop_gear_min_pos(self):
-        pass
-        # info = self.model.get_nmt_info()
-        # if info:
-        #     tag = 'down' if info['direction_to_nmt'] > 0 else 'up'
-            
-        #     speed = self.calc_data.definition_speed_by_hod('slow')
-        #     self.model.fc_control(**{'tag': 'speed', 'adr': 1, 'speed': speed})
-        #     self.model.fc_control(**{'tag': tag, 'adr': 1})
-            
-        #     if self.model.is_nmt_reached():
-        #         self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-
-        #         self.set_stage(Stage.WAIT)
-        #         if self.model.flag_test:
-        #             self.model.flag_test = False
-            
-        #         type_test = self.model.data_test.type_test
-        #         if self.model.flag_search_hod:
-        #             self.model.flag_search_hod = False
-        #             self.signals.search_hod_msg.emit()
-        #         else:
-        #             if type_test == 'conv':
-        #                 self.signals.conv_test_stop.emit()
-        #             else:
-        #                 self.signals.lab_test_stop.emit()
 
     def _exit_stop_gear_min_pos(self):
-        self.model.stop_collect()
+        pass
 
     #==========
 
@@ -596,7 +571,7 @@ class Controller:
     def _stage_search_hod(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            self.model.stop_gear_end_test()
+            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
 
     def _exit_search_hod(self):
         pass

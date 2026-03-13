@@ -52,6 +52,8 @@ class Mode(Enum):
     COLLECT = 1
     STROKE_ONLY = 2
     WAIT_STOP = 3
+    NMT_CAPTURE = 4
+    NMT_FINAL = 5
 
 
 class CycleCollector:
@@ -112,6 +114,25 @@ class CycleCollector:
 
         # -------- потоковое время (по sample_rate) --------
         self.stream_time = None
+
+        # -------- НМТ (нижняя мёртвая точка) --------
+        self.nmt_values = deque(maxlen=20)
+        self.nmt_estimate = None
+        self.nmt_target_pos = None
+        self.nmt_tolerance = 0.5
+        self.nmt_confirm_points = 3
+        self._nmt_in_tol_points = 0
+
+    def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
+        """Задать целевую НМТ (в тех же единицах, что и `move`)."""
+        self.nmt_target_pos = float(target_pos)
+        self.nmt_tolerance = float(tolerance)
+        self.nmt_confirm_points = max(1, int(confirm_points))
+        self._nmt_in_tol_points = 0
+
+    def get_nmt_estimate(self):
+        """Оценка НМТ по предыдущим циклам (или None)."""
+        return self.nmt_estimate
     
     @staticmethod
     def log_exceptions(func):
@@ -127,8 +148,26 @@ class CycleCollector:
         return wrapper
     
     @log_exceptions
-    def load_program(self, program, skip_accel=False):
+    def load_program(self, program, skip_accel=False, preserve_nmt: bool = False):
+        preserved_nmt_values = None
+        preserved_nmt_estimate = None
+        preserved_nmt_target = None
+        preserved_nmt_cfg = None
+        if preserve_nmt:
+            preserved_nmt_values = list(self.nmt_values)
+            preserved_nmt_estimate = self.nmt_estimate
+            preserved_nmt_target = self.nmt_target_pos
+            preserved_nmt_cfg = (self.nmt_tolerance, self.nmt_confirm_points)
+
         self.reset()
+
+        if preserve_nmt and preserved_nmt_values is not None:
+            self.nmt_values.extend(preserved_nmt_values)
+            self.nmt_estimate = preserved_nmt_estimate
+            self.nmt_target_pos = preserved_nmt_target
+            if preserved_nmt_cfg is not None:
+                self.nmt_tolerance, self.nmt_confirm_points = preserved_nmt_cfg
+
         self.program = program
         self.skip_accel = skip_accel
 
@@ -136,6 +175,19 @@ class CycleCollector:
             self.phase_state = PhaseState.RUN
         
         self.active = True
+
+    def set_nmt_params(self, *, tolerance: float = 1.0, confirm_points: int = 2):
+        """Настройки для доворота до НМТ без задания явной цели."""
+        self.nmt_tolerance = float(tolerance)
+        self.nmt_confirm_points = max(1, int(confirm_points))
+        self._nmt_in_tol_points = 0
+
+    def clear_nmt(self):
+        """Сбросить сохранённую НМТ (оценку и историю)."""
+        self.nmt_values.clear()
+        self.nmt_estimate = None
+        self.nmt_target_pos = None
+        self._nmt_in_tol_points = 0
 
     @log_exceptions
     def _current_program_step(self):
@@ -147,7 +199,7 @@ class CycleCollector:
     def _update_threshold(self, v):
         self.vel_hist.append(abs(v))
         if len(self.vel_hist) >= 5:
-            arr = np.sort(np.asarray(self.vel_hist, dtype=np.float64))
+            arr = np.sort(np.asarray(self.vel_hist, dtype=np.float32))
             k = min(3, arr.size)
             noise_floor = float(np.median(arr[:k]))
             self.vel_threshold = max(noise_floor * 3, 1e-6)
@@ -254,6 +306,23 @@ class CycleCollector:
                     self._advance_program_if_needed(mode, target_cycles)
                     return
 
+        if self.phase_state == PhaseState.RUN:
+            step = self._current_program_step()
+            if step is not None:
+                mode, target_cycles = step
+                if mode == Mode.NMT_FINAL:
+                    target = self.nmt_target_pos if self.nmt_target_pos is not None else self.nmt_estimate
+                    if target is not None:
+                        tol = float(self.nmt_tolerance)
+                        if abs(float(pos) - float(target)) <= tol:
+                            self._nmt_in_tol_points += 1
+                        else:
+                            self._nmt_in_tol_points = 0
+                        if self._nmt_in_tol_points >= int(self.nmt_confirm_points):
+                            self.last_step_result = [float(target), float(pos)]
+                            self._advance_program_if_needed(mode, target_cycles)
+                            return
+
         sign = self._sign(v)
         self.points_after_turn += 1
         turn_detected = self._detect_turn(sign)
@@ -315,6 +384,10 @@ class CycleCollector:
             return self._handle_stroke()
         if mode == Mode.WAIT_STOP:
             return self._handle_wait_stop()
+        if mode == Mode.NMT_CAPTURE:
+            return self._handle_nmt_capture()
+        if mode == Mode.NMT_FINAL:
+            return self._handle_nmt_final()
         return False
 
     @log_exceptions
@@ -328,7 +401,7 @@ class CycleCollector:
         if mode == Mode.COLLECT:
             self.current_pos.append(pos)
             self.current_force.append(force)
-        elif mode == Mode.STROKE_ONLY:
+        elif mode in (Mode.STROKE_ONLY, Mode.NMT_CAPTURE, Mode.DETECT_ONLY):
             self.cycle_min_pos = min(self.cycle_min_pos, pos)
             self.cycle_max_pos = max(self.cycle_max_pos, pos)
     
@@ -339,12 +412,20 @@ class CycleCollector:
         self.cycle_min_pos = float("inf")
         self.cycle_max_pos = float("-inf")
     
-    @log_exceptions
     def _handle_detect_only(self) -> bool:
         """
         Завершает один шаг на каждый полный оборот.
         Никакие данные не сохраняются.
+        При этом мы можем обновлять оценку НМТ по минимуму перемещения.
         """
+        if self.cycle_min_pos != float("inf"):
+            try:
+                nmt = float(self.cycle_min_pos)
+                self.nmt_values.append(nmt)
+                self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
+            except Exception:
+                pass
+        self._reset_cycle_buffers()
         return True
     
     @log_exceptions
@@ -354,6 +435,15 @@ class CycleCollector:
         pos_np = np.array(self.current_pos, dtype=np.float32)
         force_np = np.array(self.current_force, dtype=np.float32)
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
+
+        try:
+            if pos_np.size:
+                nmt = float(pos_np[0])
+                self.nmt_values.append(nmt)
+                self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
+        except Exception:
+            pass
+
         result = (pos_np, force_np)
         if self.cycle_callback:
             self.cycle_callback(result)
@@ -367,10 +457,20 @@ class CycleCollector:
     def _handle_stroke(self) -> bool:
         if self.cycle_min_pos == float("inf"):
             return False
+        try:
+            nmt = float(self.cycle_min_pos)
+            self.nmt_values.append(nmt)
+            self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
+        except Exception:
+            pass
+
+        min_pos = float(self.cycle_min_pos)
+        max_pos = float(self.cycle_max_pos)
+        stroke = float(max_pos - min_pos)
         result = (
-            self.cycle_min_pos,
-            self.cycle_max_pos,
-            self.cycle_max_pos - self.cycle_min_pos
+            round(min_pos, 1),
+            round(max_pos, 1),
+            round(stroke, 1),
         )
         self.cycles.append(result)
         self.last_step_result = self.cycles.copy()
@@ -384,6 +484,23 @@ class CycleCollector:
         if not self.stop_detector.is_stopped():
             return False
         return True
+
+    @log_exceptions
+    def _handle_nmt_capture(self) -> bool:
+        """Захватывает НМТ (минимум перемещения) на каждом полном цикле."""
+        if self.cycle_min_pos == float("inf"):
+            return False
+        nmt = float(self.cycle_min_pos)
+        self.nmt_values.append(nmt)
+        self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
+        self.last_step_result = [self.nmt_estimate]
+        self._reset_cycle_buffers()
+        return True
+
+    @log_exceptions
+    def _handle_nmt_final(self) -> bool:
+        """Доворот до НМТ: завершение происходит в _process_sample (для быстрого стопа)."""
+        return False
 
     @log_exceptions
     def _advance_program_if_needed(self, mode, target_cycles):
@@ -430,7 +547,7 @@ class CycleCollector:
     def motor_stopped(self):
         return self.stop_detector.stopped
 
-    def reset(self):
+    def reset(self, *, clear_nmt: bool = False):
         self.active = False
         self.phase_state = PhaseState.ACCEL
         self.stop_detector.reset()
@@ -457,3 +574,5 @@ class CycleCollector:
         self.last_step_result = None
         self.cycle_completed = False
         self.cycle_callback = None
+        if clear_nmt:
+            self.clear_nmt()
