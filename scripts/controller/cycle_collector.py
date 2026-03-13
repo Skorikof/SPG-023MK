@@ -9,8 +9,6 @@ from scripts.logger import my_logger
 
 class StopDetector:
     def __init__(self, vel_threshold=0.02, confirm_time=0.5):
-        # vel_threshold here acts as a minimal threshold (floor);
-        # the actual threshold can be updated adaptively from the collector.
         self.min_vel_threshold = float(vel_threshold)
         self.vel_threshold = float(vel_threshold)
         self.confirm_time = confirm_time
@@ -22,7 +20,6 @@ class StopDetector:
         try:
             self.vel_threshold = max(float(vel_threshold), self.min_vel_threshold)
         except Exception:
-            # keep previous threshold
             pass
 
     def update(self, velocity, now):
@@ -69,10 +66,16 @@ class CycleCollector:
         self.stop_detector = StopDetector()
 
         # -------- параметры --------
-        self.sample_rate = sample_rate
-        self.min_halfcycle_points = int(sample_rate * min_halfcycle_fraction)
+        self.sample_rate = float(sample_rate)
+        self.min_halfcycle_fraction = float(min_halfcycle_fraction)
         self.period_stability_threshold = period_stability_threshold
         self.min_stable_cycles = min_stable_cycles
+
+        # -------- оценка реальной частоты буфера --------
+        self._current_sample_rate = float(sample_rate)
+        self._sr_alpha = 0.15
+        self._last_count = None
+        self._last_count_ts = None
 
         # -------- состояния --------
         self.active = False
@@ -144,10 +147,45 @@ class CycleCollector:
     def _update_threshold(self, v):
         self.vel_hist.append(abs(v))
         if len(self.vel_hist) >= 5:
-            noise = np.median(self.vel_hist)
-            self.vel_threshold = max(noise * 3, 1e-6)
-            # Make stop detection adaptive to the current noise/velocity scale.
+            arr = np.sort(np.asarray(self.vel_hist, dtype=np.float64))
+            k = min(3, arr.size)
+            noise_floor = float(np.median(arr[:k]))
+            self.vel_threshold = max(noise_floor * 3, 1e-6)
             self.stop_detector.set_threshold(self.vel_threshold)
+
+    @log_exceptions
+    def _update_sample_rate_from_count(self, last_count: int, now_real: float):
+        """Estimate controller sampling rate from record counter increments."""
+        if last_count is None:
+            return
+        try:
+            last_count = int(last_count)
+        except Exception:
+            return
+        if last_count <= 0:
+            return
+        if self._last_count is None or self._last_count_ts is None:
+            self._last_count = last_count
+            self._last_count_ts = now_real
+            return
+        dt = float(now_real - self._last_count_ts)
+        if dt <= 1e-4:
+            return
+        wrap = 65535
+        prev = int(self._last_count)
+        if prev <= 0:
+            prev = last_count
+        delta_count = (last_count - prev) % wrap
+        if delta_count <= 0:
+            self._last_count = last_count
+            self._last_count_ts = now_real
+            return
+        sr = delta_count / dt
+        if 10.0 <= sr <= 20000.0:
+            a = float(self._sr_alpha)
+            self._current_sample_rate = (1.0 - a) * self._current_sample_rate + a * sr
+        self._last_count = last_count
+        self._last_count_ts = now_real
 
     @log_exceptions
     def _sign(self, v):
@@ -184,10 +222,14 @@ class CycleCollector:
         force_arr = data.get("force")
         if pos_arr is None or force_arr is None:
             return self.phase_state
+
+        now_real = time.perf_counter()
+        self._update_sample_rate_from_count(data.get("count"), now_real)
+        sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
         
-        dt = 1.0 / float(self.sample_rate)
+        dt = 1.0 / sr
         if self.stream_time is None:
-            self.stream_time = time.perf_counter()
+            self.stream_time = now_real
         for i, (pos, force) in enumerate(zip(pos_arr, force_arr)):
             now = self.stream_time
             self.stream_time += dt
@@ -201,12 +243,9 @@ class CycleCollector:
         if self.prev_pos is None:
             self.prev_pos = pos
             return
-        v = (pos - self.prev_pos) * float(self.sample_rate)
+        v = (pos - self.prev_pos) * float(self._current_sample_rate)
         self._update_threshold(v)
         self.stop_detector.update(v, now)
-
-        # WAIT_STOP must complete as soon as устойчивый стоп подтверждён,
-        # even if we never reach the next turn boundary.
         if self.phase_state == PhaseState.RUN and self.stop_detector.is_stopped():
             step = self._current_program_step()
             if step is not None:
@@ -227,8 +266,9 @@ class CycleCollector:
         
     @log_exceptions
     def _detect_turn(self, sign):
+        min_halfcycle_points = max(1, int(float(self._current_sample_rate) * self.min_halfcycle_fraction))
         if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
-            if self.points_after_turn > self.min_halfcycle_points:
+            if self.points_after_turn > min_halfcycle_points:
                 self.points_after_turn = 0
                 self.turn_count += 1
                 return True
@@ -347,13 +387,9 @@ class CycleCollector:
 
     @log_exceptions
     def _advance_program_if_needed(self, mode, target_cycles):
-        # Semantics of target_cycles:
-        # - For Mode.COLLECT, target_cycles=None means "collect indefinitely".
-        # - For other modes, target_cycles=None means "complete on first completion".
         if target_cycles is None:
             if mode == Mode.COLLECT:
                 return
-            # complete immediately
             self.last_completed_step = self.program[self.program_index]
             self.program_index += 1
             self.program_cycle_counter = 0
@@ -414,6 +450,9 @@ class CycleCollector:
         self.cycle_times.clear()
         self.last_cycle_time = None
         self.stream_time = None
+        self._current_sample_rate = float(self.sample_rate)
+        self._last_count = None
+        self._last_count_ts = None
         self.last_completed_step = None
         self.last_step_result = None
         self.cycle_completed = False
