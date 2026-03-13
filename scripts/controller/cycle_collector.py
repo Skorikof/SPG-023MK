@@ -9,10 +9,21 @@ from scripts.logger import my_logger
 
 class StopDetector:
     def __init__(self, vel_threshold=0.02, confirm_time=0.5):
-        self.vel_threshold = vel_threshold
+        # vel_threshold here acts as a minimal threshold (floor);
+        # the actual threshold can be updated adaptively from the collector.
+        self.min_vel_threshold = float(vel_threshold)
+        self.vel_threshold = float(vel_threshold)
         self.confirm_time = confirm_time
         self.below_since = None
         self.stopped = False
+
+    def set_threshold(self, vel_threshold: float):
+        """Set current threshold, keeping a minimal floor."""
+        try:
+            self.vel_threshold = max(float(vel_threshold), self.min_vel_threshold)
+        except Exception:
+            # keep previous threshold
+            pass
 
     def update(self, velocity, now):
         if abs(velocity) < self.vel_threshold:
@@ -95,6 +106,9 @@ class CycleCollector:
         # -------- стабильность периода --------
         self.cycle_times = deque(maxlen=5)
         self.last_cycle_time = None
+
+        # -------- потоковое время (по sample_rate) --------
+        self.stream_time = None
     
     @staticmethod
     def log_exceptions(func):
@@ -132,6 +146,8 @@ class CycleCollector:
         if len(self.vel_hist) >= 5:
             noise = np.median(self.vel_hist)
             self.vel_threshold = max(noise * 3, 1e-6)
+            # Make stop detection adaptive to the current noise/velocity scale.
+            self.stop_detector.set_threshold(self.vel_threshold)
 
     @log_exceptions
     def _sign(self, v):
@@ -169,10 +185,12 @@ class CycleCollector:
         if pos_arr is None or force_arr is None:
             return self.phase_state
         
-        base = time.perf_counter()
         dt = 1.0 / float(self.sample_rate)
+        if self.stream_time is None:
+            self.stream_time = time.perf_counter()
         for i, (pos, force) in enumerate(zip(pos_arr, force_arr)):
-            now = base + i * dt
+            now = self.stream_time
+            self.stream_time += dt
             self._process_sample(pos, force, now)
             if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
                 break
@@ -186,11 +204,22 @@ class CycleCollector:
         v = (pos - self.prev_pos) * float(self.sample_rate)
         self._update_threshold(v)
         self.stop_detector.update(v, now)
+
+        # WAIT_STOP must complete as soon as устойчивый стоп подтверждён,
+        # even if we never reach the next turn boundary.
+        if self.phase_state == PhaseState.RUN and self.stop_detector.is_stopped():
+            step = self._current_program_step()
+            if step is not None:
+                mode, target_cycles = step
+                if mode == Mode.WAIT_STOP:
+                    self._advance_program_if_needed(mode, target_cycles)
+                    return
+
         sign = self._sign(v)
         self.points_after_turn += 1
         turn_detected = self._detect_turn(sign)
         if turn_detected:
-            self._process_turn()
+            self._process_turn(now)
         self._append_data_if_needed(pos, force)
         if sign != 0:
             self.prev_sign = sign
@@ -206,10 +235,10 @@ class CycleCollector:
         return False
     
     @log_exceptions
-    def _process_turn(self):
+    def _process_turn(self, now):
         if self.turn_count % 2 != 0:
             return  # только полный цикл
-        now_cycle = time.perf_counter()
+        now_cycle = now
         if self.last_cycle_time is not None:
             self.cycle_times.append(now_cycle - self.last_cycle_time)
         self.last_cycle_time = now_cycle
@@ -234,7 +263,7 @@ class CycleCollector:
         mode, target_cycles = step
         cycle_completed = self._execute_mode(mode)
         if cycle_completed:
-            self._advance_program_if_needed(target_cycles)
+            self._advance_program_if_needed(mode, target_cycles)
     
     @log_exceptions
     def _execute_mode(self, mode):
@@ -317,9 +346,22 @@ class CycleCollector:
         return True
 
     @log_exceptions
-    def _advance_program_if_needed(self, target_cycles):
+    def _advance_program_if_needed(self, mode, target_cycles):
+        # Semantics of target_cycles:
+        # - For Mode.COLLECT, target_cycles=None means "collect indefinitely".
+        # - For other modes, target_cycles=None means "complete on first completion".
         if target_cycles is None:
+            if mode == Mode.COLLECT:
+                return
+            # complete immediately
+            self.last_completed_step = self.program[self.program_index]
+            self.program_index += 1
+            self.program_cycle_counter = 0
+            if self.program_index >= len(self.program):
+                self.phase_state = PhaseState.DONE
+                self.active = False
             return
+
         self.program_cycle_counter += 1
         if self.program_cycle_counter >= target_cycles:
             self.last_completed_step = self.program[self.program_index]
@@ -371,6 +413,7 @@ class CycleCollector:
         self.vel_threshold = 0.0
         self.cycle_times.clear()
         self.last_cycle_time = None
+        self.stream_time = None
         self.last_completed_step = None
         self.last_step_result = None
         self.cycle_completed = False
