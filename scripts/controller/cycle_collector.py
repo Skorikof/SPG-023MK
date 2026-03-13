@@ -1,4 +1,5 @@
 import numpy as np
+import functools
 import time
 from collections import deque
 from enum import Enum
@@ -13,7 +14,7 @@ class StopDetector:
         self.below_since = None
         self.stopped = False
 
-    def update(self, velocity, phase_state, now):
+    def update(self, velocity, now):
         if abs(velocity) < self.vel_threshold:
             if self.below_since is None:
                 self.below_since = now
@@ -42,7 +43,7 @@ class Mode(Enum):
     DETECT_ONLY = 0
     COLLECT = 1
     STROKE_ONLY = 2
-    WAIT_STOP = 5
+    WAIT_STOP = 3
 
 
 class CycleCollector:
@@ -94,15 +95,18 @@ class CycleCollector:
         # -------- стабильность периода --------
         self.cycle_times = deque(maxlen=5)
         self.last_cycle_time = None
-        
+    
+    @staticmethod
     def log_exceptions(func):
-        def wrapper(*args, **kwargs):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
             try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                args[0].logger.error(
-                    f'ERROR in {func.__name__}: {e}'
-                )
+                return func(self, *args, **kwargs)
+            except Exception:
+                self.logger.exception(f"ERROR in {func.__name__}")
+                self.phase_state = PhaseState.ERROR
+                self.active = False
+                return self.phase_state
         return wrapper
     
     @log_exceptions
@@ -164,8 +168,11 @@ class CycleCollector:
         force_arr = data.get("force")
         if pos_arr is None or force_arr is None:
             return self.phase_state
-        now = time.perf_counter()
-        for pos, force in zip(pos_arr, force_arr):
+        
+        base = time.perf_counter()
+        dt = 1.0 / float(self.sample_rate)
+        for i, (pos, force) in enumerate(zip(pos_arr, force_arr)):
+            now = base + i * dt
             self._process_sample(pos, force, now)
             if self.phase_state in (PhaseState.DONE, PhaseState.ERROR):
                 break
@@ -176,9 +183,9 @@ class CycleCollector:
         if self.prev_pos is None:
             self.prev_pos = pos
             return
-        v = pos - self.prev_pos
+        v = (pos - self.prev_pos) * float(self.sample_rate)
         self._update_threshold(v)
-        self.stop_detector.update(v, self.phase_state, now)
+        self.stop_detector.update(v, now)
         sign = self._sign(v)
         self.points_after_turn += 1
         turn_detected = self._detect_turn(sign)
@@ -307,10 +314,6 @@ class CycleCollector:
         # StopDetector уже обновляется в _process_sample
         if not self.stop_detector.is_stopped():
             return False
-        self.logger.info("WAIT_STOP: motion stopped confirmed")
-        self.last_completed_step = self.program[self.program_index]
-        self.program_index += 1
-        self.program_cycle_counter = 0
         return True
 
     @log_exceptions
