@@ -133,6 +133,19 @@ class CycleCollector:
     def get_nmt_estimate(self):
         """Оценка НМТ по предыдущим циклам (или None)."""
         return self.nmt_estimate
+
+    def _update_nmt_from_cycle_extrema(self):
+        """Обновить оценку НМТ по минимуму перемещения в текущем полном цикле."""
+        if self.cycle_min_pos == float("inf"):
+            return
+        try:
+            nmt = float(self.cycle_min_pos)
+            self.nmt_values.append(nmt)
+            arr = np.asarray(self.nmt_values, dtype=np.float32)
+            if arr.size:
+                self.nmt_estimate = float(np.median(arr))
+        except Exception:
+            pass
     
     @staticmethod
     def log_exceptions(func):
@@ -351,16 +364,20 @@ class CycleCollector:
         if self.last_cycle_time is not None:
             self.cycle_times.append(now_cycle - self.last_cycle_time)
         self.last_cycle_time = now_cycle
+
+        self._update_nmt_from_cycle_extrema()
+
         if self.phase_state == PhaseState.ACCEL:
             self._handle_accel_phase()
         elif self.phase_state == PhaseState.RUN:
             self._handle_run_phase()
+
+        self._reset_cycle_buffers()
     
     @log_exceptions
     def _handle_accel_phase(self):
         if self._is_period_stable():
             self.phase_state = PhaseState.RUN
-            self._reset_cycle_buffers()
     
     @log_exceptions
     def _handle_run_phase(self):
@@ -392,6 +409,18 @@ class CycleCollector:
 
     @log_exceptions
     def _append_data_if_needed(self, pos, force):
+        if self.phase_state not in (PhaseState.ACCEL, PhaseState.RUN):
+            return
+
+        self.cycle_min_pos = min(self.cycle_min_pos, pos)
+        self.cycle_max_pos = max(self.cycle_max_pos, pos)
+
+        if self.nmt_estimate is None and self.cycle_min_pos != float("inf"):
+            try:
+                self.nmt_estimate = float(self.cycle_min_pos)
+            except Exception:
+                pass
+
         if self.phase_state != PhaseState.RUN:
             return
         step = self._current_program_step()
@@ -401,9 +430,6 @@ class CycleCollector:
         if mode == Mode.COLLECT:
             self.current_pos.append(pos)
             self.current_force.append(force)
-        elif mode in (Mode.STROKE_ONLY, Mode.NMT_CAPTURE, Mode.DETECT_ONLY):
-            self.cycle_min_pos = min(self.cycle_min_pos, pos)
-            self.cycle_max_pos = max(self.cycle_max_pos, pos)
     
     @log_exceptions
     def _reset_cycle_buffers(self):
@@ -416,16 +442,8 @@ class CycleCollector:
         """
         Завершает один шаг на каждый полный оборот.
         Никакие данные не сохраняются.
-        При этом мы можем обновлять оценку НМТ по минимуму перемещения.
+        Оценка НМТ обновляется централизованно на каждом полном цикле.
         """
-        if self.cycle_min_pos != float("inf"):
-            try:
-                nmt = float(self.cycle_min_pos)
-                self.nmt_values.append(nmt)
-                self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
-            except Exception:
-                pass
-        self._reset_cycle_buffers()
         return True
     
     @log_exceptions
@@ -436,33 +454,18 @@ class CycleCollector:
         force_np = np.array(self.current_force, dtype=np.float32)
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
 
-        try:
-            if pos_np.size:
-                nmt = float(pos_np[0])
-                self.nmt_values.append(nmt)
-                self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
-        except Exception:
-            pass
-
         result = (pos_np, force_np)
         if self.cycle_callback:
             self.cycle_callback(result)
         else:
             self.cycles.append(result)
             self.last_step_result = self.cycles.copy()
-        self._reset_cycle_buffers()
         return True
     
     @log_exceptions
     def _handle_stroke(self) -> bool:
         if self.cycle_min_pos == float("inf"):
             return False
-        try:
-            nmt = float(self.cycle_min_pos)
-            self.nmt_values.append(nmt)
-            self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
-        except Exception:
-            pass
 
         min_pos = float(self.cycle_min_pos)
         max_pos = float(self.cycle_max_pos)
@@ -474,7 +477,6 @@ class CycleCollector:
         )
         self.cycles.append(result)
         self.last_step_result = self.cycles.copy()
-        self._reset_cycle_buffers()
         return True
     
     @log_exceptions
@@ -490,11 +492,7 @@ class CycleCollector:
         """Захватывает НМТ (минимум перемещения) на каждом полном цикле."""
         if self.cycle_min_pos == float("inf"):
             return False
-        nmt = float(self.cycle_min_pos)
-        self.nmt_values.append(nmt)
-        self.nmt_estimate = float(np.median(np.asarray(self.nmt_values, dtype=np.float32)))
         self.last_step_result = [self.nmt_estimate]
-        self._reset_cycle_buffers()
         return True
 
     @log_exceptions
@@ -574,5 +572,6 @@ class CycleCollector:
         self.last_step_result = None
         self.cycle_completed = False
         self.cycle_callback = None
+        self._nmt_in_tol_points = 0
         if clear_nmt:
             self.clear_nmt()

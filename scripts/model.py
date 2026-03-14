@@ -190,11 +190,17 @@ class Model:
     def set_type_test(self, type_test: TypeTest):
         self.data_test.type_test = type_test
         
-    def get_type_test(self):
+    def get_type_test(self) -> TypeTest:
         return self.data_test.type_test
         
     def set_amort(self, amort):
         self.data_test.amort = amort
+        
+    def set_speed_test(self, speed: float):
+        self.data_test.speed_test = speed
+        
+    def get_speed_test(self) -> float:
+        return self.data_test.speed_test
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
@@ -316,7 +322,7 @@ class Model:
     def check_max_temper_test(self):
         first = self.data_test.first_temperature
         second = self.data_test.second_temperature
-        if self.data_test.type_test == TypeTest.TEMPER:
+        if self.get_type_test() == TypeTest.TEMPER:
             finish_temp = self.data_test.finish_temperature
         else:
             finish_temp = self.data_test.amort.max_temper
@@ -388,7 +394,7 @@ class Model:
             self._update_state_dict(result.get('state'))
             self.state_list = result.get('state_list')
 
-            if self.data_test.type_test == TypeTest.SETTINGS:
+            if self.get_type_test() == TypeTest.SETTINGS:
                 self.signals.win_set_update.emit('reg')
 
     @log_exceptions
@@ -406,7 +412,7 @@ class Model:
             self.data_test.temperature = temperature
             self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
                                                                               self.data_test.max_temperature)
-            if self.data_test.type_test == TypeTest.SETTINGS:
+            if self.get_type_test() == TypeTest.SETTINGS:
                 self._send_data_in_set_win(data)
             else:
                 event_state = self.collector.add_stream_dict(data)
@@ -435,7 +441,6 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.flag_nmt_reached = False
-        self.reset_nmt()
         if with_data:
             self.collector.load_program([
             (Mode.DETECT_ONLY, count_det),
@@ -491,14 +496,14 @@ class Model:
         self.signals.win_set_update.emit('buf')
             
     def _pars_result_inf_cycles(self, result):
-        if self.data_test.type_test == TypeTest.TEMPER:
+        if self.get_type_test() == TypeTest.TEMPER:
             self._pars_result_temper_test(result)
 
     def _pars_result_avarage_cycles(self, avg):
-        if self.data_test.type_test == TypeTest.CONV:
+        if self.get_type_test() == TypeTest.CONV:
             self._pars_result_conv_test(avg)
         
-        elif self.data_test.type_test == TypeTest.TEMPER:
+        elif self.get_type_test() == TypeTest.TEMPER:
             pass
             
         else:
@@ -520,8 +525,8 @@ class Model:
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
         
-        self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.data_test.speed_test,
-                                                                    self.data_test.amort.hod)
+        self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.get_speed_test(),
+                                                                          self.data_test.amort.hod)
     
     @log_exceptions
     def _pars_result_lab_test(self, avg):
@@ -529,7 +534,7 @@ class Model:
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        data_dict = {'speed': self.data_test.speed_test,
+        data_dict = {'speed': self.get_speed_test(),
                      'move': self.data_test.move[:],
                      'force': self.data_test.force[:]}
         self.list_lab_result.append((data_dict))
@@ -543,7 +548,7 @@ class Model:
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        data_dict = {'speed': self.data_test.speed_test,
+        data_dict = {'speed': self.get_speed_test(),
                      'move': self.data_test.move[:],
                      'force': self.data_test.force[:]}
         self.list_conv_result.append((data_dict))
@@ -748,6 +753,7 @@ class Model:
         self.signals.set_stage.emit(Stage.WAIT_BUFFER)
         
     def test_move_cycle(self):
+        self.reset_nmt()
         self.start_collect(with_data=False, count_det=2)
         hod = self.data_test.amort.hod if self.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('slow', hod)
@@ -765,7 +771,7 @@ class Model:
         if ind == 1:
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.amort.speed_one
-            self.data_test.speed_test = speed
+            self.set_speed_test(speed)
             self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
@@ -773,14 +779,14 @@ class Model:
         elif ind == 2:
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.amort.speed_two
-            self.data_test.speed_test = speed
+            self.set_speed_test(speed)
             self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
         self.start_collect(with_data=True, count_col=3)
-        speed = self.data_test.speed_test
+        speed = self.get_speed_test()
         self._tune_cycle_collector_for_speed()
         self.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
@@ -790,7 +796,7 @@ class Model:
             self.flag_cascade_done = False
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.speed_list[self.count_cascade]
-            self.data_test.speed_test = speed            
+            self.set_speed_test(speed)  
             self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_LAB_CASCADE, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
@@ -800,7 +806,7 @@ class Model:
 
     def test_temper(self):
         self.start_collect_inf_cycle()
-        speed = self.data_test.speed_test
+        speed = self.get_speed_test()
         self._tune_cycle_collector_for_speed()
         self.transition_via_buffer(Stage.TEST_TEMPER, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
@@ -848,11 +854,11 @@ class Model:
         
     @log_exceptions
     def save_data_test_in_archive(self):
-        type_test = self.data_test.type_test.name.lower()
+        type_test = self.get_type_test()
         data_dict = {'move_graph': list(self.data_test.move),
                      'force_graph': list(self.data_test.force),
-                     'type_test': type_test,
-                     'speed': self.data_test.speed_test,
+                     'type_test': type_test.name.lower(),
+                     'speed': self.get_speed_test(),
                      'operator_name': self.data_test.operator.name,
                      'operator_rank': self.data_test.operator.rank,
                      'serial': self.data_test.serial,
@@ -870,7 +876,7 @@ class Model:
                      'temper_recoil_graph': self.data_test.recoil_list[:],
                      'temper_comp_graph': self.data_test.comp_list[:],
                      'type_test': 'temper',
-                     'speed': self.data_test.speed_test,
+                     'speed': self.get_speed_test(),
                      'operator_name': self.data_test.operator.name,
                      'operator_rank': self.data_test.operator.rank,
                      'serial': self.data_test.serial,

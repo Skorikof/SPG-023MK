@@ -639,13 +639,13 @@ class AppWindow(QMainWindow):
                         elif type_test == TypeTest.LAB_HAND:
                             speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                             if speed:
-                                self.model.data_test.speed_test = speed
+                                self.model.set_speed_test(speed)
                                 self._init_lab_graph()
                                 self.begin_test()
                         elif type_test == TypeTest.TEMPER:
                             speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                             if speed:
-                                self.model.data_test.speed_test = speed
+                                self.model.set_speed_test(speed)
                                 temper = self.specif_lab_input_temper(self.ui.specif_max_temp_lineEdit)
                                 if temper:
                                     self.model.data_test.finish_temperature = temper
@@ -713,7 +713,7 @@ class AppWindow(QMainWindow):
         type_test = self.model.get_type_test()
         amort = self.model.data_test.amort
         if type_test in (TypeTest.LAB_HAND, TypeTest.TEMPER):
-            speed = self.model.data_test.speed_test
+            speed = self.model.get_speed_test()
         elif type_test == TypeTest.LAB_CASCADE:
             speed = self.model.data_test.speed_list
         else:
@@ -847,7 +847,7 @@ class AppWindow(QMainWindow):
     def _update_conv_graph(self, data):
         self.ui.conv_GraphWidget.clear()
         self.graph.fill_graph(data[0], data[1],
-                                name=f'{self.model.data_test.speed_test} м/с')
+                                name=f'{self.model.get_speed_test()} м/с')
 
     @log_exceptions
     def _update_conv_data(self):
@@ -855,12 +855,12 @@ class AppWindow(QMainWindow):
         self.ui.conv_push_force_le.setText(f'{self._fill_push_force()}')
 
         if self.controller.stage == Stage.TEST_SPEED_ONE:
-            self.ui.conv_speed_one_le.setText(f'{self.model.data_test.speed_test}')
+            self.ui.conv_speed_one_le.setText(f'{self.model.get_speed_test()}')
             self.ui.conv_comp_le.setText(f'{self.model.data_test.max_comp}')
             self.ui.conv_recoil_le.setText(f'{self.model.data_test.max_recoil}')
 
         elif self.controller.stage == Stage.TEST_SPEED_TWO:
-            self.ui.conv_speed_two_le.setText(f'{self.model.data_test.speed_test}')
+            self.ui.conv_speed_two_le.setText(f'{self.model.get_speed_test()}')
             self.ui.conv_comp_le_2.setText(f'{self.model.data_test.max_comp}')
             self.ui.conv_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
 
@@ -871,7 +871,7 @@ class AppWindow(QMainWindow):
     def _update_lab_graph(self, data):
         self.ui.lab_GraphWidget.clear()
         self.graph.fill_graph(data[0], data[1],
-                                name=f'{self.model.data_test.speed_test} м/с')
+                                name=f'{self.model.get_speed_test()} м/с')
 
     @log_exceptions
     def _update_temper_graph(self, data: tuple):
@@ -903,7 +903,7 @@ class AppWindow(QMainWindow):
             self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
         self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
         self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
-        self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
+        self.ui.lab_speed_le.setText(f'{self.model.get_speed_test()}')
         self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
         self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
         self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
@@ -915,7 +915,7 @@ class AppWindow(QMainWindow):
         
         self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
         self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
-        self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')
+        self.ui.lab_speed_le.setText(f'{self.model.get_speed_test()}')
         self.ui.lab_power_le.setText(f'{self.model.data_test.power_amort}')
         self.ui.lab_freq_le.setText(f'{self.model.data_test.freq_piston}')
         self.ui.lab_push_force_le.setText(f'{self._fill_push_force()}')
@@ -948,7 +948,7 @@ class AppWindow(QMainWindow):
     def change_speed_lab_test(self):
         speed = self.specif_lab_input_speed(self.ui.lab_speed_le)
         if speed:
-            self.model.data_test.speed_test = speed
+            self.model.set_speed_test(speed)
 
     @Slot()
     def slot_lab_test_stop(self):
