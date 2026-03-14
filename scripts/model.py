@@ -11,7 +11,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
-from scripts.controller.stages import Stage
+from scripts.controller.stages import Stage, TypeTest
 from scripts.modbus.client import Client
 from scripts.freq_ctrl.freq_control import FreqControl
 
@@ -187,11 +187,14 @@ class Model:
         self.signals.stbar_msg.emit(' ')
         self.timer_clear_statusbar.stop()
         
+    def set_type_test(self, type_test: TypeTest):
+        self.data_test.type_test = type_test
+        
+    def get_type_test(self):
+        return self.data_test.type_test
+        
     def set_amort(self, amort):
         self.data_test.amort = amort
-
-    def set_type_test(self, type_test):
-        self.data_test.type_test = type_test
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]
@@ -313,7 +316,7 @@ class Model:
     def check_max_temper_test(self):
         first = self.data_test.first_temperature
         second = self.data_test.second_temperature
-        if self.data_test.type_test == 'temper':
+        if self.data_test.type_test == TypeTest.TEMPER:
             finish_temp = self.data_test.finish_temperature
         else:
             finish_temp = self.data_test.amort.max_temper
@@ -385,7 +388,7 @@ class Model:
             self._update_state_dict(result.get('state'))
             self.state_list = result.get('state_list')
 
-            if self.data_test.type_test == 'hand':
+            if self.data_test.type_test == TypeTest.SETTINGS:
                 self.signals.win_set_update.emit('reg')
 
     @log_exceptions
@@ -403,7 +406,7 @@ class Model:
             self.data_test.temperature = temperature
             self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
                                                                               self.data_test.max_temperature)
-            if self.data_test.type_test == 'hand':
+            if self.data_test.type_test == TypeTest.SETTINGS:
                 self._send_data_in_set_win(data)
             else:
                 event_state = self.collector.add_stream_dict(data)
@@ -488,14 +491,14 @@ class Model:
         self.signals.win_set_update.emit('buf')
             
     def _pars_result_inf_cycles(self, result):
-        if self.data_test.type_test == 'temper':
+        if self.data_test.type_test == TypeTest.TEMPER:
             self._pars_result_temper_test(result)
 
     def _pars_result_avarage_cycles(self, avg):
-        if self.data_test.type_test == 'conv':
+        if self.data_test.type_test == TypeTest.CONV:
             self._pars_result_conv_test(avg)
         
-        elif self.data_test.type_test == 'temper':
+        elif self.data_test.type_test == TypeTest.TEMPER:
             pass
             
         else:
@@ -845,9 +848,10 @@ class Model:
         
     @log_exceptions
     def save_data_test_in_archive(self):
+        type_test = self.data_test.type_test.name.lower()
         data_dict = {'move_graph': list(self.data_test.move),
                      'force_graph': list(self.data_test.force),
-                     'type_test': self.data_test.type_test,
+                     'type_test': type_test,
                      'speed': self.data_test.speed_test,
                      'operator_name': self.data_test.operator.name,
                      'operator_rank': self.data_test.operator.rank,
@@ -865,7 +869,7 @@ class Model:
         data_dict = {'temper_graph': self.data_test.temper_list[:],
                      'temper_recoil_graph': self.data_test.recoil_list[:],
                      'temper_comp_graph': self.data_test.comp_list[:],
-                     'type_test': self.data_test.type_test,
+                     'type_test': 'temper',
                      'speed': self.data_test.speed_test,
                      'operator_name': self.data_test.operator.name,
                      'operator_rank': self.data_test.operator.rank,

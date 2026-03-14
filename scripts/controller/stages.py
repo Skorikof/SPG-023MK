@@ -22,3 +22,12 @@ class Stage(Enum):
     STOP_GEAR_MIN_POS = auto()
     STOP_TEST = auto()
     TEST_PROGRAM = auto()
+
+
+class TypeTest(Enum):
+    LAB = auto()
+    LAB_HAND = auto()
+    LAB_CASCADE = auto()
+    CONV = auto()
+    TEMPER = auto()
+    SETTINGS = auto()

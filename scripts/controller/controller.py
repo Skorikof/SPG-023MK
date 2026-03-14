@@ -5,7 +5,7 @@ from scripts.logger import my_logger
 from scripts.model import Model
 from scripts.data_calculation import CalcData
 from .alarm_steps import AlarmSteps
-from .stages import Stage
+from .stages import Stage, TypeTest
 from .traverse_service import TraverseService
 
 
@@ -268,30 +268,31 @@ class Controller:
         Завершение теста, если определена референтная точка коленвала, то остановка в нижней точке,
         иначе моментальная остановка
         """
-        self.model.flag_reset_stop_test()
         self.model.stop_collect()
+        self.model.flag_reset_stop_test()
+        self.set_stage(Stage.WAIT)
         self.model.stop_gear_end_test()
 
     def _dispatch_test_by_type(self):
-        type_test = self.model.data_test.type_test
-        if type_test == 'conv':
+        type_test = self.model.get_type_test()
+        if type_test == TypeTest.CONV:
             self.signals.conv_win_test.emit()
             self.model.flag_test = True
             self.model.test_on_two_speed(1)
         else:
             self.signals.lab_win_test.emit()
             handlers = {
-                'lab': self.model.test_on_two_speed(1),
-                'lab_hand': self.model.test_lab_hand_speed,
-                'lab_cascade': self._start_cascade_test,
-                'temper': self._start_temper_test,
+                TypeTest.LAB: self.model.test_on_two_speed(1),
+                TypeTest.LAB_HAND: self.model.test_lab_hand_speed,
+                TypeTest.LAB_CASCADE: self._start_cascade_test,
+                TypeTest.TEMPER: self._start_temper_test,
             }
             handler = handlers.get(type_test, self.model.test_on_two_speed(1))
             if handler:
                 self.model.flag_test = True
                 handler()
             else:
-                self.logger.warning(f'Unknown type test: {type_test}')
+                self.logger.warning(f'Unknown type test: {type_test.name.lower()}')
         
     def _start_cascade_test(self):
         self.model.reset_cascade_speed()
@@ -418,7 +419,6 @@ class Controller:
     def _stage_pumping(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            self.set_stage(Stage.WAIT)
             self._dispatch_test_by_type()
 
     def _exit_pumping(self):
@@ -432,7 +432,7 @@ class Controller:
     def _stage_test_speed_one(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            if self.model.data_test.type_test == 'conv':
+            if self.model.get_type_test() == TypeTest.CONV:
                 self.model.result_conveyor_test('one')
             self.model.save_data_test_in_archive()
             self.model.write_end_test_in_archive()
@@ -450,7 +450,7 @@ class Controller:
         if self.model.is_collect_done():
             self.model.stop_collect()
             self.model.save_data_test_in_archive()
-            if self.model.data_test.type_test == 'conv':
+            if self.model.get_type_test() == TypeTest.CONV:
                 self.model.result_conveyor_test('two')
             self.model.write_end_test_in_archive()
             self.model.stop_gear_end_test()
@@ -531,12 +531,11 @@ class Controller:
             self.model.stop_collect()
             if self.model.flag_test:
                 self.model.flag_test = False
-            type_test = self.model.data_test.type_test
             if self.model.flag_search_hod:
                 self.model.flag_search_hod = False
                 self.signals.search_hod_msg.emit()
             else:
-                if type_test == 'conv':
+                if self.model.get_type_test() == TypeTest.CONV:
                     self.signals.conv_test_stop.emit()
                 else:
                     self.signals.lab_test_stop.emit()

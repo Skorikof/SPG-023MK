@@ -4,7 +4,7 @@ from enum import Enum
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
-from .stages import Stage
+from .stages import Stage, TypeTest
 
 
 @dataclass
@@ -132,7 +132,7 @@ class AlarmSteps:
                     return alarm_tag
             
             # Check temperature alarm (only if not in temperature test)
-            if self.model.data_test.type_test != 'temper':
+            if self.model.get_type_test() != TypeTest.TEMPER:
                 if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
                     return 'excess_temperature'
             

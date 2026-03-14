@@ -14,7 +14,7 @@ from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
 from scripts.controller.controller import Controller
-from scripts.controller.stages import Stage
+from scripts.controller.stages import Stage, TypeTest
 from scripts.logger import my_logger
 from scripts.model import Model
 
@@ -323,7 +323,7 @@ class AppWindow(QMainWindow):
         if tag == 'done':
             txt_msg = 'Показания с датчика усилия обнулены'
 
-        if self.model.data_test.type_test == 'hand':
+        if self.model.get_type_test() == TypeTest.SETTINGS:
             self.win_set.setEnabled(True)
 
         else:
@@ -392,23 +392,23 @@ class AppWindow(QMainWindow):
     def select_type_test(self):
         ind = self.index_type_test
         if ind == 0:
-            self.model.set_type_test('lab')
+            self.model.set_type_test(TypeTest.LAB)
             self.specif_enable_gui(True, True, False, True)
 
         elif ind == 1:
-            self.model.set_type_test('lab_hand')
+            self.model.set_type_test(TypeTest.LAB_HAND)
             self.specif_enable_gui(False, False, False, True)
 
         elif ind == 2:
-            self.model.set_type_test('lab_cascade')
+            self.model.set_type_test(TypeTest.LAB_CASCADE)
             self.specif_enable_gui(False, False, True, True)
 
         elif ind == 3:
-            self.model.set_type_test('temper')
+            self.model.set_type_test(TypeTest.TEMPER)
             self.specif_enable_gui(False, False, False, False)
 
         elif ind == 4:
-            self.model.set_type_test('conv')
+            self.model.set_type_test(TypeTest.CONV)
             self.specif_enable_gui(True, True, False, True)
 
     def specif_enable_gui(self, flag_change_speed, flag_enable_two_test, flag_cascade, flag_temper):
@@ -447,7 +447,7 @@ class AppWindow(QMainWindow):
         self.ui.specif_min_recoil_lineEdit_2.setText(str(obj.min_recoil_2))
         self.ui.specif_max_recoil_lineEdit.setText(str(obj.max_recoil))
         self.ui.specif_max_recoil_lineEdit_2.setText(str(obj.max_recoil_2))
-        if self.model.data_test.type_test == 'temper':
+        if self.model.get_type_test() == TypeTest.TEMPER:
             max_temper = self.model.data_test.finish_temperature
         else:
             max_temper = obj.max_temper
@@ -618,7 +618,8 @@ class AppWindow(QMainWindow):
                 if flag:
                     self.model.data_test.serial = self.ui.specif_serial_lineEdit.text()
                     self.lab_test_second_force_gui(False)
-                    if self.model.data_test.type_test == 'conv':
+                    type_test = self.model.get_type_test()
+                    if type_test == TypeTest.CONV:
                         self._init_conv_graph()
                         self._conv_win_clear()
                         self.conv_test_fill_template()
@@ -627,7 +628,7 @@ class AppWindow(QMainWindow):
                     else:
                         self._lab_win_clear()
                         self.fill_gui_lab_test()
-                        if self.model.data_test.type_test == 'lab_cascade':
+                        if type_test == TypeTest.LAB_CASCADE:
                             flag = self.specif_read_lab_cascade_table()
                             if flag:
                                 self._init_lab_graph()
@@ -635,13 +636,13 @@ class AppWindow(QMainWindow):
                             else:
                                 self.specif_msg_none_cascade_speed()
 
-                        elif self.model.data_test.type_test == 'lab_hand':
+                        elif type_test == TypeTest.LAB_HAND:
                             speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                             if speed:
                                 self.model.data_test.speed_test = speed
                                 self._init_lab_graph()
                                 self.begin_test()
-                        elif self.model.data_test.type_test == 'temper':
+                        elif type_test == TypeTest.TEMPER:
                             speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
                             if speed:
                                 self.model.data_test.speed_test = speed
@@ -709,11 +710,11 @@ class AppWindow(QMainWindow):
 
     @log_exceptions
     def save_log_begin_test(self):
-        type_test = self.model.data_test.type_test
+        type_test = self.model.get_type_test()
         amort = self.model.data_test.amort
-        if type_test == 'lab_hand' or type_test == 'temper':
+        if type_test in (TypeTest.LAB_HAND, TypeTest.TEMPER):
             speed = self.model.data_test.speed_test
-        elif type_test == 'lab_cascade':
+        elif type_test == TypeTest.LAB_CASCADE:
             speed = self.model.data_test.speed_list
         else:
             speed = amort.speed_one
@@ -724,7 +725,7 @@ class AppWindow(QMainWindow):
         limit_recoil_one = f'{amort.min_recoil}~{amort.max_recoil}'
         limit_recoil_two = f'{amort.min_recoil_2}~{amort.max_recoil_2}'
 
-        txt_log = (f'Start {type_test} --> n={amort.name}, s={speed}, '
+        txt_log = (f'Start {type_test.name.lower()} --> n={amort.name}, s={speed}, '
                     f'dim={dimensions}, h={amort.hod}, '
                     f's_o={amort.speed_one}, s_t={amort.speed_two}, '
                     f'l_c_o={limit_comp_one}, l_c_t={limit_comp_two}, '
@@ -756,9 +757,11 @@ class AppWindow(QMainWindow):
     def begin_test(self):
         self.main_stop_state(True)
         self.main_btn_state(False)
+        
+        type_test = self.model.get_type_test()
 
-        if self.model.data_test.type_test != 'conv':
-            if self.model.data_test.type_test == 'temper':
+        if type_test != TypeTest.CONV:
+            if type_test == TypeTest.TEMPER:
                 self.model.data_test.reset_temper_test()
                 
             self.model.list_lab_result = []
@@ -887,8 +890,7 @@ class AppWindow(QMainWindow):
 
     @log_exceptions
     def _update_lab_data(self):
-        type_test = self.model.data_test.type_test
-        if type_test == 'lab':
+        if self.model.get_type_test() == TypeTest.LAB:
             if self.controller.stage == Stage.TEST_SPEED_ONE:
                 self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
                 self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
@@ -950,16 +952,15 @@ class AppWindow(QMainWindow):
 
     @Slot()
     def slot_lab_test_stop(self):
-        type_test = self.model.data_test.type_test
         self.ui.test_cancel_btn.setEnabled(True)
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
-
-        if type_test == 'lab_hand':
+        type_test = self.model.get_type_test()
+        if type_test == TypeTest.LAB_HAND:
             self.ui.lab_speed_le.setReadOnly(False)
             self.ui.test_change_speed_btn.setVisible(True)
-
-        elif type_test == 'lab' or type_test == 'lab_cascade':
+            
+        elif type_test in (TypeTest.LAB, TypeTest.LAB_CASCADE):
             self.ui.lab_GraphWidget.clear()
             self.graph.fill_compare_graph(self.model.list_lab_result)
 
@@ -1002,7 +1003,7 @@ class AppWindow(QMainWindow):
     def open_win_settings(self):
         self.main_btn_state(False)
         self.main_ui_state(False)
-        self.model.data_test.type_test = 'hand'
+        self.model.set_type_test(TypeTest.SETTINGS)
         self.win_set.start_param_win_set()
         self.win_set.show()
 
