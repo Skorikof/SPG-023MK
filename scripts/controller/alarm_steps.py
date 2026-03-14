@@ -5,6 +5,7 @@ from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
 from .stages import Stage, TypeTest
+from model import Model
 
 
 @dataclass
@@ -39,7 +40,7 @@ class AlarmSteps:
                                                   stop_gear=False, emit_stage=False),
     }
 
-    def __init__(self, model):
+    def __init__(self, model: Model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
         self.signals = AlarmSignals()
@@ -50,6 +51,8 @@ class AlarmSteps:
         self.model.fc_control(tag="stop", adr=2)
         self.model.reader_stop_test()
         self.model.write_bit_force_cycle(0)
+        if self.model.get_type_test() == TypeTest.LAB_CASCADE:
+            self.model.write_end_test_in_archive()
 
     def _set_common_alarm_flags(self, tag: str):
         self.model.flag_test_launch = False

@@ -691,14 +691,17 @@ class Model:
             
     def work_interrupted_operator(self):
         self.signals.set_stage.emit(Stage.WAIT)
-        self.flag_test_launch = False
-        self.flag_test = False
         self.lamp_all_switch_off()
         if self.client.flag_connect:
             self.fc_control(**{'tag': 'stop', 'adr': 1})
             self.fc_control(**{'tag': 'stop', 'adr': 2})
             self.reader_stop_test()
             self.write_bit_force_cycle(0)
+        self.flag_test_launch = False
+        if self.flag_test:
+            self.flag_test = False
+            if self.set_type_test() == TypeTest.LAB_CASCADE:
+                self.write_end_test_in_archive()
     
     @log_exceptions
     def flag_reset_start_test(self):
