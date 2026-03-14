@@ -80,14 +80,14 @@ class TestGraph(AbstractGraph):
 
     def fill_compare_graph(self, compare_list):
         try:
-            for ind, graph in enumerate(compare_list):
-                name = f'{graph["speed"]} м/с'
+            for ind, data in enumerate(compare_list):
+                name = f'{data.get("speed")} м/с'
                 
                 pen = pg.mkPen(color=self._select_color_line(ind),
                                width=3,
                                style=self._select_line_style(ind))
-
-                self.widget.plot(graph[0], graph[1], pen=pen, name=name)
+                
+                self.widget.plot(data.get('move'), data.get('force'), pen=pen, name=name)
             
         except Exception as e:
             self.logger.error(e)

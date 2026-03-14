@@ -17,6 +17,9 @@ class TraverseService:
         self.logger = my_logger.get_logger(__name__)
         self.signals = TraverseServiceSignals()
         self.set_trav_point = 0
+        self.flag_freq_1_step = False
+        self.flag_freq_2_step = False
+        self.flag_freq_stop = False
         
     def set_traverse_position(self, point):
         self.set_trav_point = point
@@ -75,6 +78,7 @@ class TraverseService:
                     
                 self.flag_freq_1_step = False
                 self.flag_freq_2_step = False
+                self.flag_freq_stop = False
                 self.model.fc_control(**{'tag': 'speed', 'adr': 2, 'freq': freq})
 
                 if self.model.move_traverse > self.set_trav_point:
@@ -100,8 +104,9 @@ class TraverseService:
                     self.flag_freq_2_step = True
 
             if abs(self.set_trav_point - self.model.move_traverse) <= 0.3:
-                self.model.fc_control(**{'tag': 'stop', 'adr': 2})
-                # print(f'Остановился -- {self.model.move_traverse}')
+                if not self.flag_freq_stop:
+                    self.model.fc_control(**{'tag': 'stop', 'adr': 2})
+                    self.flag_freq_stop = True
                 return True
 
             return False

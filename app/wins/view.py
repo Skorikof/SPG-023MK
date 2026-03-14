@@ -754,9 +754,8 @@ class AppWindow(QMainWindow):
         self.ui.lab_serial_le.setText(f'{self.model.data_test.serial}')
 
     def begin_test(self):
-        # FIXME закоммичено для тестов на столе
-        # self.main_stop_state(True)
-        # self.main_btn_state(False)
+        self.main_stop_state(True)
+        self.main_btn_state(False)
 
         if self.model.data_test.type_test != 'conv':
             if self.model.data_test.type_test == 'temper':
@@ -888,14 +887,18 @@ class AppWindow(QMainWindow):
 
     @log_exceptions
     def _update_lab_data(self):
-        if self.controller.stage == Stage.TEST_SPEED_ONE:
+        type_test = self.model.data_test.type_test
+        if type_test == 'lab':
+            if self.controller.stage == Stage.TEST_SPEED_ONE:
+                self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
+                self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
+
+            elif self.controller.stage == Stage.TEST_SPEED_TWO:
+                self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
+                self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
+        else:
             self.ui.lab_comp_le.setText(f'{self.model.data_test.max_comp}')
             self.ui.lab_recoil_le.setText(f'{self.model.data_test.max_recoil}')
-
-        elif self.controller.stage == Stage.TEST_SPEED_TWO:
-            self.ui.lab_comp_le_2.setText(f'{self.model.data_test.max_comp}')
-            self.ui.lab_recoil_le_2.setText(f'{self.model.data_test.max_recoil}')
-
         self.ui.lab_now_temp_le.setText(f'{self.model.data_test.temperature}')
         self.ui.lab_max_temp_le.setText(f'{self.model.data_test.max_temperature}')
         self.ui.lab_speed_le.setText(f'{self.model.data_test.speed_test}')

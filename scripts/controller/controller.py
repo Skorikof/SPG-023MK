@@ -207,7 +207,6 @@ class Controller:
         self.model.stop_gear_end_test()
         self.alarm_steps.step_excess_temperature()
             
-    # FIXME При втором испытании он сразу падает сюда в else и останавливает испытание, соответственно пока отключена кнопка
     @log_exceptions 
     def _step_yellow_btn_push(self):
         if self.model.flag_test is False:
@@ -250,7 +249,7 @@ class Controller:
             self.model.write_emergency_force_start_test()
 
             if self.model.flag_repeat:
-                self.set_next_stage(Stage.REPEAT_TEST)
+                self.set_stage(Stage.REPEAT_TEST)
 
             else:
                 if self.model.move_traverse < 10:
@@ -270,27 +269,29 @@ class Controller:
         иначе моментальная остановка
         """
         self.model.flag_reset_stop_test()
+        self.model.stop_collect()
         self.model.stop_gear_end_test()
 
     def _dispatch_test_by_type(self):
         type_test = self.model.data_test.type_test
         if type_test == 'conv':
             self.signals.conv_win_test.emit()
+            self.model.flag_test = True
             self.model.test_on_two_speed(1)
-            return
-        
-        self.signals.lab_win_test.emit()
-        handlers = {
-            'lab': self.model.test_on_two_speed(1),
-            'lab_hand': self.model.test_lab_hand_speed,
-            'lab_cascade': self._start_cascade_test,
-            'temper': self._start_temper_test,
-        }
-        handler = handlers.get(type_test)
-        if handler:
-            handler()
         else:
-            self.logger.warning(f'Unknown type tese: {type_test}')
+            self.signals.lab_win_test.emit()
+            handlers = {
+                'lab': self.model.test_on_two_speed(1),
+                'lab_hand': self.model.test_lab_hand_speed,
+                'lab_cascade': self._start_cascade_test,
+                'temper': self._start_temper_test,
+            }
+            handler = handlers.get(type_test, self.model.test_on_two_speed(1))
+            if handler:
+                self.model.flag_test = True
+                handler()
+            else:
+                self.logger.warning(f'Unknown type test: {type_test}')
         
     def _start_cascade_test(self):
         self.model.reset_cascade_speed()
@@ -403,7 +404,7 @@ class Controller:
     def _stage_test_move_cycle(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            QTimer.singleShot(100, lambda: self.model.pumping())
+            self.model.pumping()
 
     def _exit_test_move_cycle(self):
         pass
@@ -416,7 +417,7 @@ class Controller:
     def _stage_pumping(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            QTimer.singleShot(100, lambda: self._dispatch_test_by_type())
+            self.set_stage(Stage.WAIT)
             self._dispatch_test_by_type()
 
     def _exit_pumping(self):
@@ -430,11 +431,11 @@ class Controller:
     def _stage_test_speed_one(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            # self.model.save_result_cycle() # FIXME
             if self.model.data_test.type_test == 'conv':
                 self.model.result_conveyor_test('one')
+            self.model.save_data_test_in_archive()
             self.model.write_end_test_in_archive()
-            QTimer.singleShot(100, lambda: self.model.test_on_two_speed(2))
+            self.model.test_on_two_speed(2)
 
     def _exit_test_speed_one(self):
         pass
@@ -447,12 +448,11 @@ class Controller:
     def _stage_test_speed_two(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            # self.model.save_result_cycle() # FIXME
+            self.model.save_data_test_in_archive()
             if self.model.data_test.type_test == 'conv':
                 self.model.result_conveyor_test('two')
-            # self.set_stage(Stage.WAIT)
             self.model.write_end_test_in_archive()
-            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
+            self.model.stop_gear_end_test()
 
     def _exit_test_speed_two(self):
         pass
@@ -465,28 +465,25 @@ class Controller:
     def _stage_test_lab_hand_speed(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            # self.model.save_result_cycle() # FIXME
-            # self.set_stage(Stage.WAIT)
+            self.model.save_data_test_in_archive()
             self.model.write_end_test_in_archive()
-            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
+            self.model.stop_gear_end_test()
 
     def _exit_test_lab_hand_speed(self):
         pass
     
     #==========
 
-    # FIXME QTimer.singleShot(100, lambda: func) after stop_collect()
     def _enter_test_lab_cascade(self):
         pass
 
     def _stage_test_lab_cascade(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            # self.model.save_result_cycle() # FIXME
+            self.model.save_data_test_in_archive()
             self.model.set_next_step_count_cascade()
             self.model.test_lab_cascade()
             if self.model.get_flag_cascade_done():
-                # self.set_stage(Stage.WAIT)
                 self.model.write_end_test_in_archive()
                 self.model.stop_gear_end_test()
 
@@ -500,12 +497,11 @@ class Controller:
 
     def _stage_test_temper(self):
         if self.model.check_finish_temper_test():
-            # self.model.save_result_cycle() # FIXME
-            # self.set_stage(Stage.WAIT)
+            self.model.save_temper_test_in_archive()
             self.model.stop_cycle_collection()
             self.model.stop_collect()
             self.model.write_end_test_in_archive()
-            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
+            self.model.stop_gear_end_test()
 
     def _exit_test_temper(self):
         pass
@@ -518,7 +514,7 @@ class Controller:
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
             self.model.stop_collect()
-            QTimer.singleShot(100, lambda: self.model.stop_gear_min_pos())
+            self.model.stop_gear_min_pos()
 
     def _exit_stop_gear_end_test(self):
         pass
@@ -544,6 +540,7 @@ class Controller:
                 else:
                     self.signals.lab_test_stop.emit()
             self.set_stage(Stage.WAIT)
+            self.set_next_stage(Stage.WAIT)
 
     def _exit_stop_gear_min_pos(self):
         pass
@@ -559,6 +556,7 @@ class Controller:
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
             self.set_stage(Stage.WAIT)
+            self.set_next_stage(Stage.WAIT)
 
     def _exit_stop_test(self):
         pass
@@ -571,7 +569,7 @@ class Controller:
     def _stage_search_hod(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            QTimer.singleShot(100, lambda: self.model.stop_gear_end_test())
+            self.model.stop_gear_end_test()
 
     def _exit_search_hod(self):
         pass

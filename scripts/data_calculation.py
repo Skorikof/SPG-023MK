@@ -104,7 +104,7 @@ class CalcData:
             self.logger.error(e)
 
     def middle_min_and_max_force(self, force: list):
-        """Усреднение максимального и инимального усилия"""
+        """Усреднение максимального и минимального усилия"""
         try:
             max_rec = max(force)
             max_comp = abs(min(force))
@@ -126,16 +126,16 @@ class CalcData:
             return max_rec, max_comp
         
     def middle_min_and_max_force_array(self, force: np.array):
-        """Вычисление и усреднение максимального и инимального усилия из массива"""
-        return np.max(force[1]), abs(min(force[1]))
+        """Вычисление и усреднение максимального и минимального усилия из массива"""
+        return np.max(force[1]), abs(np.min(force[1]))
         
-    def offset_move_by_hod(self, amort, min_p):
-        """Смещение хода на графике от хода поршня"""
-        try:
-            return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 1)
+    # def offset_move_by_hod(self, amort, min_p):
+    #     """Смещение хода на графике от хода поршня"""
+    #     try:
+    #         return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 1)
 
-        except Exception as e:
-            self.logger.error(e)
+    #     except Exception as e:
+    #         self.logger.error(e)
 
     def calc_power_amort(self, move, force):
         """Расчёт мощности"""
@@ -193,7 +193,7 @@ class CalcData:
             force_avg = (force_min + force_max) / 2
             dynamic = (force_avg + static) / 2
             
-            return dynamic
+            return round(dynamic, 1)
             
         except Exception as e:
             self.logger.error(f"Error calculating dynamic force: {e}")

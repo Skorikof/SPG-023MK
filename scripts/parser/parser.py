@@ -29,7 +29,8 @@ class ParserSPG023MK:
             
     def pars_response_from_buffer(self, res):
         try:
-            if res.get('count') == []:
+            force_data = res.get('force', [])
+            if not force_data:
                 return None
             
             result = {
@@ -38,10 +39,10 @@ class ParserSPG023MK:
                 'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
                 'state': self._register_state(res.get('state')[-1]),
                 'state_list': self._bits16(res.get('state')[-1]),
-                'temper': res.get('temper')[-1] * 0.01,
+                'temper': round(res.get('temper')[-1] * 0.01, 1),
             }
             return result
-            
+        
         except Exception as e:
             self.logger.error(e)
             return None

@@ -137,8 +137,7 @@ class Model:
     def _start_param_model(self):
         self._init_timer_clear_statusbar()
         self.client.connect_client()
-        # FIXME таймер жёлтой кнопки
-        # self._init_timer_yellow_btn()
+        self._init_timer_yellow_btn()
 
         if self.client.flag_connect:
             self.writer = Writer(self.client.client)
@@ -270,7 +269,7 @@ class Model:
 
     @log_exceptions
     def yellow_btn_click(self):
-        if self.state_dict.get('yellow_btn', True) is False:
+        if self.state_dict.get('yellow_btn', False) is True:
             if self.yellow_rattle is False:
                 self.time_push_yellow = time.monotonic()
                 self.signals.test_launch.emit(True)
@@ -310,8 +309,7 @@ class Model:
     def reset_nmt(self):
         """Сбросить сохранённую НМТ в коллекторе."""
         self.collector.clear_nmt()
-    
-    # FIXME
+
     def is_nmt_reached(self):
         return self.flag_nmt_reached
 
@@ -322,12 +320,11 @@ class Model:
         else:
             self._pars_buffer_result(response)
 
-        # FIXME при включении проскакивает шум с жёлтой кнопки и отрубается испытание
-        # if self.flag_test_launch is True:
-        #     if not self.timer_yellow.isActive():
-        #         self.timer_yellow.start()
-        #     else:
-        #         pass
+        if self.flag_test_launch is True:
+            if not self.timer_yellow.isActive():
+                self.timer_yellow.start()
+            else:
+                pass
 
     @log_exceptions
     def _pars_regs_result(self, res):
@@ -346,8 +343,8 @@ class Model:
             self.counter = result.get('counter')
             self.data_test.force_alarm = result.get('force_a')
 
-            self.data_test.first_temperature = result.get('first_t')
-            self.data_test.second_temperature = result.get('second_t')
+            self.data_test.first_temperature = round(result.get('first_t'), 1)
+            self.data_test.second_temperature = round(result.get('second_t'), 1)
             
             self.data_test.temperature = max(
                 self.data_test.first_temperature,
@@ -369,7 +366,7 @@ class Model:
     @log_exceptions
     def _pars_buffer_result(self, res):
         data = self.parser.pars_response_from_buffer(res)
-        if data is None:
+        if not data:
             if not self.flag_non_buffer:
                 self.flag_non_buffer = True
             self.logger.debug('Response from force sensor is None')
@@ -380,7 +377,7 @@ class Model:
             temperature = data.get('temper')
             self.data_test.temperature = temperature
             self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
-                                                                                self.data_test.max_temperature)
+                                                                              self.data_test.max_temperature)
             if self.data_test.type_test == 'hand':
                 self._send_data_in_set_win(data)
             else:
@@ -418,7 +415,6 @@ class Model:
             ])
         else:
             self.collector.load_program([(Mode.DETECT_ONLY, count_det)], skip_accel=True)
-        self.reader_start_test()
         
     def start_collect_inf_cycle(self):
         self.flag_collect_done = False
@@ -491,8 +487,8 @@ class Model:
             push_force = self.data_test.static_push_force
             self.data_test.dynamic_push_force = 0
         
-        self.data_test.max_recoil = rec_clear + push_force
-        self.data_test.max_comp = comp_clear - push_force
+        self.data_test.max_recoil = round(rec_clear + push_force, 1)
+        self.data_test.max_comp = round(comp_clear - push_force, 1)
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
         
@@ -505,8 +501,10 @@ class Model:
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        
-        self.list_lab_result.append((self.data_test.move, self.data_test.force))
+        data_dict = {'speed': self.data_test.speed_test,
+                     'move': self.data_test.move[:],
+                     'force': self.data_test.force[:]}
+        self.list_lab_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_lab_graph.emit(avg)
@@ -517,8 +515,10 @@ class Model:
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        
-        self.list_conv_result.append((self.data_test.move, self.data_test.force))
+        data_dict = {'speed': self.data_test.speed_test,
+                     'move': self.data_test.move[:],
+                     'force': self.data_test.force[:]}
+        self.list_conv_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_conv_graph.emit(avg)
@@ -811,51 +811,43 @@ class Model:
         self.transition_via_buffer(Stage.POS_SET_GEAR, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
 
-
-    # FIXME Переделать под новую реализацию
-    @log_exceptions
-    def save_result_cycle(self):
-        if self.data_test.type_test in ('lab', 'lab_cascade'):
-            data_dict = {'speed': self.data_test.speed_test,
-                            'move': self.move[:],
-                            'force': self.force[:]}
-            self.list_lab_result.append(data_dict)
-        self.save_data_in_archive()
-            
     def write_data_in_archive(self, tag, data=None):
         self.save_arch.write_arch_out(tag, data)
-            
-    @log_exceptions
-    def save_data_in_archive(self):
-        if self.data_test.type_test != 'temper':
-            data_dict = {'move_graph': self.data_test.move,
-                        'force_graph': self.data_test.force,
-                        'type_test': self.data_test.type_test,
-                        'speed': self.data_test.speed_test,
-                        'operator_name': self.data_test.operator.name,
-                        'operator_rank': self.data_test.operator.rank,
-                        'serial': self.data_test.serial,
-                        'amort': self.data_test.amort,
-                        'flag_push_force': int(self.data_test.flag_push_force),
-                        'static_push_force': self.data_test.static_push_force,
-                        'dynamic_push_force': self.data_test.dynamic_push_force,
-                        'max_temperature': self.data_test.max_temperature}
-        else:
-            data_dict = {'temper_graph': self.data_test.temper_list,
-                        'temper_recoil_graph': self.data_test.recoil_list,
-                        'temper_comp_graph': self.data_test.comp_list,
-                        'type_test': self.data_test.type_test,
-                        'speed': self.data_test.speed_test,
-                        'operator_name': self.data_test.operator.name,
-                        'operator_rank': self.data_test.operator.rank,
-                        'serial': self.data_test.serial,
-                        'amort': self.data_test.amort,
-                        'flag_push_force': int(self.data_test.flag_push_force),
-                        'static_push_force': self.data_test.static_push_force,
-                        'dynamic_push_force': self.data_test.dynamic_push_force,
-                        'max_temperature': self.data_test.max_temperature}
         
+    @log_exceptions
+    def save_data_test_in_archive(self):
+        data_dict = {'move_graph': list(self.data_test.move),
+                     'force_graph': list(self.data_test.force),
+                     'type_test': self.data_test.type_test,
+                     'speed': self.data_test.speed_test,
+                     'operator_name': self.data_test.operator.name,
+                     'operator_rank': self.data_test.operator.rank,
+                     'serial': self.data_test.serial,
+                     'amort': self.data_test.amort,
+                     'flag_push_force': int(self.data_test.flag_push_force),
+                     'static_push_force': self.data_test.static_push_force,
+                     'dynamic_push_force': self.data_test.dynamic_push_force,
+                     'max_temperature': self.data_test.max_temperature,
+                    }
         self.write_data_in_archive('data', data_dict)
-            
+    
+    @log_exceptions
+    def save_temper_test_in_archive(self):
+        data_dict = {'temper_graph': self.data_test.temper_list[:],
+                     'temper_recoil_graph': self.data_test.recoil_list[:],
+                     'temper_comp_graph': self.data_test.comp_list[:],
+                     'type_test': self.data_test.type_test,
+                     'speed': self.data_test.speed_test,
+                     'operator_name': self.data_test.operator.name,
+                     'operator_rank': self.data_test.operator.rank,
+                     'serial': self.data_test.serial,
+                     'amort': self.data_test.amort,
+                     'flag_push_force': int(self.data_test.flag_push_force),
+                     'static_push_force': self.data_test.static_push_force,
+                     'dynamic_push_force': self.data_test.dynamic_push_force,
+                     'max_temperature': self.data_test.max_temperature,
+                    }
+        self.write_data_in_archive('data', data_dict)
+
     def write_end_test_in_archive(self):
         self.write_data_in_archive('end_test')
