@@ -57,11 +57,11 @@ class ReaderThread(QRunnable):
             elif self.read_tag == 'buffer':
                 try:
                     self.result = {'count': [],
-                                    'force_big': [],
-                                    'force_low': [],
-                                    'move': [],
-                                    'state': [],
-                                    'temper': []}
+                                   'force_big': [],
+                                   'force_low': [],
+                                   'move': [],
+                                   'state': [],
+                                   'temper': []}
                     
                     rr = self.client.read_holding_registers(self.reg_buffer,
                                                             count=self.buffer_count * 6,
@@ -86,12 +86,13 @@ class ReaderThread(QRunnable):
                                     self.current_rec = rr.registers[ind]
                                     self.reg_buffer += 6
 
-                                    self.result['count'].append(rr.registers[ind])
-                                    self.result['force_big'].append(rr.registers[ind+1])
-                                    self.result['force_low'].append(rr.registers[ind+2])
-                                    self.result['move'].append(rr.registers[ind+3])
-                                    self.result['state'].append(rr.registers[ind + 4])
-                                    self.result['temper'].append(rr.registers[ind + 5])
+                                    if rr.registers[ind] != 0:
+                                        self.result['count'].append(rr.registers[ind])
+                                        self.result['force_big'].append(rr.registers[ind+1])
+                                        self.result['force_low'].append(rr.registers[ind+2])
+                                        self.result['move'].append(rr.registers[ind+3])
+                                        self.result['state'].append(rr.registers[ind + 4])
+                                        self.result['temper'].append(rr.registers[ind + 5])
 
                                 else:
                                     # txt = (f'addr: {self.reg_buffer} num rec: {self.current_rec} read rec: {rr.registers[ind]}\n')
@@ -112,7 +113,8 @@ class ReaderThread(QRunnable):
                                 else:
                                     self.buffer_count = int(delta_r / 6)
                                     
-                            self.signals.read_result.emit(self.result, self.read_tag)
+                            if self.result.get('count'):
+                                self.signals.read_result.emit(self.result, self.read_tag)
                         
                     # time.sleep(self.PAUSE_BUF)
 

@@ -6,6 +6,41 @@ from scripts.logger import my_logger
 class ParserSPG023MK:
     def __init__(self):
         self.logger = my_logger.get_logger(__name__)
+        self.INVALID_FORCE = -100000
+
+    def _replace_invalid_force(self, values: list[float | None]) -> list[float] | None:
+        """Replace invalid force samples (-100000/None) with nearest valid values.
+
+        Strategy: forward-fill with previous valid value; for leading invalid samples,
+        use the first valid value in the series. If there are no valid samples,
+        returns None.
+        """
+        try:
+            if not values:
+                return None
+
+            valid_first = None
+            for v in values:
+                if v is not None and v != self.INVALID_FORCE:
+                    valid_first = float(v)
+                    break
+
+            if valid_first is None:
+                return None
+
+            out: list[float] = []
+            prev = valid_first
+            for v in values:
+                if v is None or v == self.INVALID_FORCE:
+                    out.append(prev)
+                else:
+                    prev = float(v)
+                    out.append(prev)
+            return out
+
+        except Exception as e:
+            self.logger.error(e)
+            return None
         
     def pars_response_from_regs(self, res):
         try:
@@ -29,20 +64,50 @@ class ParserSPG023MK:
             
     def pars_response_from_buffer(self, res):
         try:
-            force_data = res.get('force', [])
-            if not force_data:
+            count_list = res.get('count') or []
+            force_big = res.get('force_big') or []
+            force_low = res.get('force_low') or []
+            move_list = res.get('move') or []
+            state_list = res.get('state') or []
+            temper_list = res.get('temper') or []
+
+            if not count_list or not force_big or not force_low or not move_list:
                 return None
-            
-            result = {
-                'count': res.get('count')[-1],
-                'force': [self._parse_float(a, b) for a, b in zip(res.get('force_big'), res.get('force_low'))],
-                'move': [self._movement_amount(x, 'pos') for x in res.get('move')],
-                'state': self._register_state(res.get('state')[-1]),
-                'state_list': self._bits16(res.get('state')[-1]),
-                'temper': round(res.get('temper')[-1] * 0.01, 1),
+
+            parse_float = self._parse_float
+            movement_amount = self._movement_amount
+
+            count_out: list[int] = []
+            force_out: list[float | None] = []
+            move_out: list[float | None] = []
+            state_out: list[int] = []
+            temper_out: list[int] = []
+
+            for c, fb, fl, mv, st, tp in zip(
+                count_list, force_big, force_low, move_list, state_list, temper_list
+            ):
+                count_out.append(c)
+                force_out.append(parse_float(fb, fl))
+                move_out.append(movement_amount(mv, 'pos'))
+                state_out.append(st)
+                temper_out.append(tp)
+
+            force_sanitized = self._replace_invalid_force(force_out)
+            if force_sanitized is None:
+                return None
+
+            last_state_reg = state_out[-1]
+            last_temp = temper_out[-1]
+
+            return {
+                'count': count_out,
+                'force': force_sanitized,
+                'move': move_out,
+                'state': self._register_state(last_state_reg),
+                'state_list': self._bits16(last_state_reg),
+                'temper': round(last_temp * 0.01, 1),
             }
-            return result
-        
+
         except Exception as e:
             self.logger.error(e)
             return None
@@ -50,13 +115,21 @@ class ParserSPG023MK:
     def _discard_left_data(self, request):
         """Filter out invalid force data points (value -100000) from request."""
         try:
-            force_data = request.get('force', [])
+            force_data = request.get('force') or []
+            move_data = request.get('move') or []
             
             if not force_data:
                 return None
             
-            # Filter indices where force is not -100000
-            valid_ind_f = [i for i, force in enumerate(force_data) if force != -100000]
+            # Filter indices where force is valid and move exists
+            valid_ind_f = [
+                i
+                for i, force in enumerate(force_data)
+                if force is not None
+                and force != self.INVALID_FORCE
+                and i < len(move_data)
+                and move_data[i] is not None
+            ]
             
             if not valid_ind_f:
                 return None

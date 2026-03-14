@@ -369,7 +369,7 @@ class Model:
         if not data:
             if not self.flag_non_buffer:
                 self.flag_non_buffer = True
-            self.logger.debug('Response from force sensor is None')
+                self.logger.debug('Response from force sensor is None')
         else:
             self.flag_non_buffer = False
             self.state_list = data.get('state_list')
@@ -457,7 +457,7 @@ class Model:
         self.force_offset = round(self.force_correct - self.force_koef_offset, 1)
 
         self.move_now = data.get('move')[-1]
-        self.counter = data.get('count')
+        self.counter = data.get('count')[-1]
         self.data_test.first_temperature = self.data_test.temperature
 
         self.signals.win_set_update.emit('buf')
