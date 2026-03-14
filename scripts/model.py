@@ -44,6 +44,31 @@ class Model:
 
         self._start_param_model()
 
+    def _tune_cycle_collector_for_speed(self):
+        """Tune CycleCollector parameters for current speed/stroke.
+        At high speeds with short stroke, the half-cycle time can drop below the
+        fixed gate (default 0.2s) and the collector starts missing turns, which
+        looks like doubled loops on the force-displacement graph.
+        """
+        try:
+            amort = self.data_test.amort
+            hod = int(amort.hod) if amort and amort.hod else 120
+            speed = float(self.data_test.speed_test) if self.data_test.speed_test else None
+            if not speed or speed <= 0:
+                return
+
+            freq = self.calc_data.calc_freq_piston_amort(speed, hod)
+            if not freq or freq <= 0:
+                return
+
+            half_cycle_s = 1.0 / (2.0 * float(freq))
+            # Gate must be < real half-cycle; keep reasonable floor/ceiling.
+            gate_s = max(0.03, min(0.2, 0.45 * half_cycle_s))
+            self.collector.min_halfcycle_fraction = float(gate_s)
+
+        except Exception as e:
+            self.logger.error(e)
+
     def _init_variables(self):
         self.logger = my_logger.get_logger(__name__)
         self.signals = ModelSignals()
@@ -738,6 +763,7 @@ class Model:
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.amort.speed_one
             self.data_test.speed_test = speed
+            self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_SPEED_ONE, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
 
@@ -745,12 +771,14 @@ class Model:
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.amort.speed_two
             self.data_test.speed_test = speed
+            self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_SPEED_TWO, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
         self.start_collect(with_data=True, count_col=3)
         speed = self.data_test.speed_test
+        self._tune_cycle_collector_for_speed()
         self.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
     
@@ -760,6 +788,7 @@ class Model:
             self.start_collect(with_data=True, count_col=3)
             speed = self.data_test.speed_list[self.count_cascade]
             self.data_test.speed_test = speed            
+            self._tune_cycle_collector_for_speed()
             self.transition_via_buffer(Stage.TEST_LAB_CASCADE, speed=speed,
                                        extra_fc={'tag': 'up', 'adr': 1})
         
@@ -769,6 +798,7 @@ class Model:
     def test_temper(self):
         self.start_collect_inf_cycle()
         speed = self.data_test.speed_test
+        self._tune_cycle_collector_for_speed()
         self.transition_via_buffer(Stage.TEST_TEMPER, speed=speed,
                                    extra_fc={'tag': 'up', 'adr': 1})
     
