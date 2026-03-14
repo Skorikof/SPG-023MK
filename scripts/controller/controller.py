@@ -282,17 +282,18 @@ class Controller:
         else:
             self.signals.lab_win_test.emit()
             handlers = {
-                TypeTest.LAB: self.model.test_on_two_speed(1),
+                TypeTest.LAB: lambda: self.model.test_on_two_speed(1),
                 TypeTest.LAB_HAND: self.model.test_lab_hand_speed,
                 TypeTest.LAB_CASCADE: self._start_cascade_test,
                 TypeTest.TEMPER: self._start_temper_test,
             }
-            handler = handlers.get(type_test, self.model.test_on_two_speed(1))
-            if handler:
-                self.model.flag_test = True
-                handler()
-            else:
+            handler = handlers.get(type_test)
+            if handler is None:
                 self.logger.warning(f'Unknown type test: {type_test.name.lower()}')
+                handler = lambda: self.model.test_on_two_speed(1)
+
+            self.model.flag_test = True
+            handler()
         
     def _start_cascade_test(self):
         self.model.reset_cascade_speed()
