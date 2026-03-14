@@ -675,7 +675,6 @@ class Model:
             self.write_bit_unblock_control()
         self.lamp_all_switch_off()
         self.data_test.max_temperature = 0
-        self.flag_test_launch = True
         self.alarm_tag = ''
         self.flag_alarm = False
             

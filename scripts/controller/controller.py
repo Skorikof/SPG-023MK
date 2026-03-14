@@ -379,6 +379,7 @@ class Controller:
 
     def _stage_install_amort(self):
         if self.trav_serv.step_control_traverse_move():
+            self.model.flag_test_launch = True
             self.signals.control_msg.emit('yellow_btn')
 
     def _exit_install_amort(self):
