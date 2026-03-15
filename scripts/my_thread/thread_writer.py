@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
@@ -29,31 +30,30 @@ class WriterThread(QRunnable):
     def run(self):
         if self.tag == 'reg':
             try:
-                succes = False
+                success = False
                 while self.number_attempts < self.max_attempts:
                     try:
                         rw = self.client.write_registers(self.reg_write,
                                                         self.values,
                                                         device_id=1)
-                        
                         if not rw.isError():
                             success = True
                             break
-                        
                         self.number_attempts += 1
                         time.sleep(self.PAUSE_WRITE)
-                        
                     except Exception:
                         pass
                         
                 flag = 'OK!' if success else 'ERROR!'
-
                 self.signals.write_result.emit((flag, self.tag,
                                                 self.reg_write,
                                                 self.values, self.command))
 
             except Exception as e:
                 self.signals.thread_err.emit(f'ERROR in thread_writer reg --> {e}')
+                self.signals.write_result.emit(('ERROR!', self.tag,
+                                                self.reg_write,
+                                                self.values, self.command))
 
         if self.tag == 'FC':
             try:

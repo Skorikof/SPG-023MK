@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class TextMsg:
     def msg_from_controller(msg):
         msg_dict = {'welcome': ('info',

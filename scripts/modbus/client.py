@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pymodbus.client import ModbusSerialClient as ModbusClient
 from pymodbus.framer import FramerType
 

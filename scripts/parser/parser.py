@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import struct
 
 from scripts.logger import my_logger

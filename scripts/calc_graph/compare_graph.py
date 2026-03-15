@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pyqtgraph as pg
 from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtCore import Qt

@@ -1,4 +1,4 @@
-import statistics
+# -*- coding: utf-8 -*-
 import numpy as np
 from struct import pack
 
@@ -105,29 +105,11 @@ class CalcData:
 
     def middle_min_and_max_force(self, force: list):
         """Усреднение максимального и минимального усилия"""
-        try:
-            max_rec = max(force)
-            max_comp = abs(min(force))
-            # if force != []:
-            #     rec_ind = force.index(max(force))
-            #     max_rec = round(statistics.fmean(force[rec_ind - 5:rec_ind + 5]), 1)
-
-            #     comp_ind = force.index(min(force))
-            #     max_comp = round(statistics.fmean(force[comp_ind - 5:comp_ind + 5]), 1)
-            
-            # else:
-            #     max_rec = max_comp = 0
-
-        except Exception as e:
-            max_rec = max_comp = 0
-            self.logger.error(e)
-            
-        finally:
-            return max_rec, max_comp
+        return abs(max(force)), abs(min(force))
         
     def middle_min_and_max_force_array(self, force: np.array):
         """Вычисление максимального и минимального усилия из массива"""
-        return np.max(force), abs(np.min(force))
+        return abs(np.max(force)), abs(np.min(force))
         
     # def offset_move_by_hod(self, amort, min_p):
     #     """Смещение хода на графике от хода поршня"""

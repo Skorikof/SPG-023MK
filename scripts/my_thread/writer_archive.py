@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 from datetime import datetime
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot

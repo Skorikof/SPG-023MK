@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Qt

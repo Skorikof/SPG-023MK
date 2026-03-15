@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from PySide6.QtCore import QThreadPool, QObject, Signal, Slot
 
 from scripts.logger import my_logger
