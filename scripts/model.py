@@ -143,6 +143,7 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.flag_nmt_reached = False
+        self.flag_mid_reached = False
         
     def _init_signals(self):
         self.reader.signals.result.connect(self._reader_result)
@@ -349,6 +350,9 @@ class Model:
 
     def is_nmt_reached(self):
         return self.flag_nmt_reached
+    
+    def is_mid_reached(self):
+        return self.flag_mid_reached
 
     @log_exceptions
     def _reader_result(self, response, tag):
@@ -438,6 +442,8 @@ class Model:
             self._pars_result_avarage_cycles(avg)
         elif mode == Mode.NMT_FINAL:
             self.flag_nmt_reached = True
+        elif mode == Mode.MID_FINAL:
+            self.flag_mid_reached = True
         self.flag_collect_done = True
         
     def start_collect(self, with_data: bool, *, count_det: int=1, count_col: int=1):
@@ -482,6 +488,13 @@ class Model:
         self.collector.set_nmt_params(tolerance=tolerance_mm, confirm_points=confirm_points)
         self.collector.load_program([(Mode.NMT_FINAL, None)], skip_accel=True, preserve_nmt=True)
 
+    def start_mid_position(self, *, tolerance_mm: float = 2.0, confirm_points: int = 2):
+        self.flag_collect_done = False
+        self.flag_collect_error = False
+        self.flag_mid_reached = False
+        self.collector.set_mid_params(tolerance=tolerance_mm, confirm_points=confirm_points)
+        self.collector.load_program([(Mode.MID_FINAL, None)], skip_accel=True, preserve_nmt=True)
+        
     def stop_collect(self):
         self.reader_stop_test()
         self.write_bit_force_cycle(0)
@@ -848,8 +861,7 @@ class Model:
                                    extra_fc={'tag': 'up', 'adr': 1})
         
     def move_gear_set_pos(self):
-        self.alarm_tag = ''
-        self.flag_alarm = False
+        self.start_mid_position()
         hod = self.data_test.amort.hod if self.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('slow', hod)
         self.transition_via_buffer(Stage.POS_SET_GEAR, speed=speed,

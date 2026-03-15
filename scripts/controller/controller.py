@@ -547,7 +547,6 @@ class Controller:
                 else:
                     self.signals.lab_test_stop.emit()
             self.set_stage(Stage.WAIT)
-            self.set_next_stage(Stage.WAIT)
 
     def _exit_stop_gear_min_pos(self):
         pass
@@ -563,7 +562,6 @@ class Controller:
             if not self.model.flag_alarm:
                 self.signals.cancel_test.emit()
             self.set_stage(Stage.WAIT)
-            self.set_next_stage(Stage.WAIT)
 
     def _exit_stop_test(self):
         pass
@@ -583,19 +581,15 @@ class Controller:
         
     #==========
 
-    # FIXME Пока не реализован
     def _enter_pos_set_gear(self):
         self.signals.control_msg.emit('gear_set_pos')
 
     def _stage_pos_set_gear(self):
-        if self.model.gear_referent:
-            if self.model.max_pos:
-                if abs(14 - self.model.move_now) < 5:
-                    self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-                    self.model.reader_stop_test()
-                    self.model.write_bit_force_cycle(0)
-                    self.set_stage(Stage.WAIT)
-                    self.signals.reset_ui.emit()
+        if self.model.is_mid_reached():
+            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
+            self.model.stop_collect()
+            self.set_stage(Stage.WAIT)
+            self.signals.reset_ui.emit()
 
     def _exit_pos_set_gear(self):
         pass

@@ -55,6 +55,7 @@ class Mode(Enum):
     WAIT_STOP = 3
     NMT_CAPTURE = 4
     NMT_FINAL = 5
+    MID_FINAL = 6
 
 
 class CycleCollector:
@@ -123,6 +124,24 @@ class CycleCollector:
         self.nmt_tolerance = 0.5
         self.nmt_confirm_points = 3
         self._nmt_in_tol_points = 0
+        
+        # -------- ВМТ (верхняя мёртвая точка) --------
+        self.vmt_values = deque(maxlen=20)
+        self.vmt_estimate = None
+
+        # -------- Середина хода (ВМТ->НМТ, первый проход) --------
+        self.mid_target_pos = None
+        self.mid_tolerance = 1.0
+        self.mid_confirm_points = 3
+        self._mid_in_tol_points = 0
+        self._mid_armed = False
+        self._mid_nmt_ref = None
+        self._mid_vmt_ref = None
+
+        # -------- экстремумы полупериода (между разворотами) --------
+        self.half_min_pos = float("inf")
+        self.half_max_pos = float("-inf")
+        self._start_pos = None
 
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
         """Задать целевую НМТ (в тех же единицах, что и `move`)."""
@@ -134,6 +153,10 @@ class CycleCollector:
     def get_nmt_estimate(self):
         """Оценка НМТ по предыдущим циклам (или None)."""
         return self.nmt_estimate
+    
+    def get_vmt_estimate(self):
+        """Оценка ВМТ по предыдущим циклам (или None)."""
+        return self.vmt_estimate
 
     def _update_nmt_from_cycle_extrema(self):
         """Обновить оценку НМТ по минимуму перемещения в текущем полном цикле."""
@@ -147,6 +170,31 @@ class CycleCollector:
                 self.nmt_estimate = float(np.median(arr))
         except Exception:
             pass
+        
+    def _update_vmt_from_value(self, vmt_value: float):
+        """Обновить оценку ВМТ по значению максимума (обычно на развороте в ВМТ)."""
+        try:
+            vmt = float(vmt_value)
+            self.vmt_values.append(vmt)
+            arr = np.asarray(self.vmt_values, dtype=np.float32)
+            if arr.size:
+                self.vmt_estimate = float(np.median(arr))
+        except Exception:
+            pass
+
+    def set_mid_params(self, *, tolerance: float = 1.0, confirm_points: int = 2):
+        """Настройки для остановки в середине хода (режим MID_FINAL)."""
+        self.mid_tolerance = float(tolerance)
+        self.mid_confirm_points = max(1, int(confirm_points))
+        self._mid_in_tol_points = 0
+
+    def _reset_half_extrema(self, pos):
+        try:
+            p = float(pos)
+        except Exception:
+            return
+        self.half_min_pos = p
+        self.half_max_pos = p
     
     @staticmethod
     def log_exceptions(func):
@@ -308,6 +356,13 @@ class CycleCollector:
     def _process_sample(self, pos, force, now):
         if self.prev_pos is None:
             self.prev_pos = pos
+            if self._start_pos is None:
+                try:
+                    self._start_pos = float(pos)
+                except Exception:
+                    self._start_pos = None
+            if self.half_min_pos == float("inf"):
+                self._reset_half_extrema(pos)
             return
         v = (pos - self.prev_pos) * float(self._current_sample_rate)
         self._update_threshold(v)
@@ -336,12 +391,32 @@ class CycleCollector:
                             self.last_step_result = [float(target), float(pos)]
                             self._advance_program_if_needed(mode, target_cycles)
                             return
+                if mode == Mode.MID_FINAL:
+                    if self._mid_armed and self.mid_target_pos is not None:
+                        if float(v) < 0.0:
+                            tol = float(self.mid_tolerance)
+                            if abs(float(pos) - float(self.mid_target_pos)) <= tol:
+                                self._mid_in_tol_points += 1
+                            else:
+                                self._mid_in_tol_points = 0
+                            if self._mid_in_tol_points >= int(self.mid_confirm_points):
+                                self.last_step_result = [float(self.mid_target_pos), float(pos)]
+                                self._advance_program_if_needed(mode, target_cycles)
+                                return
 
         sign = self._sign(v)
+        if self.half_min_pos == float("inf"):
+            self._reset_half_extrema(pos)
+        else:
+            self.half_min_pos = min(self.half_min_pos, float(pos))
+            self.half_max_pos = max(self.half_max_pos, float(pos))
         self.points_after_turn += 1
         turn_detected = self._detect_turn(sign)
         if turn_detected:
+            prev_sign = int(self.prev_sign)
+            self._process_half_turn(prev_sign, int(sign), pos)
             self._process_turn(now)
+            self._reset_half_extrema(pos)
         self._append_data_if_needed(pos, force)
         if sign != 0:
             self.prev_sign = sign
@@ -356,6 +431,35 @@ class CycleCollector:
                 self.turn_count += 1
                 return True
         return False
+    
+    @log_exceptions
+    def _process_half_turn(self, prev_sign: int, sign: int, pos):
+        """
+        Обработка разворота на каждом полупериоде (смена знака скорости).
+        prev_sign - знак движения ДО разворота, sign - ПОСЛЕ.
+        """
+        if prev_sign == 1 and sign == -1:
+            vmt = float(self.half_max_pos if self.half_max_pos != float("-inf") else pos)
+            self._update_vmt_from_value(vmt)
+            if self.phase_state == PhaseState.RUN:
+                step = self._current_program_step()
+                if step is not None:
+                    mode, _ = step
+                    if mode == Mode.MID_FINAL and not self._mid_armed:
+                        nmt_ref = None
+                        if self.half_min_pos != float("inf"):
+                            nmt_ref = float(self.half_min_pos)
+                        elif self.nmt_estimate is not None:
+                            nmt_ref = float(self.nmt_estimate)
+                        elif self._start_pos is not None:
+                            nmt_ref = float(self._start_pos)
+
+                        if nmt_ref is not None:
+                            self._mid_nmt_ref = float(nmt_ref)
+                            self._mid_vmt_ref = float(vmt)
+                            self.mid_target_pos = 0.5 * (float(vmt) + float(nmt_ref))
+                            self._mid_armed = True
+                            self._mid_in_tol_points = 0
     
     @log_exceptions
     def _process_turn(self, now):
@@ -406,6 +510,8 @@ class CycleCollector:
             return self._handle_nmt_capture()
         if mode == Mode.NMT_FINAL:
             return self._handle_nmt_final()
+        if mode == Mode.MID_FINAL:
+            return self._handle_mid_final()
         return False
 
     @log_exceptions
@@ -500,6 +606,11 @@ class CycleCollector:
     def _handle_nmt_final(self) -> bool:
         """Доворот до НМТ: завершение происходит в _process_sample (для быстрого стопа)."""
         return False
+    
+    @log_exceptions
+    def _handle_mid_final(self) -> bool:
+        """Остановка в середине хода (ВМТ->НМТ): завершение происходит в _process_sample."""
+        return False
 
     @log_exceptions
     def _advance_program_if_needed(self, mode, target_cycles):
@@ -574,5 +685,13 @@ class CycleCollector:
         self.cycle_completed = False
         self.cycle_callback = None
         self._nmt_in_tol_points = 0
+        self.mid_target_pos = None
+        self._mid_in_tol_points = 0
+        self._mid_armed = False
+        self._mid_nmt_ref = None
+        self._mid_vmt_ref = None
+        self.half_min_pos = float("inf")
+        self.half_max_pos = float("-inf")
+        self._start_pos = None
         if clear_nmt:
             self.clear_nmt()
