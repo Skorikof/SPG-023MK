@@ -130,7 +130,7 @@ class TraverseService:
             if self.model.switch_dict.get('highest_position', False) is True:
                 self.model.fc_control(**{'tag': 'stop', 'adr': 2})
                 
-                self.model.init_timer_koef_force() # FIXME Тут происходит запуск обнудения датчика усилия
+                self.model.init_timer_koef_force()
 
                 return True
             return False

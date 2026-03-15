@@ -201,6 +201,9 @@ class Model:
         
     def get_speed_test(self) -> float:
         return self.data_test.speed_test
+    
+    def get_state_cycle_force(self) -> bool:
+        return self.state_dict.get('cycle_force', False)
 
     def check_buffer_state(self, res, state):
         self.buffer_state = [res, state]

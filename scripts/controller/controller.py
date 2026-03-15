@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
 from scripts.logger import my_logger
@@ -316,19 +317,24 @@ class Controller:
     #==========
 
     def _enter_wait_buffer(self):
-        pass
+        self._wait_buf_t0 = time.monotonic()
+        self._check_next_stage = False
 
     def _stage_wait_buffer(self):
         """Блок ожидания включения записи в буфер и переключение на следующий шаг"""
+        if self._check_next_stage is True:
+            return
+        
+        if self.model.get_state_cycle_force():
+            self._check_next_stage = True
+            self.model.reader_start_test()
+            self.set_stage(self.next_stage)
+            return
+        
+        timed_out = (time.monotonic() - self._wait_buf_t0) > 1
         res, state = self.model.get_buffer_state()
-        if res == 'OK!':
-            if state == 'buffer_on':
-                self.model.reader_start_test()
-                self.set_stage(self.next_stage)
-            elif state == 'buffer_off':
-                pass
-        elif res == 'ERROR!':
-            self.model.reset_buffer_state()
+        if (res == 'ERROR!' and state == 'buffer_on') or timed_out:
+            self._wait_buf_t0 = time.monotonic()
             self.model.write_bit_force_cycle(1)
 
     def _exit_wait_buffer(self):

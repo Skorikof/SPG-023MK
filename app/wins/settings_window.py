@@ -44,8 +44,7 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.model.reader_stop()
 
     def closeEvent(self, event):
-        _, state = self.model.get_buffer_state()
-        if state == 'buffer_on':
+        if self.model.get_state_cycle_force():
             self.model.write_bit_force_cycle(0)
         self.signals.closed.emit()
 
