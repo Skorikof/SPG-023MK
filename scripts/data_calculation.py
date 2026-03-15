@@ -126,8 +126,8 @@ class CalcData:
             return max_rec, max_comp
         
     def middle_min_and_max_force_array(self, force: np.array):
-        """Вычисление и усреднение максимального и минимального усилия из массива"""
-        return np.max(force[1]), abs(np.min(force[1]))
+        """Вычисление максимального и минимального усилия из массива"""
+        return np.max(force), abs(np.min(force))
         
     # def offset_move_by_hod(self, amort, min_p):
     #     """Смещение хода на графике от хода поршня"""
