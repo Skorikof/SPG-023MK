@@ -785,6 +785,8 @@ class AppWindow(QMainWindow):
         self.ui.lab_recoil_le.clear()
         self.ui.lab_comp_le.clear()
         self.ui.lab_speed_le.clear()
+        self.ui.lab_power_le.clear()
+        self.ui.lab_freq_le.clear()
         self.ui.lab_now_temp_le.clear()
         self.ui.lab_max_temp_le.clear()
         self.ui.lab_serial_le.clear()

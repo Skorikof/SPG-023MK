@@ -9,7 +9,7 @@ class CalcData:
     SPEED_CONFIG = {
         (100, float('inf')): {'slow': 0.03, 'medium': 0.1, 'fast': 0.2},
         (50, 100): {'slow': 0.02, 'medium': 0.06, 'fast': 0.1},
-        (0, 50): {'slow': 0.01, 'medium': 0.03, 'fast': 0.03},
+        (0, 50): {'slow': 0.02, 'medium': 0.03, 'fast': 0.03},
     }
     
     def __init__(self):

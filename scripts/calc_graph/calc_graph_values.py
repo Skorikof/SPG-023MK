@@ -83,31 +83,31 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    # def interpoly_line_coord(self, x, y):
-    #     try:
-    #         f = interpolate.interp1d(x, y, kind='cubic')
-    #         x_new = np.linspace(0, max(x), num=10000)
-    #         y_new = f(x_new)
-    #         return x_new, y_new
-
-    #     except Exception as e:
-    #         self.logger.error(e)
-    #         return x, y
-
-    def interpoly_line_coord(self, x, y, n=100):
+    def interpoly_line_coord(self, x, y):
         try:
-            x = np.asarray(x)
-            y = np.asarray(y)
-
-            idx = np.argsort(x)
-            x, y = x[idx], y[idx]
-
-            f = interpolate.interp1d(x, y, kind='linear', fill_value="extrapolate")
-            x_new = np.linspace(x.min(), x.max(), n)
+            f = interpolate.interp1d(x, y, kind='cubic')
+            x_new = np.linspace(0, max(x), num=1000)
             y_new = f(x_new)
-
             return x_new, y_new
-        
+
         except Exception as e:
             self.logger.error(e)
+            return x, y
+
+    # def interpoly_line_coord(self, x, y, n=100):
+    #     try:
+    #         x = np.asarray(x)
+    #         y = np.asarray(y)
+
+    #         idx = np.argsort(x)
+    #         x, y = x[idx], y[idx]
+
+    #         f = interpolate.interp1d(x, y, kind='linear', fill_value="extrapolate")
+    #         x_new = np.linspace(x.min(), x.max(), n)
+    #         y_new = f(x_new)
+
+    #         return x_new, y_new
+        
+    #     except Exception as e:
+    #         self.logger.error(e)
             

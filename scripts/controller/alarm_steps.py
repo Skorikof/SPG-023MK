@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
 from .stages import Stage, TypeTest
-from model import Model
+from scripts.model import Model
 
 
 @dataclass
