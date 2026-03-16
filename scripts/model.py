@@ -446,7 +446,7 @@ class Model:
             self.flag_mid_reached = True
         self.flag_collect_done = True
         
-    def start_collect(self, with_data: bool, *, count_det: int=1, count_col: int=1):
+    def start_collect(self, with_data: bool, *, count_det: int=2, count_col: int=1):
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.flag_nmt_reached = False
@@ -454,7 +454,7 @@ class Model:
             self.collector.load_program([
             (Mode.DETECT_ONLY, count_det),
             (Mode.COLLECT, count_col),
-            ])
+            ], skip_accel=True)
         else:
             self.collector.load_program([(Mode.DETECT_ONLY, count_det)], skip_accel=True)
         
@@ -536,8 +536,8 @@ class Model:
             push_force = self.data_test.static_push_force
             self.data_test.dynamic_push_force = 0
         
-        self.data_test.max_recoil = round(rec_clear + push_force, 1)
-        self.data_test.max_comp = round(comp_clear - push_force, 1)
+        self.data_test.max_recoil = abs(round(rec_clear + push_force, 2))
+        self.data_test.max_comp = abs(round(comp_clear - push_force, 2))
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
         

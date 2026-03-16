@@ -142,6 +142,9 @@ class CycleCollector:
         self.half_min_pos = float("inf")
         self.half_max_pos = float("-inf")
         self._start_pos = None
+        
+        self.vel_window_points = 5
+        self._pos_window = deque(maxlen=self.vel_window_points + 1)
 
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
         """Задать целевую НМТ (в тех же единицах, что и `move`)."""
@@ -338,7 +341,10 @@ class CycleCollector:
             return self.phase_state
 
         now_real = time.perf_counter()
-        self._update_sample_rate_from_count(data.get("count"), now_real)
+        last_count = data.get("count")
+        if isinstance(last_count, (list, tuple, np.ndarray)) and len(last_count) > 0:
+            last_count = last_count[-1]
+        self._update_sample_rate_from_count(last_count, now_real)
         sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
         
         dt = 1.0 / sr
@@ -364,7 +370,17 @@ class CycleCollector:
             if self.half_min_pos == float("inf"):
                 self._reset_half_extrema(pos)
             return
-        v = (pos - self.prev_pos) * float(self._current_sample_rate)
+        
+        self._pos_window.append(float(pos))
+        sr = float(self._current_sample_rate)
+        if len(self._pos_window) >= 2:
+            n = min(self.vel_window_points, len(self._pos_window) - 1)
+            pos_old = self._pos_window[-(n + 1)]
+            v = (float(pos) - float(pos_old)) * sr / float(n)
+        else:
+            v = (pos - self.prev_pos) * sr
+        
+        # v = (pos - self.prev_pos) * float(self._current_sample_rate)
         self._update_threshold(v)
         self.stop_detector.update(v, now)
         if self.phase_state == PhaseState.RUN and self.stop_detector.is_stopped():
@@ -693,5 +709,6 @@ class CycleCollector:
         self.half_min_pos = float("inf")
         self.half_max_pos = float("-inf")
         self._start_pos = None
+        self._pos_window.clear()
         if clear_nmt:
             self.clear_nmt()
