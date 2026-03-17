@@ -66,7 +66,6 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._stage_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._stage_stop_gear_min_pos,
             Stage.STOP_TEST: self._stage_stop_test,
-            Stage.TEST_PROGRAM: self._stage_testing_prog,
         }
         
         self._enter_handlers = {
@@ -89,7 +88,6 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._enter_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._enter_stop_gear_min_pos,
             Stage.STOP_TEST: self._enter_stop_test,
-            Stage.TEST_PROGRAM: self._enter_testing_prog,
         }
         
         self._exit_handlers = {
@@ -112,7 +110,6 @@ class Controller:
             Stage.STOP_GEAR_END_TEST: self._exit_stop_gear_end_test,
             Stage.STOP_GEAR_MIN_POS: self._exit_stop_gear_min_pos,
             Stage.STOP_TEST: self._exit_stop_test,
-            Stage.TEST_PROGRAM: self._exit_testing_prog,
         }
 
     def _init_signals(self):
@@ -244,7 +241,6 @@ class Controller:
         Точка входа в испытание, определение референтной точки траверсы, если известна,
         то сразу запуск позиционирования для установки амортизатора
         """
-        # self._test_program()
         if self.model.check_max_temper_test():
             self.model.flag_reset_start_test()
             self.model.write_emergency_force_start_test()
@@ -595,28 +591,3 @@ class Controller:
         pass
 
     #==========
-    
-    #--------- testing ---------#
-    def _test_program(self):
-        self.model.start_find_stroke()
-        hod = self.model.data_test.amort.hod if self.model.data_test.amort else 120
-        speed = self.calc_data.definition_speed_by_hod('fast', hod)
-        self.model.transition_via_buffer(Stage.TEST_PROGRAM, speed=speed,
-                                   extra_fc={'tag': 'up', 'adr': 1})
-
-    def _enter_testing_prog(self):
-        print('enter test stage')
-        print('enter stage buffer start')
-        # self.signals.lab_win_test.emit()
-
-    def _stage_testing_prog(self):
-        if self.model.is_collect_done():
-            print('Congratelations! stroke is done')
-            print(f'{self.model.min_point=}, {self.model.max_point=}, {self.model.stroke=}')
-            self.model.fc_control(**{'tag': 'stop', 'adr': 1})
-            self.set_stage(Stage.WAIT)
-
-    def _exit_testing_prog(self):
-        print('exit test stage')
-        self.model.stop_collect()
-        print('exit stage off sensor')

@@ -143,7 +143,7 @@ class CycleCollector:
         self.half_max_pos = float("-inf")
         self._start_pos = None
         
-        self.vel_window_points = 5
+        self.vel_window_points = 7
         self._pos_window = deque(maxlen=self.vel_window_points + 1)
 
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
