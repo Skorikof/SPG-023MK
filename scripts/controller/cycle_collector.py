@@ -473,7 +473,7 @@ class CycleCollector:
                         if nmt_ref is not None:
                             self._mid_nmt_ref = float(nmt_ref)
                             self._mid_vmt_ref = float(vmt)
-                            self.mid_target_pos = 0.5 * (float(vmt) + float(nmt_ref))
+                            self.mid_target_pos = 0.5 * (float(vmt) + float(nmt_ref)) + 7
                             self._mid_armed = True
                             self._mid_in_tol_points = 0
     

@@ -711,12 +711,11 @@ class Model:
         if self.client.flag_connect:
             self.fc_control(**{'tag': 'stop', 'adr': 1})
             self.fc_control(**{'tag': 'stop', 'adr': 2})
-            self.reader_stop_test()
-            self.write_bit_force_cycle(0)
+            self.stop_collect()
         self.flag_test_launch = False
         if self.flag_test:
             self.flag_test = False
-            if self.set_type_test() == TypeTest.LAB_CASCADE:
+            if self.get_type_test() == TypeTest.LAB_CASCADE:
                 self.write_end_test_in_archive()
     
     @log_exceptions
