@@ -215,7 +215,7 @@ class ReadArchive:
             data = self._fill_obj_archive_data(archive_list[:FIRST_DATA_LENGTH])
             self.type_test = archive_list[3]
             
-            if self.type_test == TYPE_LAB_CASCADE and not self.cascade_meta:
+            if self.type_test == TYPE_LAB_CASCADE and data:
                 self.cascade_meta = data.copy()
 
             list_key = 'move_list' if self.type_test != TYPE_TEMPER else 'temper_list'

@@ -11,7 +11,6 @@ def main():
     try:
         me = singleton.SingleInstance()
         log = my_logger.get_logger(__name__)
-        log.info('Starting view archive')
 
         app = QApplication(sys.argv)
 
@@ -21,7 +20,6 @@ def main():
         sys.exit(app.exec())
 
     except:
-        print('sys.exit(0)')
         sys.exit(0)
 
 

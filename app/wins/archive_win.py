@@ -403,8 +403,8 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.archive_fill.fill_lbl_push_force('2', 'base')
                 
                 self.speed_base_le.setText(f'{response.get("speed", 0)}')
-                self.recoil_base_le.setText(f'{response.get("recoil", 0)}')
-                self.comp_base_le.setText(f'{response.get("comp", 0)}')
+                self.recoil_base_le.setText(f'{response.get("recoil", 0):.2f}')
+                self.comp_base_le.setText(f'{response.get("comp", 0):.2f}')
                 self.push_force_base_le.setText(f'{response.get("push_force", 0)}')
 
         except Exception as e:
@@ -697,10 +697,10 @@ class ArchiveWinFill:
             
     def ui_base_fill(self, arch_obj):
         try:
-            limit_recoil = f'{arch_obj.min_recoil} - {arch_obj.max_recoil}'
-            limit_recoil_2 = f'{arch_obj.min_recoil_2} - {arch_obj.max_recoil_2}'
-            limit_comp = f'{arch_obj.min_comp} - {arch_obj.max_comp}'
-            limit_comp_2 = f'{arch_obj.min_comp_2} - {arch_obj.max_comp_2}'
+            limit_recoil = f'{arch_obj.min_recoil}~{arch_obj.max_recoil}'
+            limit_recoil_2 = f'{arch_obj.min_recoil_2}~{arch_obj.max_recoil_2}'
+            limit_comp = f'{arch_obj.min_comp}~{arch_obj.max_comp}'
+            limit_comp_2 = f'{arch_obj.min_comp_2}~{arch_obj.max_comp_2}'
             
             self.widget.speed_set_1_base_le.setText(f'{arch_obj.speed_one}')
             self.widget.speed_set_2_base_le.setText(f'{arch_obj.speed_two}')

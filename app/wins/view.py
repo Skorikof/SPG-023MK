@@ -736,10 +736,10 @@ class AppWindow(QMainWindow):
     @log_exceptions
     def fill_gui_lab_test(self):
         amort = self.model.data_test.amort
-        limit_comp_one = f'{amort.min_comp} - {amort.max_comp}'
-        limit_comp_two = f'{amort.min_comp_2} - {amort.max_comp_2}'
-        limit_recoil_one = f'{amort.min_recoil} - {amort.max_recoil}'
-        limit_recoil_two = f'{amort.min_recoil_2} - {amort.max_recoil_2}'
+        limit_comp_one = f'{amort.min_comp}~{amort.max_comp}'
+        limit_comp_two = f'{amort.min_comp_2}~{amort.max_comp_2}'
+        limit_recoil_one = f'{amort.min_recoil}~{amort.max_recoil}'
+        limit_recoil_two = f'{amort.min_recoil_2}~{amort.max_recoil_2}'
 
         self.ui.lab_name_le.setText(amort.name)
         self.ui.lab_speed_set_1_le.setText(f'{amort.speed_one}')
@@ -816,10 +816,10 @@ class AppWindow(QMainWindow):
     @log_exceptions
     def conv_test_fill_template(self):
         amort = self.model.data_test.amort
-        self.ui.conv_comp_limit_le.setText(f'{amort.min_comp} - {amort.max_comp}')
-        self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil} - {amort.max_recoil}')
-        self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2} - {amort.max_comp_2}')
-        self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2} - {amort.max_recoil_2}')
+        self.ui.conv_comp_limit_le.setText(f'{amort.min_comp}~{amort.max_comp}')
+        self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil}~{amort.max_recoil}')
+        self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2}~{amort.max_comp_2}')
+        self.ui.conv_recoil_limit_le_2.setText(f'{amort.min_recoil_2}~{amort.max_recoil_2}')
 
         self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
 
