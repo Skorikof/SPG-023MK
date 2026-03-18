@@ -62,7 +62,7 @@ class CascadeGraph(AbstractGraph):
     def calc_graph(self, data):
         try:
             push_force = CalcGraphValue().select_push_force(data)
-            recoil = [round(x + push_force, 2) for x in data.recoil_list]
+            recoil = [abs(round(x + push_force, 2)) for x in data.recoil_list]
             comp = [round(x + push_force, 2) for x in data.comp_list]
             
             speed = data.speed_list[:]

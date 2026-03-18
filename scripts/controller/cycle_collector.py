@@ -143,7 +143,7 @@ class CycleCollector:
         self.half_max_pos = float("-inf")
         self._start_pos = None
         
-        self.vel_window_points = 7
+        self.vel_window_points = 9
         self._pos_window = deque(maxlen=self.vel_window_points + 1)
 
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
@@ -324,7 +324,34 @@ class CycleCollector:
     def _normalize_cycle(self, pos_arr, force_arr):
         if len(pos_arr) == 0:
             return pos_arr, force_arr
-        start_idx = np.argmin(pos_arr)
+        min_val = float(np.min(pos_arr))
+        arr = np.asarray(pos_arr, dtype=np.float64)
+        arr = arr[np.isfinite(arr)]
+        scale = 1000  # точность 0.001 для борьбы с float-ошибками
+        ints = np.unique(np.rint(arr * scale).astype(np.int64))
+        diffs = np.diff(ints)
+        diffs = diffs[diffs > 0]
+        if diffs.size:
+            g = int(np.gcd.reduce(diffs))
+            quant = max(g / scale, 1e-6)
+        else:
+            quant = 0.1  # fallback
+        eps = min(0.51 * quant, 0.06) # имеет смысл поиграться, тобы не рисовал восьмёрки
+        idxs = np.where(pos_arr <= (min_val + eps))[0]
+        if idxs.size == 0:
+            start_idx = int(np.argmin(pos_arr))
+        elif idxs.size == 1:
+            start_idx = int(idxs[0])
+        else:
+            # ищем последний минимум перед ростом
+            start_idx = int(idxs[-1])
+            for j in idxs[::-1]:
+                j = int(j)
+                j_next = (j + 1) % len(pos_arr)
+                if float(pos_arr[j_next]) > float(pos_arr[j]) + eps:
+                    start_idx = j
+                    break
+
         pos_arr = np.roll(pos_arr, -start_idx)
         force_arr = np.roll(force_arr, -start_idx)
         return pos_arr, force_arr

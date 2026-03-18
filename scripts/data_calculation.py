@@ -55,9 +55,11 @@ class CalcData:
                 x_n, y_n = self._normalize_cycle(pos, force, target_len)
                 xs.append(x_n)
                 ys.append(y_n)
-            mean_x = np.mean(xs, axis=0)
+                
+            ref_x = xs[0]
+            # mean_x = np.mean(xs, axis=0)
             mean_y = np.mean(ys, axis=0)
-            return mean_x, mean_y
+            return ref_x, mean_y
 
         except Exception as e:
             self.logger.error(e)
@@ -105,19 +107,11 @@ class CalcData:
 
     def middle_min_and_max_force(self, force: list):
         """Усреднение максимального и минимального усилия"""
-        return abs(max(force)), abs(min(force))
+        return max(force), min(force)
         
     def middle_min_and_max_force_array(self, force: np.array):
         """Вычисление максимального и минимального усилия из массива"""
-        return abs(np.max(force)), abs(np.min(force))
-        
-    # def offset_move_by_hod(self, amort, min_p):
-    #     """Смещение хода на графике от хода поршня"""
-    #     try:
-    #         return round((float(amort.max_length) - float(amort.min_length) - float(amort.hod)) / 2 + min_p, 1)
-
-    #     except Exception as e:
-    #         self.logger.error(e)
+        return np.max(force), np.min(force)
 
     def calc_power_amort(self, move, force):
         """Расчёт мощности"""

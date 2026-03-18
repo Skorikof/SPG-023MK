@@ -262,9 +262,10 @@ class CompareGraph:
             self.ui.push_force_casc_le.setText(f'{data.get("push_force", 0)}')
                 
             for ind, val in enumerate(data.get('speed')):
-                self.ui.casc_tableWt.setItem(0, ind, QTableWidgetItem(f'{val}'))
-                self.ui.casc_tableWt.setItem(1, ind, QTableWidgetItem(f'{data.get("recoil")[ind]}'))
-                self.ui.casc_tableWt.setItem(2, ind, QTableWidgetItem(f'{data.get("comp")[ind]}'))
+                if ind != 0:
+                    self.ui.casc_tableWt.setItem(0, ind - 1, QTableWidgetItem(f'{val}'))
+                    self.ui.casc_tableWt.setItem(1, ind - 1, QTableWidgetItem(f'{data.get("recoil")[ind]}'))
+                    self.ui.casc_tableWt.setItem(2, ind - 1, QTableWidgetItem(f'{data.get("comp")[ind]}'))
             
         except Exception as e:
             self.logger.error(e)

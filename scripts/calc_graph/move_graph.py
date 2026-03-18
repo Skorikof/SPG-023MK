@@ -41,7 +41,7 @@ class MoveGraph(AbstractGraph):
             push_force = CalcGraphValue().select_push_force(data)
 
             max_recoil = abs(round(recoil + push_force, 2))
-            max_comp = abs(round(comp - push_force, 2))
+            max_comp = abs(round(comp + push_force, 2))
 
             power = CalcData().calc_power_amort(data.move_list, data.force_list)
 

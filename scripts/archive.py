@@ -247,7 +247,7 @@ class ReadArchive:
                 if force_list:
                     data['force_list'] = force_list[:]
                     self._add_data_cascade_graph(
-                        recoil=max(force_list), 
+                        recoil=max(force_list),
                         comp=min(force_list)
                     )
 

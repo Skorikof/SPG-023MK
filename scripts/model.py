@@ -537,7 +537,7 @@ class Model:
             self.data_test.dynamic_push_force = 0
         
         self.data_test.max_recoil = abs(round(rec_clear + push_force, 2))
-        self.data_test.max_comp = abs(round(comp_clear - push_force, 2))
+        self.data_test.max_comp = abs(round(comp_clear + push_force, 2))
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
         
