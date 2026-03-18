@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import struct
 
 from scripts.logger import my_logger
@@ -19,10 +20,26 @@ class ParserSPG023MK:
         try:
             if not values:
                 return None
+            
+            def is_bad(v):
+                if v is None:
+                    return True
+                try:
+                    fv = float(v)
+                except Exception:
+                    return True
+                if fv == self.INVALID_FORCE:
+                    return True
+                if not math.isfinite(fv):
+                    return True
+                # опционально: отсечь явные “пики” (подберите порог под систему)
+                # if abs(fv) > 1e6:  # пример
+                #     return True
+                return False
 
             valid_first = None
             for v in values:
-                if v is not None and v != self.INVALID_FORCE:
+                if not is_bad(v):
                     valid_first = float(v)
                     break
 
@@ -32,7 +49,7 @@ class ParserSPG023MK:
             out: list[float] = []
             prev = valid_first
             for v in values:
-                if v is None or v == self.INVALID_FORCE:
+                if is_bad(v):
                     out.append(prev)
                 else:
                     prev = float(v)

@@ -114,6 +114,12 @@ class CycleCollector:
         self.cycle_times = deque(maxlen=5)
         self.last_cycle_time = None
 
+        # -------- якорь завершения цикла --------
+        # 'nmt' => цикл НМТ->ВМТ->НМТ (по умолчанию)
+        # 'vmt' => цикл ВМТ->НМТ->ВМТ (удобно, если скорость переключается после ВМТ)
+        self.cycle_anchor = 'nmt'
+        self._anchor_armed = False
+
         # -------- потоковое время (по sample_rate) --------
         self.stream_time = None
 
@@ -145,6 +151,10 @@ class CycleCollector:
         
         self.vel_window_points = 9
         self._pos_window = deque(maxlen=self.vel_window_points + 1)
+
+        # -------- коллект валидация --------
+        self.max_collect_rejects_per_step = 6
+        self._collect_rejects_in_step = 0
 
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
         """Задать целевую НМТ (в тех же единицах, что и `move`)."""
@@ -371,9 +381,11 @@ class CycleCollector:
         last_count = data.get("count")
         if isinstance(last_count, (list, tuple, np.ndarray)) and len(last_count) > 0:
             last_count = last_count[-1]
+        # self._update_sample_rate_from_count(last_count, now_real)
+        # sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
+        # dt = 1.0 / sr
         self._update_sample_rate_from_count(last_count, now_real)
-        sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
-        
+        sr = float(self.sample_rate)
         dt = 1.0 / sr
         if self.stream_time is None:
             self.stream_time = now_real
@@ -399,7 +411,8 @@ class CycleCollector:
             return
         
         self._pos_window.append(float(pos))
-        sr = float(self._current_sample_rate)
+        # sr = float(self._current_sample_rate)
+        sr = float(self.sample_rate)
         if len(self._pos_window) >= 2:
             n = min(self.vel_window_points, len(self._pos_window) - 1)
             pos_old = self._pos_window[-(n + 1)]
@@ -407,7 +420,6 @@ class CycleCollector:
         else:
             v = (pos - self.prev_pos) * sr
         
-        # v = (pos - self.prev_pos) * float(self._current_sample_rate)
         self._update_threshold(v)
         self.stop_detector.update(v, now)
         if self.phase_state == PhaseState.RUN and self.stop_detector.is_stopped():
@@ -458,7 +470,14 @@ class CycleCollector:
         if turn_detected:
             prev_sign = int(self.prev_sign)
             self._process_half_turn(prev_sign, int(sign), pos)
-            self._process_turn(now)
+            # тип разворота: ВМТ (+ -> -), НМТ (- -> +)
+            if prev_sign == 1 and int(sign) == -1:
+                turn_kind = 'vmt'
+            elif prev_sign == -1 and int(sign) == 1:
+                turn_kind = 'nmt'
+            else:
+                turn_kind = None
+            self._process_turn(now, turn_kind)
             self._reset_half_extrema(pos)
         self._append_data_if_needed(pos, force)
         if sign != 0:
@@ -467,7 +486,8 @@ class CycleCollector:
         
     @log_exceptions
     def _detect_turn(self, sign):
-        min_halfcycle_points = max(1, int(float(self._current_sample_rate) * self.min_halfcycle_fraction))
+        # min_halfcycle_points = max(1, int(float(self._current_sample_rate) * self.min_halfcycle_fraction))
+        min_halfcycle_points = max(1, int(float(self.sample_rate) * self.min_halfcycle_fraction))
         if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
             if self.points_after_turn > min_halfcycle_points:
                 self.points_after_turn = 0
@@ -505,9 +525,32 @@ class CycleCollector:
                             self._mid_in_tol_points = 0
     
     @log_exceptions
-    def _process_turn(self, now):
-        if self.turn_count % 2 != 0:
-            return  # только полный цикл
+    def _process_turn(self, now, turn_kind: str | None):
+        """Обработка завершения цикла по выбранному якорю (НМТ или ВМТ).
+
+        Важно для каскада скоростей: если ПЛК/привод меняет скорость после ВМТ,
+        то цикл НМТ->ВМТ->НМТ захватывает переключение *внутри* цикла и может
+        давать артефакты. В этом случае используем якорь 'vmt'.
+        """
+        anchor = (self.cycle_anchor or 'nmt').lower()
+        if anchor not in ('nmt', 'vmt'):
+            anchor = 'nmt'
+
+        if turn_kind is None:
+            return
+        if anchor == 'nmt' and turn_kind != 'nmt':
+            return
+        if anchor == 'vmt' and turn_kind != 'vmt':
+            return
+
+        # первое попадание в якорь: синхронизируемся и начинаем копить цикл ОТ якоря
+        if not self._anchor_armed:
+            self._anchor_armed = True
+            self.last_cycle_time = now
+            self._reset_cycle_buffers()
+            self._collect_rejects_in_step = 0
+            return
+
         now_cycle = now
         if self.last_cycle_time is not None:
             self.cycle_times.append(now_cycle - self.last_cycle_time)
@@ -590,9 +633,11 @@ class CycleCollector:
     
     def _handle_detect_only(self) -> bool:
         """
-        Завершает один шаг на каждый полный оборот.
-        Никакие данные не сохраняются.
-        Оценка НМТ обновляется централизованно на каждом полном цикле.
+        Завершает один шаг на каждый якорный цикл.
+
+        Примечание: проверка стабильности периода здесь намеренно НЕ используется,
+        потому что при квантованном `move` и батчевом чтении буфера она может
+        быть слишком жёсткой и приводить к лишним оборотам.
         """
         return True
     
@@ -600,9 +645,83 @@ class CycleCollector:
     def _handle_collect(self) -> bool:
         if len(self.current_pos) == 0:
             return False
-        pos_np = np.array(self.current_pos, dtype=np.float32)
-        force_np = np.array(self.current_force, dtype=np.float32)
+
+        pos_np = np.asarray(self.current_pos, dtype=np.float32)
+        force_np = np.asarray(self.current_force, dtype=np.float32)
+
+        # 0) убрать мусорные пары (на всякий случай)
+        mask = np.isfinite(pos_np) & np.isfinite(force_np)
+        pos_np = pos_np[mask]
+        force_np = force_np[mask]
+        if pos_np.size < 30:
+            return False
+
+        # 1) нормализация старта (НМТ) — для графика/усреднения
         pos_np, force_np = self._normalize_cycle(pos_np, force_np)
+
+        # 2) мягкая проверка "нормальности" цикла по направлению движения
+        #    (на квантованном move важно отсечь только явно сломанные циклы).
+        def _estimate_quant_and_eps(p: np.ndarray) -> tuple[float, float]:
+            try:
+                arr = np.asarray(p, dtype=np.float64)
+                arr = arr[np.isfinite(arr)]
+                if arr.size < 2:
+                    return 0.1, 0.06
+                scale = 1000
+                ints = np.unique(np.rint(arr * scale).astype(np.int64))
+                diffs = np.diff(ints)
+                diffs = diffs[diffs > 0]
+                if diffs.size:
+                    g = int(np.gcd.reduce(diffs))
+                    quant = max(g / scale, 1e-6)
+                else:
+                    quant = 0.1
+                eps = min(0.51 * quant, 0.06)
+                return float(quant), float(eps)
+            except Exception:
+                return 0.1, 0.06
+
+        def _dir_changes(p: np.ndarray, window: int, min_step: float) -> int:
+            p = np.asarray(p, dtype=np.float32)
+            if p.size <= window + 2:
+                return 0
+            dv = p[window:] - p[:-window]
+            s = np.sign(dv)
+            s[np.abs(dv) < float(min_step)] = 0
+            s = s[s != 0]
+            if s.size < 2:
+                return 0
+            return int(np.sum(s[1:] != s[:-1]))
+
+        quant, eps = _estimate_quant_and_eps(pos_np)
+        # min_step чуть больше кванта, чтобы не считать дребезг на полках как развороты
+        min_step = max(0.06, 0.9 * float(quant))
+        dc = _dir_changes(pos_np, window=max(5, int(self.vel_window_points)), min_step=min_step)
+        # нормальный цикл: 1 смена направления (в районе ВМТ) +/- небольшие артефакты
+        bad = (dc > 4)
+
+        # 3) защита от слишком длинного цикла относительно уже принятых в этом COLLECT-шаге
+        if not bad and self.cycles:
+            try:
+                prev_lens = [len(p) for (p, _) in self.cycles[-min(5, len(self.cycles)) :]]
+                med = float(np.median(prev_lens)) if prev_lens else 0.0
+                if med > 0 and len(pos_np) > 1.8 * med:
+                    bad = True
+            except Exception:
+                pass
+
+        # 4) если слишком много отбраковок — начинаем принимать, чтобы не крутить 20 оборотов
+        if bad:
+            self._collect_rejects_in_step += 1
+            if self._collect_rejects_in_step <= int(self.max_collect_rejects_per_step):
+                self.logger.warning(
+                    f"Reject cycle: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
+                )
+                return False
+            else:
+                self.logger.warning(
+                    f"Accept cycle after many rejects: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
+                )
 
         result = (pos_np, force_np)
         if self.cycle_callback:
@@ -719,6 +838,8 @@ class CycleCollector:
         self.vel_threshold = 0.0
         self.cycle_times.clear()
         self.last_cycle_time = None
+        self._anchor_armed = False
+        self._collect_rejects_in_step = 0
         self.stream_time = None
         self._current_sample_rate = float(self.sample_rate)
         self._last_count = None

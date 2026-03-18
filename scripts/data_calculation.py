@@ -43,26 +43,123 @@ class CalcData:
         
         except Exception as e:
             self.logger.error(e)
-
+        
+    def _interp_force_on_grid(self, x, y, x_grid):
+        x = np.asarray(x, dtype=np.float32)
+        y = np.asarray(y, dtype=np.float32)
+        mask = np.isfinite(x) & np.isfinite(y)
+        x = x[mask]
+        y = y[mask]
+        if x.size < 2:
+            return None
+        order = np.argsort(x)
+        x = x[order]
+        y = y[order]
+        # 0.1 мм — физическая квантовка move (см. parser: -0.1 * value)
+        q = np.float32(0.1)
+        xq = np.round(x / q) * q
+        # медиана силы на каждом квантованном x
+        x_u, inv = np.unique(xq, return_inverse=True)
+        y_u = np.empty_like(x_u, dtype=np.float32)
+        for i in range(x_u.size):
+            y_u[i] = np.median(y[inv == i])
+        if x_u.size < 2:
+            return None
+        return np.interp(x_grid, x_u, y_u)
+    
     def average_cycles(self, cycles, target_len=1000):
-        """Усредняет несколько циклов, предварительно нормализуя их длинну"""
+        """
+        Усреднение циклов по перемещению (а не по времени):
+        - ветвь 1: НМТ->ВМТ (x растёт)
+        - ветвь 2: ВМТ->НМТ (x падает)
+        """
         try:
             if not cycles:
                 return None, None
-            xs = []
-            ys = []
+            # 1) нормализуем длину/знак как раньше, но НЕ усредняем x
+            norm = []
             for pos, force in cycles:
-                x_n, y_n = self._normalize_cycle(pos, force, target_len)
-                xs.append(x_n)
-                ys.append(y_n)
-                
-            ref_x = xs[0]
-            # mean_x = np.mean(xs, axis=0)
-            mean_y = np.mean(ys, axis=0)
-            return ref_x, mean_y
+                x, y = self._normalize_cycle(pos, force, target_len)
+                if x is None or y is None:
+                    continue
+                norm.append((np.asarray(x), np.asarray(y)))
+
+            if not norm:
+                return None, None
+            # 2) делим на ветви
+            branches_a = []
+            branches_b = []
+            for x, y in norm:
+                imax = int(np.nanargmax(x))
+                xa, ya = x[:imax + 1], y[:imax + 1]
+                xb, yb = x[imax:], y[imax:]
+                # ветвь B приведём к возрастающему x для интерполяции
+                xb = xb[::-1]
+                yb = yb[::-1]
+                branches_a.append((xa, ya))
+                branches_b.append((xb, yb))
+            half_len = max(10, int(target_len // 2))
+            # 3) общая область по X (пересечение диапазонов), чтобы не экстраполировать
+            def overlap_grid(branches):
+                mins = []
+                maxs = []
+                for x, _ in branches:
+                    x = np.asarray(x, dtype=np.float64)
+                    x = x[np.isfinite(x)]
+                    if x.size:
+                        mins.append(np.min(x))
+                        maxs.append(np.max(x))
+                if not mins:
+                    return None
+                x_min = max(mins)
+                x_max = min(maxs)
+                if not np.isfinite(x_min) or not np.isfinite(x_max) or (x_max - x_min) <= 1e-6:
+                    return None
+                q = 0.1
+                # выровнять границы по сетке 0.1 мм
+                x_min_q = np.ceil(x_min / q) * q
+                x_max_q = np.floor(x_max / q) * q
+                if x_max_q - x_min_q < q:
+                    return None
+                xg = np.arange(x_min_q, x_max_q + 0.5 * q, q, dtype=np.float32)
+                if xg.size < 10:
+                    return None
+                return xg
+            x_grid_a = overlap_grid(branches_a)
+            x_grid_b = overlap_grid(branches_b)
+            if x_grid_a is None or x_grid_b is None:
+                # fallback на старое поведение, если что-то пошло не так
+                xs = []
+                ys = []
+                for x, y in norm:
+                    xs.append(x)
+                    ys.append(y)
+                ref_x = xs[0]
+                mean_y = np.mean(ys, axis=0)
+                return ref_x, mean_y
+            # 4) интерполируем силы на сетку и усредняем
+            ya_list = []
+            yb_list = []
+            for (xa, ya), (xb, yb) in zip(branches_a, branches_b):
+                ya_i = self._interp_force_on_grid(xa, ya, x_grid_a)
+                yb_i = self._interp_force_on_grid(xb, yb, x_grid_b)
+                if ya_i is not None:
+                    ya_list.append(ya_i)
+                if yb_i is not None:
+                    yb_list.append(yb_i)
+
+            if not ya_list or not yb_list:
+                return None, None
+            mean_ya = np.mean(np.vstack(ya_list), axis=0)
+            mean_yb = np.mean(np.vstack(yb_list), axis=0)
+            # 5) склеиваем петлю: A (вперёд) + B (назад)
+            x_out = np.concatenate([x_grid_a, x_grid_b[::-1]])
+            y_out = np.concatenate([mean_ya, mean_yb[::-1]])
+            return x_out, y_out
 
         except Exception as e:
             self.logger.error(e)
+            return None, None
             
     def correct_force_with_koef(self, force, koef, offset):
         try:

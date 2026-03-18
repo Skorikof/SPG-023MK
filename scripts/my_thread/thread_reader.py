@@ -79,7 +79,7 @@ class ReaderThread(QRunnable):
                                     flag_add = True
                                     self.flag_start_test = False
                                 else:
-                                    if abs(rr.registers[ind] - self.current_rec) < 2 or abs(rr.registers[ind] - self.current_rec) > 65530:
+                                    if abs(rr.registers[ind] - self.current_rec) == 1 or abs(rr.registers[ind] - self.current_rec) > 65530:
                                         flag_add = True
 
                                 if flag_add:
