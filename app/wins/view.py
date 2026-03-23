@@ -783,7 +783,9 @@ class AppWindow(QMainWindow):
     def _lab_win_clear(self):
         self.ui.lab_GraphWidget.clear()
         self.ui.lab_recoil_le.clear()
+        self.ui.lab_recoil_le_2.clear()
         self.ui.lab_comp_le.clear()
+        self.ui.lab_comp_le_2.clear()
         self.ui.lab_speed_le.clear()
         self.ui.lab_power_le.clear()
         self.ui.lab_freq_le.clear()

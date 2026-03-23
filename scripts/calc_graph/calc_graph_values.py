@@ -83,10 +83,12 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def interpoly_line_coord(self, x, y):
+    def interpoly_line_coord(self, x, y, *, start_point: float=None):
         try:
             f = interpolate.interp1d(x, y, kind='cubic')
-            x_new = np.linspace(0, max(x), num=100)
+            if start_point is None:
+                start_point = 0
+            x_new = np.linspace(start_point, max(x), num=100)
             y_new = f(x_new)
             return x_new, y_new
 

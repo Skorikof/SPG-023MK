@@ -714,14 +714,15 @@ class CycleCollector:
         if bad:
             self._collect_rejects_in_step += 1
             if self._collect_rejects_in_step <= int(self.max_collect_rejects_per_step):
-                self.logger.warning(
-                    f"Reject cycle: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
-                )
+                # self.logger.warning(
+                #     f"Reject cycle: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
+                # )
                 return False
             else:
-                self.logger.warning(
-                    f"Accept cycle after many rejects: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
-                )
+                pass
+                # self.logger.warning(
+                #     f"Accept cycle after many rejects: dc={dc}, n={len(pos_np)}, rejects={self._collect_rejects_in_step}"
+                # )
 
         result = (pos_np, force_np)
         if self.cycle_callback:

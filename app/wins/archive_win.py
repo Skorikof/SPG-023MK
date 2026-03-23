@@ -454,8 +454,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 arch_obj = self.archive.temper[self.index_test]
                 
                 response = self.temper_graph.calc_graph(arch_obj)
-                self.temper_graph.fill_graph(response.get('x_temp'),
+                self.temper_graph.fill_graph(response.get('x_rec'),
                                              response.get('y_rec'),
+                                             response.get('x_comp'),
                                              response.get('y_comp'))
 
                 self.archive_fill.ui_fill(arch_obj, 'temper', self.index_date)
@@ -464,11 +465,11 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
                 self.speed_temp_le.setText(f'{response.get("speed", 0)}')
                 self.begin_temp_le.setText(f'{response.get("start_temper", 0)}')
                 self.max_temp_le.setText(f'{response.get("end_temper", 0)}')
-                self.recoil_begin_temp_le.setText(f'{response.get("start_recoil", 0)}')
-                self.recoil_end_temp_le.setText(f'{response.get("end_recoil", 0)}')
-                self.comp_begin_temp_le.setText(f'{response.get("start_comp", 0)}')
-                self.comp_end_temp_le.setText(f'{response.get("end_comp", 0)}')
-                self.push_force_temp_le.setText(f'{response.get("push_force")}')
+                self.recoil_begin_temp_le.setText(f'{response.get("start_recoil", 0):.2f}')
+                self.recoil_end_temp_le.setText(f'{response.get("end_recoil", 0):.2f}')
+                self.comp_begin_temp_le.setText(f'{response.get("start_comp", 0):.2f}')
+                self.comp_end_temp_le.setText(f'{response.get("end_comp", 0):.2f}')
+                self.push_force_temp_le.setText(f'{response.get("push_force"):.2f}')
 
         except Exception as e:
             self.logger.error(e)

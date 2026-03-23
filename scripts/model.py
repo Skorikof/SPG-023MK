@@ -527,7 +527,7 @@ class Model:
 
     @log_exceptions
     def _calc_result_cycle(self, move, force):
-        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force_array(force)
+        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force(force)
         if self.data_test.flag_push_force:
             push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
                                                                     self.data_test.static_push_force)

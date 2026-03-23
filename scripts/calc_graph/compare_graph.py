@@ -289,8 +289,9 @@ class CompareGraph:
                                width=3,
                                style=self.select_line_style(ind))
                 
-                graph.fill_graph(response.get('x_temp'),
+                graph.fill_graph(response.get('x_rec'),
                                  response.get('y_rec'),
+                                 response.get('x_comp'),
                                  response.get('y_comp'),
                                  pen, pen, name, name)
             

@@ -203,12 +203,11 @@ class CalcData:
             self.logger.error(e)
 
     def middle_min_and_max_force(self, force: list):
-        """Усреднение максимального и минимального усилия"""
-        return max(force), min(force)
-        
-    def middle_min_and_max_force_array(self, force: np.array):
-        """Вычисление максимального и минимального усилия из массива"""
-        return np.max(force), np.min(force)
+        """Вычисление максимального и минимального усилия"""
+        if isinstance(force, list):
+            return max(force), min(force)
+        elif isinstance(force, np.array):
+            return np.max(force), np.min(force)
 
     def calc_power_amort(self, move, force):
         """Расчёт мощности"""
