@@ -98,7 +98,6 @@ class CalcData:
                 yb = yb[::-1]
                 branches_a.append((xa, ya))
                 branches_b.append((xb, yb))
-            half_len = max(10, int(target_len // 2))
             # 3) общая область по X (пересечение диапазонов), чтобы не экстраполировать
             def overlap_grid(branches):
                 mins = []
@@ -125,9 +124,11 @@ class CalcData:
                 if xg.size < 10:
                     return None
                 return xg
-            x_grid_a = overlap_grid(branches_a)
-            x_grid_b = overlap_grid(branches_b)
-            if x_grid_a is None or x_grid_b is None:
+            # x_grid_a = overlap_grid(branches_a)
+            # x_grid_b = overlap_grid(branches_b)
+            # if x_grid_a is None or x_grid_b is None:
+            x_grid = overlap_grid(branches_a + branches_b)
+            if x_grid is None:
                 # fallback на старое поведение, если что-то пошло не так
                 xs = []
                 ys = []
@@ -140,9 +141,14 @@ class CalcData:
             # 4) интерполируем силы на сетку и усредняем
             ya_list = []
             yb_list = []
-            for (xa, ya), (xb, yb) in zip(branches_a, branches_b):
-                ya_i = self._interp_force_on_grid(xa, ya, x_grid_a)
-                yb_i = self._interp_force_on_grid(xb, yb, x_grid_b)
+            # for (xa, ya), (xb, yb) in zip(branches_a, branches_b):
+            for i in range(min(len(branches_a), len(branches_b))):
+                xa, ya = branches_a[i]
+                xb, yb = branches_b[i]
+                # ya_i = self._interp_force_on_grid(xa, ya, x_grid_a)
+                # yb_i = self._interp_force_on_grid(xb, yb, x_grid_b)
+                ya_i = self._interp_force_on_grid(xa, ya, x_grid)
+                yb_i = self._interp_force_on_grid(xb, yb, x_grid)
                 if ya_i is not None:
                     ya_list.append(ya_i)
                 if yb_i is not None:
@@ -152,9 +158,27 @@ class CalcData:
                 return None, None
             mean_ya = np.mean(np.vstack(ya_list), axis=0)
             mean_yb = np.mean(np.vstack(yb_list), axis=0)
+            
+            # Сведение значений в точках разворота, чтобы не было “ступеньки” при склейке
+            # НМТ = начало сетки, ВМТ = конец сетки
+            nmt = 0
+            vmt = -1
+            y_nmt = 0.5 * (mean_ya[nmt] + mean_yb[nmt])
+            y_vmt = 0.5 * (mean_ya[vmt] + mean_yb[vmt])
+            mean_ya[nmt] = y_nmt
+            mean_yb[nmt] = y_nmt
+            mean_ya[vmt] = y_vmt
+            mean_yb[vmt] = y_vmt
+        
             # 5) склеиваем петлю: A (вперёд) + B (назад)
-            x_out = np.concatenate([x_grid_a, x_grid_b[::-1]])
+            # x_out = np.concatenate([x_grid_a, x_grid_b[::-1]])
+            x_out = np.concatenate([x_grid, x_grid[::-1]])
             y_out = np.concatenate([mean_ya, mean_yb[::-1]])
+            
+            # Явное замыкание: дубль первой точки в конце
+            x_out = np.concatenate([x_out, x_out[:1]])
+            y_out = np.concatenate([y_out, y_out[:1]])
+        
             return x_out, y_out
 
         except Exception as e:
@@ -209,9 +233,16 @@ class CalcData:
         elif isinstance(force, np.array):
             return np.max(force), np.min(force)
 
-    def calc_power_amort(self, move, force):
+    def calc_power_amort(self, move: list, force: list):
         """Расчёт мощности"""
         try:
+            if move is None or force is None or len(move) < 2:
+                return 0.0
+            # если кривая замкнута явным дублем первой точки — игнорируем её
+            if abs(move[-1] - move[0]) < 1e-6 and abs(force[-1] - force[0]) < 1e-6:
+                move = move[:-1]
+                force = force[:-1]
+                
             temp = 0
             for i in range(1, len(move)):
                 step = abs(abs(move[i]) - abs(move[i - 1]))
@@ -227,6 +258,12 @@ class CalcData:
     def calc_power_amort_array(self, move: np.array, force: np.array):
         """Расчёт мощности из массивов"""
         try:
+            if move is None or force is None or move.size < 2:
+                return 0.0
+            # если кривая замкнута явным дублем первой точки — игнорируем её
+            if abs(float(move[-1] - move[0])) < 1e-6 and abs(float(force[-1] - force[0])) < 1e-6:
+                move = move[:-1]
+                force = force[:-1]
             steps = np.abs(np.abs(move[1:]) - np.abs(move[:-1]))
             mask = steps > 0
             if not np.any(mask):

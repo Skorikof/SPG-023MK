@@ -452,9 +452,9 @@ class Controller:
     def _stage_test_speed_two(self):
         if self.model.is_collect_done():
             self.model.stop_collect()
-            self.model.save_data_test_in_archive()
             if self.model.get_type_test() == TypeTest.CONV:
                 self.model.result_conveyor_test('two')
+            self.model.save_data_test_in_archive()
             self.model.write_end_test_in_archive()
             self.model.stop_gear_end_test()
 
