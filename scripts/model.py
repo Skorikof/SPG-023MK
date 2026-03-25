@@ -580,10 +580,20 @@ class Model:
                                                        self.force_koef_offset)
         
         self._calc_result_cycle(move, force)
-        self.data_test.recoil_list.append(self.data_test.max_recoil)
-        self.data_test.comp_list.append(self.data_test.max_comp)
-        self.data_test.temper_list.append(self.data_test.max_temperature)
         
+        t = round(float(self.data_test.max_temperature), 1)
+
+        if self.data_test.temper_list and abs(t - self.data_test.temper_list[-1]) < 1e-9:
+            # температура та же — обновляем последнюю точку
+            self.data_test.recoil_list[-1] = self.data_test.max_recoil
+            self.data_test.comp_list[-1] = self.data_test.max_comp
+            self.data_test.temper_list[-1] = t
+        else:
+            # новая температура — добавляем точку
+            self.data_test.recoil_list.append(self.data_test.max_recoil)
+            self.data_test.comp_list.append(self.data_test.max_comp)
+            self.data_test.temper_list.append(t)
+            
         self.signals.update_temper_graph.emit((self.data_test.recoil_list,
                                                self.data_test.comp_list,
                                                self.data_test.temper_list))

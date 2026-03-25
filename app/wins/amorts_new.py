@@ -107,6 +107,42 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
             
         except Exception as e:
             self.logger.error(e)
+            
+    def _validate_int(self, widget, key, min_val, max_val, field_name):
+        try:
+            text = widget.text().strip()
+
+            if not text:
+                QMessageBox.information(self, 'Внимание', f'Заполните поле -> {field_name}')
+                self.response[key] = ''
+                return
+
+            try:
+                value_f = float(text.replace(',', '.'))
+            except ValueError:
+                QMessageBox.information(self, 'Внимание',
+                                        f'Некорректное значение в поле -> {field_name}')
+                self.response[key] = ''
+                return
+
+            if not value_f.is_integer():
+                QMessageBox.information(self, 'Внимание',
+                                        f'Поле "{field_name}" должно быть целым числом')
+                self.response[key] = ''
+                return
+
+            value = int(value_f)
+
+            if not (min_val <= value <= max_val):
+                QMessageBox.information(self, 'Внимание',
+                                        f'{field_name} -> ({value}) вне диапазона')
+                self.response[key] = ''
+                return
+
+            self.response[key] = value
+
+        except Exception as e:
+            self.logger.error(e)
 
     def _name_editing_finished(self):
         text = self.lineEdit_name.text()
@@ -139,7 +175,7 @@ class AmortNew(QMainWindow, Ui_NewAmortWindow):
         )
 
     def _hod_editing_finished(self):
-        self._validate_float(
+        self._validate_int(
             self.le_hod,
             'hod',
             40,
