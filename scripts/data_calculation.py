@@ -230,7 +230,7 @@ class CalcData:
         """Вычисление максимального и минимального усилия"""
         if isinstance(force, list):
             return max(force), min(force)
-        elif isinstance(force, np.array):
+        elif isinstance(force, np.ndarray):
             return np.max(force), np.min(force)
 
     def calc_power_amort(self, move: list, force: list):
@@ -255,7 +255,7 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
             
-    def calc_power_amort_array(self, move: np.array, force: np.array):
+    def calc_power_amort_array(self, move: np.ndarray, force: np.ndarray):
         """Расчёт мощности из массивов"""
         try:
             if move is None or force is None or move.size < 2:
