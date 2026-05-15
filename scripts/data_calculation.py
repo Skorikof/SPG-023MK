@@ -187,7 +187,7 @@ class CalcData:
             
     def correct_force_with_koef(self, force, koef, offset):
         try:
-            return force * koef - offset
+            return force * koef + offset
             
         except Exception as e:
             self.logger.error(e)
