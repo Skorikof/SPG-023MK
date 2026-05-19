@@ -152,10 +152,6 @@ class CycleCollector:
         self.vel_window_points = 9
         self._pos_window = deque(maxlen=self.vel_window_points + 1)
 
-        # -------- буфер знаков для фильтрации шума на перекладках --------
-        self._sign_window = deque(maxlen=7)
-        self._min_confirm_points = 3
-
         # -------- коллект валидация --------
         self.max_collect_rejects_per_step = 6
         self._collect_rejects_in_step = 0
@@ -386,7 +382,7 @@ class CycleCollector:
         if isinstance(last_count, (list, tuple, np.ndarray)) and len(last_count) > 0:
             last_count = last_count[-1]
         self._update_sample_rate_from_count(last_count, now_real)
-        sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
+        sr = float(self.sample_rate)
         dt = 1.0 / sr
         if self.stream_time is None:
             self.stream_time = now_real
@@ -412,7 +408,7 @@ class CycleCollector:
             return
         
         self._pos_window.append(float(pos))
-        sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
+        sr = float(self.sample_rate)
         if len(self._pos_window) >= 2:
             n = min(self.vel_window_points, len(self._pos_window) - 1)
             pos_old = self._pos_window[-(n + 1)]
@@ -486,27 +482,13 @@ class CycleCollector:
         
     @log_exceptions
     def _detect_turn(self, sign):
-        sr = float(self._current_sample_rate) if self._current_sample_rate > 1e-9 else float(self.sample_rate)
-        min_halfcycle_points = max(1, int(sr * self.min_halfcycle_fraction))
-
-        # Накапливаем знаки для фильтрации шума на перекладках (ВМТ/НМТ)
-        if sign != 0:
-            self._sign_window.append(sign)
+        min_halfcycle_points = max(1, int(float(self.sample_rate) * self.min_halfcycle_fraction))
 
         if sign != 0 and self.prev_sign != 0 and sign != self.prev_sign:
             if self.points_after_turn > min_halfcycle_points:
-                # Требуем подтверждение смены направления: большинство последних точек
-                # должны быть одного знака (исключаем шум на мёртвых точках)
-                if len(self._sign_window) >= self._min_confirm_points:
-                    recent_signs = list(self._sign_window)
-                    # Считаем точки нового знака в буфере
-                    new_sign_count = sum(1 for s in recent_signs if s == sign)
-                    # Требуем хотя бы (len - 1) точек нового знака из последних
-                    if new_sign_count >= len(recent_signs) - 1:
-                        self.points_after_turn = 0
-                        self.turn_count += 1
-                        self._sign_window.clear()
-                        return True
+                self.points_after_turn = 0
+                self.turn_count += 1
+                return True
         return False
     
     @log_exceptions
@@ -873,6 +855,5 @@ class CycleCollector:
         self.half_max_pos = float("-inf")
         self._start_pos = None
         self._pos_window.clear()
-        self._sign_window.clear()
         if clear_nmt:
             self.clear_nmt()

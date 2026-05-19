@@ -26,17 +26,23 @@ class SetWindow(QMainWindow, UiSettingsWindow):
             self.setupUi(self)
             self.setWindowIcon(QIcon('icon/settings.png'))
             self.hod = 50
+            
+            self._ui_wired = False
+            self._smap = None
 
         except Exception as e:
             self.logger.error(e)
 
     def _smap_line_edit(self):
-        smap = QSignalMapper(self)
+        if self._smap is not None:
+            return
+        
+        self._smap = QSignalMapper(self)
 
-        self.lineEdit_F_alarm.clicked.connect(smap.map)
-        smap.setMapping(self.lineEdit_F_alarm, 1)
+        self.lineEdit_F_alarm.clicked.connect(self._smap.map)
+        self._smap.setMapping(self.lineEdit_F_alarm, 1)
 
-        smap.mappedInt.connect(self._on_click_lineedit)
+        self._smap.mappedInt.connect(self._on_click_lineedit)
 
     @Slot(int)
     def _on_click_lineedit(self, index):
@@ -49,9 +55,12 @@ class SetWindow(QMainWindow, UiSettingsWindow):
         self.signals.closed.emit()
 
     def start_param_win_set(self):
-        self._init_signals()
-        self._init_buttons()
-        self._smap_line_edit()
+        if not self._ui_wired:
+            self._init_signals()
+            self._init_buttons()
+            self._smap_line_edit()
+            self._ui_wired = True
+            
         self._check_operator()
         self._fill_lbl_temp_sens()
             

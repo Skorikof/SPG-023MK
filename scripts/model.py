@@ -542,12 +542,12 @@ class Model:
         else:
             push_force = self.data_test.static_push_force
             self.data_test.dynamic_push_force = 0
-        
+
         self.data_test.max_recoil = abs(round(rec_clear + push_force, 2))
         self.data_test.max_comp = abs(round(comp_clear + push_force, 2))
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
-        
+
         self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.get_speed_test(),
                                                                           self.data_test.amort.hod)
     
@@ -578,7 +578,7 @@ class Model:
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
         self.signals.update_conv_graph.emit(avg)
-        
+
     @log_exceptions
     def _pars_result_temper_test(self, result):
         move = result[0]
