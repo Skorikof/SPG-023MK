@@ -64,7 +64,11 @@ class Model:
             half_cycle_s = 1.0 / (2.0 * float(freq))
             # Gate must be < real half-cycle; keep reasonable floor/ceiling.
             gate_s = max(0.03, min(0.2, 0.45 * half_cycle_s))
-            self.collector.min_halfcycle_fraction = float(gate_s)
+            # Convert time (seconds) to fraction of sample_rate
+            sr = float(self.collector.sample_rate)
+            if sr > 0:
+                gate_fraction = gate_s / sr
+                self.collector.min_halfcycle_fraction = gate_fraction
 
         except Exception as e:
             self.logger.error(e)
@@ -527,7 +531,10 @@ class Model:
 
     @log_exceptions
     def _calc_result_cycle(self, move, force):
-        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force(force)
+        if self.get_type_test() == TypeTest.TEMPER:
+            comp_clear, rec_clear = self.calc_data.middle_min_and_max_force(force)
+        else:
+            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force(force)
         if self.data_test.flag_push_force:
             push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
                                                                     self.data_test.static_push_force)
@@ -574,11 +581,10 @@ class Model:
         
     @log_exceptions
     def _pars_result_temper_test(self, result):
-        move, force = result[0], result[1]
-        force = self.calc_data.correct_force_with_koef(force,
+        move = result[0]
+        force = self.calc_data.correct_force_with_koef(result[1],
                                                        config.force_koef,
                                                        self.force_koef_offset)
-        
         self._calc_result_cycle(move, force)
         
         t = round(float(self.data_test.max_temperature), 1)

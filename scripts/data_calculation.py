@@ -227,7 +227,11 @@ class CalcData:
             self.logger.error(e)
 
     def middle_min_and_max_force(self, force: list):
-        """Вычисление максимального и минимального усилия"""
+        """Вычисление максимального и минимального усилия
+
+        Возвращает (отбой, сжатие) — максимум и минимум по модулю.
+        Отбой обычно имеет большее усилие сопротивления, чем сжатие.
+        """
         if isinstance(force, list):
             return max(force), min(force)
         elif isinstance(force, np.ndarray):

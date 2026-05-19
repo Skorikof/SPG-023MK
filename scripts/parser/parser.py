@@ -129,42 +129,6 @@ class ParserSPG023MK:
         except Exception as e:
             self.logger.error(e)
             return None
-        
-    def _discard_left_data(self, request):
-        """Filter out invalid force data points (value -100000) from request."""
-        try:
-            force_data = request.get('force') or []
-            move_data = request.get('move') or []
-            
-            if not force_data:
-                return None
-            
-            # Filter indices where force is valid and move exists
-            valid_ind_f = [
-                i
-                for i, force in enumerate(force_data)
-                if force is not None
-                and force != self.INVALID_FORCE
-                and i < len(move_data)
-                and move_data[i] is not None
-            ]
-            
-            if not valid_ind_f:
-                return None
-            
-            # Build response with only valid data points
-            valid_force = {
-                'count': [request['count'][i] for i in valid_ind_f],
-                'force': [request['force'][i] for i in valid_ind_f],
-                'move': [request['move'][i] for i in valid_ind_f],
-                'state': [request['state'][i] for i in valid_ind_f],
-                'temper': [request['temper'][i] for i in valid_ind_f],
-            }
-
-            return valid_force
-        
-        except Exception as e:
-            self.logger.error(e)
     
     def _parse_float(self, big_reg: int, low_reg: int) -> float | None:
         """Парсер значения типа float из двух регистров"""
