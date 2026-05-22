@@ -184,6 +184,14 @@ class CalcData:
         except Exception as e:
             self.logger.error(e)
             return None, None
+        
+    def not_avarage_cycles(self, cycle):
+        try:
+            return cycle[0], -cycle[1]
+            
+        except Exception as e:
+            self.logger.error(e)
+            return None, None
             
     def correct_force_with_koef(self, force, koef, offset):
         try:

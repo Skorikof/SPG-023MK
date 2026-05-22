@@ -442,8 +442,10 @@ class Model:
         if mode == Mode.STROKE_ONLY:
             self.min_point, self.max_point, self.stroke = result[0]
         elif mode == Mode.COLLECT:
-            avg = self.calc_data.average_cycles(result)
-            self._pars_result_avarage_cycles(avg)
+            # avg = self.calc_data.average_cycles(result)
+            # self._pars_result_avarage_cycles(avg)
+            not_avg = self.calc_data.not_avarage_cycles(result[-1])
+            self._pars_result_avarage_cycles(not_avg)
         elif mode == Mode.NMT_FINAL:
             self.flag_nmt_reached = True
         elif mode == Mode.MID_FINAL:
@@ -795,7 +797,7 @@ class Model:
                                    extra_fc={'tag': 'up', 'adr': 1})
         
     def pumping(self):
-        self.start_collect(with_data=False, count_det=3)
+        self.start_collect(with_data=False, count_det=2)
         hod = self.data_test.amort.hod if self.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('fast', hod)
         self.transition_via_buffer(Stage.PUMPING, speed=speed,
@@ -803,7 +805,7 @@ class Model:
     
     def test_on_two_speed(self, ind: int):
         if ind == 1:
-            self.start_collect(with_data=True, count_col=3)
+            self.start_collect(with_data=True, count_col=2)
             speed = self.data_test.amort.speed_one
             self.set_speed_test(speed)
             self._tune_cycle_collector_for_speed()
@@ -811,7 +813,7 @@ class Model:
                                        extra_fc={'tag': 'up', 'adr': 1})
 
         elif ind == 2:
-            self.start_collect(with_data=True, count_col=3)
+            self.start_collect(with_data=True, count_col=2)
             speed = self.data_test.amort.speed_two
             self.set_speed_test(speed)
             self._tune_cycle_collector_for_speed()
@@ -819,7 +821,7 @@ class Model:
                                        extra_fc={'tag': 'up', 'adr': 1})
     
     def test_lab_hand_speed(self):
-        self.start_collect(with_data=True, count_col=3)
+        self.start_collect(with_data=True, count_col=2)
         speed = self.get_speed_test()
         self._tune_cycle_collector_for_speed()
         self.transition_via_buffer(Stage.TEST_LAB_HAND_SPEED, speed=speed,
@@ -828,7 +830,7 @@ class Model:
     def test_lab_cascade(self):
         if self.count_cascade < self.max_cascade:
             self.flag_cascade_done = False
-            self.start_collect(with_data=True, count_col=3)
+            self.start_collect(with_data=True, count_col=2)
             speed = self.data_test.speed_list[self.count_cascade]
             self.set_speed_test(speed)  
             self._tune_cycle_collector_for_speed()
