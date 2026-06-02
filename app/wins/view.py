@@ -14,7 +14,7 @@ from app.wins.txt_msg import TextMsg
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
 from scripts.controller.controller import Controller
-from scripts.controller.stages import Stage, TypeTest
+from scripts.controller.stages import Stage, TypeTest, ColorLampConv
 from scripts.logger import my_logger
 from scripts.model import Model
 
@@ -809,8 +809,8 @@ class AppWindow(QMainWindow):
         self.ui.conv_recoil_limit_le_2.clear()
         self.ui.conv_temperture_le.clear()
         self.ui.conv_push_force_le.clear()
-        self.conv_test_lamp_slot('one', 'white')
-        self.conv_test_lamp_slot('two', 'white')
+        self.conv_test_lamp_slot('one', ColorLampConv.WHITE)
+        self.conv_test_lamp_slot('two', ColorLampConv.WHITE)
 
     def conv_test_win(self):
         self.ui.main_stackedWidget.setCurrentIndex(3)
@@ -826,25 +826,13 @@ class AppWindow(QMainWindow):
         self.ui.lbl_push_force_conv.setText(self.model.lbl_push_force)
 
     @log_exceptions
-    def conv_color_lamp(self, color):
+    def conv_test_lamp_slot(self, step, color: ColorLampConv):
         border = "border-color: rgb(0, 0, 0);"
-        if color == 'white':
-            res = f"background-color: rgb(255, 255, 255);\n{border}"
-        elif color == 'red':
-            res = f"background-color: rgb(255, 0, 0);\n{border}"
-        elif color == 'green':
-            res = f"background-color: rgb(0, 255, 0);\n{border}"
-        else:
-            res = f"background-color: rgb(0, 0, 0);\n{border}"
-
-        return res
-
-    @log_exceptions
-    def conv_test_lamp_slot(self, step, color):
+        res = f"background-color: {color.value};\n{border}"
         if step == 'one':
-            self.ui.first_signal.setStyleSheet(self.conv_color_lamp(color))
+            self.ui.first_signal.setStyleSheet(res)
         elif step == 'two':
-            self.ui.second_signal.setStyleSheet(self.conv_color_lamp(color))
+            self.ui.second_signal.setStyleSheet(res)
 
     @log_exceptions
     def _update_conv_graph(self, data):

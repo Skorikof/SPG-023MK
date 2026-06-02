@@ -11,7 +11,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
-from scripts.controller.stages import Stage, TypeTest
+from scripts.controller.stages import Stage, TypeTest, ColorLampConv
 from scripts.modbus.client import Client
 from scripts.freq_ctrl.freq_control import FreqControl
 
@@ -32,7 +32,7 @@ class ModelSignals(QObject):
     update_conv_graph = Signal(object)
     update_temper_graph = Signal(object)
     
-    conv_result_lamp = Signal(str, str)
+    conv_result_lamp = Signal(str, object)
     set_stage = Signal(object)
     set_next_stage = Signal(object)
 
@@ -718,10 +718,10 @@ class Model:
             
         if min_comp < self.data_test.max_comp < max_comp and min_recoil < self.data_test.max_recoil < max_recoil:
             self.lamp_green_switch_on()
-            self.signals.conv_result_lamp.emit(step, 'green')
+            self.signals.conv_result_lamp.emit(step, ColorLampConv.GREEN)
         else:
             self.lamp_red_switch_on()
-            self.signals.conv_result_lamp.emit(step, 'red')
+            self.signals.conv_result_lamp.emit(step, ColorLampConv.RED)
             
     def work_interrupted_operator(self):
         self.signals.set_stage.emit(Stage.WAIT)

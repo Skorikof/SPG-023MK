@@ -31,3 +31,10 @@ class TypeTest(Enum):
     CONV = auto()
     TEMPER = auto()
     SETTINGS = auto()
+
+
+class ColorLampConv(Enum):
+    BLACK = 'rgb(0, 0, 0)'
+    WHITE = 'rgb(255, 255, 255)'
+    RED = 'rgb(255, 0, 0)'
+    GREEN = 'rgb(0, 255, 0)'
