@@ -3,6 +3,7 @@ import time
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 from config import config
+from scripts.modbus.registers import REG_STATE_WORD, REG_FC_COMMAND_LEN, REG_FC_COMMAND
 
 
 class Signals(QObject):
@@ -60,19 +61,19 @@ class WriterThread(QRunnable):
                 if not self._wait_drive_ready():
                     raise Exception("Drive busy timeout")
 
-                if not self._write_retry(0x2060, [8]):
+                if not self._write_retry(REG_FC_COMMAND_LEN, [8]):
                     raise Exception("Length write failed")
 
                 if not self._wait_drive_ready():
                     raise Exception("Drive busy timeout 2")
 
-                if not self._write_retry(0x2061, self.freq_command):
+                if not self._write_retry(REG_FC_COMMAND, self.freq_command):
                     raise Exception("Command write failed")
 
                 self.signals.write_result.emit((
                     'OK!',
                     self.tag,
-                    0x2061,
+                    REG_FC_COMMAND,
                     self.freq_command,
                     self.command
                 ))
@@ -81,7 +82,7 @@ class WriterThread(QRunnable):
                 self.signals.write_result.emit((
                     'ERROR!',
                     self.tag,
-                    0x2061,
+                    REG_FC_COMMAND,
                     self.freq_command,
                     self.command
                 ))
@@ -106,7 +107,7 @@ class WriterThread(QRunnable):
                 time.sleep(0.02)
                 try:
                     rr = self.client.read_holding_registers(
-                        0x2003, count=1, device_id=1
+                        REG_STATE_WORD, count=1, device_id=1
                     )
                     if not rr.isError() and len(rr.registers) == 1:
                         bits = self._dec_to_bin_str(rr.registers[0])

@@ -3,6 +3,14 @@ import time
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 from config import config
+from scripts.modbus.registers import (
+    REG_STATE_BLOCK,
+    REG_STATE_BLOCK_COUNT,
+    REG_BUFFER_START,
+    REG_BUFFER_RECORD_REGS,
+    REG_BUFFER_RECORDS_PER_READ,
+    REG_BUFFER_TOTAL_REGS,
+)
 
 
 class Signals(QObject):
@@ -21,8 +29,8 @@ class ReaderThread(QRunnable):
 
         self.read_tag: str = 'reg'
 
-        self.reg_buffer: int = 0x4000
-        self.buffer_count: int = 20
+        self.reg_buffer: int = REG_BUFFER_START
+        self.buffer_count: int = REG_BUFFER_RECORDS_PER_READ
 
         self.flag_start_test: bool = False
         self.current_rec: int = -1
@@ -41,7 +49,9 @@ class ReaderThread(QRunnable):
             
             if self.read_tag == 'reg':
                 try:
-                    rr = self.client.read_holding_registers(0x2000, count=14, device_id=1)
+                    rr = self.client.read_holding_registers(REG_STATE_BLOCK,
+                                                            count=REG_STATE_BLOCK_COUNT,
+                                                            device_id=1)
                     if rr.isError():
                         self.signals.thread_err.emit(str(rr))
                         
@@ -64,17 +74,17 @@ class ReaderThread(QRunnable):
                                    'temper': []}
                     
                     rr = self.client.read_holding_registers(self.reg_buffer,
-                                                            count=self.buffer_count * 6,
+                                                            count=self.buffer_count * REG_BUFFER_RECORD_REGS,
                                                             device_id=1)
-                    
+
                     if rr.isError():
                         self.signals.thread_err.emit(str(rr))
-                        
+
                     else:
-                        if len(rr.registers) == self.buffer_count * 6:  # 120
-                            for i in range(0, self.buffer_count):  # 20
+                        if len(rr.registers) == self.buffer_count * REG_BUFFER_RECORD_REGS:
+                            for i in range(0, self.buffer_count):
                                 flag_add = False
-                                ind = 6 * i
+                                ind = REG_BUFFER_RECORD_REGS * i
                                 if self.flag_start_test:
                                     flag_add = True
                                     self.flag_start_test = False
@@ -84,7 +94,7 @@ class ReaderThread(QRunnable):
 
                                 if flag_add:
                                     self.current_rec = rr.registers[ind]
-                                    self.reg_buffer += 6
+                                    self.reg_buffer += REG_BUFFER_RECORD_REGS
 
                                     if rr.registers[ind] != 0:
                                         self.result['count'].append(rr.registers[ind])
@@ -99,19 +109,19 @@ class ReaderThread(QRunnable):
                                     # self.signals.thread_err.emit(txt)
                                     break
 
-                            delta_r = 16384 + 18000 - self.reg_buffer
+                            delta_r = REG_BUFFER_START + REG_BUFFER_TOTAL_REGS - self.reg_buffer
 
                             if delta_r <= 0:
                                 if delta_r < 0:
                                     self.signals.thread_err.emit('Выход за пределы буфера')
-                                self.buffer_count = 20
-                                self.reg_buffer = 0x4000
+                                self.buffer_count = REG_BUFFER_RECORDS_PER_READ
+                                self.reg_buffer = REG_BUFFER_START
                             else:
-                                if delta_r >= 6 * self.buffer_count:
-                                    self.buffer_count = 20
+                                if delta_r >= REG_BUFFER_RECORD_REGS * self.buffer_count:
+                                    self.buffer_count = REG_BUFFER_RECORDS_PER_READ
 
                                 else:
-                                    self.buffer_count = int(delta_r / 6)
+                                    self.buffer_count = int(delta_r / REG_BUFFER_RECORD_REGS)
                                     
                             if self.result.get('count'):
                                 self.signals.read_result.emit(self.result, self.read_tag)
@@ -123,7 +133,7 @@ class ReaderThread(QRunnable):
 
     @Slot()
     def start_test(self):
-        self.reg_buffer = 0x4000
+        self.reg_buffer = REG_BUFFER_START
         self.flag_start_test = True
         self.read_tag = 'buffer'
 

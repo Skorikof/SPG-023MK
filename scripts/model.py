@@ -13,6 +13,7 @@ from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
 from scripts.controller.stages import Stage, TypeTest, ColorLampConv
 from scripts.modbus.client import Client
+from scripts.modbus.registers import REG_STATE_WORD, REG_EMERGENCY_FORCE
 from scripts.freq_ctrl.freq_control import FreqControl
 
 from scripts.controller.cycle_collector import CycleCollector, PhaseState, Mode
@@ -618,7 +619,7 @@ class Model:
 
         self.writer.write_out('reg',
                                 values=[res],
-                                reg_write=0x2003,
+                                reg_write=REG_STATE_WORD,
                                 command=command)
 
     @log_exceptions
@@ -660,7 +661,7 @@ class Model:
     @log_exceptions
     def write_emergency_force(self, value):
         arr = self.calc_data.emergency_force(value)
-        self.writer.write_out('reg', values=arr, reg_write=0x200a)
+        self.writer.write_out('reg', values=arr, reg_write=REG_EMERGENCY_FORCE)
     
     @log_exceptions
     def fc_control(self, tag: str, adr: int, speed: float = None, freq: int = None, hod: int = None):
@@ -683,26 +684,25 @@ class Model:
     def lamp_all_switch_on(self):
         """Включение всех индикаторов"""
         self.write_bit_green_light(1)
-        QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
+        QTimer.singleShot(200, lambda: self.write_bit_red_light(1))
 
     @log_exceptions
     def lamp_all_switch_off(self):
         """Выключение всех индикаторов"""
         self.write_bit_green_light(0)
-        QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
+        QTimer.singleShot(200, lambda: self.write_bit_red_light(0))
 
     @log_exceptions
     def lamp_green_switch_on(self):
         """Включение зелёного индикатора"""
         self.write_bit_green_light(1)
-        QTimer.singleShot(100, lambda: self.write_bit_red_light(0))
 
     @log_exceptions
     def lamp_red_switch_on(self):
         """Включение красного индикатора"""
-        self.write_bit_green_light(0)
-        QTimer.singleShot(100, lambda: self.write_bit_red_light(1))
+        self.write_bit_red_light(1)
             
+    #FIXME Включение ламп результата конвейера, при попадании в допуски, зависает тест, нужно тестировать и отлаживать
     @log_exceptions
     def result_conveyor_test(self, step):
         """Включение индикаторов, зелёный - в допусках, красный - нет"""
@@ -716,10 +716,17 @@ class Model:
             min_comp, max_comp = amort.min_comp_2, amort.max_comp_2
             min_recoil, max_recoil = amort.min_recoil_2, amort.max_recoil_2
             
-        if min_comp < self.data_test.max_comp < max_comp and min_recoil < self.data_test.max_recoil < max_recoil:
+        flag_comp = min_comp < self.data_test.max_comp < max_comp
+        flag_recoil = min_recoil < self.data_test.max_recoil < max_recoil
+
+        if flag_comp and flag_recoil:
+            if self.state_dict.get('red_light', False) is True:
+                self.write_bit_red_light(0)
             self.lamp_green_switch_on()
             self.signals.conv_result_lamp.emit(step, ColorLampConv.GREEN)
         else:
+            if self.state_dict.get('green_light', False) is True:
+                self.write_bit_green_light(0)
             self.lamp_red_switch_on()
             self.signals.conv_result_lamp.emit(step, ColorLampConv.RED)
             

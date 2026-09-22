@@ -93,7 +93,6 @@ class AlarmSteps:
         """Handle excess temperature alarm."""
         self._trigger_alarm(self.ALARM_CONFIGS[AlarmType.EXCESS_TEMPERATURE])
 
-    # FIXME Проверить вот этот моент
     def step_alarm_traverse_position(self):
         """Check and handle traverse position alarms."""
         try:
@@ -102,11 +101,11 @@ class AlarmSteps:
                 tag = 'up'
             elif not self.model.switch_dict.get('alarm_lowest_position', False):
                 tag = 'down'
-            
+
             if tag and not self.flag_alarm_traverse:
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
-                self._set_common_alarm_flags(self, msg)
+                self._set_common_alarm_flags(msg)
 
                 self.model.write_bit_red_light(1)
                 self.model.stop_collect()

@@ -34,8 +34,11 @@ class Client:
         if self.client is None:
             self._init_client()
 
-        self.client.connect()
-        self.flag_connect = True
+        if self.client is None:
+            self.flag_connect = False
+            return
+
+        self.flag_connect = bool(self.client.connect())
 
     def disconnect_client(self):
         if self.client:

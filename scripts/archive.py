@@ -157,16 +157,7 @@ class ReadArchive:
             if self.type_test == TYPE_LAB_CASCADE:
                 lab_obj = LabSchema(**data)
                 self.lab.append(lab_obj)
-                
-                # casc_data = {
-                # **data,
-                # 'speed_list': self.speed_list,
-                # 'recoil_list': self.recoil_list,
-                # 'comp_list': self.comp_list,
-                # }
-                # casc_obj = CascSchema(**casc_data)
-                # self.cascade.append(casc_obj)
-            
+
             else:
                 schema_class = self.TYPE_SCHEMA_MAP.get(self.type_test, LabSchema)
                 obj = schema_class(**data)
