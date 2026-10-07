@@ -423,6 +423,10 @@ class AppWindow(QMainWindow):
 
         self.ui.btn_add_speed.setVisible(flag_cascade)
         self.ui.btn_reduce_speed.setVisible(flag_cascade)
+        self.ui.cascad_profile_1_btn.setVisible(flag_cascade)
+        self.ui.cascad_profile_2_btn.setVisible(flag_cascade)
+        self.ui.cascad_profile_3_btn.setVisible(flag_cascade)
+        self.ui.cascad_profile_4_btn.setVisible(flag_cascade)
         self.ui.specif_lab_cascade_speed_table.setVisible(flag_cascade)
 
     @log_exceptions
@@ -818,6 +822,8 @@ class AppWindow(QMainWindow):
     @log_exceptions
     def conv_test_fill_template(self):
         amort = self.model.data_test.amort
+        self.ui.conv_name_le.setText(amort.name)
+        self.ui.conv_serial_le.setText(f'{self.model.data_test.serial}')
         self.ui.conv_comp_limit_le.setText(f'{amort.min_comp}~{amort.max_comp}')
         self.ui.conv_recoil_limit_le.setText(f'{amort.min_recoil}~{amort.max_recoil}')
         self.ui.conv_comp_limit_le_2.setText(f'{amort.min_comp_2}~{amort.max_comp_2}')

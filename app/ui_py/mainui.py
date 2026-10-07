@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'mainuiBuImwc.ui'
+## Form generated from reading UI file 'mainui.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.4.3
+## Created by: Qt User Interface Compiler version 6.11.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QSize, Qt)
-from PySide6.QtGui import (QFont)
-from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFrame, QGridLayout,
-                               QHBoxLayout, QLabel, QLineEdit, QPushButton, QStackedWidget,
-                               QStatusBar, QTableWidget, QVBoxLayout, QWidget)
+from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+    QMetaObject, QObject, QPoint, QRect,
+    QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
+    QFont, QFontDatabase, QGradient, QIcon,
+    QImage, QKeySequence, QLinearGradient, QPainter,
+    QPalette, QPixmap, QRadialGradient, QTransform)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
+    QFrame, QGridLayout, QHBoxLayout, QHeaderView,
+    QLabel, QLineEdit, QMainWindow, QPushButton,
+    QSizePolicy, QStackedWidget, QStatusBar, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget)
 
 from pyqtgraph import PlotWidget
 
@@ -518,8 +525,6 @@ class Ui_MainWindow(object):
         self.push_force_chb.setObjectName(u"push_force_chb")
         self.push_force_chb.setGeometry(QRect(630, 460, 380, 35))
         self.push_force_chb.setFont(font7)
-        self.push_force_chb.setChecked(True)
-        self.push_force_chb.setCheckState(Qt.Unchecked)
         self.specif_lab_cascade_speed_table = QTableWidget(self.specif_data_frame)
         if (self.specif_lab_cascade_speed_table.columnCount() < 1):
             self.specif_lab_cascade_speed_table.setColumnCount(1)
@@ -624,6 +629,30 @@ class Ui_MainWindow(object):
         font10.setPointSize(14)
         font10.setBold(False)
         self.select_temp_sensor_btn.setFont(font10)
+        self.cascad_profile_1_btn = QPushButton(self.specif_data_frame)
+        self.cascad_profile_1_btn.setObjectName(u"cascad_profile_1_btn")
+        self.cascad_profile_1_btn.setGeometry(QRect(700, 260, 120, 35))
+        self.cascad_profile_1_btn.setMinimumSize(QSize(100, 35))
+        self.cascad_profile_1_btn.setMaximumSize(QSize(120, 35))
+        self.cascad_profile_1_btn.setFont(font10)
+        self.cascad_profile_2_btn = QPushButton(self.specif_data_frame)
+        self.cascad_profile_2_btn.setObjectName(u"cascad_profile_2_btn")
+        self.cascad_profile_2_btn.setGeometry(QRect(700, 310, 120, 35))
+        self.cascad_profile_2_btn.setMinimumSize(QSize(100, 35))
+        self.cascad_profile_2_btn.setMaximumSize(QSize(120, 35))
+        self.cascad_profile_2_btn.setFont(font10)
+        self.cascad_profile_4_btn = QPushButton(self.specif_data_frame)
+        self.cascad_profile_4_btn.setObjectName(u"cascad_profile_4_btn")
+        self.cascad_profile_4_btn.setGeometry(QRect(700, 410, 120, 35))
+        self.cascad_profile_4_btn.setMinimumSize(QSize(100, 35))
+        self.cascad_profile_4_btn.setMaximumSize(QSize(120, 35))
+        self.cascad_profile_4_btn.setFont(font10)
+        self.cascad_profile_3_btn = QPushButton(self.specif_data_frame)
+        self.cascad_profile_3_btn.setObjectName(u"cascad_profile_3_btn")
+        self.cascad_profile_3_btn.setGeometry(QRect(700, 360, 120, 35))
+        self.cascad_profile_3_btn.setMinimumSize(QSize(100, 35))
+        self.cascad_profile_3_btn.setMaximumSize(QSize(120, 35))
+        self.cascad_profile_3_btn.setFont(font10)
 
         self.verticalLayout_3.addWidget(self.specif_data_frame)
 
@@ -1171,6 +1200,34 @@ class Ui_MainWindow(object):
         self.lbl_push_force_conv.setFont(font12)
         self.lbl_push_force_conv.setTextFormat(Qt.AutoText)
         self.lbl_push_force_conv.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lbl_18 = QLabel(self.frame_2)
+        self.lbl_18.setObjectName(u"lbl_18")
+        self.lbl_18.setGeometry(QRect(590, 0, 121, 25))
+        self.lbl_18.setMinimumSize(QSize(0, 25))
+        self.lbl_18.setMaximumSize(QSize(16777215, 25))
+        self.lbl_18.setFont(font11)
+        self.conv_name_le = QLineEdit(self.frame_2)
+        self.conv_name_le.setObjectName(u"conv_name_le")
+        self.conv_name_le.setGeometry(QRect(710, 0, 300, 25))
+        self.conv_name_le.setMinimumSize(QSize(300, 25))
+        self.conv_name_le.setMaximumSize(QSize(300, 25))
+        self.conv_name_le.setFont(font2)
+        self.conv_name_le.setAlignment(Qt.AlignCenter)
+        self.conv_name_le.setReadOnly(True)
+        self.lbl_29 = QLabel(self.frame_2)
+        self.lbl_29.setObjectName(u"lbl_29")
+        self.lbl_29.setGeometry(QRect(590, 35, 128, 25))
+        self.lbl_29.setMinimumSize(QSize(0, 25))
+        self.lbl_29.setMaximumSize(QSize(16777215, 25))
+        self.lbl_29.setFont(font11)
+        self.conv_serial_le = QLineEdit(self.frame_2)
+        self.conv_serial_le.setObjectName(u"conv_serial_le")
+        self.conv_serial_le.setGeometry(QRect(730, 35, 80, 25))
+        self.conv_serial_le.setMinimumSize(QSize(0, 0))
+        self.conv_serial_le.setMaximumSize(QSize(150, 25))
+        self.conv_serial_le.setFont(font2)
+        self.conv_serial_le.setAlignment(Qt.AlignCenter)
+        self.conv_serial_le.setReadOnly(True)
 
         self.verticalLayout_2.addWidget(self.frame_2)
 
@@ -1214,7 +1271,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.main_stackedWidget.setCurrentIndex(1)
+        self.main_stackedWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -1285,6 +1342,10 @@ class Ui_MainWindow(object):
         self.btn_add_speed.setText(QCoreApplication.translate("MainWindow", u"+", None))
         self.btn_reduce_speed.setText(QCoreApplication.translate("MainWindow", u"-", None))
         self.select_temp_sensor_btn.setText(QCoreApplication.translate("MainWindow", u"\u0411\u0435\u0441\u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u044b\u0439 \u0434\u0430\u0442\u0447\u0438\u043a \u0442\u0435\u043c\u0435\u0440\u0430\u0442\u0443\u0440\u044b", None))
+        self.cascad_profile_1_btn.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0444\u0438\u043b\u044c 1", None))
+        self.cascad_profile_2_btn.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0444\u0438\u043b\u044c 2", None))
+        self.cascad_profile_4_btn.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0444\u0438\u043b\u044c 4", None))
+        self.cascad_profile_3_btn.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0444\u0438\u043b\u044c 3", None))
         self.specif_continue_btn.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0410\u0427\u0410\u0422\u042c \u0418\u0421\u041f\u042b\u0422\u0410\u041d\u0418\u0415", None))
         self.lab_serial_le.setText("")
         self.lbl_23.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0435\u0440\u0438\u0439\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440:", None))
@@ -1334,6 +1395,10 @@ class Ui_MainWindow(object):
         self.conv_recoil_le_2.setText("")
         self.conv_recoil_limit_le_2.setText("")
         self.lbl_push_force_conv.setText(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>\u0414\u0438\u043d\u0430\u043c\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0432\u044b\u0442\u0430\u043b\u043a\u0438\u0432\u0430\u044e\u0449\u0430\u044f \u0441\u0438\u043b\u0430, \u043a\u0433\u0441:</p></body></html>", None))
+        self.lbl_18.setText(QCoreApplication.translate("MainWindow", u"\u041d\u0430\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u0435:", None))
+        self.conv_name_le.setText("")
+        self.lbl_29.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0435\u0440\u0438\u0439\u043d\u044b\u0439 \u043d\u043e\u043c\u0435\u0440:", None))
+        self.conv_serial_le.setText("")
         self.test_conv_cancel_btn.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0420\u0415\u0420\u0412\u0410\u0422\u042c \u0418\u0421\u041f\u042b\u0422\u0410\u041d\u0418\u0415", None))
     # retranslateUi
 
