@@ -11,6 +11,7 @@ from app.wins.amorts_win import AmortWin
 from app.wins.archive_win import ArchiveWin
 from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
+from scripts.cascade_profiles import CascadeProfiles
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
 from scripts.controller.controller import Controller
@@ -29,6 +30,7 @@ class AppWindow(QMainWindow):
         self.controller = controller
         self.win_set = SetWindow(model)
         self.calc_data = CalcData()
+        self.cascade_profiles = CascadeProfiles()
         self.win_exec = ExecWin()
         self.win_amort = AmortWin()
         self.win_archive = ArchiveWin()
@@ -65,6 +67,8 @@ class AppWindow(QMainWindow):
     def _init_variables(self):
         self.index_amort = 0
         self.index_type_test = 0
+        # номер профиля, которым заполнена таблица каскада (None - пустая или поправлена вручную)
+        self.cascade_profile_num = None
 
     def _init_buttons(self):
         self.ui.test_save_btn.setVisible(False)
@@ -85,6 +89,11 @@ class AppWindow(QMainWindow):
         self.ui.select_temp_sensor_btn.clicked.connect(self.select_temper_sensor)
         self.ui.btn_add_speed.clicked.connect(self.specif_add_lab_cascade_table)
         self.ui.btn_reduce_speed.clicked.connect(self.specif_reduce_lab_cascade_table)
+        self.ui.cascad_profile_1_btn.clicked.connect(lambda: self.specif_fill_cascade_profile(1))
+        self.ui.cascad_profile_2_btn.clicked.connect(lambda: self.specif_fill_cascade_profile(2))
+        self.ui.cascad_profile_3_btn.clicked.connect(lambda: self.specif_fill_cascade_profile(3))
+        self.ui.cascad_profile_4_btn.clicked.connect(lambda: self.specif_fill_cascade_profile(4))
+        self._init_cascade_profile_btns()
         self.ui.test_cancel_btn.clicked.connect(self.cancel_test_clicked)
         self.ui.test_conv_cancel_btn.clicked.connect(self.cancel_test_conv_clicked)
         self.ui.test_repeat_btn.clicked.connect(self.repeat_test_clicked_slot)
@@ -434,6 +443,7 @@ class AppWindow(QMainWindow):
         amort = self.win_amort.amorts.struct.amorts[self.index_amort]
         self.model.set_amort(amort)
         self.specif_ui_fill(amort)
+        self.specif_recheck_cascade_table()
 
     @log_exceptions
     def specif_ui_fill(self, obj):
@@ -476,6 +486,7 @@ class AppWindow(QMainWindow):
         self.ui.specif_static_push_force_lineEdit.clear()
 
         self.ui.specif_lab_cascade_speed_table.setRowCount(0)
+        self.cascade_profile_num = None
 
     def specif_lab_input_speed(self, obj):
         try:
@@ -525,6 +536,8 @@ class AppWindow(QMainWindow):
                 self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
 
                 self.ui.specif_lab_cascade_speed_table.setItem(count_rows, 0, QTableWidgetItem(f'{speed}'))
+                # таблица поправлена вручную и больше не совпадает с профилем
+                self.cascade_profile_num = None
 
         else:
             msg = QMessageBox.information(self,
@@ -533,11 +546,93 @@ class AppWindow(QMainWindow):
                                             f'для испытания</b>'
                                             )
 
+    def _cascade_profile_btns(self):
+        return {1: self.ui.cascad_profile_1_btn,
+                2: self.ui.cascad_profile_2_btn,
+                3: self.ui.cascad_profile_3_btn,
+                4: self.ui.cascad_profile_4_btn}
+
+    @log_exceptions
+    def _init_cascade_profile_btns(self):
+        """Подписи кнопок профилей из cascade.ini"""
+        self.cascade_profiles.update_list()
+        for num, btn in self._cascade_profile_btns().items():
+            profile = self.cascade_profiles.get_profile(num)
+            if profile:
+                btn.setText(profile.name)
+
+    def _cascade_speed_limits(self):
+        """Допустимый диапазон скоростей для хода выбранного амортизатора: (hod, min, max)"""
+        hod = 120 if self.model.data_test.amort is None else self.model.data_test.amort.hod
+        return hod, 0.02, self.calc_data.max_speed(hod)
+
+    def _cascade_table_set(self, speeds):
+        table = self.ui.specif_lab_cascade_speed_table
+        table.setColumnCount(1)
+        table.setRowCount(len(speeds))
+        for row, speed in enumerate(speeds):
+            table.setItem(row, 0, QTableWidgetItem(f'{speed}'))
+
+    def _cascade_filter_speeds(self, speeds, action: str):
+        """Оставляет скорости, допустимые для текущего хода, о лишних предупреждает оператора"""
+        hod, min_speed, max_speed = self._cascade_speed_limits()
+        valid = [s for s in speeds if min_speed <= s <= max_speed]
+        skipped = [s for s in speeds if not min_speed <= s <= max_speed]
+        if skipped:
+            QMessageBox.information(self,
+                                    'Внимание',
+                                    f'Скорости <b style="color: #f00;">{"; ".join(map(str, skipped))}</b> '
+                                    f'не попадают в диапазон от {min_speed} до {max_speed} '
+                                    f'для хода {hod} мм и {action}')
+        if len(valid) > 30:
+            QMessageBox.information(self,
+                                    'Внимание',
+                                    'В профиле больше 30 скоростей, добавлены первые 30')
+        return valid[:30]
+
+    @log_exceptions
+    def specif_fill_cascade_profile(self, num: int):
+        """Заполнение таблицы каскада скоростями профиля из cascade.ini"""
+        self._init_cascade_profile_btns()
+        profile = self.cascade_profiles.get_profile(num)
+        if profile is None or not profile.speeds:
+            QMessageBox.information(self,
+                                    'Внимание',
+                                    f'<b style="color: #f00;">Профиль {num} не найден или пуст</b><br>'
+                                    f'Проверьте файл {self.cascade_profiles.CONFIG_FILE}')
+            return
+
+        self._cascade_table_set(self._cascade_filter_speeds(profile.speeds, 'не добавлены'))
+        self.cascade_profile_num = num
+
+    @log_exceptions
+    def specif_recheck_cascade_table(self):
+        """
+        Перепроверка таблицы каскада после смены амортизатора (другой ход - другая макс. скорость).
+        Заполненная профилем таблица перезаполняется им же, поправленная вручную - чистится
+        от скоростей вне диапазона
+        """
+        if self.model.get_type_test() != TypeTest.LAB_CASCADE:
+            return
+
+        if self.cascade_profile_num is not None:
+            self.specif_fill_cascade_profile(self.cascade_profile_num)
+            return
+
+        table = self.ui.specif_lab_cascade_speed_table
+        if table.rowCount() == 0:
+            return
+        speeds = [float(table.item(i, 0).text()) for i in range(table.rowCount())]
+        valid = self._cascade_filter_speeds(speeds, 'удалены из таблицы')
+        if len(valid) != len(speeds):
+            self._cascade_table_set(valid)
+
     @log_exceptions
     def specif_reduce_lab_cascade_table(self):
             count_rows = self.ui.specif_lab_cascade_speed_table.rowCount()
             if count_rows > 0:
                 self.ui.specif_lab_cascade_speed_table.removeRow(count_rows - 1)
+                self.cascade_profile_num = None
 
     @log_exceptions
     def specif_read_lab_cascade_table(self):
