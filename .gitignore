@@ -1,13 +1,11 @@
 .git/
 .idea/
+.venv/
 .vscode/
 *__pycache__/
 archive/
 dist/
 logs/
-venv/
-.venv/
-.venv38/
-.venv311/
 screens/
 firm/
+.env
