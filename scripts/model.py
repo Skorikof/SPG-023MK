@@ -39,6 +39,9 @@ class ModelSignals(QObject):
 
 
 class Model:
+    # Биты слова состояния 0x2003, которые выставляет только ПК: 0 - буфер, 1 - красная, 2 - зелёная лампа
+    COMMANDED_BITS = (0, 1, 2)
+
     def __init__(self):
         self._init_variables()
         self._init_flags()
@@ -124,7 +127,13 @@ class Model:
         self.timer_yellow = None
         self.time_push_yellow = None
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        
+        # Последние записанные значения бит, которыми управляет ПК (буфер, лампы).
+        # state_list отстаёт от записей, поэтому без этого запись соседнего бита
+        # затирала только что отправленный (лампа гасла сразу после включения)
+        self.commanded_bits: dict[int, int] = {}
+        # Общий итог конвейерного испытания по всем скоростям (для лампы стенда)
+        self.conv_result_ok = True
+
         self.list_lab_result = []
         self.list_conv_result = []
         self.count_cascade = 0
@@ -609,7 +618,12 @@ class Model:
         
     @log_exceptions
     def _write_reg_state(self, bit, value, command=None):
+        if bit in self.COMMANDED_BITS:
+            self.commanded_bits[bit] = value
+
         com_list = self.state_list[:]
+        for b, v in self.commanded_bits.items():
+            com_list[b] = v
         com_list[bit] = value
 
         res = 0
@@ -635,13 +649,13 @@ class Model:
     @log_exceptions
     def write_bit_red_light(self, value):
         bit = self.state_dict.get('red_light', 0)
-        if int(bit) != value:
+        if int(bit) != value or self.commanded_bits.get(1, value) != value:
             self._write_reg_state(1, value, command='red_light')
 
     @log_exceptions
     def write_bit_green_light(self, value):
         bit = self.state_dict.get('green_light', 0)
-        if int(bit) != value:
+        if int(bit) != value or self.commanded_bits.get(2, value) != value:
             self._write_reg_state(2, value, command='green_light')
 
     @log_exceptions
@@ -702,10 +716,13 @@ class Model:
         """Включение красного индикатора"""
         self.write_bit_red_light(1)
             
-    #FIXME Включение ламп результата конвейера, при попадании в допуски, зависает тест, нужно тестировать и отлаживать
     @log_exceptions
     def result_conveyor_test(self, step):
-        """Включение индикаторов, зелёный - в допусках, красный - нет"""
+        """
+        Включение индикаторов, зелёный - в допусках, красный - нет.
+        Индикатор в окне показывает результат своей скорости, лампа стенда - общий итог:
+        если первая скорость не в допусках, лампа остаётся красной и после второй
+        """
         amort = self.data_test.amort
         min_comp, max_comp = 0, 2000
         min_recoil, max_recoil = 0, 2000
@@ -718,17 +735,21 @@ class Model:
             
         flag_comp = min_comp < self.data_test.max_comp < max_comp
         flag_recoil = min_recoil < self.data_test.max_recoil < max_recoil
+        step_ok = flag_comp and flag_recoil
 
-        if flag_comp and flag_recoil:
-            if self.state_dict.get('red_light', False) is True:
-                self.write_bit_red_light(0)
-            self.lamp_green_switch_on()
-            self.signals.conv_result_lamp.emit(step, ColorLampConv.GREEN)
+        if step == 'one':
+            self.conv_result_ok = step_ok
         else:
-            if self.state_dict.get('green_light', False) is True:
-                self.write_bit_green_light(0)
+            self.conv_result_ok = self.conv_result_ok and step_ok
+
+        self.signals.conv_result_lamp.emit(step, ColorLampConv.GREEN if step_ok else ColorLampConv.RED)
+
+        if self.conv_result_ok:
+            self.write_bit_red_light(0)
+            self.lamp_green_switch_on()
+        else:
+            self.write_bit_green_light(0)
             self.lamp_red_switch_on()
-            self.signals.conv_result_lamp.emit(step, ColorLampConv.RED)
             
     def work_interrupted_operator(self):
         self.signals.set_stage.emit(Stage.WAIT)

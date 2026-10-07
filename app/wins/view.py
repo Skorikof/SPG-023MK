@@ -976,8 +976,12 @@ class AppWindow(QMainWindow):
             self.controller.stop_test_clicked()
 
         elif temp == 'НАЗАД':
+            self.model.lamp_all_switch_off()
             self.model.flag_reset_stop_test()
-            self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
+            # FIXME Автоувеличение серийника отключено: оператор вводит номера с буквами ('1п'),
+            #  int() падал с ValueError и кнопка «НАЗАД» переставала работать. Сейчас серийник
+            #  остаётся как ввели, нужно решить, как увеличивать номера с буквенной частью
+            # self.model.data_test.serial = str(int(self.model.data_test.serial) + 1)
             self.controller.trav_serv.traverse_install_point('stop_test')
             self.ui.test_conv_cancel_btn.setText('ПРЕРВАТЬ ИСПЫТАНИЕ')
 
