@@ -26,7 +26,10 @@ def get_logger(name):
     os.makedirs(directory, exist_ok=True)
     logger = logging.getLogger(name)
     logger.setLevel(config.log_level)
-    logger.addHandler(get_handler())
+    # get_logger вызывается в конструкторах (CalcData, ReadArchive... создаются многократно):
+    # без проверки каждый вызов добавлял обработчик, и строка писалась в лог N раз
+    if not logger.handlers:
+        logger.addHandler(get_handler())
     logger.propagate = False
 
     return logger

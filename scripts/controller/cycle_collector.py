@@ -435,6 +435,12 @@ class CycleCollector:
         self._mid_armed = False
         self._mid_seen_nmt_turn = False
         self._mid_in_tol_points = 0
+        # обороты, засчитанные текущим шагом программы до скачка, - в старых координатах
+        # (определение хода брало бы ход из такого оборота)
+        self.program_cycle_counter = 0
+        self.cycles.clear()
+        self.cycle_times.clear()
+        self.last_cycle_time = None
 
     @log_exceptions
     def _process_sample(self, pos, force, now):
