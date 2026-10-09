@@ -266,7 +266,7 @@ class Controller:
         иначе моментальная остановка
         """
         self.model.stop_collect()
-        self.model.write_end_test_in_archive()
+        self.model.close_test_in_archive()
         self.model.flag_reset_stop_test()
         self.set_stage(Stage.WAIT)
         self.model.stop_gear_end_test()

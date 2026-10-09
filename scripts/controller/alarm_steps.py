@@ -53,9 +53,9 @@ class AlarmSteps:
         self.model.stop_collect()
 
     def _set_common_alarm_flags(self, tag: str):
-        # Любая авария завершает испытание - закрываем его запись в архиве
-        # (раньше только для каскада и только при остановке привода, при перегреве - нет)
-        self.model.write_end_test_in_archive()
+        # Любая авария завершает испытание - сохраняем прерванное температурное
+        # и закрываем запись в архиве (раньше end_test только для каскада и не при перегреве)
+        self.model.close_test_in_archive()
         self.model.flag_test_launch = False
         self.model.flag_test = False
         self.model.alarm_tag = tag

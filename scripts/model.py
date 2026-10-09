@@ -151,6 +151,8 @@ class Model:
         self.flag_cascade_done = False
         # В архив записаны данные испытания, но ещё нет end_test
         self.flag_archive_test_open = False
+        # Температурное испытание идёт, накопленные точки ещё не сохранены в архив
+        self.flag_temper_unsaved = False
 
         self.alarm_tag = ''
         self.flag_alarm = False
@@ -768,7 +770,7 @@ class Model:
             self.stop_collect()
         self.flag_test_launch = False
         self.flag_test = False
-        self.write_end_test_in_archive()
+        self.close_test_in_archive()
     
     @log_exceptions
     def flag_reset_start_test(self):
@@ -875,6 +877,9 @@ class Model:
             self.flag_cascade_done = True
 
     def test_temper(self):
+        # точки копятся с нуля на каждый запуск (в т.ч. при повторе испытания)
+        self.data_test.reset_temper_test()
+        self.flag_temper_unsaved = True
         self.start_collect_inf_cycle()
         speed = self.get_speed_test()
         self._tune_cycle_collector_for_speed()
@@ -952,6 +957,7 @@ class Model:
     
     @log_exceptions
     def save_temper_test_in_archive(self):
+        self.flag_temper_unsaved = False
         data_dict = {'temper_graph': self.data_test.temper_list[:],
                      'temper_recoil_graph': self.data_test.recoil_list[:],
                      'temper_comp_graph': self.data_test.comp_list[:],
@@ -967,6 +973,19 @@ class Model:
                      'max_temperature': self.data_test.max_temperature,
                     }
         self.write_data_in_archive('data', data_dict)
+
+    def close_test_in_archive(self):
+        """
+        Прерывание испытания (кнопки, аварии): температурное сохраняется с уже
+        накопленными точками, незакрытая запись (каскад) закрывается end_test
+        """
+        if self.flag_temper_unsaved:
+            self.flag_temper_unsaved = False
+            points = len(self.data_test.temper_list)
+            if points:
+                self.save_temper_test_in_archive()
+                self.logger.info(f'Прерванное температурное испытание сохранено в архив, точек: {points}')
+        self.write_end_test_in_archive()
 
     def write_end_test_in_archive(self):
         """Закрывает запись испытания в архиве. Повторный вызов без новых данных ничего не пишет"""
