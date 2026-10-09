@@ -133,13 +133,12 @@ class WriterArchive(QRunnable):
 
     def _change_data_for_save(self, data: list):
         try:
-            data = str(data)
-            data = data[1:-1]
-            data = data.replace(' ', '')
-            data = data.replace(',', ';')
-            data = data.replace('.', ',')
-
-            return data
+            # Числа приводятся к float явно: в numpy 2 str() списка из np.float64
+            # даёт 'np.float64(1.5)' вместо '1.5', и архив становится нечитаемым
+            return ';'.join(
+                str(float(x)).replace('.', ',') if not isinstance(x, str) else x.replace('.', ',')
+                for x in data
+            )
 
         except Exception as e:
             self.signals.thread_err.emit(f'ERROR in thread writer_archive/_change_data_for_save --> {e}')
