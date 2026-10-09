@@ -532,6 +532,12 @@ class AppWindow(QMainWindow):
         if count_rows < 30:
             self.ui.specif_lab_cascade_speed_table.setColumnCount(1)
             speed = self.specif_lab_input_speed(self.ui.specif_speed_one_lineEdit)
+            if speed and count_rows > 0:
+                last = float(self.ui.specif_lab_cascade_speed_table.item(count_rows - 1, 0).text())
+                if speed <= last:
+                    self._msg_cascade_order(f'Скорость <b style="color: #f00;">{speed}</b> должна быть '
+                                            f'больше предыдущей ({last})')
+                    return
             if speed:
                 self.ui.specif_lab_cascade_speed_table.setRowCount(count_rows + 1)
 
@@ -560,6 +566,24 @@ class AppWindow(QMainWindow):
             profile = self.cascade_profiles.get_profile(num)
             if profile:
                 btn.setText(profile.name)
+
+    @staticmethod
+    def _cascade_order_error(speeds):
+        """
+        Скорости каскада должны строго возрастать: повтор или убывание ломают
+        интерполяцию графика усилие/скорость. Возвращает текст ошибки или None
+        """
+        for i in range(1, len(speeds)):
+            if speeds[i] <= speeds[i - 1]:
+                kind = 'повторяет предыдущую' if speeds[i] == speeds[i - 1] else 'меньше предыдущей'
+                return (f'Скорость №{i + 1} (<b style="color: #f00;">{speeds[i]}</b>) {kind} '
+                        f'№{i} ({speeds[i - 1]})')
+        return None
+
+    def _msg_cascade_order(self, text):
+        QMessageBox.information(self,
+                                'Внимание',
+                                f'{text}.<br>Скорости каскада должны идти по возрастанию без повторов')
 
     def _cascade_speed_limits(self):
         """Допустимый диапазон скоростей для хода выбранного амортизатора: (hod, min, max)"""
@@ -600,6 +624,12 @@ class AppWindow(QMainWindow):
                                     'Внимание',
                                     f'<b style="color: #f00;">Профиль {num} не найден или пуст</b><br>'
                                     f'Проверьте файл {self.cascade_profiles.CONFIG_FILE}')
+            return
+
+        error = self._cascade_order_error(profile.speeds)
+        if error:
+            self._msg_cascade_order(f'Профиль «{profile.name}»: {error.lower()[:1]}{error[1:]}'
+                                    f'<br>Исправьте файл {self.cascade_profiles.CONFIG_FILE}')
             return
 
         self._cascade_table_set(self._cascade_filter_speeds(profile.speeds, 'не добавлены'))
@@ -644,6 +674,11 @@ class AppWindow(QMainWindow):
         else:
             for i in range(count_rows):
                 list_speed.append(float(self.ui.specif_lab_cascade_speed_table.item(i, 0).text()))
+
+            error = self._cascade_order_error(list_speed)
+            if error:
+                self._msg_cascade_order(error)
+                return None
 
             self.model.data_test.speed_list = list_speed[:]
             return True
@@ -727,11 +762,13 @@ class AppWindow(QMainWindow):
                         self._lab_win_clear()
                         self.fill_gui_lab_test()
                         if type_test == TypeTest.LAB_CASCADE:
+                            # True - можно стартовать, False - таблица пуста,
+                            # None - ошибка в скоростях (сообщение уже показано)
                             flag = self.specif_read_lab_cascade_table()
                             if flag:
                                 self._init_lab_graph()
                                 self.begin_test()
-                            else:
+                            elif flag is False:
                                 self.specif_msg_none_cascade_speed()
 
                         elif type_test == TypeTest.LAB_HAND:
