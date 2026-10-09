@@ -2,7 +2,7 @@
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any
-from pydantic import field_validator
+from pydantic import ValidationInfo, field_validator
 
 from scripts.amorts import AmortSchema
 from scripts.logger import my_logger
@@ -35,8 +35,9 @@ class BaseSchema(AmortSchema):
     
     @field_validator('*', mode='before')
     @classmethod
-    def normalize_decimal(cls, v):
-        if isinstance(v, str):
+    def normalize_decimal(cls, v, info: ValidationInfo):
+        # Только для числовых полей: в названии, серийнике и ФИО запятую не трогаем
+        if isinstance(v, str) and cls.model_fields[info.field_name].annotation in (float, int):
             return v.replace(DECIMAL_SEPARATOR, '.')
         return v
 
@@ -118,9 +119,14 @@ class ReadArchive:
             index = self.files_name_arr.index(filename)
             filepath = self.files_arr[index]
 
-            with open(filepath, encoding='utf-8') as f:
+            # utf-8-sig читает файлы и с BOM (новые, для Excel), и без него (старые)
+            with open(filepath, encoding='utf-8-sig') as f:
                 for data_list in self._read_line_in_archive(f):
                     self._parse_str_archive(data_list)
+
+            # каскад в конце файла без end_test (программу закрыли посреди испытания)
+            if self.type_test == TYPE_LAB_CASCADE and self.cascade_meta:
+                self._create_cascade_object()
         except Exception as e:
             self.logger.error(f"Failed to select file: {e}")
 
@@ -204,6 +210,15 @@ class ReadArchive:
         """Parse first part of archive record"""
         try:
             data = self._fill_obj_archive_data(archive_list[:FIRST_DATA_LENGTH])
+
+            # Старые файлы: каскад мог остаться без end_test. Если началось испытание
+            # другого типа или другого амортизатора, незакрытый каскад закрываем здесь
+            if self.type_test == TYPE_LAB_CASCADE and self.cascade_meta and (
+                    archive_list[3] != TYPE_LAB_CASCADE
+                    or data.get('name') != self.cascade_meta.get('name')
+                    or data.get('serial_number') != self.cascade_meta.get('serial_number')):
+                self._create_cascade_object()
+
             self.type_test = archive_list[3]
             
             if self.type_test == TYPE_LAB_CASCADE and data:

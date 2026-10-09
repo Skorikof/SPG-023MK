@@ -44,7 +44,7 @@ class AppWindow(QMainWindow):
         if self.controller.timer_process is not None:
             self.controller.timer_process.stop()
 
-        self.model.save_arch.timer_writer_arch_stop()
+        self.model.save_arch.stop()
         self.model.writer.threadpool.waitForDone()
         self.model.writer.timer_writer_stop()
         self.model.reader_exit()

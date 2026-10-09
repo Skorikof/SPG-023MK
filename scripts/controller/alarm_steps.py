@@ -51,10 +51,11 @@ class AlarmSteps:
         self.model.fc_control(tag="stop", adr=1)
         self.model.fc_control(tag="stop", adr=2)
         self.model.stop_collect()
-        if self.model.get_type_test() == TypeTest.LAB_CASCADE:
-            self.model.write_end_test_in_archive()
 
     def _set_common_alarm_flags(self, tag: str):
+        # Любая авария завершает испытание - закрываем его запись в архиве
+        # (раньше только для каскада и только при остановке привода, при перегреве - нет)
+        self.model.write_end_test_in_archive()
         self.model.flag_test_launch = False
         self.model.flag_test = False
         self.model.alarm_tag = tag

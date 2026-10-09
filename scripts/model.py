@@ -149,6 +149,8 @@ class Model:
         self.flag_repeat = False
         self.flag_search_hod = False
         self.flag_cascade_done = False
+        # В архив записаны данные испытания, но ещё нет end_test
+        self.flag_archive_test_open = False
 
         self.alarm_tag = ''
         self.flag_alarm = False
@@ -179,6 +181,10 @@ class Model:
         self.client.connect_client()
         self._init_timer_yellow_btn()
 
+        self.save_arch = WriterArch()
+        self.save_arch.signals.status_msg.connect(self.signals.stbar_msg)
+        self.save_arch.start()
+
         if self.client.flag_connect:
             self.writer = Writer(self.client.client)
             self.writer.timer_writer_start()
@@ -186,9 +192,6 @@ class Model:
             self.reader.init_reader(self.client.client)
             self._init_signals()
             self.reader_start()
-
-            self.save_arch = WriterArch()
-            self.save_arch.timer_writer_arch_start()
 
         else:
             self.status_bar_msg(f'Нет подключения к контроллеру')
@@ -759,10 +762,8 @@ class Model:
             self.fc_control(**{'tag': 'stop', 'adr': 2})
             self.stop_collect()
         self.flag_test_launch = False
-        if self.flag_test:
-            self.flag_test = False
-            if self.get_type_test() == TypeTest.LAB_CASCADE:
-                self.write_end_test_in_archive()
+        self.flag_test = False
+        self.write_end_test_in_archive()
     
     @log_exceptions
     def flag_reset_start_test(self):
@@ -914,6 +915,17 @@ class Model:
 
     def write_data_in_archive(self, tag, data=None):
         self.save_arch.write_arch_out(tag, data)
+        if tag == 'data':
+            self.flag_archive_test_open = True
+
+    def begin_test_in_archive(self):
+        """
+        Начало нового испытания: если предыдущее осталось в файле без end_test
+        (вылет программы, остановка без закрытия записи), writer допишет end_test,
+        чтобы при чтении архива испытания не склеились
+        """
+        self.flag_archive_test_open = False
+        self.write_data_in_archive('begin_test')
         
     @log_exceptions
     def save_data_test_in_archive(self):
@@ -952,4 +964,7 @@ class Model:
         self.write_data_in_archive('data', data_dict)
 
     def write_end_test_in_archive(self):
-        self.write_data_in_archive('end_test')
+        """Закрывает запись испытания в архиве. Повторный вызов без новых данных ничего не пишет"""
+        if self.flag_archive_test_open:
+            self.flag_archive_test_open = False
+            self.write_data_in_archive('end_test')
