@@ -591,6 +591,8 @@ class Controller:
             self.model.stop_collect()
             self.set_stage(Stage.WAIT)
             self.signals.reset_ui.emit()
+            # к этому времени шатун уже стоит, а положение обновлено чтением регистров
+            QTimer.singleShot(1500, self.model.log_mid_stop_result)
 
     def _exit_pos_set_gear(self):
         pass

@@ -53,5 +53,12 @@ class Config:
     @property
     def finish_temper(self) -> int:
         return int(os.getenv("FINISH_TEMPER", "80"))
+
+    @property
+    def mid_lead(self) -> float:
+        """Упреждение остановки в середине хода (настройка хода), мм: команда «стоп»
+        подаётся на столько раньше середины, чтобы шатун выбегом дошёл до неё.
+        Подобрано опытным путём при ходе 100"""
+        return float(os.getenv("MID_LEAD", "7"))
     
 config = Config()

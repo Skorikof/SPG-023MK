@@ -143,6 +143,13 @@ class CycleCollector:
         self._mid_armed = False
         self._mid_nmt_ref = None
         self._mid_vmt_ref = None
+        self._mid_seen_nmt_turn = False
+        self.mid_lead = 7.0             # упреждение стопа до середины, мм (config MID_LEAD)
+        self.MID_MIN_SPAN = 10.0        # минимальный ход НМТ->ВМТ, мм: меньше - дрожание, а не разворот
+        self.MID_NMT_MATCH = 2.0        # старт считается из НМТ, если ближе к известной НМТ, мм
+        # Скачок между соседними записями (1 мс) больше этого - смена координат линейки
+        # (прошла референтную точку после включения), а не движение: 5 мм/мс = 5 м/с
+        self.POSITION_JUMP_MM = 5.0
 
         # -------- экстремумы полупериода (между разворотами) --------
         self.half_min_pos = float("inf")
@@ -195,10 +202,12 @@ class CycleCollector:
         except Exception:
             pass
 
-    def set_mid_params(self, *, tolerance: float = 1.0, confirm_points: int = 2):
+    def set_mid_params(self, *, tolerance: float = 1.0, confirm_points: int = 2, lead: float | None = None):
         """Настройки для остановки в середине хода (режим MID_FINAL)."""
         self.mid_tolerance = float(tolerance)
         self.mid_confirm_points = max(1, int(confirm_points))
+        if lead is not None:
+            self.mid_lead = float(lead)
         self._mid_in_tol_points = 0
 
     def _reset_half_extrema(self, pos):
@@ -394,8 +403,44 @@ class CycleCollector:
                 break
         return self.phase_state
     
+    def _on_position_jump(self, prev_pos, pos):
+        """
+        Скачок координаты между соседними записями (запись раз в 1 мс): линейка после
+        включения стенда прошла референтную точку и перешла в абсолютные координаты.
+        Всё, что накоплено о движении, относится к старым координатам - начинаем
+        отслеживание заново с этой точки. Программа сбора (режим, счётчики шагов) сохраняется
+        """
+        self.logger.debug(f'Скачок координаты линейки {float(prev_pos):.1f} -> {float(pos):.1f}: '
+                          f'отслеживание разворотов начато заново')
+        self.prev_pos = None
+        self.prev_sign = 0
+        self.points_after_turn = 0
+        self.half_min_pos = float("inf")
+        self.half_max_pos = float("-inf")
+        self._start_pos = None
+        self._pos_window.clear()
+        self.vel_hist.clear()
+        self.vel_threshold = 0.0
+        self.stop_detector.reset()
+        self.current_pos.clear()
+        self.current_force.clear()
+        self.cycle_min_pos = float("inf")
+        self.cycle_max_pos = float("-inf")
+        self._anchor_armed = False
+        self.nmt_values.clear()
+        self.nmt_estimate = None
+        self.vmt_values.clear()
+        self.vmt_estimate = None
+        self.mid_target_pos = None
+        self._mid_armed = False
+        self._mid_seen_nmt_turn = False
+        self._mid_in_tol_points = 0
+
     @log_exceptions
     def _process_sample(self, pos, force, now):
+        if self.prev_pos is not None and abs(float(pos) - float(self.prev_pos)) > self.POSITION_JUMP_MM:
+            self._on_position_jump(self.prev_pos, pos)
+
         if self.prev_pos is None:
             self.prev_pos = pos
             if self._start_pos is None:
@@ -451,6 +496,8 @@ class CycleCollector:
                             else:
                                 self._mid_in_tol_points = 0
                             if self._mid_in_tol_points >= int(self.mid_confirm_points):
+                                self.logger.debug(f'Середина хода: стоп на {float(pos):.1f} '
+                                                  f'(цель {self.mid_target_pos:.1f})')
                                 self.last_step_result = [float(self.mid_target_pos), float(pos)]
                                 self._advance_program_if_needed(mode, target_cycles)
                                 return
@@ -497,6 +544,13 @@ class CycleCollector:
         Обработка разворота на каждом полупериоде (смена знака скорости).
         prev_sign - знак движения ДО разворота, sign - ПОСЛЕ.
         """
+        if prev_sign == -1 and sign == 1:
+            # разворот в НМТ: следующий полупериод до ВМТ начинается из настоящей НМТ.
+            # Засчитываем только после настоящего спуска - дрожание линейки на стоянке
+            # тоже даёт смену знака скорости
+            if self.half_max_pos - self.half_min_pos >= self.MID_MIN_SPAN:
+                self._mid_seen_nmt_turn = True
+
         if prev_sign == 1 and sign == -1:
             vmt = float(self.half_max_pos if self.half_max_pos != float("-inf") else pos)
             self._update_vmt_from_value(vmt)
@@ -505,20 +559,38 @@ class CycleCollector:
                 if step is not None:
                     mode, _ = step
                     if mode == Mode.MID_FINAL and not self._mid_armed:
-                        nmt_ref = None
-                        if self.half_min_pos != float("inf"):
-                            nmt_ref = float(self.half_min_pos)
-                        elif self.nmt_estimate is not None:
-                            nmt_ref = float(self.nmt_estimate)
-                        elif self._start_pos is not None:
-                            nmt_ref = float(self._start_pos)
+                        self._try_arm_mid(vmt)
 
-                        if nmt_ref is not None:
-                            self._mid_nmt_ref = float(nmt_ref)
-                            self._mid_vmt_ref = float(vmt)
-                            self.mid_target_pos = 0.5 * (float(vmt) + float(nmt_ref)) + 7
-                            self._mid_armed = True
-                            self._mid_in_tol_points = 0
+    def _try_arm_mid(self, vmt: float):
+        """
+        Расчёт точки остановки в середине обратного хода (ВМТ->НМТ) на развороте в ВМТ.
+        Минимум полупериода - это НМТ, только если полупериод начался из НМТ:
+          - перед этим был разворот в НМТ, или
+          - старт совпал с НМТ, известной по прошлым оборотам (испытание, определение хода).
+        Иначе (старт с середины подъёма, ложный «разворот» от дрожания линейки на стоянке)
+        цель не взводим и ждём следующую ВМТ - шатун сделает лишний оборот, но встанет верно.
+        """
+        nmt_ref = float(self.half_min_pos) if self.half_min_pos != float("inf") else None
+        if nmt_ref is None:
+            return
+        span = vmt - nmt_ref
+        # «Известная» НМТ - только по полным оборотам (nmt_values). nmt_estimate для этого
+        # не годится: пока он пуст, _append_data_if_needed подставляет в него текущий минимум
+        known_nmt = float(np.median(np.asarray(self.nmt_values))) if self.nmt_values else None
+        from_known_nmt = known_nmt is not None and abs(nmt_ref - known_nmt) <= self.MID_NMT_MATCH
+        if span < self.MID_MIN_SPAN or not (self._mid_seen_nmt_turn or from_known_nmt):
+            self.logger.debug(f'Середина хода: ВМТ {vmt:.1f} пропущена (мин {nmt_ref:.1f}, ход {span:.1f}, '
+                              f'был разворот в НМТ: {self._mid_seen_nmt_turn}, '
+                              f'известная НМТ: {known_nmt}) - ждём следующий оборот')
+            return
+
+        self._mid_nmt_ref = nmt_ref
+        self._mid_vmt_ref = vmt
+        self.mid_target_pos = 0.5 * (vmt + nmt_ref) + self.mid_lead
+        self._mid_armed = True
+        self._mid_in_tol_points = 0
+        self.logger.debug(f'Середина хода: НМТ {nmt_ref:.1f}, ВМТ {vmt:.1f}, середина {0.5 * (vmt + nmt_ref):.1f}, '
+                          f'стоп на {self.mid_target_pos:.1f} (упреждение {self.mid_lead})')
     
     @log_exceptions
     def _process_turn(self, now, turn_kind: str | None):
@@ -851,6 +923,7 @@ class CycleCollector:
         self._mid_armed = False
         self._mid_nmt_ref = None
         self._mid_vmt_ref = None
+        self._mid_seen_nmt_turn = False
         self.half_min_pos = float("inf")
         self.half_max_pos = float("-inf")
         self._start_pos = None

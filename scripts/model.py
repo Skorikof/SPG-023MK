@@ -494,9 +494,19 @@ class Model:
         self.flag_collect_done = False
         self.flag_collect_error = False
         self.flag_mid_reached = False
-        self.collector.set_mid_params(tolerance=tolerance_mm, confirm_points=confirm_points)
+        self.collector.set_mid_params(tolerance=tolerance_mm, confirm_points=confirm_points,
+                                      lead=config.mid_lead)
         self.collector.load_program([(Mode.MID_FINAL, None)], skip_accel=True, preserve_nmt=True)
         
+    def log_mid_stop_result(self):
+        """DEBUG: где шатун фактически остановился после настройки хода (для подбора MID_LEAD)"""
+        nmt, vmt = self.collector._mid_nmt_ref, self.collector._mid_vmt_ref
+        if nmt is None or vmt is None or self.move_now is None:
+            return
+        mid = 0.5 * (nmt + vmt)
+        self.logger.debug(f'Настройка хода: шатун остановился на {self.move_now:.1f}, середина {mid:.1f}, '
+                          f'отклонение {self.move_now - mid:+.1f} мм (MID_LEAD {config.mid_lead})')
+
     def stop_collect(self):
         self.reader_stop_test()
         self.write_bit_force_cycle(0)
