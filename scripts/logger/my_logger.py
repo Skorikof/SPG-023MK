@@ -2,13 +2,17 @@
 import os
 import logging
 from datetime import datetime
+from pathlib import Path
 from config import config
+from scripts import archive_names
 
 
 _log_format = "%(asctime)s - [%(levelname)s] - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
-_date_log = str(datetime.now().day).zfill(2) + '_' + str(datetime.now().month).zfill(2) + \
-            '_' + str(datetime.now().year)
+_date_log = archive_names.file_stem(datetime.now())     # ГГГГ-ММ-ДД
 _path_logs = 'logs'
+
+# старые логи ДД_ММ_ГГГГ.log -> ГГГГ-ММ-ДД.log (один раз, при первом импорте)
+archive_names.rename_old_files(Path(_path_logs), '.log')
 
     
 def get_handler():

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
-from datetime import datetime
 from typing import Dict, List, Any
 from pydantic import ValidationInfo, field_validator
 
+from scripts import archive_names
 from scripts.amorts import AmortSchema
 from scripts.logger import my_logger
 
 
-DATE_FORMAT = "%d.%m.%Y"
 HEADER_MARKER = 'Время'
 FIRST_ROW_MARKER = '*'
 END_TEST_MARKER = 'end_test'
@@ -79,6 +78,7 @@ class ReadArchive:
         self.files_arr: List[Path] = []
         self.files_name_arr: List[str] = []
         self.files_name_sort: List[str] = []
+        self._paths_by_name: Dict[str, List[Path]] = {}
         self._reset_state()
         
     def _reset_state(self) -> None:
@@ -96,30 +96,44 @@ class ReadArchive:
         self.comp_list: List[float] = []
 
     def init_arch(self) -> None:
-        """Initialize archive files list"""
+        """
+        Список дат архива. Файлы - ГГГГ-ММ-ДД.csv (или старые ДД.ММ.ГГГГ.csv),
+        в files_name_* даты в виде ДД.ММ.ГГГГ для окна. Если за одну дату есть файлы
+        в обоих форматах, они читаются вместе
+        """
         try:
             self.files_arr = sorted(self.SOURCE_DIR.glob('*.csv'))
-            self.files_name_arr = [f.stem for f in self.files_arr]
-            self.files_name_sort = sorted(
-                self.files_name_arr,
-                key=lambda date: datetime.strptime(date, DATE_FORMAT),
-                reverse=True
-            )
+            self._paths_by_name: Dict[str, List[Path]] = {}
+            dates = {}
+            for path in self.files_arr:
+                d = archive_names.parse_stem(path.stem)
+                if d is None:
+                    self.logger.warning(f"Archive file with unknown name skipped: {path.name}")
+                    continue
+                name = archive_names.display(d)
+                dates[name] = d
+                self._paths_by_name.setdefault(name, []).append(path)
+            self.files_name_arr = list(self._paths_by_name)
+            self.files_name_sort = sorted(self.files_name_arr, key=dates.get, reverse=True)
         except Exception as e:
             self.logger.error(f"Failed to initialize archive: {e}")
-            
+
     def select_file(self, filename: str) -> None:
-        """Select and parse archive file"""
+        """Select and parse archive file (filename - дата ДД.ММ.ГГГГ из files_name_*)"""
         try:
             self._reset_state()
-            if filename not in self.files_name_arr:
+            paths = self._paths_by_name.get(filename)
+            if not paths:
                 self.logger.warning(f"File {filename} not found in archive")
                 return
 
-            index = self.files_name_arr.index(filename)
-            filepath = self.files_arr[index]
+            # старый формат имени раньше нового: при двух файлах за дату он записан первым
+            paths = sorted(paths, key=lambda p: archive_names.is_new_format(p.stem))
+            lines = []
+            for filepath in paths:
+                lines.extend(self._read_text(filepath).splitlines())
 
-            for data_list in self._read_line_in_archive(self._read_text(filepath).splitlines()):
+            for data_list in self._read_line_in_archive(lines):
                 self._parse_str_archive(data_list)
 
             # каскад в конце файла без end_test (программу закрыли посреди испытания)

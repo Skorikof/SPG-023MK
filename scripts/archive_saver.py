@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtCore import QObject, Signal
 
+from scripts import archive_names
 from scripts.logger import my_logger
 
 
@@ -53,7 +54,7 @@ class WriterArchSignals(QObject):
 
 class WriterArch:
     """
-    Запись архива испытаний в archive/ДД.ММ.ГГГГ.csv.
+    Запись архива испытаний в archive/ГГГГ-ММ-ДД.csv.
 
     Все записи идут через очередь в одном фоновом потоке - порядок строк сохраняется.
     Если файл занят (открыт в Excel), запись повторяется, пока файл не освободится,
@@ -103,9 +104,10 @@ class WriterArch:
 
     @staticmethod
     def _file_for(dt: datetime) -> Path:
-        return ARCHIVE_DIR / f'{dt.day:02}.{dt.month:02}.{dt.year}.csv'
+        return ARCHIVE_DIR / f'{archive_names.file_stem(dt)}.csv'
 
     def _run(self):
+        archive_names.rename_old_files(ARCHIVE_DIR, '.csv', self.logger)
         self._convert_old_files()
         while True:
             item = self._queue.get()
