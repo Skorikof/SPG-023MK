@@ -37,6 +37,9 @@ class TraverseService:
             if tag == 'install':
                 self.set_trav_point = round((stock_point + hod / 2) - len_max - adapter, 1)
                 if abs(abs(self.model.move_traverse) - abs(self.set_trav_point)) < 0.5:
+                    # траверса уже в точке установки (повторное испытание того же амортизатора):
+                    # ждём запуска так же, как после позиционирования, иначе жёлтая кнопка не работает
+                    self.model.flag_test_launch = True
                     self.signals.control_msg.emit('yellow_btn')
                 else:
                     self.signals.set_stage.emit(Stage.INSTALL_AMORT)

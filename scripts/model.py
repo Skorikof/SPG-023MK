@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 import statistics
 from PySide6.QtCore import QObject, Signal, QTimer
 
@@ -11,6 +10,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
+from scripts.yellow_button import YellowButton
 from scripts.controller.stages import Stage, TypeTest, ColorLampConv
 from scripts.modbus.client import Client
 from scripts.modbus.registers import REG_STATE_WORD, REG_EMERGENCY_FORCE
@@ -23,6 +23,8 @@ class ModelSignals(QObject):
     stbar_msg = Signal(str)
 
     test_launch = Signal(bool)
+    # нажатие жёлтой кнопки на стенде (что оно значит - решает окно по текущему состоянию)
+    yellow_pressed = Signal()
     save_koef_force = Signal(str)
     
     connect_ctrl = Signal()
@@ -124,8 +126,7 @@ class Model:
         self.timer_clear_statusbar = None
         self.timer_add_koef = None
         self.timer_calc_koef = None
-        self.timer_yellow = None
-        self.time_push_yellow = None
+        self.yellow_btn = YellowButton()
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # Последние записанные значения бит, которыми управляет ПК (буфер, лампы).
         # state_list отстаёт от записей, поэтому без этого запись соседнего бита
@@ -145,7 +146,6 @@ class Model:
 
         self.flag_test = False
         self.flag_test_launch = False
-        self.yellow_rattle = False
         self.flag_repeat = False
         self.flag_search_hod = False
         self.flag_cascade_done = False
@@ -181,7 +181,6 @@ class Model:
     def _start_param_model(self):
         self._init_timer_clear_statusbar()
         self.client.connect_client()
-        self._init_timer_yellow_btn()
 
         self.save_arch = WriterArch()
         self.save_arch.signals.status_msg.connect(self.signals.stbar_msg)
@@ -319,29 +318,6 @@ class Model:
     def cancel_koef_force(self):
         self.force_koef_offset = 0
             
-    def _init_timer_yellow_btn(self):
-        self.timer_yellow = QTimer()
-        self.timer_yellow.setInterval(1000)
-        self.timer_yellow.timeout.connect(self.yellow_btn_click)
-
-    @log_exceptions
-    def yellow_btn_click(self):
-        if self.state_dict.get('yellow_btn', False) is True:
-            if self.yellow_rattle is False:
-                self.time_push_yellow = time.monotonic()
-                self.signals.test_launch.emit(True)
-                self.yellow_rattle = True
-            else:
-                time_signal = time.monotonic() - self.time_push_yellow
-                if 2 < time_signal:
-                    self.time_push_yellow = time.monotonic()
-                    self.signals.test_launch.emit(True)
-                    self.yellow_rattle = True
-                else:
-                    pass
-        else:
-            self.timer_yellow.stop()
-            
     def check_max_temper_test(self):
         first = self.data_test.first_temperature
         second = self.data_test.second_temperature
@@ -373,18 +349,17 @@ class Model:
     def is_mid_reached(self):
         return self.flag_mid_reached
 
+    def _check_yellow_btn(self, source):
+        if self.yellow_btn.update(self.state_dict.get('yellow_btn', False), source):
+            self.logger.info(f'Нажата жёлтая кнопка ({source})')
+            self.signals.yellow_pressed.emit()
+
     @log_exceptions
     def _reader_result(self, response, tag):
         if tag == 'reg':
             self._pars_regs_result(response.get('regs'))
         else:
             self._pars_buffer_result(response)
-
-        if self.flag_test_launch is True:
-            if not self.timer_yellow.isActive():
-                self.timer_yellow.start()
-            else:
-                pass
 
     @log_exceptions
     def _pars_regs_result(self, res):
@@ -419,6 +394,7 @@ class Model:
             self._update_switch_dict(result.get('switch'))
             self._update_state_dict(result.get('state'))
             self.state_list = result.get('state_list')
+            self._check_yellow_btn('reg')
 
             if self.get_type_test() == TypeTest.SETTINGS:
                 self.signals.win_set_update.emit('reg')
@@ -434,6 +410,11 @@ class Model:
             self.flag_non_buffer = False
             self.state_list = data.get('state_list')
             self._update_state_dict(data.get('state'))
+            # Буфер перед данными заполнен нулями: в такой записи бит 13 = 0, и при старой
+            # инвертированной кнопке (0 = нажата) это давало ложное нажатие. В настоящей
+            # записи буфера бит 0 (циклический опрос включён) всегда 1 - по нему и отсеиваем
+            if (data.get('state') or {}).get('cycle_force'):
+                self._check_yellow_btn('buffer')
             temperature = data.get('temper')
             self.data_test.temperature = temperature
             self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
@@ -563,8 +544,10 @@ class Model:
             push_force = self.data_test.static_push_force
             self.data_test.dynamic_push_force = 0
 
-        self.data_test.max_recoil = abs(round(rec_clear + push_force, 2))
-        self.data_test.max_comp = abs(round(comp_clear + push_force, 2))
+        # float(): усилие из collector - float32, и round() numpy-числа в numpy 2
+        # при выводе даёт 112.41000366210938 вместо 112.41
+        self.data_test.max_recoil = abs(round(float(rec_clear + push_force), 2))
+        self.data_test.max_comp = abs(round(float(comp_clear + push_force), 2))
 
         self.data_test.power_amort = self.calc_data.calc_power_amort_array(move, force)
 

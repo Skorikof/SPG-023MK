@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import codecs
 import queue
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 from PySide6.QtCore import QObject, Signal
 
 from scripts.logger import my_logger
@@ -13,6 +15,9 @@ from scripts.logger import my_logger
 ARCHIVE_DIR = Path('archive')
 END_TEST_MARKER = 'end_test'
 BOM = b'\xef\xbb\xbf'
+# Excel на стенде открывает CSV только в кодировке Windows (UTF-8 даже с BOM - кракозябры).
+# Символы вне cp1251 при записи заменяются на '?'
+ENCODING = 'cp1251'
 
 HEADER = ('Время;'
           'ФИО оператора;'
@@ -38,7 +43,7 @@ HEADER = ('Время;'
           'Выталкивающая сила динамическая, кгс;'
           'Макс температура, °С;'
           'Скорость испытания, м/с;'
-          'Перемещение, мм(Температура, ℃)/Усилие, кгс')
+          'Перемещение, мм(Температура, °С)/Усилие, кгс')
 
 
 class WriterArchSignals(QObject):
@@ -53,7 +58,8 @@ class WriterArch:
     Все записи идут через очередь в одном фоновом потоке - порядок строк сохраняется.
     Если файл занят (открыт в Excel), запись повторяется, пока файл не освободится,
     остальные записи ждут в очереди. При остановке очередь дописывается до конца.
-    Файлы пишутся в UTF-8 с BOM, чтобы Excel правильно показывал кириллицу.
+    Файлы пишутся в Windows-1251, чтобы Excel на стенде правильно показывал кириллицу;
+    старые файлы в UTF-8 перекодируются при запуске (и перед первой дозаписью).
     """
     RETRY_PAUSE = 1.0       # пауза между попытками записи в занятый файл, с
     STOP_TIMEOUT = 10.0     # сколько ждать дозаписи очереди при закрытии программы, с
@@ -65,6 +71,7 @@ class WriterArch:
         self._thread: threading.Thread | None = None
         self._stopping = False
         self._stop_deadline = 0.0
+        self._checked_files: set[Path] = set()   # уже проверены/перекодированы в cp1251
 
     def start(self):
         if self._thread is not None:
@@ -132,8 +139,10 @@ class WriterArch:
             try:
                 ARCHIVE_DIR.mkdir(exist_ok=True)
                 is_new = not path.exists()
-                # utf-8-sig пишет BOM только в начало пустого файла
-                with open(path, 'a', encoding='utf-8-sig') as f:
+                if not is_new:
+                    # файл мог быть занят при перекодировке на старте - не смешиваем кодировки
+                    self._ensure_cp1251(path)
+                with open(path, 'a', encoding=ENCODING, errors='replace') as f:
                     if is_new:
                         f.write(HEADER + '\n')
                     f.write(text)
@@ -159,38 +168,61 @@ class WriterArch:
 
     @staticmethod
     def _last_line_is_open_test(path: Path) -> bool:
-        """True, если файл заканчивается записью испытания без end_test"""
+        """
+        True, если файл заканчивается записью испытания без end_test.
+        Не зависит от кодировки: запись испытания начинается со времени (цифра)
+        или со '*', а заголовок и end_test - нет
+        """
         if not path.exists():
             return False
         with open(path, 'rb') as f:
             f.seek(0, 2)
             size = f.tell()
             f.seek(max(0, size - 64 * 1024))
-            tail = f.read().decode('utf-8', errors='ignore')
+            tail = f.read()
         lines = [ln for ln in tail.splitlines() if ln.strip()]
         if not lines:
             return False
-        last = lines[-1].lstrip('﻿')
-        return not (last.startswith(END_TEST_MARKER) or last.startswith('Время;'))
+        first = lines[-1][:1]
+        return first.isdigit() or first == b'*'
 
     def _convert_old_files(self):
-        """Однократно добавляет BOM в старые файлы архива (записанные в UTF-8 без BOM)"""
+        """Перекодирует старые файлы архива (UTF-8 с BOM и без) в Windows-1251"""
         if not ARCHIVE_DIR.exists():
             return
-        for path in ARCHIVE_DIR.glob('*.csv'):
+        for path in sorted(ARCHIVE_DIR.glob('*.csv')):
             try:
-                with open(path, 'rb') as f:
-                    if f.read(3) == BOM:
-                        continue
-                content = path.read_bytes()
-                tmp = path.with_suffix('.csv.tmp')
-                tmp.write_bytes(BOM + content)
-                tmp.replace(path)
-                self.logger.info(f'Архив: {path.name} перекодирован в UTF-8 с BOM')
+                self._ensure_cp1251(path)
             except PermissionError:
-                self.logger.warning(f'Архив: {path.name} занят, перекодировка при следующем запуске')
+                self.logger.warning(f'Архив: {path.name} занят, перекодировка перед первой записью '
+                                    f'или при следующем запуске')
             except Exception as e:
                 self.logger.error(f'Архив: ошибка перекодировки {path.name} - {e}')
+
+    def _ensure_cp1251(self, path: Path):
+        """
+        Переводит файл в cp1251, если он в UTF-8. Файл в cp1251 как UTF-8 не читается
+        (кириллица cp1251 - недопустимые для UTF-8 последовательности), по этому и
+        отличаем. PermissionError пробрасывается - вызывающий решает, ждать или пропустить
+        """
+        if path in self._checked_files:
+            return
+        # Кодировку определяем по началу файла (там кириллица заголовка), чтобы при
+        # каждом запуске не читать архив целиком. Неполный символ на границе куска допустим
+        with open(path, 'rb') as f:
+            head = f.read(64 * 1024)
+        try:
+            codecs.getincrementaldecoder('utf-8')().decode(head, final=False)
+        except UnicodeDecodeError:
+            self._checked_files.add(path)       # уже cp1251
+            return
+        if head.startswith(BOM) or not head.isascii():
+            text = path.read_bytes().decode('utf-8-sig', errors='replace').replace('℃', '°С')
+            tmp = path.with_suffix('.csv.tmp')
+            tmp.write_bytes(text.encode(ENCODING, errors='replace'))
+            tmp.replace(path)
+            self.logger.info(f'Архив: {path.name} перекодирован в Windows-1251')
+        self._checked_files.add(path)
 
     # --- формат записи ---------------------------------------------------------------
 
@@ -201,7 +233,13 @@ class WriterArch:
 
     @staticmethod
     def _num(value) -> str:
-        return str(float(value)).replace('.', ',')
+        # Числа numpy печатаем по их собственной точности: float32 через float()
+        # превращается в 1.100000023841858 вместо 1.1
+        if isinstance(value, np.floating):
+            text = np.format_float_positional(value, trim='0')
+        else:
+            text = repr(float(value))
+        return text.replace('.', ',')
 
     def _join_values(self, data: list) -> str:
         # Числа приводятся к float явно: в numpy 2 str() списка из np.float64

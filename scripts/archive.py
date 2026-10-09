@@ -119,16 +119,26 @@ class ReadArchive:
             index = self.files_name_arr.index(filename)
             filepath = self.files_arr[index]
 
-            # utf-8-sig читает файлы и с BOM (новые, для Excel), и без него (старые)
-            with open(filepath, encoding='utf-8-sig') as f:
-                for data_list in self._read_line_in_archive(f):
-                    self._parse_str_archive(data_list)
+            for data_list in self._read_line_in_archive(self._read_text(filepath).splitlines()):
+                self._parse_str_archive(data_list)
 
             # каскад в конце файла без end_test (программу закрыли посреди испытания)
             if self.type_test == TYPE_LAB_CASCADE and self.cascade_meta:
                 self._create_cascade_object()
         except Exception as e:
             self.logger.error(f"Failed to select file: {e}")
+
+    @staticmethod
+    def _read_text(filepath: Path) -> str:
+        """
+        Архив пишется в Windows-1251 (Excel на стенде), старые файлы - в UTF-8
+        (с BOM и без). UTF-8 пробуем первым: cp1251 с кириллицей как UTF-8 не читается
+        """
+        raw = filepath.read_bytes()
+        try:
+            return raw.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            return raw.decode('cp1251', errors='replace')
 
     def _read_line_in_archive(self, file) -> Any:
         """Generator that reads and parses CSV lines"""

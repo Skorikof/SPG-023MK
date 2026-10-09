@@ -227,7 +227,10 @@ class Controller:
 
     @log_exceptions 
     def _yellow_btn_push(self, state: bool):
-        """Обработка нажатия жёлтой кнопки, запускает она испытание или останавливает"""
+        """
+        Команда запуска испытания (экранная «ЗАПУСК»; жёлтая кнопка на стенде нажимает её же
+        через AppWindow.yellow_btn_pressed). Ветка 'stop' осталась от старой логики кнопки
+        """
         if state:
             tag = self._step_yellow_btn_push()
             if tag == 'start':

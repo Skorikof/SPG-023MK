@@ -110,6 +110,7 @@ class AppWindow(QMainWindow):
         self.model.signals.update_conv_graph.connect(self.update_graph_view_conv)
         self.model.signals.update_temper_graph.connect(self.update_graph_view_temper)
         self.model.signals.conv_result_lamp.connect(self.conv_test_lamp_slot)
+        self.model.signals.yellow_pressed.connect(self.yellow_btn_pressed)
 
         self.controller.signals.control_msg.connect(self.controller_msg_slot)
         self.controller.signals.conv_win_test.connect(self.conv_test_win)
@@ -228,6 +229,27 @@ class AppWindow(QMainWindow):
             self.main_btn_state(False)
             self.main_stop_state(True)
             self.model.signals.test_launch.emit(True)
+
+    @log_exceptions
+    def yellow_btn_pressed(self):
+        """
+        Жёлтая кнопка на стенде нажимает ту экранную кнопку, которая сейчас активна,
+        чтобы окно и все проверки работали так же, как при управлении с компьютера:
+          ожидание запуска -> «ЗАПУСК»;
+          идёт испытание   -> «ПРЕРВАТЬ ИСПЫТАНИЕ»;
+          испытание окончено -> «НАЗАД» (траверса в точку снятия амортизатора).
+        В остальных состояниях нажатие игнорируется
+        """
+        page = self.ui.main_stackedWidget.currentIndex()
+        if (page == 0 and self.tag_msg == 'question' and self.ui.ok_message_btn.isVisible()
+                and self.model.flag_test_launch and not self.model.flag_test):
+            self.btn_ok_message_clicked()
+        elif page == 2 and self.ui.test_cancel_btn.isEnabled():
+            self.cancel_test_clicked()
+        elif page == 3 and self.ui.test_conv_cancel_btn.isEnabled():
+            self.cancel_test_conv_clicked()
+        else:
+            self.logger.debug(f'Жёлтая кнопка: нет действия (страница {page}, сообщение {self.tag_msg})')
 
     @log_exceptions
     def btn_cancel_message_clicked(self):

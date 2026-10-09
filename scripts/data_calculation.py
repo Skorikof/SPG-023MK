@@ -200,9 +200,12 @@ class CalcData:
         поэтому ось сдвигается так, чтобы НМТ (минимум цикла) была 0.
         На усилия, скорость и мощность не влияет, повторный вызов ничего не меняет
         """
-        move = np.asarray(move, dtype=float)
+        move = np.asarray(move)
+        if move.dtype.kind != 'f':
+            move = move.astype(float)
         if move.size == 0:
             return move
+        # тип массива сохраняем: float32 -> float64 даёт хвосты вида 37.900001525878906
         return move - move.min()
 
     def correct_force_with_koef(self, force, koef, offset):
@@ -293,7 +296,7 @@ class CalcData:
             if not np.any(mask):
                 return 0.0
             temp = np.dot(steps[mask], np.abs(force[:-1])[mask])
-            return round((temp * 0.009807) / 1000, 3)
+            return round(float(temp) * 0.009807 / 1000, 3)
 
         except Exception as e:
             self.logger.error(e)
@@ -325,8 +328,8 @@ class CalcData:
             force_max = abs(force[np.argmax(move)])
             force_avg = (force_min + force_max) / 2
             dynamic = (force_avg + static) / 2
-            
-            return round(dynamic, 1)
+
+            return round(float(dynamic), 1)
             
         except Exception as e:
             self.logger.error(f"Error calculating dynamic force: {e}")
