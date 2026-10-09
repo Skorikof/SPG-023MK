@@ -490,8 +490,10 @@ class CycleCollector:
                 if mode == Mode.MID_FINAL:
                     if self._mid_armed and self.mid_target_pos is not None:
                         if float(v) < 0.0:
-                            tol = float(self.mid_tolerance)
-                            if abs(float(pos) - float(self.mid_target_pos)) <= tol:
+                            # Стоп - при пересечении цели (середина + MID_LEAD) на спуске, а не при
+                            # входе в окно ±tolerance: иначе стоп подавался на tolerance мм раньше,
+                            # и MID_LEAD не совпадал с фактическим выбегом шатуна
+                            if float(pos) <= float(self.mid_target_pos):
                                 self._mid_in_tol_points += 1
                             else:
                                 self._mid_in_tol_points = 0
