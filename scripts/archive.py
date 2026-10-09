@@ -230,7 +230,12 @@ class ReadArchive:
                 speed = self._parse_float(archive_list[23])
                 self._add_data_cascade_graph(speed=speed)
 
-            data[list_key] = self._parse_float_list(archive_list[FIRST_DATA_LENGTH:-1])
+            values = self._parse_float_list(archive_list[FIRST_DATA_LENGTH:-1])
+            if list_key == 'move_list' and values:
+                # старые записи хранят сырое положение линейки - показываем от НМТ = 0
+                low = min(values)
+                values = [v - low for v in values]
+            data[list_key] = values
             return data
         except Exception as e:
             self.logger.error(f"Failed to parse first data: {e}")

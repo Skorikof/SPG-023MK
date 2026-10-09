@@ -535,6 +535,9 @@ class Model:
             self._pars_result_temper_test(result)
 
     def _pars_result_avarage_cycles(self, avg):
+        # Дальше (график, расчёты, архив) перемещение идёт от НМТ = 0.
+        # Сырой поток с линейки в collector не меняется - по нему ищутся НМТ/ВМТ
+        avg = (self.calc_data.move_from_nmt(avg[0]), avg[1])
         if self.get_type_test() == TypeTest.CONV:
             self._pars_result_conv_test(avg)
         
@@ -578,7 +581,8 @@ class Model:
         self.list_lab_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
-        self.signals.update_lab_graph.emit(avg)
+        # на графике то же исправленное усилие (коэффициент + ноль датчика), что в цифрах и архиве
+        self.signals.update_lab_graph.emit((self.data_test.move, self.data_test.force))
     
     @log_exceptions
     def _pars_result_conv_test(self, avg):
@@ -592,7 +596,8 @@ class Model:
         self.list_conv_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
-        self.signals.update_conv_graph.emit(avg)
+        # на графике то же исправленное усилие (коэффициент + ноль датчика), что в цифрах и архиве
+        self.signals.update_conv_graph.emit((self.data_test.move, self.data_test.force))
 
     @log_exceptions
     def _pars_result_temper_test(self, result):

@@ -193,6 +193,18 @@ class CalcData:
             self.logger.error(e)
             return None, None
             
+    @staticmethod
+    def move_from_nmt(move):
+        """
+        Перемещение от НМТ: ноль линейки смещён (например -37..62 при ходе 100),
+        поэтому ось сдвигается так, чтобы НМТ (минимум цикла) была 0.
+        На усилия, скорость и мощность не влияет, повторный вызов ничего не меняет
+        """
+        move = np.asarray(move, dtype=float)
+        if move.size == 0:
+            return move
+        return move - move.min()
+
     def correct_force_with_koef(self, force, koef, offset):
         try:
             return force * koef + offset
