@@ -77,6 +77,10 @@ class Model:
                 gate_fraction = gate_s / sr
                 self.collector.min_halfcycle_fraction = gate_fraction
 
+            # сбор начнётся только после набора заданной скорости
+            self.collector.set_speed_target(speed, tolerance=config.speed_tolerance / 100.0,
+                                            max_wait=config.speed_wait_cycles)
+
         except Exception as e:
             self.logger.error(e)
 
@@ -129,6 +133,8 @@ class Model:
         self.timer_calc_koef = None
         self.yellow_btn = YellowButton()
         # Страховка буфера: идёт ли чтение буфера, когда началось и когда пришли последние данные
+        # шаги испытания, на которых не набралась заданная скорость: (задана, фактически, %)
+        self.speed_warnings = []
         self.buffer_reading = False
         self.buffer_reading_since = 0.0
         self.last_buffer_data = 0.0
@@ -447,6 +453,7 @@ class Model:
         if mode == Mode.STROKE_ONLY:
             self.min_point, self.max_point, self.stroke = result[0]
         elif mode == Mode.COLLECT:
+            self._check_test_speed()
             # avg = self.calc_data.average_cycles(result)
             # self._pars_result_avarage_cycles(avg)
             not_avg = self.calc_data.not_avarage_cycles(result[-1])
@@ -457,6 +464,27 @@ class Model:
             self.flag_mid_reached = True
         self.flag_collect_done = True
         
+    def _check_test_speed(self):
+        """
+        Фактическая скорость собранного оборота против заданной. Пишется в лог всегда
+        (данные для подбора управляющей частоты ПЧ); если скорость так и не набралась -
+        запоминается для сообщения оператору в конце испытания
+        """
+        v_set = self.get_speed_test()
+        v_act = self.collector.last_cycle_speed
+        if not v_set or v_act is None:
+            return
+        dev = (v_act / v_set - 1.0) * 100.0
+        self.logger.info(f'Скорость испытания: задана {v_set} м/с, фактически {v_act:.3f} м/с ({dev:+.1f} %)')
+        # предупреждаем, только если и собранный оборот вне допуска (ожидание могло
+        # закончиться, а привод дотянуть скорость уже во время сбора)
+        if self.collector.speed_not_reached and abs(dev) > config.speed_tolerance:
+            self.speed_warnings.append((v_set, round(v_act, 3), round(dev, 1)))
+            self.status_bar_msg(f'Скорость {v_set} м/с не набрана: фактически {v_act:.3f} м/с')
+
+    def reset_speed_warnings(self):
+        self.speed_warnings = []
+
     def start_collect(self, with_data: bool, *, count_det: int=2, count_col: int=1):
         self.flag_collect_done = False
         self.flag_collect_error = False

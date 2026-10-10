@@ -336,6 +336,7 @@ class Controller:
     def _dispatch_test_by_type(self):
         type_test = self.model.get_type_test()
         self.model.begin_test_in_archive()
+        self.model.reset_speed_warnings()
         if type_test == TypeTest.CONV:
             self.signals.conv_win_test.emit()
             self.model.flag_test = True

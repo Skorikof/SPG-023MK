@@ -1101,8 +1101,22 @@ class AppWindow(QMainWindow):
         if speed:
             self.model.set_speed_test(speed)
 
+    def _show_speed_warnings(self):
+        """Сообщение оператору, если на каких-то шагах привод не набрал заданную скорость"""
+        warnings = self.model.speed_warnings
+        if not warnings:
+            return
+        rows = '<br>'.join(f'задана <b>{v_set}</b> м/с — фактически <b style="color: #f00;">{v_act}</b> м/с '
+                           f'({dev:+.1f} %)' for v_set, v_act, dev in warnings)
+        QMessageBox.information(self,
+                                'Внимание',
+                                f'<b>Привод не набрал заданную скорость</b>, испытание прошло '
+                                f'на фактической скорости:<br><br>{rows}')
+        self.model.reset_speed_warnings()
+
     @Slot()
     def slot_lab_test_stop(self):
+        self._show_speed_warnings()
         self.ui.test_cancel_btn.setEnabled(True)
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
@@ -1117,6 +1131,7 @@ class AppWindow(QMainWindow):
 
     @Slot()
     def slot_conv_test_stop(self):
+        self._show_speed_warnings()
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
         self.ui.conv_GraphWidget.clear()

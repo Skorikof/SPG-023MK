@@ -159,6 +159,17 @@ class CycleCollector:
         self.vel_window_points = 9
         self._pos_window = deque(maxlen=self.vel_window_points + 1)
 
+        # -------- контроль набора скорости (испытания) --------
+        # Скорость каждого оборота: π * ход / период (скорость штока в середине хода).
+        # Пока скорость не в допуске два оборота подряд, DETECT_ONLY не засчитывает обороты -
+        # иначе после большого шага скорости собирался цикл ещё на разгоне
+        self.speed_target = None        # заданная скорость, м/с (None - контроль выключен)
+        self.speed_tolerance = 0.05     # допуск, доля
+        self.speed_max_wait = 10        # сколько оборотов ждать набора скорости
+        self._speed_wait_cycles = 0
+        self.speed_not_reached = False
+        self.last_cycle_speed = None    # фактическая скорость последнего полного оборота, м/с
+
         # -------- коллект валидация --------
         self.max_collect_rejects_per_step = 6
         self._collect_rejects_in_step = 0
@@ -201,6 +212,23 @@ class CycleCollector:
                 self.vmt_estimate = float(np.median(arr))
         except Exception:
             pass
+
+    def set_speed_target(self, speed: float, *, tolerance: float = 0.05, max_wait: int = 10):
+        """Включить контроль набора скорости для текущей программы (вызывать после load_program)."""
+        self.speed_target = float(speed) if speed else None
+        self.speed_tolerance = float(tolerance)
+        self.speed_max_wait = max(1, int(max_wait))
+        self._speed_wait_cycles = 0
+        self.speed_not_reached = False
+
+    def _measure_cycle_speed(self):
+        """Фактическая скорость завершённого оборота: π * ход / период (ход в мм -> м)."""
+        if not self.cycle_times or self.cycle_max_pos == float("-inf"):
+            return
+        period = float(self.cycle_times[-1])
+        stroke = float(self.cycle_max_pos - self.cycle_min_pos)
+        if period > 0 and stroke > 0:
+            self.last_cycle_speed = np.pi * stroke / 1000.0 / period
 
     def set_mid_params(self, *, tolerance: float = 1.0, confirm_points: int = 2, lead: float | None = None):
         """Настройки для остановки в середине хода (режим MID_FINAL)."""
@@ -632,6 +660,7 @@ class CycleCollector:
             self.cycle_times.append(now_cycle - self.last_cycle_time)
         self.last_cycle_time = now_cycle
 
+        self._measure_cycle_speed()
         self._update_nmt_from_cycle_extrema()
 
         if self.phase_state == PhaseState.ACCEL:
@@ -714,8 +743,29 @@ class CycleCollector:
         Примечание: проверка стабильности периода здесь намеренно НЕ используется,
         потому что при квантованном `move` и батчевом чтении буфера она может
         быть слишком жёсткой и приводить к лишним оборотам.
+
+        Если задана целевая скорость (испытания), оборот засчитывается, только когда
+        фактическая скорость в допуске; засчитываемые обороты должны идти подряд.
+        Через speed_max_wait оборотов без набора скорости ждать перестаём
+        (speed_not_reached = True) - испытание продолжается, оператор будет предупреждён.
         """
-        return True
+        if self.speed_target is None or self.speed_not_reached:
+            return True
+        v = self.last_cycle_speed
+        ok = v is not None and abs(v / self.speed_target - 1.0) <= self.speed_tolerance
+        self.logger.debug(f'Набор скорости: задана {self.speed_target}, фактически '
+                          f'{v if v is None else round(v, 3)} м/с - {"в допуске" if ok else "ещё нет"}')
+        if ok:
+            return True
+        self._speed_wait_cycles += 1
+        if self._speed_wait_cycles >= self.speed_max_wait:
+            self.speed_not_reached = True
+            self.logger.warning(f'Скорость {self.speed_target} м/с не набрана за {self._speed_wait_cycles} '
+                                f'оборотов (фактически {v if v is None else round(v, 3)} м/с), '
+                                f'сбор продолжается')
+            return True
+        self.program_cycle_counter = 0      # нужны обороты на скорости подряд
+        return False
     
     @log_exceptions
     def _handle_collect(self) -> bool:
@@ -932,6 +982,10 @@ class CycleCollector:
         self._mid_nmt_ref = None
         self._mid_vmt_ref = None
         self._mid_seen_nmt_turn = False
+        self.speed_target = None
+        self._speed_wait_cycles = 0
+        self.speed_not_reached = False
+        self.last_cycle_speed = None
         self.half_min_pos = float("inf")
         self.half_max_pos = float("-inf")
         self._start_pos = None
