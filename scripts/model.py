@@ -589,10 +589,9 @@ class Model:
 
     @log_exceptions
     def _calc_result_cycle(self, move, force):
-        if self.get_type_test() == TypeTest.TEMPER:
-            comp_clear, rec_clear = self.calc_data.middle_min_and_max_force(force)
-        else:
-            rec_clear, comp_clear = self.calc_data.middle_min_and_max_force(force)
+        # force - уже с перевёрнутым знаком (отбой +, сжатие -) для всех испытаний,
+        # отбой/сжатие берутся по модулю - в температурном оба положительные
+        rec_clear, comp_clear = self.calc_data.middle_min_and_max_force(force)
         if self.data_test.flag_push_force:
             push_force = self.calc_data.calc_dynamic_push_force_array(move, force,
                                                                     self.data_test.static_push_force)
@@ -644,7 +643,10 @@ class Model:
     @log_exceptions
     def _pars_result_temper_test(self, result):
         move = result[0]
-        force = self.calc_data.correct_force_with_koef(result[1],
+        # Знак усилия переворачиваем так же, как в лабораторном (not_avarage_cycles):
+        # раньше здесь его не переворачивали, а меняли местами отбой и сжатие - ноль датчика
+        # и выталкивающая сила тогда учитывались с обратным знаком (отбой R - p вместо R + p)
+        force = self.calc_data.correct_force_with_koef(-result[1],
                                                        config.force_koef,
                                                        self.force_koef_offset)
         self._calc_result_cycle(move, force)

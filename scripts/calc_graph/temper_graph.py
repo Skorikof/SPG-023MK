@@ -28,9 +28,11 @@ class TemperGraph(AbstractGraph):
     def calc_graph(self, data):
         try:
             push_force = CalcGraphValue().select_push_force(data)
-            
-            recoil = [x + push_force for x in data.recoil_list]
-            comp = [x + push_force for x in data.comp_list]
+
+            # в архиве точки уже с учётом выталкивающей силы (Model._calc_result_cycle),
+            # раньше она прибавлялась здесь второй раз
+            recoil = list(data.recoil_list)
+            comp = list(data.comp_list)
             
             x_coord = data.temper_list
             r_x, r_y = CalcGraphValue().interpoly_line_coord(x_coord, recoil, start_point=x_coord[0])
