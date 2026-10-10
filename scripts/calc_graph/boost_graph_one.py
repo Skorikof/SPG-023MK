@@ -36,8 +36,12 @@ class BoostGraphOne(AbstractGraph):
             
             move_array = np.array(data.move_list)
             force_array = np.array(data.force_list)
-            speed_coord = CalcGraphValue().speed_coord(move_array, 'one')
-            round_coord = CalcGraphValue().rounding_coord(speed_coord, 50)
+            # Диаграмма «усилие / модуль скорости»: та же скорость со знаком, что и в графике 2
+            # (м/с), сглаживается, и только потом берётся модуль - тогда на разворотах штока
+            # скорость доходит до 0 и кривая касается оси X. Раньше по оси X шло стандартное
+            # отклонение положения в окне (мм, не скорость): ≈2.9 раза больше скорости и не 0
+            speed_coord = CalcGraphValue().speed_coord(move_array, 'two')
+            round_coord = np.abs(CalcGraphValue().rounding_coord(speed_coord, 50))
             x_coord = np.concatenate((round_coord, round_coord[:1]))
             y_coord = np.concatenate((force_array, force_array[:1]))
             

@@ -173,17 +173,7 @@ class CompareGraph:
             
         except Exception as e:
             self.logger.error(e)
-            
-    def _fill_compare_boost_one_data(self, data, speed):
-        try:
-            self.ui.speed_base_le.setText(f'{speed}')
-            self.ui.recoil_base_le.setText(f'{data.get("recoil", 0)}')
-            self.ui.comp_base_le.setText(f'{data.get("comp", 0)}')
-            self.ui.push_force_base_le.setText(f'{data.get("push_force", 0)}')
-            
-        except Exception as e:
-            self.logger.error(e)
-            
+
     def _compare_triple_data(self):
         try:
             self.ui.stackedWidget.setCurrentIndex(1)

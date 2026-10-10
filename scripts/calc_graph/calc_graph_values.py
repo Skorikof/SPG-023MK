@@ -31,17 +31,18 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
-    def speed_coord(self, move, tag):
+    def speed_coord(self, move, tag='two'):
+        """
+        Скорость штока по точкам цикла, м/с: среднее приращение положения за 10 записей
+        вокруг точки (записи буфера раз в 1 мс, значит мм/мс = м/с), цикл замкнут.
+        Вариант 'one' (стандартное отклонение положения в окне) убран: это не скорость
+        """
         try:
             y_coord = []
 
             move_array = np.concatenate((move[-5:], move, move[:5]))
 
-            if tag == 'one':
-                for i in range(len(move)):
-                    y_coord.append(round(np.std(move_array[i:i + 10]), 3))
-
-            elif tag == 'two':
+            if tag == 'two':
                 for i in range(len(move)):
                     speed_coord = []
                     for j in range(10):
