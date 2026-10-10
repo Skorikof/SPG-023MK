@@ -303,9 +303,16 @@ class CalcData:
             return 0.0
 
     def calc_freq_piston_amort(self, speed, hod):
-        """Частота поршня"""
+        """
+        Частота качания поршня, Гц (= обороты кривошипа в секунду: за оборот шток
+        проходит вверх и вниз один раз).
+        Скорость испытания - максимальная скорость штока (в середине хода): v = ω·r,
+        r = ход/2, ω = 2π·f  =>  v = π·f·ход  =>  f = v / (π·ход).
+        Так же скорость понимает и пересчёт в частоту ПЧ (FreqControl._freq_from_speed).
+        Раньше было v / (2π·ход) - вдвое меньше реальной частоты
+        """
         try:
-            return round(speed / (int(hod) * 0.002 * 3.14), 3)
+            return round(speed / (np.pi * int(hod) / 1000), 3)
 
         except Exception as e:
             self.logger.error(e)
