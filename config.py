@@ -55,6 +55,17 @@ class Config:
         return int(os.getenv("FINISH_TEMPER", "80"))
 
     @property
+    def buffer_timeout(self) -> float:
+        """Страховка буфера: сколько секунд без новых данных из буфера считать сбоем
+        (буфер пишет запись каждую 1 мс, пока включён), после чего буфер перезапускается"""
+        return float(os.getenv("BUFFER_TIMEOUT", "5"))
+
+    @property
+    def buffer_restarts(self) -> int:
+        """Страховка буфера: сколько перезапусков подряд без данных, затем авария (стоп привода)"""
+        return int(os.getenv("BUFFER_RESTARTS", "3"))
+
+    @property
     def mid_lead(self) -> float:
         """Упреждение остановки в середине хода (настройка хода), мм: команда «стоп»
         подаётся на столько раньше середины, чтобы шатун выбегом дошёл до неё.

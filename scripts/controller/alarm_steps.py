@@ -22,6 +22,7 @@ class AlarmType(str, Enum):
     EXCESS_FORCE = "excess_force"
     SAFETY_FENCE = "safety_fence"
     EXCESS_TEMPERATURE = "excess_temperature"
+    NO_BUFFER_DATA = "no_buffer_data"
 
 
 class AlarmSignals(QObject):
@@ -39,6 +40,9 @@ class AlarmSteps:
                                             stop_gear=True, emit_stage=False),
         AlarmType.EXCESS_TEMPERATURE: AlarmConfig(AlarmType.EXCESS_TEMPERATURE,
                                                   stop_gear=False, emit_stage=False),
+        # данные из буфера не пришли и после перезапусков - программа «слепая», привод стоп
+        AlarmType.NO_BUFFER_DATA: AlarmConfig(AlarmType.NO_BUFFER_DATA,
+                                              stop_gear=True, emit_stage=True),
     }
 
     def __init__(self, model: Model):
@@ -93,6 +97,10 @@ class AlarmSteps:
     def step_excess_temperature(self):
         """Handle excess temperature alarm."""
         self._trigger_alarm(self.ALARM_CONFIGS[AlarmType.EXCESS_TEMPERATURE])
+
+    def step_no_buffer_data(self):
+        """Нет данных из буфера контроллера после всех перезапусков."""
+        self._trigger_alarm(self.ALARM_CONFIGS[AlarmType.NO_BUFFER_DATA])
 
     def step_alarm_traverse_position(self):
         """Check and handle traverse position alarms."""

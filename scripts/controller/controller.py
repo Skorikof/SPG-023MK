@@ -2,6 +2,7 @@
 import time
 from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
+from config import config
 from scripts.logger import my_logger
 from scripts.model import Model
 from scripts.data_calculation import CalcData
@@ -41,6 +42,12 @@ class Controller:
         self.stage = Stage.WAIT
         self.next_stage = Stage.WAIT
         self.timer_process = None
+        # страховка буфера: перезапусков подряд без данных и время последнего
+        self._buffer_restarts = 0
+        self._buffer_restart_at = 0.0
+        self._wait_buf_t0 = 0.0
+        self._wait_buf_started = 0.0
+        self._check_next_stage = False
         
     def _init_flags(self):
         self.flag_alarm_traverse = True
@@ -174,6 +181,8 @@ class Controller:
     @log_exceptions     
     def _update_stage_on_timer(self):
         self.alarm_steps.step_alarm_traverse_position()
+        if self._check_buffer_watchdog():
+            return
         if self.model.flag_test:
             self._select_alarm_state(
                 self.alarm_steps.control_alarm_state()
@@ -194,6 +203,7 @@ class Controller:
             'excess_force': self.alarm_steps.step_excess_force,
             'safety_fence': self.alarm_steps.step_safety_fence,
             'excess_temperature': self._handle_excess_temperature,
+            'no_buffer_data': self.alarm_steps.step_no_buffer_data,
         }
         handler = handlers.get(tag)
         if handler:
@@ -204,6 +214,55 @@ class Controller:
     def _handle_excess_temperature(self):
         self.model.stop_gear_end_test()
         self.alarm_steps.step_excess_temperature()
+
+    def _check_buffer_watchdog(self) -> bool:
+        """
+        Страховка буфера. Пока буфер включён, контроллер пишет запись каждую 1 мс, поэтому
+        BUFFER_TIMEOUT секунд без данных во время чтения буфера - сбой (данные не идут,
+        программа «слепая», привод крутится). Буфер перезапускается (выкл -> вкл), чтение
+        возобновляется с того же этапа. После BUFFER_RESTARTS перезапусков подряд без
+        данных - авария со стопом привода. True - сработала (этап на этом тике не выполнять)
+        """
+        now = time.monotonic()
+        # данные пришли после последнего перезапуска - сбой прошёл, счёт попыток заново
+        if self._buffer_restarts and self.model.last_buffer_data > self._buffer_restart_at:
+            self.logger.warning(f'Страховка буфера: данные снова идут после перезапуска '
+                                f'№{self._buffer_restarts}')
+            self._buffer_restarts = 0
+
+        if self.stage == Stage.WAIT_BUFFER:
+            # контроллер не подтверждает buffer_on (повтор команды раз в 1 с не помогает)
+            waited = now - self._wait_buf_started
+            if waited < config.buffer_timeout:
+                return False
+            reason = f'буфер не включился за {waited:.1f} с (переход в {self.next_stage.name})'
+        elif self.model.buffer_reading:
+            silence = now - max(self.model.last_buffer_data, self.model.buffer_reading_since)
+            if silence < config.buffer_timeout:
+                return False
+            reason = f'нет данных {silence:.1f} с на этапе {self.stage.name}'
+        else:
+            return False
+
+        if self._buffer_restarts >= config.buffer_restarts:
+            self.logger.error(f'Страховка буфера: {reason}, перезапусков было {self._buffer_restarts} '
+                              f'- авария, стоп привода')
+            self._buffer_restarts = 0
+            self._select_alarm_state('no_buffer_data')
+            return True
+
+        self._buffer_restarts += 1
+        self._buffer_restart_at = now
+        self.logger.warning(f'Страховка буфера: {reason}, перезапуск буфера '
+                            f'{self._buffer_restarts}/{config.buffer_restarts}')
+        self.model.restart_buffer()
+        if self.stage == Stage.WAIT_BUFFER:
+            # повторный вход в тот же этап set_stage игнорирует - сбрасываем его ожидание сами
+            self._enter_wait_buffer()
+        else:
+            self.set_next_stage(self.stage)
+            self.set_stage(Stage.WAIT_BUFFER)
+        return True
             
     @log_exceptions 
     def _step_yellow_btn_push(self):
@@ -318,7 +377,8 @@ class Controller:
     #==========
 
     def _enter_wait_buffer(self):
-        self._wait_buf_t0 = time.monotonic()
+        self._wait_buf_t0 = time.monotonic()        # для повтора buffer_on раз в 1 с
+        self._wait_buf_started = self._wait_buf_t0  # для страховки буфера (общее время ожидания)
         self._check_next_stage = False
 
     def _stage_wait_buffer(self):

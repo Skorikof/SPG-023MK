@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import statistics
+import time
 from PySide6.QtCore import QObject, Signal, QTimer
 
 from config import config
@@ -127,6 +128,10 @@ class Model:
         self.timer_add_koef = None
         self.timer_calc_koef = None
         self.yellow_btn = YellowButton()
+        # Страховка буфера: идёт ли чтение буфера, когда началось и когда пришли последние данные
+        self.buffer_reading = False
+        self.buffer_reading_since = 0.0
+        self.last_buffer_data = 0.0
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # Последние записанные значения бит, которыми управляет ПК (буфер, лампы).
         # state_list отстаёт от записей, поэтому без этого запись соседнего бита
@@ -254,6 +259,8 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
+        self.buffer_reading = True
+        self.buffer_reading_since = time.monotonic()
         self.reader.reader_start_test()
         self.status_bar_msg(f'Чтение буфера контроллера запущено')
 
@@ -262,6 +269,7 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера остановлено')
 
     def reader_stop_test(self):
+        self.buffer_reading = False
         self.reader.reader_stop_test()
         self.status_bar_msg(f'Чтение буфера контроллера остановлено')
 
@@ -408,6 +416,7 @@ class Model:
                 self.logger.debug('Response from force sensor is None')
         else:
             self.flag_non_buffer = False
+            self.last_buffer_data = time.monotonic()
             self.state_list = data.get('state_list')
             self._update_state_dict(data.get('state'))
             # Буфер перед данными заполнен нулями: в такой записи бит 13 = 0, и при старой
@@ -506,6 +515,16 @@ class Model:
         mid = 0.5 * (nmt + vmt)
         self.logger.debug(f'Настройка хода: шатун остановился на {self.move_now:.1f}, середина {mid:.1f}, '
                           f'отклонение {self.move_now - mid:+.1f} мм (MID_LEAD {config.mid_lead})')
+
+    def restart_buffer(self):
+        """
+        Страховка: перезапуск записи буфера в контроллере (выкл -> вкл). Чтение буфера
+        возобновляется в WAIT_BUFFER после подтверждения buffer_on, программа сбора
+        в collector сохраняется
+        """
+        self.reader_stop_test()
+        self.write_bit_force_cycle(0)
+        self.write_bit_force_cycle(1)
 
     def stop_collect(self):
         self.reader_stop_test()
