@@ -311,6 +311,23 @@ PyInstaller стоит в dev-группе (`uv sync` ставит его сам
 (`main.py`, onedir, без консоли, иконка `icon/shock-absorber.ico`, имя
 `SPG-023MK`).
 
+```powershell
+.\build.ps1                 # основная программа  -> dist/SPG-023MK/
+.\build_archive_view.ps1    # просмотр архива     -> dist/SPG-023MK Archive view/
+```
+
+- `build.ps1` — сборка + рядом с exe содержимое `dist/add` (справочники,
+  `icon/`, `archive/`) и `.env` из `.env.example`. Параметры для других
+  проектов: `-Name -Entry -Icon -AddDir -EnvFile -DataDirs -OneFile -Console -Clean`.
+- `build_archive_view.ps1` — обёртка над `build.ps1` для `archive_view.py`:
+  рядом с exe только `icon/` и пустая `archive/` (справочники и `.env`
+  просмотрщику не нужны). Файлы архива кладутся в его `archive/`; он
+  читает оба формата имён и кодировок, сам ничего не переименовывает.
+- Оба скрипта не дают пересобрать поверх сборки, в `archive/`/`logs/` которой
+  есть файлы (PyInstaller удаляет папку сборки целиком); поверх — `-Force`.
+- Если PowerShell не запускает скрипты:
+  `powershell -ExecutionPolicy Bypass -File .\build_archive_view.ps1`.
+
 ## Структура репозитория
 
 ```
