@@ -478,7 +478,7 @@ class Model:
         self.logger.info(f'Скорость испытания: задана {v_set} м/с, фактически {v_act:.3f} м/с ({dev:+.1f} %)')
         # предупреждаем, только если и собранный оборот вне допуска (ожидание могло
         # закончиться, а привод дотянуть скорость уже во время сбора)
-        if self.collector.speed_not_reached and abs(dev) > config.speed_tolerance:
+        if self.collector.speed_not_reached and dev < -config.speed_tolerance:
             self.speed_warnings.append((v_set, round(v_act, 3), round(dev, 1)))
             self.status_bar_msg(f'Скорость {v_set} м/с не набрана: фактически {v_act:.3f} м/с')
 

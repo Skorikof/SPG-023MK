@@ -2,7 +2,7 @@
 import time
 import pyqtgraph as pg
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Slot, QTimer
 
 from app import glob_var
 from app.ui_py.mainui import Ui_MainWindow
@@ -1116,7 +1116,9 @@ class AppWindow(QMainWindow):
 
     @Slot()
     def slot_lab_test_stop(self):
-        self._show_speed_warnings()
+        # после завершения обработчика контроллера: модальное окно внутри сигнала
+        # задерживало перевод этапа в WAIT, пока оператор его не закроет
+        QTimer.singleShot(0, self._show_speed_warnings)
         self.ui.test_cancel_btn.setEnabled(True)
         self.ui.test_cancel_btn.setText('НАЗАД')
         self.ui.test_repeat_btn.setVisible(True)
@@ -1131,7 +1133,9 @@ class AppWindow(QMainWindow):
 
     @Slot()
     def slot_conv_test_stop(self):
-        self._show_speed_warnings()
+        # после завершения обработчика контроллера: модальное окно внутри сигнала
+        # задерживало перевод этапа в WAIT, пока оператор его не закроет
+        QTimer.singleShot(0, self._show_speed_warnings)
         self.ui.test_conv_cancel_btn.setEnabled(True)
         self.ui.test_conv_cancel_btn.setText('НАЗАД')
         self.ui.conv_GraphWidget.clear()

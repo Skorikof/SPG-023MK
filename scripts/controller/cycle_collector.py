@@ -752,7 +752,9 @@ class CycleCollector:
         if self.speed_target is None or self.speed_not_reached:
             return True
         v = self.last_cycle_speed
-        ok = v is not None and abs(v / self.speed_target - 1.0) <= self.speed_tolerance
+        # «набрана» = не ниже заданной больше чем на допуск. Превышение - не разгон
+        # (на 0.05 м/с привод стабильно +6 %, из-за этого ждали 10 оборотов на каждом шаге)
+        ok = v is not None and v >= self.speed_target * (1.0 - self.speed_tolerance)
         self.logger.debug(f'Набор скорости: задана {self.speed_target}, фактически '
                           f'{v if v is None else round(v, 3)} м/с - {"в допуске" if ok else "ещё нет"}')
         if ok:
