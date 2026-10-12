@@ -86,6 +86,10 @@ class CalcGraphValue:
 
     def interpoly_line_coord(self, x, y, *, start_point: float=None):
         try:
+            # кубический сплайн требует минимум 4 точки (каскад из 1-2 скоростей,
+            # прерванный каскад) - тогда ломаная, а не ошибка в лог на каждую отрисовку
+            if len(x) < 4:
+                return x, y
             f = interpolate.interp1d(x, y, kind='cubic')
             if start_point is None:
                 start_point = 0

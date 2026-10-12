@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from PySide6.QtCore import QObject, Signal
 
+from config import config
 from scripts.logger import my_logger
 from .stages import Stage, TypeTest
 from scripts.model import Model
@@ -111,13 +112,18 @@ class AlarmSteps:
             elif not self.model.switch_dict.get('alarm_lowest_position', False):
                 tag = 'down'
 
-            if tag and not self.flag_alarm_traverse:
+            if (tag and not self.flag_alarm_traverse
+                    and self.model.traverse_alarm_reads >= config.traverse_alarm_reads):
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
+                self.logger.warning(f'{msg}: сигнал {self.model.traverse_alarm_reads} чтений подряд')
                 self._set_common_alarm_flags(msg)
 
+                # как у остальных аварий: стоп привода и траверсы, испытание прекращается.
+                # Раньше испытание продолжалось, а запись в архиве уже была закрыта end_test
+                self._stop_gear()
                 self.model.write_bit_red_light(1)
-                self.model.stop_collect()
+                self.signals.stage_from_alarm.emit(Stage.WAIT)
 
                 self.signals.alarm_traverse.emit(tag)
 

@@ -78,6 +78,12 @@ class Config:
         return int(os.getenv("SPEED_WAIT_CYCLES", "10"))
 
     @property
+    def traverse_alarm_reads(self) -> int:
+        """Аварийный концевик траверсы засчитывается, если сигнал держится столько чтений
+        регистров подряд (защита от помехи; одно чтение - примерно 20-50 мс)"""
+        return int(os.getenv("TRAVERSE_ALARM_READS", "3"))
+
+    @property
     def mid_lead(self) -> float:
         """Упреждение остановки в середине хода (настройка хода), мм: команда «стоп»
         подаётся на столько раньше середины, чтобы шатун выбегом дошёл до неё.

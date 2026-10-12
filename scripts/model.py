@@ -133,6 +133,8 @@ class Model:
         self.timer_calc_koef = None
         self.yellow_btn = YellowButton()
         # Страховка буфера: идёт ли чтение буфера, когда началось и когда пришли последние данные
+        # чтений регистров подряд с сигналом аварийного концевика траверсы
+        self.traverse_alarm_reads = 0
         # шаги испытания, на которых не набралась заданная скорость: (задана, фактически, %)
         self.speed_warnings = []
         self.buffer_reading = False
@@ -287,6 +289,24 @@ class Model:
         if data is not None:
             self.switch_dict.update(data)
 
+    def _count_traverse_alarm_reads(self):
+        """
+        Сколько чтений регистров подряд сработан аварийный концевик траверсы (верх/низ).
+        Авария засчитывается от TRAVERSE_ALARM_READS чтений: 12.10 одно чтение при разгоне
+        до 0.9 м/с дало ложную аварию при траверсе на месте. Счёт - по чтениям, а не по
+        тикам контроллера: в режиме буфера регистры не читаются, и одно плохое чтение
+        иначе «залипало» бы на весь шаг испытания
+        """
+        alarm = (not self.switch_dict.get('alarm_highest_position', True)
+                 or not self.switch_dict.get('alarm_lowest_position', True))
+        if alarm:
+            self.traverse_alarm_reads += 1
+        else:
+            if 0 < self.traverse_alarm_reads < config.traverse_alarm_reads:
+                self.logger.warning(f'Концевик траверсы: сигнал аварии {self.traverse_alarm_reads} '
+                                    f'чтение(я) и пропал - помеха, авария не засчитана')
+            self.traverse_alarm_reads = 0
+
     @log_exceptions
     def _update_state_dict(self, data):
         if data is not None:
@@ -406,6 +426,7 @@ class Model:
             )
 
             self._update_switch_dict(result.get('switch'))
+            self._count_traverse_alarm_reads()
             self._update_state_dict(result.get('state'))
             self.state_list = result.get('state_list')
             self._check_yellow_btn('reg')
