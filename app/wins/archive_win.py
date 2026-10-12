@@ -389,7 +389,7 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                self.triple_graph.fill_piston_graph(int(arch_obj.hod))
+                self.triple_graph.fill_piston_graph(arch_obj)
                 
                 x_f, y_f = self.triple_graph.calc_force_graph(arch_obj)
                 self.triple_graph.fill_force_graph(x_f, y_f)

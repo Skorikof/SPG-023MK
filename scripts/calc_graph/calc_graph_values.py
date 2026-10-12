@@ -24,9 +24,18 @@ class CalcGraphValue:
             self.logger.error(e)
 
     def rounding_coord(self, coord, degree: int):
+        """
+        Сглаживание окном Ханна. Цикл замкнут, поэтому края дополняются точками с другого
+        конца цикла: раньше за краями подразумевались нули, и в НМТ (стык начала и конца
+        цикла) кривая скорости получала ступеньку
+        """
         try:
             w = np.hanning(degree)
-            return np.round(np.convolve(w / w.sum(), coord, mode='same'), decimals=3)
+            arr = np.asarray(coord, dtype=float)
+            pad = min(degree, len(arr))
+            ext = np.concatenate((arr[-pad:], arr, arr[:pad]))
+            smooth = np.convolve(ext, w / w.sum(), mode='same')[pad:pad + len(arr)]
+            return np.round(smooth, decimals=3)
 
         except Exception as e:
             self.logger.error(e)

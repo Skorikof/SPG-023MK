@@ -184,7 +184,7 @@ class CompareGraph:
                 if ind == 0:
                     self._fill_compare_triple_data(graph.data_graph(arch_obj))
                     
-                    graph.fill_piston_graph(int(arch_obj.hod))
+                    graph.fill_piston_graph(arch_obj)
                     
                 pen = pg.mkPen(color=self.select_color_line(ind),
                                width=3,
