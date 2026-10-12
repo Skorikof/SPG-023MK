@@ -54,8 +54,9 @@ class CompareGraph:
             
     def select_color_line(self, ind):
         try:
-            color_pen = ('black',
-                         'blue',
+            # первый график синим, второй чёрным (пожелание заказчика)
+            color_pen = ('blue',
+                         'black',
                          'green',
                          'orange',
                          'purple',
@@ -75,7 +76,7 @@ class CompareGraph:
             return color_pen[ind]
         
         except Exception as e:
-            self.logger(e)
+            self.logger.error(e)
             
     def _compare_move_graph(self):
         try:

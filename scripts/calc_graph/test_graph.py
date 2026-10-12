@@ -36,7 +36,7 @@ class TestGraph(AbstractGraph):
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
             if pen is None:
-                pen = pg.mkPen(color='black', width=3)
+                pen = pg.mkPen(color='blue', width=3)
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
         except Exception as e:
@@ -44,8 +44,9 @@ class TestGraph(AbstractGraph):
             
     def _select_color_line(self, ind):
         try:
-            color_pen = ('black',
-                         'blue',
+            # первый график синим, второй чёрным (пожелание заказчика)
+            color_pen = ('blue',
+                         'black',
                          'green',
                          'orange',
                          'purple',
@@ -65,7 +66,7 @@ class TestGraph(AbstractGraph):
             return color_pen[ind]
         
         except Exception as e:
-            self.logger(e)
+            self.logger.error(e)
             
     def _select_line_style(self, ind):
         try:

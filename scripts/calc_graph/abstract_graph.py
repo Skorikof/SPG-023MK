@@ -21,7 +21,13 @@ class AbstractGraph:
                 
         self.widget.showGrid(True, True)
         self.widget.setBackground('w')
-        self.widget.addLegend()
+        # легенда на непрозрачной белой подложке с рамкой и чёрным текстом:
+        # по умолчанию фон прозрачный, текст серый - на сетке плохо видно
+        self.widget.addLegend(offset=(10, 10),
+                              brush=pg.mkBrush(255, 255, 255, 235),
+                              pen=pg.mkPen(color='k', width=1),
+                              labelTextColor='k',
+                              labelTextSize='11pt')
         
     def _graph_title(self, title):
         if not title:

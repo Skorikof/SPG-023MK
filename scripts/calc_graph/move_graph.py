@@ -29,7 +29,7 @@ class MoveGraph(AbstractGraph):
     def fill_graph(self, x_coord, y_coord, pen=None, name='Сопротивление'):
         try:
             if pen is None:
-                pen = pg.mkPen(color='black', width=3)
+                pen = pg.mkPen(color='blue', width=3)
             self.widget.plot(x_coord, y_coord, pen=pen, name=name)
 
         except Exception as e:
