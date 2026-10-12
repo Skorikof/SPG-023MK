@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import statistics
+from collections import deque
 import time
 from PySide6.QtCore import QObject, Signal, QTimer
 
@@ -133,8 +134,12 @@ class Model:
         self.timer_calc_koef = None
         self.yellow_btn = YellowButton()
         # Страховка буфера: идёт ли чтение буфера, когда началось и когда пришли последние данные
-        # чтений регистров подряд с сигналом аварийного концевика траверсы
-        self.traverse_alarm_reads = 0
+        # Фильтр аварий от помех: сколько чтений подряд держится сигнал каждой аварии
+        # ('traverse' - концевики траверсы, 'fence' - ограждение, 'temper' - перегрев)
+        self.alarm_reads = {}
+        # последние температуры - максимум испытания считается по медиане трёх,
+        # чтобы одиночный выброс датчика не попадал в аварию и в архив
+        self._recent_temps = deque(maxlen=3)
         # шаги испытания, на которых не набралась заданная скорость: (задана, фактически, %)
         self.speed_warnings = []
         self.buffer_reading = False
@@ -289,23 +294,47 @@ class Model:
         if data is not None:
             self.switch_dict.update(data)
 
+    def _filter_alarm(self, name: str, active: bool, label: str):
+        """
+        Счёт чтений подряд, в которых держится сигнал аварии. Авария засчитывается от
+        ALARM_FILTER_READS чтений (alarm_confirmed). Modbus-чтение защищено контрольной
+        суммой, так что короткий сигнал - это реальный импульс на входе (дребезг концевика
+        от вибрации, наводка): 12.10 одно чтение концевика траверсы при разгоне до 0.9 м/с
+        дало ложную аварию при траверсе на месте
+        """
+        n = self.alarm_reads.get(name, 0)
+        if active:
+            self.alarm_reads[name] = n + 1
+        else:
+            if 0 < n < config.alarm_filter_reads:
+                self.logger.warning(f'{label}: сигнал аварии {n} чтение(я) и пропал - помеха, '
+                                    f'авария не засчитана')
+            self.alarm_reads[name] = 0
+
+    def alarm_confirmed(self, name: str) -> bool:
+        return self.alarm_reads.get(name, 0) >= config.alarm_filter_reads
+
     def _count_traverse_alarm_reads(self):
-        """
-        Сколько чтений регистров подряд сработан аварийный концевик траверсы (верх/низ).
-        Авария засчитывается от TRAVERSE_ALARM_READS чтений: 12.10 одно чтение при разгоне
-        до 0.9 м/с дало ложную аварию при траверсе на месте. Счёт - по чтениям, а не по
-        тикам контроллера: в режиме буфера регистры не читаются, и одно плохое чтение
-        иначе «залипало» бы на весь шаг испытания
-        """
+        """Концевики траверсы - только при чтении регистров (в режиме буфера их нет)"""
         alarm = (not self.switch_dict.get('alarm_highest_position', True)
                  or not self.switch_dict.get('alarm_lowest_position', True))
-        if alarm:
-            self.traverse_alarm_reads += 1
-        else:
-            if 0 < self.traverse_alarm_reads < config.traverse_alarm_reads:
-                self.logger.warning(f'Концевик траверсы: сигнал аварии {self.traverse_alarm_reads} '
-                                    f'чтение(я) и пропал - помеха, авария не засчитана')
-            self.traverse_alarm_reads = 0
+        self._filter_alarm('traverse', alarm, 'Концевик траверсы')
+
+    def _count_state_alarm_reads(self):
+        """Ограждение - из слова состояния (и регистры, и записи буфера)"""
+        self._filter_alarm('fence', bool(self.state_dict.get('safety_fence', False)), 'Ограждение')
+
+    def _update_temperature(self, temperature):
+        """Текущая температура: максимум испытания по медиане трёх последних чтений + счёт перегрева"""
+        self.data_test.temperature = temperature
+        self._recent_temps.append(float(temperature))
+        filtered = sorted(self._recent_temps)[len(self._recent_temps) // 2]
+        self.data_test.max_temperature = max(self.data_test.max_temperature, filtered)
+
+        amort = self.data_test.amort
+        over = (amort is not None and self.get_type_test() != TypeTest.TEMPER
+                and float(temperature) >= float(amort.max_temper))
+        self._filter_alarm('temper', over, 'Температура')
 
     @log_exceptions
     def _update_state_dict(self, data):
@@ -415,19 +444,13 @@ class Model:
             self.data_test.first_temperature = round(result.get('first_t'), 1)
             self.data_test.second_temperature = round(result.get('second_t'), 1)
             
-            self.data_test.temperature = max(
-                self.data_test.first_temperature,
-                self.data_test.second_temperature
-            )
-
-            self.data_test.max_temperature = max(
-                self.data_test.max_temperature,
-                self.data_test.temperature
-            )
+            self._update_temperature(max(self.data_test.first_temperature,
+                                         self.data_test.second_temperature))
 
             self._update_switch_dict(result.get('switch'))
             self._count_traverse_alarm_reads()
             self._update_state_dict(result.get('state'))
+            self._count_state_alarm_reads()
             self.state_list = result.get('state_list')
             self._check_yellow_btn('reg')
 
@@ -446,15 +469,13 @@ class Model:
             self.last_buffer_data = time.monotonic()
             self.state_list = data.get('state_list')
             self._update_state_dict(data.get('state'))
+            self._count_state_alarm_reads()
             # Буфер перед данными заполнен нулями: в такой записи бит 13 = 0, и при старой
             # инвертированной кнопке (0 = нажата) это давало ложное нажатие. В настоящей
             # записи буфера бит 0 (циклический опрос включён) всегда 1 - по нему и отсеиваем
             if (data.get('state') or {}).get('cycle_force'):
                 self._check_yellow_btn('buffer')
-            temperature = data.get('temper')
-            self.data_test.temperature = temperature
-            self.data_test.max_temperature = self.calc_data.check_temperature(temperature,
-                                                                              self.data_test.max_temperature)
+            self._update_temperature(data.get('temper'))
             if self.get_type_test() == TypeTest.SETTINGS:
                 self._send_data_in_set_win(data)
             else:
@@ -843,6 +864,7 @@ class Model:
             self.write_bit_unblock_control()
         self.lamp_all_switch_off()
         self.data_test.max_temperature = 0
+        self._recent_temps.clear()
         self.alarm_tag = ''
         self.flag_alarm = False
             

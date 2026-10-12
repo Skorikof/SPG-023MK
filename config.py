@@ -78,10 +78,11 @@ class Config:
         return int(os.getenv("SPEED_WAIT_CYCLES", "10"))
 
     @property
-    def traverse_alarm_reads(self) -> int:
-        """Аварийный концевик траверсы засчитывается, если сигнал держится столько чтений
-        регистров подряд (защита от помехи; одно чтение - примерно 20-50 мс)"""
-        return int(os.getenv("TRAVERSE_ALARM_READS", "3"))
+    def alarm_filter_reads(self) -> int:
+        """Фильтр аварий от помех: концевик траверсы, ограждение и перегрев засчитываются,
+        если сигнал держится столько чтений подряд (одно чтение - примерно 20-50 мс).
+        TRAVERSE_ALARM_READS - прежнее имя настройки"""
+        return int(os.getenv("ALARM_FILTER_READS", os.getenv("TRAVERSE_ALARM_READS", "3")))
 
     @property
     def mid_lead(self) -> float:

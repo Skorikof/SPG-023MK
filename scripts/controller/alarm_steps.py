@@ -113,10 +113,10 @@ class AlarmSteps:
                 tag = 'down'
 
             if (tag and not self.flag_alarm_traverse
-                    and self.model.traverse_alarm_reads >= config.traverse_alarm_reads):
+                    and self.model.alarm_confirmed('traverse')):
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
-                self.logger.warning(f'{msg}: сигнал {self.model.traverse_alarm_reads} чтений подряд')
+                self.logger.warning(f'{msg}: сигнал {self.model.alarm_reads.get("traverse")} чтений подряд')
                 self._set_common_alarm_flags(msg)
 
                 # как у остальных аварий: стоп привода и траверсы, испытание прекращается.
@@ -140,17 +140,19 @@ class AlarmSteps:
             alarm_checks = [
                 ('lost_control', self.model.state_dict.get('lost_control', False)),
                 ('excess_force', self.model.state_dict.get('excess_force', False)),
-                ('safety_fence', self.model.state_dict.get('safety_fence', False)),
+                # ограждение - с фильтром помех (ALARM_FILTER_READS чтений подряд);
+                # потеря управления и превышение усилия контроллер фиксирует и держит сам
+                ('safety_fence', self.model.alarm_confirmed('fence')),
             ]
             
             for alarm_tag, is_triggered in alarm_checks:
                 if is_triggered:
                     return alarm_tag
             
-            # Check temperature alarm (only if not in temperature test)
-            if self.model.get_type_test() != TypeTest.TEMPER:
-                if self.model.data_test.max_temperature >= self.model.data_test.amort.max_temper:
-                    return 'excess_temperature'
+            # Перегрев (кроме температурного испытания): температура не ниже предела
+            # ALARM_FILTER_READS чтений подряд; раньше хватало одного выброса датчика в максимуме
+            if self.model.alarm_confirmed('temper'):
+                return 'excess_temperature'
             
             return None
 
