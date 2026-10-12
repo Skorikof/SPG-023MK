@@ -983,8 +983,24 @@ class Model:
         self.start_collect_wait_stop()
         self.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
 
+    NMT_TOLERANCE = 1.0     # мм: шатун считается в НМТ (тот же допуск, что у доводки)
+
     def stop_gear_min_pos(self):
-        self.start_nmt_position()
+        # Шатун после выбега мог остановиться уже в НМТ (≈5 % случаев по логам). Раньше
+        # всё равно подавались «скорость» и «пуск», через ~0.15 с доводка видела «НМТ
+        # достигнута» и давала «стоп» - привод дёргался и шатун уходил за НМТ.
+        # Положение - последняя точка буфера этапа остановки, НМТ - по полным оборотам
+        pos = self.collector.prev_pos
+        nmt = self.collector.known_nmt()
+        if pos is not None and nmt is not None and abs(float(pos) - nmt) <= self.NMT_TOLERANCE:
+            self.logger.debug(f'Доводка до НМТ не нужна: шатун уже в НМТ '
+                              f'(положение {float(pos):.1f}, НМТ {nmt:.1f})')
+            self.flag_nmt_reached = True
+            # этап доводки завершит испытание как обычно (стоп, сигналы, WAIT), без пуска привода
+            self.signals.set_stage.emit(Stage.STOP_GEAR_MIN_POS)
+            return
+
+        self.start_nmt_position(tolerance_mm=self.NMT_TOLERANCE)
         hod = self.data_test.amort.hod if self.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('slow', hod)
         self.transition_via_buffer(Stage.STOP_GEAR_MIN_POS, speed=speed,

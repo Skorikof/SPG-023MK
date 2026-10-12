@@ -185,6 +185,15 @@ class CycleCollector:
         """Оценка НМТ по предыдущим циклам (или None)."""
         return self.nmt_estimate
     
+    def known_nmt(self):
+        """
+        НМТ по полным оборотам (медиана nmt_values) или None. nmt_estimate для проверок
+        не годится: пока он пуст, _append_data_if_needed подставляет в него текущий минимум
+        """
+        if not self.nmt_values:
+            return None
+        return float(np.median(np.asarray(self.nmt_values)))
+
     def get_vmt_estimate(self):
         """Оценка ВМТ по предыдущим циклам (или None)."""
         return self.vmt_estimate
@@ -612,7 +621,7 @@ class CycleCollector:
         span = vmt - nmt_ref
         # «Известная» НМТ - только по полным оборотам (nmt_values). nmt_estimate для этого
         # не годится: пока он пуст, _append_data_if_needed подставляет в него текущий минимум
-        known_nmt = float(np.median(np.asarray(self.nmt_values))) if self.nmt_values else None
+        known_nmt = self.known_nmt()
         from_known_nmt = known_nmt is not None and abs(nmt_ref - known_nmt) <= self.MID_NMT_MATCH
         if span < self.MID_MIN_SPAN or not (self._mid_seen_nmt_turn or from_known_nmt):
             self.logger.debug(f'Середина хода: ВМТ {vmt:.1f} пропущена (мин {nmt_ref:.1f}, ход {span:.1f}, '
