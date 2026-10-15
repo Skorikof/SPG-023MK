@@ -12,6 +12,7 @@ from scripts.data_calculation import CalcData
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
+from scripts.buffer_dump import dump
 from scripts.yellow_button import YellowButton
 from scripts.controller.stages import Stage, TypeTest, ColorLampConv
 from scripts.modbus.client import Client
@@ -147,6 +148,8 @@ class Model:
         self.speed_warnings = []
         self.buffer_reading = False
         self.buffer_reading_since = 0.0
+        # бит 0 (буфер включён) по последнему чтению регистров - для записи буфера в файл
+        self._dump_bit0 = None
         self.last_buffer_data = 0.0
         self.state_list = [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # Последние записанные значения бит, которыми управляет ПК (буфер, лампы).
@@ -275,6 +278,7 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
+        dump.event('reader_start', '0x4000')
         self.buffer_reading = True
         self.buffer_reading_since = time.monotonic()
         self.reader.reader_start_test()
@@ -285,6 +289,7 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера остановлено')
 
     def reader_stop_test(self):
+        dump.event('reader_stop')
         self.buffer_reading = False
         self.reader.reader_stop_test()
         self.status_bar_msg(f'Чтение буфера контроллера остановлено')
@@ -465,6 +470,7 @@ class Model:
             self._update_state_dict(result.get('state'))
             self._count_state_alarm_reads()
             self.state_list = result.get('state_list')
+            self._dump_state_bit0(result)
             self._check_yellow_btn('reg')
 
             if self.get_type_test() == TypeTest.SETTINGS:
@@ -499,12 +505,24 @@ class Model:
                     self.flag_collect_error = True
                     self.logger.error('Error in collector/add_stream_dict')
 
+    def _dump_state_bit0(self, result):
+        """Запись в файл буфера: бит 0 слова состояния по чтению регистров сменился -
+        буфер в контроллере реально включился/выключился (counter - счётчик 0x2004, мс)"""
+        bit0 = self.state_list[0] if self.state_list else None
+        if bit0 != self._dump_bit0:
+            if self._dump_bit0 is not None:
+                dump.event('state_bit0', f'{self._dump_bit0}->{bit0}', f'counter={result.get("counter")}',
+                           f'move={result.get("move")}')
+            self._dump_bit0 = bit0
+
     def _handle_program_done(self):
         step = self.collector.get_last_completed_step()
         result = self.collector.get_last_step_result()
         if step is None:
             return
         mode, _ = step
+        dump.event('collector_done', mode.name, f'move_now={self.move_now}',
+                   result if mode in (Mode.NMT_FINAL, Mode.MID_FINAL, Mode.STROKE_ONLY) else '')
         if mode == Mode.STROKE_ONLY:
             self.min_point, self.max_point, self.stroke = result[0]
         elif mode == Mode.COLLECT:
@@ -745,6 +763,12 @@ class Model:
 
     @log_exceptions
     def write_bit_force_cycle(self, value):
+        if value == 1:
+            # запись буфера в файл (BUFFER_DUMP): новый файл с первой команды buffer_on операции
+            # (тип испытания до выбора на странице спецификации - None)
+            type_test = self.get_type_test()
+            dump.open('search_hod' if self.flag_search_hod
+                      else type_test.name.lower() if type_test else 'other')
         self.reset_buffer_state()
         if value == 1:
             command = 'buffer_on'
@@ -1015,6 +1039,7 @@ class Model:
                                    extra_fc={'tag': 'up', 'adr': 1})
         
     def move_gear_set_pos(self):
+        dump.open('set_gear')
         self.start_mid_position()
         hod = self.data_test.amort.hod if self.data_test.amort else 120
         speed = self.calc_data.definition_speed_by_hod('slow', hod)

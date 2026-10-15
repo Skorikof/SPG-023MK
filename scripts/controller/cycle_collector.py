@@ -5,6 +5,7 @@ import time
 from collections import deque
 from enum import Enum
 
+from scripts.buffer_dump import dump
 from scripts.logger import my_logger
 
 
@@ -440,6 +441,7 @@ class CycleCollector:
         """
         self.logger.debug(f'Скачок координаты линейки {float(prev_pos):.1f} -> {float(pos):.1f}: '
                           f'отслеживание разворотов начато заново')
+        dump.event('position_jump', f'{float(prev_pos):.1f}', f'{float(pos):.1f}')
         self.prev_pos = None
         self.prev_sign = 0
         self.points_after_turn = 0

@@ -11,6 +11,7 @@ from app.wins.amorts_win import AmortWin
 from app.wins.archive_win import ArchiveWin
 from app.wins.settings_window import SetWindow
 from app.wins.txt_msg import TextMsg
+from scripts.buffer_dump import dump
 from scripts.cascade_profiles import CascadeProfiles
 from scripts.data_calculation import CalcData
 from scripts.calc_graph.test_graph import TestGraph
@@ -45,6 +46,7 @@ class AppWindow(QMainWindow):
             self.controller.timer_process.stop()
 
         self.model.save_arch.stop()
+        dump.stop()
         self.model.writer.threadpool.waitForDone()
         self.model.writer.timer_writer_stop()
         self.model.reader_exit()

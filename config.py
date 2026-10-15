@@ -93,6 +93,12 @@ class Config:
         return float(os.getenv("ALARM_FILTER_MS", "200"))
 
     @property
+    def buffer_dump(self) -> bool:
+        """Диагностика: запись сырого потока буфера и событий обмена в logs/buffer/
+        (файл на операцию стенда, разбор - tools/buffer_dump). 1 - включено"""
+        return os.getenv("BUFFER_DUMP", "0").strip() not in ("", "0")
+
+    @property
     def mid_lead(self) -> float:
         """Упреждение остановки в середине хода (настройка хода), мм: команда «стоп»
         подаётся на столько раньше середины, чтобы шатун выбегом дошёл до неё.

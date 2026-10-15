@@ -3,6 +3,7 @@ import time
 from PySide6.QtCore import QTimer, QObject, Signal, Slot
 
 from config import config
+from scripts.buffer_dump import dump
 from scripts.logger import my_logger
 from scripts.model import Model
 from scripts.data_calculation import CalcData
@@ -161,6 +162,7 @@ class Controller:
         old_stage = self.stage
         self._on_exit_stage(old_stage)
         self.logger.debug(f'Stage {old_stage} -> {new_stage}')
+        dump.event('stage', old_stage.name, new_stage.name)
         self.stage = new_stage
         self._on_enter_stage(new_stage)
 
@@ -176,11 +178,13 @@ class Controller:
 
     def set_next_stage(self, stage):
         self.logger.debug(f'Next stage {self.next_stage} -> {stage}')
+        dump.event('next_stage', stage.name)
         self.next_stage = stage
     
     @log_exceptions     
     def _update_stage_on_timer(self):
         self.alarm_steps.step_alarm_traverse_position()
+        self._check_buffer_dump_close()
         if self._check_buffer_watchdog():
             return
         if self.model.flag_test:
@@ -215,6 +219,14 @@ class Controller:
         self.model.stop_gear_end_test()
         self.alarm_steps.step_excess_temperature()
 
+    def _check_buffer_dump_close(self):
+        """Файл записи буфера закрывается, когда операция закончена: этап WAIT, буфер
+        выключен, событий нет IDLE_CLOSE с (подтверждения выключения уже пришли)"""
+        if (dump.is_open and self.stage == Stage.WAIT
+                and self.model.commanded_bits.get(0, 0) == 0
+                and dump.idle_for() >= dump.IDLE_CLOSE):
+            dump.close('операция завершена')
+
     def _check_buffer_watchdog(self) -> bool:
         """
         Страховка буфера. Пока буфер включён, контроллер пишет запись каждую 1 мс, поэтому
@@ -247,6 +259,7 @@ class Controller:
         if self._buffer_restarts >= config.buffer_restarts:
             self.logger.error(f'Страховка буфера: {reason}, перезапусков было {self._buffer_restarts} '
                               f'- авария, стоп привода')
+            dump.event('watchdog_alarm', reason)
             self._buffer_restarts = 0
             self._select_alarm_state('no_buffer_data')
             return True
@@ -255,6 +268,7 @@ class Controller:
         self._buffer_restart_at = now
         self.logger.warning(f'Страховка буфера: {reason}, перезапуск буфера '
                             f'{self._buffer_restarts}/{config.buffer_restarts}')
+        dump.event('watchdog_restart', self._buffer_restarts, reason)
         self.model.restart_buffer()
         if self.stage == Stage.WAIT_BUFFER:
             # повторный вход в тот же этап set_stage игнорирует - сбрасываем его ожидание сами

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PySide6.QtCore import QTimer, QThreadPool, QObject, Signal
 
+from scripts.buffer_dump import dump
 from scripts.logger import my_logger
 from scripts.my_thread.thread_writer import WriterThread
 
@@ -76,6 +77,7 @@ class Writer:
                                   f'com={response[4]}')
                 
                 self.list_write.pop(0)
+                dump.event('ack', response[4], response[0], response[1], hex(response[2]), response[3])
                 if response[1] == 'FC':
                     pass
                 
@@ -97,6 +99,8 @@ class Writer:
     def write_out(self, tag, values=None, reg_write=None, freq_command=None, command=None):
         try:
             self.list_write.append(self._init_writer(tag, values, reg_write, freq_command, command))
+            dump.event('cmd', command, tag, hex(reg_write) if reg_write else '', values or freq_command,
+                       f'queue={len(self.list_write)}')
             if reg_write:
                 reg_write = hex(reg_write)
             self.logger.debug(f'Write queue append --> addr={reg_write}, val={values}, '

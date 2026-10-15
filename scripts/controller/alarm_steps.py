@@ -5,6 +5,7 @@ from enum import Enum
 from PySide6.QtCore import QObject, Signal
 
 from config import config
+from scripts.buffer_dump import dump
 from scripts.logger import my_logger
 from .stages import Stage, TypeTest
 from scripts.model import Model
@@ -68,6 +69,7 @@ class AlarmSteps:
 
     def _trigger_alarm(self, config: AlarmConfig):
         try:
+            dump.event('alarm', config.tag.value)
             self._set_common_alarm_flags(config.tag.value)
 
             if config.stop_gear:
@@ -116,6 +118,7 @@ class AlarmSteps:
                     and self.model.alarm_confirmed('traverse')):
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
+                dump.event('alarm', msg, f'traverse={self.model.move_traverse}')
                 self.logger.warning(f'{msg}: сигнал {self.model.alarm_reads.get("traverse")} чтений подряд, '
                                     f'{self.model.alarm_held.get("traverse", 0) * 1000:.0f} мс, '
                                     f'траверса {self.model.move_traverse}')
