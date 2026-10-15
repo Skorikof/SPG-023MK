@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'new_amortpoNFKt.ui'
+## Form generated from reading UI file 'new_amort.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.4.3
+## Created by: Qt User Interface Compiler version 6.11.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QSize, Qt)
-from PySide6.QtGui import (QFont)
-from PySide6.QtWidgets import (QComboBox, QFrame, QLabel,
-                               QLineEdit, QPushButton, QWidget)
+from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
+    QMetaObject, QObject, QPoint, QRect,
+    QSize, QTime, QUrl, Qt)
+from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
+    QFont, QFontDatabase, QGradient, QIcon,
+    QImage, QKeySequence, QLinearGradient, QPainter,
+    QPalette, QPixmap, QRadialGradient, QTransform)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QLabel,
+    QLineEdit, QMainWindow, QPushButton, QSizePolicy,
+    QWidget)
 
 class Ui_NewAmortWindow(object):
     def setupUi(self, MainWindow):
@@ -163,6 +169,7 @@ class Ui_NewAmortWindow(object):
         self.adapter_cb.addItem("")
         self.adapter_cb.addItem("")
         self.adapter_cb.addItem("")
+        self.adapter_cb.addItem("")
         self.adapter_cb.setObjectName(u"adapter_cb")
         self.adapter_cb.setGeometry(QRect(490, 200, 110, 35))
         self.adapter_cb.setFont(font)
@@ -227,10 +234,11 @@ class Ui_NewAmortWindow(object):
         self.lbl_txt4_6.setText(QCoreApplication.translate("MainWindow", u"\u0410\u0434\u0430\u043f\u0442\u0435\u0440 (\u2116)", None))
         self.adapter_cb.setItemText(0, QCoreApplication.translate("MainWindow", u"069", None))
         self.adapter_cb.setItemText(1, QCoreApplication.translate("MainWindow", u"069-01", None))
-        self.adapter_cb.setItemText(2, QCoreApplication.translate("MainWindow", u"069-02", None))
-        self.adapter_cb.setItemText(3, QCoreApplication.translate("MainWindow", u"069-03", None))
-        self.adapter_cb.setItemText(4, QCoreApplication.translate("MainWindow", u"069-04", None))
-        self.adapter_cb.setItemText(5, QCoreApplication.translate("MainWindow", u"072", None))
+        self.adapter_cb.setItemText(2, QCoreApplication.translate("MainWindow", u"069-01-2", None))
+        self.adapter_cb.setItemText(3, QCoreApplication.translate("MainWindow", u"069-02", None))
+        self.adapter_cb.setItemText(4, QCoreApplication.translate("MainWindow", u"069-03", None))
+        self.adapter_cb.setItemText(5, QCoreApplication.translate("MainWindow", u"069-04", None))
+        self.adapter_cb.setItemText(6, QCoreApplication.translate("MainWindow", u"072", None))
 
         self.le_comp_min_two.setText("")
         self.le_comp_max_two.setText("")

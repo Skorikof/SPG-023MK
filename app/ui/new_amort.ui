@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>NewAmortWindow</class>
+ <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
@@ -633,6 +633,11 @@
      <item>
       <property name="text">
        <string>069-01</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>069-01-2</string>
       </property>
      </item>
      <item>
