@@ -8,6 +8,5 @@ build/
 dist/
 logs/
 screens/
-firm/
 .env
 *.spec
