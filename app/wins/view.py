@@ -324,8 +324,15 @@ class AppWindow(QMainWindow):
         self.main_stop_state(True)
         self.model.search_hod()
 
-    @log_exceptions
+    @Slot()
     def slot_search_hod(self):
+        # после завершения обработчика контроллера: сигнал приходит из такта контроллера,
+        # и пока модальное окно открыто, таймер контроллера не срабатывает (Qt не вызывает
+        # таймер повторно) - не проверялись бы аварии и страховка буфера
+        QTimer.singleShot(0, self._show_search_hod_result)
+
+    @log_exceptions
+    def _show_search_hod_result(self):
         msg = QMessageBox.information(self,
                                         'Внимание',
                                         f'<b style="color: #f00;">Ход шатуна равен '

@@ -137,6 +137,9 @@ class Model:
         # Фильтр аварий от помех: сколько чтений подряд держится сигнал каждой аварии
         # ('traverse' - концевики траверсы, 'fence' - ограждение, 'temper' - перегрев)
         self.alarm_reads = {}
+        # когда сигнал аварии появился и сколько он держится (до последнего чтения с сигналом), с
+        self.alarm_since = {}
+        self.alarm_held = {}
         # последние температуры - максимум испытания считается по медиане трёх,
         # чтобы одиночный выброс датчика не попадал в аварию и в архив
         self._recent_temps = deque(maxlen=3)
@@ -303,16 +306,26 @@ class Model:
         дало ложную аварию при траверсе на месте
         """
         n = self.alarm_reads.get(name, 0)
+        now = time.monotonic()
         if active:
+            if n == 0:
+                self.alarm_since[name] = now
             self.alarm_reads[name] = n + 1
+            # длительность считается по последнему чтению с сигналом: в режиме буфера
+            # концевики траверсы не читаются, и время без новых чтений не должно её копить
+            self.alarm_held[name] = now - self.alarm_since.get(name, now)
         else:
-            if 0 < n < config.alarm_filter_reads:
-                self.logger.warning(f'{label}: сигнал аварии {n} чтение(я) и пропал - помеха, '
+            if 0 < n and not self.alarm_confirmed(name):
+                self.logger.warning(f'{label}: сигнал аварии {n} чтение(я), '
+                                    f'{self.alarm_held.get(name, 0) * 1000:.0f} мс и пропал - помеха, '
                                     f'авария не засчитана')
             self.alarm_reads[name] = 0
+            self.alarm_held[name] = 0.0
 
     def alarm_confirmed(self, name: str) -> bool:
-        return self.alarm_reads.get(name, 0) >= config.alarm_filter_reads
+        """Сигнал держится не меньше ALARM_FILTER_READS чтений и ALARM_FILTER_MS миллисекунд"""
+        return (self.alarm_reads.get(name, 0) >= config.alarm_filter_reads
+                and self.alarm_held.get(name, 0.0) * 1000 >= config.alarm_filter_ms)
 
     def _count_traverse_alarm_reads(self):
         """Концевики траверсы - только при чтении регистров (в режиме буфера их нет)"""

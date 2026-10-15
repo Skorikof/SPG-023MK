@@ -32,6 +32,7 @@ class WriterThread(QRunnable):
         if self.tag == 'reg':
             try:
                 success = False
+                last_error = ''
                 while self.number_attempts < self.max_attempts:
                     try:
                         rw = self.client.write_registers(self.reg_write,
@@ -40,11 +41,18 @@ class WriterThread(QRunnable):
                         if not rw.isError():
                             success = True
                             break
-                        self.number_attempts += 1
-                        time.sleep(self.PAUSE_WRITE)
-                    except Exception:
-                        pass
-                        
+                        last_error = str(rw)
+                    except Exception as e:
+                        # pymodbus при отсутствии ответа бросает исключение. Раньше такая
+                        # попытка не считалась - бесконечный цикл, и очередь записи (вместе
+                        # с командами «стоп») вставала навсегда
+                        last_error = str(e)
+                    self.number_attempts += 1
+                    time.sleep(self.PAUSE_WRITE)
+
+                if not success:
+                    self.signals.thread_err.emit(f'ERROR in thread_writer reg {hex(self.reg_write)} '
+                                                 f'({self.command}): {self.max_attempts} попыток - {last_error}')
                 flag = 'OK!' if success else 'ERROR!'
                 self.signals.write_result.emit((flag, self.tag,
                                                 self.reg_write,

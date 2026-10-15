@@ -116,7 +116,9 @@ class AlarmSteps:
                     and self.model.alarm_confirmed('traverse')):
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
-                self.logger.warning(f'{msg}: сигнал {self.model.alarm_reads.get("traverse")} чтений подряд')
+                self.logger.warning(f'{msg}: сигнал {self.model.alarm_reads.get("traverse")} чтений подряд, '
+                                    f'{self.model.alarm_held.get("traverse", 0) * 1000:.0f} мс, '
+                                    f'траверса {self.model.move_traverse}')
                 self._set_common_alarm_flags(msg)
 
                 # как у остальных аварий: стоп привода и траверсы, испытание прекращается.
