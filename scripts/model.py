@@ -151,6 +151,8 @@ class Model:
         # номер текущей сессии чтения буфера (None - буфер не читается): результаты чтения
         # с другим номером - из прошлой сессии, ещё стоявшие в очереди сигналов Qt
         self.buffer_session_counter = 0
+        # когда подана команда «стоп» в конце испытания (ожидание остановки шатуна)
+        self.stop_cmd_at = 0.0
         self.buffer_session: int | None = None
         # бит 0 (буфер включён) по последнему чтению регистров - для записи буфера в файл
         self._dump_bit0 = None
@@ -1035,6 +1037,7 @@ class Model:
                 return True
 
     def stop_gear_end_test(self):
+        self.stop_cmd_at = time.monotonic()
         self.start_collect_wait_stop()
         self.transition_via_buffer(Stage.STOP_GEAR_END_TEST, extra_fc={'tag': 'stop', 'adr': 1})
 

@@ -48,6 +48,8 @@ class Controller:
         self._buffer_restart_at = 0.0
         self._wait_buf_t0 = 0.0
         self._wait_buf_started = 0.0
+        # ожидание остановки шатуна: когда последний раз подана команда «стоп»
+        self._stop_sent_at = 0.0
         self._check_next_stage = False
         
     def _init_flags(self):
@@ -598,12 +600,23 @@ class Controller:
     #==========
 
     def _enter_stop_gear_end_test(self):
-        pass
+        self._stop_sent_at = self.model.stop_cmd_at
 
     def _stage_stop_gear_end_test(self):
         if self.model.is_motor_stopped():
+            pos = self.model.collector.prev_pos
+            self.logger.info(f'Шатун остановился через {time.monotonic() - self.model.stop_cmd_at:.1f} с '
+                             f'после команды «стоп», положение {pos}')
+            dump.event('motor_stopped', f'{time.monotonic() - self.model.stop_cmd_at:.2f}', pos)
             self.model.stop_collect()
             self.model.stop_gear_min_pos()
+        elif time.monotonic() - self._stop_sent_at > config.stop_timeout:
+            # шатун всё ещё движется: команда «стоп» могла не дойти до ЧП
+            self._stop_sent_at = time.monotonic()
+            self.logger.warning(f'Шатун не остановился за {config.stop_timeout:.0f} с после команды «стоп» '
+                                f'(положение {self.model.collector.prev_pos}) - повтор команды')
+            dump.event('stop_repeat', self.model.collector.prev_pos)
+            self.model.fc_control(tag='stop', adr=1)
 
     def _exit_stop_gear_end_test(self):
         pass

@@ -5,41 +5,56 @@ import time
 from collections import deque
 from enum import Enum
 
+from config import config
 from scripts.buffer_dump import dump
 from scripts.logger import my_logger
 
 
 class StopDetector:
-    def __init__(self, vel_threshold=0.02, confirm_time=0.5):
-        self.min_vel_threshold = float(vel_threshold)
-        self.vel_threshold = float(vel_threshold)
-        self.confirm_time = confirm_time
-        self.below_since = None
+    """
+    Остановка шатуна по положению: за последние window записей буфера (запись = 1 мс
+    времени контроллера) положение изменилось не больше чем на span_mm.
+
+    Раньше остановка определялась по скорости с плавающим порогом (3 × скорость за
+    последние 7 мс): при плавном движении скорость всегда была «ниже порога», и «стоп»
+    срабатывал на ходу - 16.10 в 37 из 38 случаев, доводка до НМТ начиналась на
+    выбеге шатуна. Медленный оборот даже у мёртвых точек даёт размах ≥ 1.6 мм за
+    0.8 с (запись 16.10), шум линейки на стоянке - 0.1-0.2 мм
+    """
+    def __init__(self, window: int = 800, span_mm: float = 0.3):
+        self.window = int(window)
+        self.span_mm = float(span_mm)
         self.stopped = False
+        self._n = 0
+        self._min_q = deque()       # (номер, положение) - возрастающие положения, минимум окна слева
+        self._max_q = deque()       # убывающие положения, максимум окна слева
 
-    def set_threshold(self, vel_threshold: float):
-        """Set current threshold, keeping a minimal floor."""
-        try:
-            self.vel_threshold = max(float(vel_threshold), self.min_vel_threshold)
-        except Exception:
-            pass
-
-    def update(self, velocity, now):
-        if abs(velocity) < self.vel_threshold:
-            if self.below_since is None:
-                self.below_since = now
-            elif (now - self.below_since) >= self.confirm_time:
-                self.stopped = True
-        else:
-            self.below_since = None
-            self.stopped = False
+    def update(self, pos: float):
+        p = float(pos)
+        i = self._n
+        self._n += 1
+        while self._min_q and self._min_q[-1][1] >= p:
+            self._min_q.pop()
+        self._min_q.append((i, p))
+        while self._max_q and self._max_q[-1][1] <= p:
+            self._max_q.pop()
+        self._max_q.append((i, p))
+        start = i - self.window + 1
+        while self._min_q[0][0] < start:
+            self._min_q.popleft()
+        while self._max_q[0][0] < start:
+            self._max_q.popleft()
+        self.stopped = (self._n >= self.window
+                        and self._max_q[0][1] - self._min_q[0][1] <= self.span_mm)
 
     def is_stopped(self):
         return self.stopped
-    
+
     def reset(self):
-        self.below_since = None
         self.stopped = False
+        self._n = 0
+        self._min_q.clear()
+        self._max_q.clear()
 
 
 class PhaseState(Enum):
@@ -68,7 +83,7 @@ class CycleCollector:
         min_stable_cycles=2,
         ):
         self.logger = my_logger.get_logger(__name__)
-        self.stop_detector = StopDetector()
+        self.stop_detector = StopDetector(window=config.stop_window_ms, span_mm=config.stop_span_mm)
 
         # -------- параметры --------
         self.sample_rate = float(sample_rate)
@@ -316,7 +331,6 @@ class CycleCollector:
             k = min(3, arr.size)
             noise_floor = float(np.median(arr[:k]))
             self.vel_threshold = max(noise_floor * 3, 1e-6)
-            self.stop_detector.set_threshold(self.vel_threshold)
 
     @log_exceptions
     def _update_sample_rate_from_count(self, last_count: int, now_real: float):
@@ -524,7 +538,7 @@ class CycleCollector:
             v = (pos - self.prev_pos) * sr
         
         self._update_threshold(v)
-        self.stop_detector.update(v, now)
+        self.stop_detector.update(pos)
         if self.phase_state == PhaseState.RUN and self.stop_detector.is_stopped():
             step = self._current_program_step()
             if step is not None:

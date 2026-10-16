@@ -93,6 +93,22 @@ class Config:
         return float(os.getenv("ALARM_FILTER_MS", "200"))
 
     @property
+    def stop_window_ms(self) -> int:
+        """Остановка шатуна: положение должно стоять столько мс (записей буфера)..."""
+        return int(os.getenv("STOP_WINDOW_MS", "800"))
+
+    @property
+    def stop_span_mm(self) -> float:
+        """...сдвинувшись не больше чем на столько мм (шум линейки на стоянке 0.1-0.2 мм)"""
+        return float(os.getenv("STOP_SPAN_MM", "0.3"))
+
+    @property
+    def stop_timeout(self) -> float:
+        """Шатун не остановился за столько секунд после команды «стоп» - команда повторяется
+        (WARNING в логе)"""
+        return float(os.getenv("STOP_TIMEOUT", "10"))
+
+    @property
     def buffer_dump(self) -> bool:
         """Диагностика: запись сырого потока буфера и событий обмена в logs/buffer/
         (файл на операцию стенда, разбор - tools/buffer_dump). 1 - включено"""
