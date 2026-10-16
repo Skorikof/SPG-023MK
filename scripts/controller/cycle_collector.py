@@ -432,6 +432,32 @@ class CycleCollector:
                 break
         return self.phase_state
     
+    def on_stream_restart(self):
+        """
+        Новая сессия чтения буфера: поток прерывался (переход этапа, перезапуск буфера), и
+        первая запись новой сессии не продолжает последнюю старую - шатун за это время мог
+        уйти. Отслеживание движения начинается заново, программа сбора и известные НМТ/ВМТ
+        сохраняются (в отличие от скачка координат линейки - там меняется сама шкала)
+        """
+        self.prev_pos = None
+        self.prev_sign = 0
+        self.points_after_turn = 0
+        self.half_min_pos = float("inf")
+        self.half_max_pos = float("-inf")
+        self._start_pos = None
+        self._pos_window.clear()
+        self.vel_hist.clear()
+        self.vel_threshold = 0.0
+        self.stop_detector.reset()
+        # незаконченный оборот разорван - копим заново от следующего якоря
+        self.current_pos.clear()
+        self.current_force.clear()
+        self.cycle_min_pos = float("inf")
+        self.cycle_max_pos = float("-inf")
+        self._anchor_armed = False
+        self.last_cycle_time = None
+        self.stream_time = None
+
     def _on_position_jump(self, prev_pos, pos):
         """
         Скачок координаты между соседними записями (запись раз в 1 мс): линейка после

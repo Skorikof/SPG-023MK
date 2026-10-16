@@ -36,6 +36,13 @@ class ReaderThread(QRunnable):
         self.flag_start_test: bool = False
         self.current_rec: int = -1
 
+        # Сессия чтения буфера: номер приходит с командой start_test, каждый результат
+        # чтения несёт номер своей сессии - Model отбрасывает результаты прошлых сессий.
+        # Сброс на начало буфера выполняет сам поток чтения (_start_request), а не главный
+        # поток посреди чтения
+        self.session: int = 0
+        self._start_request: int | None = None
+
         self.result: dict[str, tuple | list[int]] = {}
 
         self.cycle: bool = True
@@ -74,7 +81,18 @@ class ReaderThread(QRunnable):
 
             elif self.read_tag == 'buffer':
                 try:
-                    self.result = {'count': [],
+                    if self._start_request is not None:
+                        self.session = self._start_request
+                        self._start_request = None
+                        self.reg_buffer = REG_BUFFER_START
+                        self.buffer_count = REG_BUFFER_RECORDS_PER_READ
+                        self.flag_start_test = True
+                        self._verbose_until = None
+                        self._dump_last_rej = None
+                        self._dump_idle_reads = 0
+
+                    self.result = {'session': self.session,
+                                   'count': [],
                                    'force_big': [],
                                    'force_low': [],
                                    'move': [],
@@ -186,13 +204,9 @@ class ReaderThread(QRunnable):
         self._dump_last_rej = rej_no
         self._dump_idle_reads = 0
 
-    @Slot()
-    def start_test(self):
-        self.reg_buffer = REG_BUFFER_START
-        self.flag_start_test = True
-        self._verbose_until = None
-        self._dump_last_rej = None
-        self._dump_idle_reads = 0
+    @Slot(int)
+    def start_test(self, session: int):
+        self._start_request = session
         self.read_tag = 'buffer'
 
     @Slot()

@@ -148,6 +148,10 @@ class Model:
         self.speed_warnings = []
         self.buffer_reading = False
         self.buffer_reading_since = 0.0
+        # номер текущей сессии чтения буфера (None - буфер не читается): результаты чтения
+        # с другим номером - из прошлой сессии, ещё стоявшие в очереди сигналов Qt
+        self.buffer_session_counter = 0
+        self.buffer_session: int | None = None
         # бит 0 (буфер включён) по последнему чтению регистров - для записи буфера в файл
         self._dump_bit0 = None
         self.last_buffer_data = 0.0
@@ -278,10 +282,14 @@ class Model:
         self.status_bar_msg(f'Чтение контроллера запущено')
 
     def reader_start_test(self):
-        dump.event('reader_start', '0x4000')
+        self.buffer_session_counter += 1
+        self.buffer_session = self.buffer_session_counter
+        dump.event('reader_start', '0x4000', f'session={self.buffer_session}')
         self.buffer_reading = True
         self.buffer_reading_since = time.monotonic()
-        self.reader.reader_start_test()
+        # данные новой сессии не продолжают старые: между сессиями шатун мог уйти далеко
+        self.collector.on_stream_restart()
+        self.reader.reader_start_test(self.buffer_session)
         self.status_bar_msg(f'Чтение буфера контроллера запущено')
 
     def reader_stop(self):
@@ -290,6 +298,7 @@ class Model:
 
     def reader_stop_test(self):
         dump.event('reader_stop')
+        self.buffer_session = None
         self.buffer_reading = False
         self.reader.reader_stop_test()
         self.status_bar_msg(f'Чтение буфера контроллера остановлено')
@@ -478,6 +487,15 @@ class Model:
 
     @log_exceptions
     def _pars_buffer_result(self, res):
+        if res.get('session') != self.buffer_session:
+            # Результат прошлой сессии: был в очереди сигналов, пока главный поток завершал
+            # этап и загружал программу следующего. Раньше он попадал в новую программу
+            # коллектора как начало потока - скачок положения к свежим данным сбрасывал НМТ,
+            # и доводка останавливала шатун не в НМТ (16.10: 4 из 4 таких случаев)
+            count = res.get('count') or []
+            dump.event('drop_old_result', f'session={res.get("session")}', f'current={self.buffer_session}',
+                       f'records={len(count)}', f'no={count[0] if count else ""}..{count[-1] if count else ""}')
+            return
         data = self.parser.pars_response_from_buffer(res)
         if not data:
             if not self.flag_non_buffer:

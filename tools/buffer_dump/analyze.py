@@ -178,6 +178,9 @@ def report_session(i: int, s: Session, verbose: bool):
         return out, {}
 
     ref = session_start_ref(s)
+    # точно старые: прочитаны раньше, чем через N мс после самой команды buffer_on
+    # (раньше команды контроллер начать не мог) - без допущений о задержках
+    certain = [r for r in rec if s.t_cmd_on is not None and r.t - r.no < s.t_cmd_on]
     early = [r for r in rec if r.t - r.no < ref - D_TOLERANCE]
     jumps = [(a, b) for a, b in zip(rec, rec[1:]) if abs(b.move - a.move) > JUMP_MM]
     gaps = [(a, b) for a, b in zip(rec, rec[1:]) if (b.no - a.no) % 65536 != 1]
@@ -189,8 +192,12 @@ def report_session(i: int, s: Session, verbose: bool):
     out.append(f'    старт сессии в контроллере (по свежим записям): +{fmt(lead)} мс от команды; '
                f'отставание чтения: медиана {fmt(statistics.median(lag))} мс, макс {fmt(max(lag))} мс; '
                f'часы контроллера: {fmt(rate, 4)} записи/мс ПК')
+    if certain:
+        out.append(f'    !!! записей точно старых (прочитаны раньше N мс от команды buffer_on): {len(certain)}, '
+                   f'№{certain[0].no}..{certain[-1].no}')
     if early:
-        out.append(f'    !!! записей «раньше времени» (старые): {len(early)}, №{early[0].no}..{early[-1].no}, '
+        out.append(f'    ?   записей «раньше времени» (возможно старые, допуск {D_TOLERANCE:.0f} мс от '
+                   f'опорного старта): {len(early)}, №{early[0].no}..{early[-1].no}, '
                    f'слоты {early[0].slot}..{early[-1].slot}, прочитаны на +{early[0].t - s.start_t:.1f}..'
                    f'+{early[-1].t - s.start_t:.1f} мс сессии, положение {early[0].move}..{early[-1].move} мм')
     for a, b in jumps:
@@ -213,7 +220,7 @@ def report_session(i: int, s: Session, verbose: bool):
     if verbose:
         for t, name, flds in s.events:
             out.append(f'      событие +{t - s.start_t:.1f} мс: {name} {";".join(flds)}')
-    stats = {'early': len(early), 'jumps': len(jumps), 'gaps': len(gaps), 'errors': len(s.errors),
+    stats = {'early': len(certain), 'suspect': len(early), 'jumps': len(jumps), 'gaps': len(gaps), 'errors': len(s.errors),
              'ack': rel(s.t_ack_on), 'bit0': rel(s.t_bit0_on), 'lead': lead, 'rate': rate}
     return out, stats
 
@@ -239,7 +246,7 @@ def report_file(df: DumpFile, verbose: bool):
     for t, name, flds in df.events:
         if name in ('collector_done', 'position_jump', 'alarm', 'watchdog_restart', 'watchdog_alarm'):
             print(f'    {t / 1000:9.3f}  {name}: {"; ".join(flds)}')
-    print(f'  Итого: сессий {len(df.sessions)}, старых записей {totals["early"]}, скачков {totals["jumps"]}, '
+    print(f'  Итого: сессий {len(df.sessions)}, точно старых записей {totals["early"]}, скачков {totals["jumps"]}, '
           f'разрывов {totals["gaps"]}, ошибок чтения {totals["errors"]}')
     return totals, all_stats
 
@@ -286,8 +293,9 @@ def main():
         def med(key):
             v = [s[key] for s in stats if s.get(key) is not None]
             return fmt(statistics.median(v)) if v else '-'
-        print(f'=== Всего файлов {len(files)}, сессий {len(stats)}: старых записей {grand["early"]} '
-              f'(в {sum(1 for s in stats if s.get("early"))} сессиях), скачков {grand["jumps"]}, '
+        print(f'=== Всего файлов {len(files)}, сессий {len(stats)}: точно старых записей {grand["early"]} '
+              f'(в {sum(1 for s in stats if s.get("early"))} сессиях), возможно старых в '
+              f'{sum(1 for s in stats if s.get("suspect"))} сессиях, скачков {grand["jumps"]}, '
               f'разрывов {grand["gaps"]}, ошибок чтения {grand["errors"]}')
         print(f'    медианы от команды buffer_on: подтверждение {med("ack")} мс, бит 0 {med("bit0")} мс, '
               f'старт записи в контроллере {med("lead")} мс')

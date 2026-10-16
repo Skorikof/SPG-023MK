@@ -7,7 +7,7 @@ from scripts.my_thread.thread_reader import ReaderThread
 
 class ReaderSignals(QObject):
     start = Signal()
-    start_test = Signal()
+    start_test = Signal(int)
     stop_test = Signal()
     stop = Signal()
     exit = Signal()
@@ -35,8 +35,8 @@ class Reader:
     def reader_start(self):
         self.signals.start.emit()
 
-    def reader_start_test(self):
-        self.signals.start_test.emit()
+    def reader_start_test(self, session: int):
+        self.signals.start_test.emit(session)
 
     def reader_stop(self):
         self.signals.stop.emit()
