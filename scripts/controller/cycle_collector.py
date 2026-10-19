@@ -170,6 +170,17 @@ class CycleCollector:
         # Скачок между соседними записями (1 мс) больше этого - смена координат линейки
         # (прошла референтную точку после включения), а не движение: 5 мм/мс = 5 м/с
         self.POSITION_JUMP_MM = 5.0
+        # Развороты по положению с гистерезисом (TURN_HYST_MM, 0 - старое определение по знаку
+        # скорости): разворот засчитывается, когда шатун отошёл от последнего экстремума на
+        # turn_hyst мм. Шум линейки ±0.1 мм до этого не дотягивается. Старое определение
+        # (знак скорости с порогом 3 × скорость за 7 мс) теряло развороты - собранный
+        # «оборот» был 1.5-2 настоящих (двойная петля, 19.10 - 4 записи архива)
+        self.turn_hyst = float(config.turn_hyst_mm)
+        self._turn_dir = 0              # направление движения: 1 вверх, -1 вниз, 0 - ещё не ясно
+        self._turn_ext = None           # экстремум текущего полупериода (положение)
+        self._turn_ext_time = None      # время экстремума (поток буфера)
+        self._turn_min = None           # пока направление не ясно - размах от старта
+        self._turn_max = None
 
         # -------- экстремумы полупериода (между разворотами) --------
         self.half_min_pos = float("inf")
@@ -475,6 +486,47 @@ class CycleCollector:
         self._anchor_armed = False
         self.last_cycle_time = None
         self.stream_time = None
+        self._reset_turn_tracking()
+
+    def _reset_turn_tracking(self):
+        self._turn_dir = 0
+        self._turn_ext = None
+        self._turn_ext_time = None
+        self._turn_min = None
+        self._turn_max = None
+
+    def _hyst_turn(self, p: float, now):
+        """
+        Разворот по положению с гистерезисом. Возвращает (знак до, знак после, положение
+        экстремума, время экстремума) или None. Знак: 1 - вверх (к ВМТ), -1 - вниз (к НМТ)
+        """
+        h = self.turn_hyst
+        if self._turn_dir == 0:
+            if self._turn_min is None:
+                self._turn_min = self._turn_max = p
+                return None
+            self._turn_min = min(self._turn_min, p)
+            self._turn_max = max(self._turn_max, p)
+            if p - self._turn_min >= h:
+                self._turn_dir, self._turn_ext, self._turn_ext_time = 1, p, now
+            elif self._turn_max - p >= h:
+                self._turn_dir, self._turn_ext, self._turn_ext_time = -1, p, now
+            return None
+        if self._turn_dir == 1:
+            if p > self._turn_ext:
+                self._turn_ext, self._turn_ext_time = p, now
+            elif self._turn_ext - p >= h:
+                turn = (1, -1, self._turn_ext, self._turn_ext_time)
+                self._turn_dir, self._turn_ext, self._turn_ext_time = -1, p, now
+                return turn
+        else:
+            if p < self._turn_ext:
+                self._turn_ext, self._turn_ext_time = p, now
+            elif p - self._turn_ext >= h:
+                turn = (-1, 1, self._turn_ext, self._turn_ext_time)
+                self._turn_dir, self._turn_ext, self._turn_ext_time = 1, p, now
+                return turn
+        return None
 
     def _on_position_jump(self, prev_pos, pos):
         """
@@ -515,6 +567,7 @@ class CycleCollector:
         self.cycles.clear()
         self.cycle_times.clear()
         self.last_cycle_time = None
+        self._reset_turn_tracking()
 
     @log_exceptions
     def _process_sample(self, pos, force, now):
@@ -584,13 +637,32 @@ class CycleCollector:
                                 self._advance_program_if_needed(mode, target_cycles)
                                 return
 
-        sign = self._sign(v)
         if self.half_min_pos == float("inf"):
             self._reset_half_extrema(pos)
         else:
             self.half_min_pos = min(self.half_min_pos, float(pos))
             self.half_max_pos = max(self.half_max_pos, float(pos))
         self.points_after_turn += 1
+
+        if self.turn_hyst > 0:
+            turn = self._hyst_turn(float(pos), now)
+            if turn is not None:
+                prev_sign, sign, ext, ext_time = turn
+                self.points_after_turn = 0
+                self.turn_count += 1
+                self.prev_sign = prev_sign
+                self._process_half_turn(prev_sign, sign, pos)
+                self._process_turn(ext_time, 'vmt' if prev_sign == 1 else 'nmt')
+                # следующий полупериод начинается в экстремуме, а не в точке обнаружения
+                self._reset_half_extrema(ext)
+                self.half_min_pos = min(self.half_min_pos, float(pos))
+                self.half_max_pos = max(self.half_max_pos, float(pos))
+            self.prev_sign = self._turn_dir
+            self._append_data_if_needed(pos, force)
+            self.prev_pos = pos
+            return
+
+        sign = self._sign(v)
         turn_detected = self._detect_turn(sign)
         if turn_detected:
             prev_sign = int(self.prev_sign)
@@ -1038,5 +1110,6 @@ class CycleCollector:
         self.half_max_pos = float("-inf")
         self._start_pos = None
         self._pos_window.clear()
+        self._reset_turn_tracking()
         if clear_nmt:
             self.clear_nmt()

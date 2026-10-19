@@ -93,6 +93,13 @@ class Config:
         return float(os.getenv("ALARM_FILTER_MS", "200"))
 
     @property
+    def turn_hyst_mm(self) -> float:
+        """Развороты шатуна по положению: разворот засчитывается, когда шатун отошёл от
+        экстремума на столько мм (шум линейки ±0.1 мм). 0 - старое определение по знаку
+        скорости (терял развороты - двойные петли)"""
+        return float(os.getenv("TURN_HYST_MM", "1.0"))
+
+    @property
     def stop_window_ms(self) -> int:
         """Остановка шатуна (ЧП закончил торможение): за столько мс (записей буфера)..."""
         return int(os.getenv("STOP_WINDOW_MS", "500"))
