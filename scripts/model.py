@@ -141,6 +141,7 @@ class Model:
         # когда сигнал аварии появился и сколько он держится (до последнего чтения с сигналом), с
         self.alarm_since = {}
         self.alarm_held = {}
+        self._traverse_alarm_seen = set()
         # последние температуры - максимум испытания считается по медиане трёх,
         # чтобы одиночный выброс датчика не попадал в аварию и в архив
         self._recent_temps = deque(maxlen=3)
@@ -335,19 +336,36 @@ class Model:
                 self.logger.warning(f'{label}: сигнал аварии {n} чтение(я), '
                                     f'{self.alarm_held.get(name, 0) * 1000:.0f} мс и пропал - помеха, '
                                     f'авария не засчитана')
+                dump.event('alarm_noise', label, n, f'{self.alarm_held.get(name, 0) * 1000:.0f}')
             self.alarm_reads[name] = 0
             self.alarm_held[name] = 0.0
 
     def alarm_confirmed(self, name: str) -> bool:
-        """Сигнал держится не меньше ALARM_FILTER_READS чтений и ALARM_FILTER_MS миллисекунд"""
+        """
+        Сигнал держится не меньше ALARM_FILTER_READS чтений и ALARM_FILTER_MS миллисекунд.
+        Концевики траверсы - TRAVERSE_ALARM_MS: аварийный концевик механически запирает
+        траверсу (вывести её можно только командой из программы вместе с кнопкой на корпусе),
+        поэтому настоящий сигнал держится, пока оператор не выведет траверсу. Короткий -
+        помеха входа (19.10 - до 250 мс при стоящей траверсе)
+        """
+        ms = config.traverse_alarm_ms if name == 'traverse' else config.alarm_filter_ms
         return (self.alarm_reads.get(name, 0) >= config.alarm_filter_reads
-                and self.alarm_held.get(name, 0.0) * 1000 >= config.alarm_filter_ms)
+                and self.alarm_held.get(name, 0.0) * 1000 >= ms)
 
     def _count_traverse_alarm_reads(self):
         """Концевики траверсы - только при чтении регистров (в режиме буфера их нет)"""
-        alarm = (not self.switch_dict.get('alarm_highest_position', True)
-                 or not self.switch_dict.get('alarm_lowest_position', True))
-        self._filter_alarm('traverse', alarm, 'Концевик траверсы')
+        up = not self.switch_dict.get('alarm_highest_position', True)
+        down = not self.switch_dict.get('alarm_lowest_position', True)
+        # какой концевик мигал - для WARNING о помехе (сигнал сразу пропадает)
+        if up:
+            self._traverse_alarm_seen.add('верхний')
+        if down:
+            self._traverse_alarm_seen.add('нижний')
+        seen = '/'.join(sorted(self._traverse_alarm_seen)) or '?'
+        self._filter_alarm('traverse', up or down,
+                           f'Концевик траверсы ({seen} аварийный, траверса {self.move_traverse})')
+        if not (up or down):
+            self._traverse_alarm_seen.clear()
 
     def _count_state_alarm_reads(self):
         """Ограждение - из слова состояния (и регистры, и записи буфера)"""

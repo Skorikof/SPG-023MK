@@ -47,6 +47,11 @@ class AlarmSteps:
                                               stop_gear=True, emit_stage=True),
     }
 
+    # положение траверсы на аварийных концевиках (линейка траверсы перевёрнута: верх -
+    # меньше), по словам заказчика 19.10: верхний ≈ -12, нижний - после ≈ 550
+    TRAVERSE_UP_SWITCH = -12
+    TRAVERSE_DOWN_SWITCH = 550
+
     def __init__(self, model: Model):
         self.logger = my_logger.get_logger(__name__)
         self.model = model
@@ -119,9 +124,15 @@ class AlarmSteps:
                 self.flag_alarm_traverse = True
                 msg = f'alarm_traverse_{tag}'
                 dump.event('alarm', msg, f'traverse={self.model.move_traverse}')
+                # верхний аварийный концевик - у траверсы ≈ -12, нижний - после ≈ 550 (линейка
+                # траверсы перевёрнута); далеко от них сработать он не мог - в лог для разбора
+                pos = self.model.move_traverse
+                far = (pos is not None and ((tag == 'up' and pos > self.TRAVERSE_UP_SWITCH + 50)
+                                            or (tag == 'down' and pos < self.TRAVERSE_DOWN_SWITCH - 50)))
                 self.logger.warning(f'{msg}: сигнал {self.model.alarm_reads.get("traverse")} чтений подряд, '
                                     f'{self.model.alarm_held.get("traverse", 0) * 1000:.0f} мс, '
-                                    f'траверса {self.model.move_traverse}')
+                                    f'траверса {pos}'
+                                    f'{" - далеко от концевика, вероятно неисправность входа" if far else ""}')
                 self._set_common_alarm_flags(msg)
 
                 # как у остальных аварий: стоп привода и траверсы, испытание прекращается.
