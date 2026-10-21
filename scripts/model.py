@@ -145,8 +145,6 @@ class Model:
         # последние температуры - максимум испытания считается по медиане трёх,
         # чтобы одиночный выброс датчика не попадал в аварию и в архив
         self._recent_temps = deque(maxlen=3)
-        # шаги испытания, на которых не набралась заданная скорость: (задана, фактически, %)
-        self.speed_warnings = []
         self.buffer_reading = False
         self.buffer_reading_since = 0.0
         # номер текущей сессии чтения буфера (None - буфер не читается): результаты чтения
@@ -578,8 +576,8 @@ class Model:
     def _check_test_speed(self):
         """
         Фактическая скорость собранного оборота против заданной. Пишется в лог всегда
-        (данные для подбора управляющей частоты ПЧ); если скорость так и не набралась -
-        запоминается для сообщения оператору в конце испытания
+        (данные для подбора управляющей частоты ПЧ); если скорость так и не набралась - WARNING.
+        Оператору не показывается (решение 21.10: оператору эта информация ни к чему)
         """
         v_set = self.get_speed_test()
         v_act = self.collector.last_cycle_speed
@@ -590,11 +588,7 @@ class Model:
         # предупреждаем, только если и собранный оборот вне допуска (ожидание могло
         # закончиться, а привод дотянуть скорость уже во время сбора)
         if self.collector.speed_not_reached and dev < -config.speed_tolerance:
-            self.speed_warnings.append((v_set, round(v_act, 3), round(dev, 1)))
-            self.status_bar_msg(f'Скорость {v_set} м/с не набрана: фактически {v_act:.3f} м/с')
-
-    def reset_speed_warnings(self):
-        self.speed_warnings = []
+            self.logger.warning(f'Скорость {v_set} м/с не набрана: испытание на фактической {v_act:.3f} м/с')
 
     def start_collect(self, with_data: bool, *, count_det: int=2, count_col: int=1):
         self.flag_collect_done = False

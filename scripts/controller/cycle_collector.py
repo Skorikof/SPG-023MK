@@ -205,6 +205,21 @@ class CycleCollector:
         self.max_collect_rejects_per_step = 6
         self._collect_rejects_in_step = 0
 
+        # -------- стабильность собранных оборотов (COLLECT с заданным числом) --------
+        # Амортизатор может давать «провалы» отбоя в отдельных оборотах (21.10: отбой
+        # 327 -> 173 -> 180 кгс при одинаковом сжатии) - в архив попадал случайный оборот.
+        # Шаг заканчивается, когда stable_cycles последних оборотов совпали по отбою и сжатию
+        # в пределах stable_pct (но не меньше stable_min_kgf), или после stable_max_cycles
+        # оборотов - тогда в результат оборот с наибольшим усилием (отбой + сжатие),
+        # collect_unstable - пики всех оборотов (WARNING в лог).
+        # Двух мало: «провал» отбоя бывает и два оборота подряд (0.8 м/с: 327, 173, 180)
+        self.stable_pct = float(config.collect_stable_pct)
+        self.stable_cycles = max(2, int(config.collect_stable_cycles))
+        self.stable_min_kgf = float(config.collect_stable_min_kgf)
+        self.stable_max_cycles = int(config.collect_max_cycles)
+        self.collect_peaks = []         # (отбой, сжатие) по сырым данным датчика, по оборотам шага
+        self.collect_unstable = None
+
     def set_nmt_target(self, target_pos: float, *, tolerance: float = 0.5, confirm_points: int = 3):
         """Задать целевую НМТ (в тех же единицах, что и `move`)."""
         self.nmt_target_pos = float(target_pos)
@@ -865,7 +880,7 @@ class CycleCollector:
         Если задана целевая скорость (испытания), оборот засчитывается, только когда
         фактическая скорость в допуске; засчитываемые обороты должны идти подряд.
         Через speed_max_wait оборотов без набора скорости ждать перестаём
-        (speed_not_reached = True) - испытание продолжается, оператор будет предупреждён.
+        (speed_not_reached = True) - испытание продолжается, в лог WARNING.
         """
         if self.speed_target is None or self.speed_not_reached:
             return True
@@ -1035,6 +1050,9 @@ class CycleCollector:
             return
 
         self.program_cycle_counter += 1
+        if mode == Mode.COLLECT and self.stable_pct > 0 and self.cycles:
+            if not self._collect_step_finished(target_cycles):
+                return
         if self.program_cycle_counter >= target_cycles:
             self.last_completed_step = self.program[self.program_index]
             self.program_index += 1
@@ -1043,6 +1061,51 @@ class CycleCollector:
                 self.phase_state = PhaseState.DONE
                 self.active = False
     
+    @staticmethod
+    def cycle_peaks(force) -> tuple[float, float]:
+        """(отбой, сжатие) оборота по сырым данным датчика: отбой - минимум с обратным знаком"""
+        f = np.asarray(force, dtype=np.float64)
+        return float(-f.min()), float(f.max())
+
+    def _peaks_close(self, a: float, b: float) -> bool:
+        return abs(a - b) <= max(self.stable_pct / 100.0 * max(abs(a), abs(b)), self.stable_min_kgf)
+
+    def _collect_step_finished(self, target_cycles: int) -> bool:
+        """Сбор шага закончен: набрано target_cycles оборотов и stable_cycles последних
+        совпали с последним, или набрано stable_max_cycles (тогда collect_unstable - пики всех
+        оборотов шага)"""
+        self.collect_peaks = [self.cycle_peaks(f) for _, f in self.cycles]
+        n = len(self.collect_peaks)
+        k = self.stable_cycles
+        if n < max(target_cycles, k) and n < self.stable_max_cycles:
+            return False
+        if n >= k:
+            r_last, c_last = self.collect_peaks[-1]
+            if all(self._peaks_close(r, r_last) and self._peaks_close(c, c_last)
+                   for r, c in self.collect_peaks[-k:-1]):
+                if n > max(target_cycles, k):
+                    self.logger.info(f'Обороты шага совпали за {n} оборотов (отбой/сжатие: '
+                                     f'{self._fmt_peaks()})')
+                return True
+        if n >= max(self.stable_max_cycles, target_cycles):
+            self.collect_unstable = list(self.collect_peaks)
+            # какой-то оборот сохранить нужно - с наибольшим усилием (решение 21.10):
+            # «провал» - это ослабление усилия, наибольшее ближе к нормальной работе.
+            # Model берёт последний оборот результата - ставим выбранный в конец
+            best = max(range(n), key=lambda i: sum(self.collect_peaks[i]))
+            self.cycles.append(self.cycles.pop(best))
+            self.last_step_result = self.cycles.copy()
+            r, c = self.collect_peaks[best]
+            self.logger.warning(f'Обороты шага нестабильны за {n} оборотов (отбой/сжатие: '
+                                f'{self._fmt_peaks()}) - в результат оборот №{best + 1} '
+                                f'с наибольшим усилием ({r:.0f}/{c:.0f})')
+            return True
+        self.logger.debug(f'Обороты шага не совпали ({self._fmt_peaks()}) - собираем следующий')
+        return False
+
+    def _fmt_peaks(self) -> str:
+        return ', '.join(f'{r:.0f}/{c:.0f}' for r, c in self.collect_peaks)
+
     def reset_active_collate(self):
         self.active = False
         
@@ -1106,6 +1169,8 @@ class CycleCollector:
         self._speed_wait_cycles = 0
         self.speed_not_reached = False
         self.last_cycle_speed = None
+        self.collect_peaks = []
+        self.collect_unstable = None
         self.half_min_pos = float("inf")
         self.half_max_pos = float("-inf")
         self._start_pos = None
