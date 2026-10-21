@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 import pyqtgraph as pg
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 from PySide6.QtCore import Slot, QTimer
@@ -222,12 +221,12 @@ class AppWindow(QMainWindow):
 
             else:
                 self.model.lamp_all_switch_off()
-                time.sleep(0.1)
                 self._start_page()
 
         elif self.tag_msg == 'question':
+            # команды уходят по очереди записи (её разбирает таймер в этом же потоке) -
+            # пауза здесь только замораживала окно и обработку данных стенда
             self.model.lamp_all_switch_off()
-            time.sleep(0.1)
             self.main_btn_state(False)
             self.main_stop_state(True)
             self.model.signals.test_launch.emit(True)
@@ -259,7 +258,6 @@ class AppWindow(QMainWindow):
         self.model.flag_test_launch = False
 
         self.model.lamp_all_switch_off()
-        time.sleep(0.1)
         self._start_page()
 
     def main_ui_state(self, state):

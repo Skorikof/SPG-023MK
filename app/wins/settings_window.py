@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 from PySide6.QtWidgets import QMainWindow
 from PySide6.QtCore import QObject, Signal, QSignalMapper, Slot
 from PySide6.QtGui import QIcon
@@ -237,10 +236,8 @@ class SetWindow(QMainWindow, UiSettingsWindow):
                 pass
             else:
                 self.model.write_emergency_force(value)
-                time.sleep(0.02)
 
             self.model.reader_start()
-            time.sleep(0.02)
 
             self.model.write_bit_unblock_control()
 
