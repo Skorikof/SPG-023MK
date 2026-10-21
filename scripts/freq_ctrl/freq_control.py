@@ -152,10 +152,16 @@ class FreqControl:
             if not isinstance(hod, (int, float)) or hod <= 0:
                 raise ValueError(f'Некорректный ход: {hod}')
                 
-            koef = round((2 * 17.99) / (2 * 3.1415 * 0.98), 5)
+            # f = 2 * редуктор * ω / 2π (ω = v / r - угловая скорость кривошипа). По записям
+            # буфера 16-21.10 (341 сессия): ЧП держит частоту двигателя без скольжения (наклон
+            # совпал с теорией до 0.02 %) плюс постоянная добавка ≈ 0.14 Гц. Прежний делитель
+            # 0.98 (поправка на скольжение) давал +2 % ко всем скоростям, добавка - до +10 % на
+            # 0.02 м/с. SPEED_SLIP = 0.98 и SPEED_FREQ_OFFSET_HZ = 0 - как было до 21.10
+            koef = (2 * 17.99) / (2 * 3.1415 * config.speed_slip)
             hod_m = hod / 1000
             radius = hod_m / 2
-            freq = int(100 * (koef * speed) / radius)
+            freq_hz = max(0.5, koef * speed / radius - config.speed_freq_offset_hz)
+            freq = int(round(100 * freq_hz))
             return freq
 
         except Exception as e:

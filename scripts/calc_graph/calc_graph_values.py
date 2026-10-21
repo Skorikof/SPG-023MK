@@ -23,6 +23,15 @@ class CalcGraphValue:
         except Exception as e:
             self.logger.error(e)
 
+    @staticmethod
+    def force_with_push(force, push_force):
+        """
+        Усилие для графика: с выталкивающей силой, как в цифрах отбоя/сжатия
+        (|max + p|, |min + p|) - тогда пик графика совпадает с цифрой, а диаграмма Лампе
+        проходит через ноль на развороте. В архиве усилие хранится без неё
+        """
+        return np.asarray(force, dtype=np.float64) + float(push_force or 0)
+
     def rounding_coord(self, coord, degree: int):
         """
         Сглаживание окном Ханна. Цикл замкнут, поэтому края дополняются точками с другого

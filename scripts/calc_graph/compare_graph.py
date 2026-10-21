@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtCore import Qt
 
 from scripts.logger import my_logger
+from scripts.calc_graph.calc_graph_values import CalcGraphValue
 from scripts.calc_graph.move_graph import MoveGraph
 from scripts.calc_graph.boost_graph_one import BoostGraphOne
 from scripts.calc_graph.boost_graph_two import BoostGraphTwo
@@ -87,7 +88,9 @@ class CompareGraph:
                 if ind == 0:
                     self._fill_compare_move_data(graph.data_graph(arch_obj))
                     
-                x_coord, y_coord = arch_obj.move_list, arch_obj.force_list
+                x_coord = arch_obj.move_list
+                y_coord = CalcGraphValue.force_with_push(arch_obj.force_list,
+                                                         CalcGraphValue().select_push_force(arch_obj))
                 
                 name = (f'{arch_obj.time_test} - '
                         f'{arch_obj.name} - '

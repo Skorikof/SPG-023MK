@@ -9,6 +9,7 @@ from scripts.logger import my_logger
 from scripts.test_obj import DataTest
 from scripts.parser.parser import ParserSPG023MK
 from scripts.data_calculation import CalcData
+from scripts.calc_graph.calc_graph_values import CalcGraphValue
 from scripts.reader import Reader
 from scripts.writer import Writer
 from scripts.archive_saver import WriterArch
@@ -715,20 +716,27 @@ class Model:
         self.data_test.freq_piston = self.calc_data.calc_freq_piston_amort(self.get_speed_test(),
                                                                           self.data_test.amort.hod)
     
+    def _push_force_used(self):
+        """Выталкивающая сила последнего расчёта: динамическая или статическая (по флагу)"""
+        if self.data_test.flag_push_force:
+            return self.data_test.dynamic_push_force
+        return self.data_test.static_push_force
+
     @log_exceptions
     def _pars_result_lab_test(self, avg):
         self.data_test.move = avg[0]
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        data_dict = {'speed': self.get_speed_test(),
-                     'move': self.data_test.move[:],
-                     'force': self.data_test.force[:]}
-        self.list_lab_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
-        # на графике то же исправленное усилие (коэффициент + ноль датчика), что в цифрах и архиве
-        self.signals.update_lab_graph.emit((self.data_test.move, self.data_test.force))
+        # на графике усилие как в цифрах: коэффициент + ноль датчика + выталкивающая сила
+        # (в архив - без выталкивающей, она там отдельным полем)
+        force_shown = CalcGraphValue.force_with_push(self.data_test.force, self._push_force_used())
+        self.list_lab_result.append({'speed': self.get_speed_test(),
+                                     'move': self.data_test.move[:],
+                                     'force': force_shown})
+        self.signals.update_lab_graph.emit((self.data_test.move, force_shown))
     
     @log_exceptions
     def _pars_result_conv_test(self, avg):
@@ -736,14 +744,15 @@ class Model:
         self.data_test.force = self.calc_data.correct_force_with_koef(avg[1],
                                                                       config.force_koef,
                                                                       self.force_koef_offset)
-        data_dict = {'speed': self.get_speed_test(),
-                     'move': self.data_test.move[:],
-                     'force': self.data_test.force[:]}
-        self.list_conv_result.append((data_dict))
         self._calc_result_cycle(self.data_test.move, self.data_test.force)
 
-        # на графике то же исправленное усилие (коэффициент + ноль датчика), что в цифрах и архиве
-        self.signals.update_conv_graph.emit((self.data_test.move, self.data_test.force))
+        # на графике усилие как в цифрах: коэффициент + ноль датчика + выталкивающая сила
+        # (в архив - без выталкивающей, она там отдельным полем)
+        force_shown = CalcGraphValue.force_with_push(self.data_test.force, self._push_force_used())
+        self.list_conv_result.append({'speed': self.get_speed_test(),
+                                     'move': self.data_test.move[:],
+                                     'force': force_shown})
+        self.signals.update_conv_graph.emit((self.data_test.move, force_shown))
 
     @log_exceptions
     def _pars_result_temper_test(self, result):

@@ -35,7 +35,7 @@ class BoostGraphTwo(AbstractGraph):
             max_comp = abs(round(comp + push_force, 2))
             
             move_array = np.array(data.move_list)
-            force_array = np.array(data.force_list)
+            force_array = CalcGraphValue.force_with_push(data.force_list, push_force)
             speed_coord = CalcGraphValue().speed_coord(move_array, 'two')
             round_coord = CalcGraphValue().rounding_coord(speed_coord, 50)
             reverse_x = round_coord * (-1)

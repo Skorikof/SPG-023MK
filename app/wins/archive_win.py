@@ -6,6 +6,7 @@ from PySide6.QtCore import QObject, Signal
 from app.screenshot.save_screen import ScreenSave
 from app.ui_py.archive_ui import Ui_WindowArch
 from scripts.data_calculation import CalcData
+from scripts.calc_graph.calc_graph_values import CalcGraphValue
 from scripts.calc_graph.move_graph import MoveGraph
 from scripts.calc_graph.cascad_graph import CascadeGraph
 from scripts.calc_graph.triple_graph import TripleGraph
@@ -314,7 +315,9 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
             else:
                 self._visible_compare_btn(True)
                 
-                x_coord, y_coord = arch_obj.move_list, arch_obj.force_list
+                x_coord = arch_obj.move_list
+                y_coord = CalcGraphValue.force_with_push(arch_obj.force_list,
+                                                         CalcGraphValue().select_push_force(arch_obj))
                 self.move_graph.fill_graph(x_coord, y_coord)
                 response = self.move_graph.data_graph(arch_obj)
                 self.archive_fill.ui_fill(arch_obj, 'base', self.index_date)

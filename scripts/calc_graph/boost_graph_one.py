@@ -35,7 +35,7 @@ class BoostGraphOne(AbstractGraph):
             max_comp = abs(round(comp + push_force, 2))
             
             move_array = np.array(data.move_list)
-            force_array = np.array(data.force_list)
+            force_array = CalcGraphValue.force_with_push(data.force_list, push_force)
             # Диаграмма «усилие / модуль скорости»: та же скорость со знаком, что и в графике 2
             # (м/с), сглаживается, и только потом берётся модуль - тогда на разворотах штока
             # скорость доходит до 0 и кривая касается оси X. Раньше по оси X шло стандартное
