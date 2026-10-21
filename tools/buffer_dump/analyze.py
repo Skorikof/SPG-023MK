@@ -183,7 +183,9 @@ def report_session(i: int, s: Session, verbose: bool):
     certain = [r for r in rec if s.t_cmd_on is not None and r.t - r.no < s.t_cmd_on]
     early = [r for r in rec if r.t - r.no < ref - D_TOLERANCE]
     jumps = [(a, b) for a, b in zip(rec, rec[1:]) if abs(b.move - a.move) > JUMP_MM]
-    gaps = [(a, b) for a, b in zip(rec, rec[1:]) if (b.no - a.no) % 65536 != 1]
+    # счётчик записей контроллера после 65535 продолжается с 1 (а не с 0) - это не разрыв
+    gaps = [(a, b) for a, b in zip(rec, rec[1:])
+            if (b.no - a.no) % 65536 != 1 and not (a.no == 65535 and b.no == 1)]
     idle = sum(x[5] for x in s.reads) + sum(1 for x in s.reads if x[2] == 0)
     lag = [r.t - r.no - ref for r in rec]
     rate = clock_rate(s)

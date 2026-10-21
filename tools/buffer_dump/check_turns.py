@@ -6,7 +6,8 @@
 оборот - отдельный цикл) со старым определением разворотов (по знаку скорости) и с
 новым (по положению с гистерезисом). Эталон - обороты, посчитанные отдельно по
 положению с большим гистерезисом REF_HYST_MM. Для каждого собранного оборота -
-отношение его длины к периоду эталона: 1.0 - настоящий оборот, 2.0 - двойная петля.
+отношение его длины к периоду эталонного оборота в то же время (на разгоне обороты
+длиннее): 1.0 - настоящий оборот, 2.0 - двойная петля.
 
 Запуск из корня проекта:
     uv run tools/buffer_dump/check_turns.py logs/buffer/2026-10-19 [--hyst 1.0] [-v]
@@ -65,14 +66,25 @@ def run_collector(records, hyst):
     c = CycleCollector()
     c.turn_hyst = hyst
     c.min_halfcycle_fraction = 0.0002       # как после _tune_cycle_collector_for_speed
-    cycles = []
+    cycles = []             # (длина оборота в записях, номер записи в конце оборота)
+    cur = [0]
     c.load_program([(Mode.COLLECT, None)], skip_accel=True)
-    c.set_cycle_callback(lambda res: cycles.append(len(res[0])))
+    c.set_cycle_callback(lambda res: cycles.append((len(res[0]), cur[0])))
     for k in range(0, len(records), 20):
         b = records[k:k + 20]
+        cur[0] = b[-1].no
         c.add_stream_dict({'move': [r.move for r in b], 'force': [r.force for r in b],
                            'count': [r.no for r in b]})
     return c.turn_count, cycles
+
+
+def ratio(cycle, nmt):
+    """Длина собранного оборота / период эталонного оборота, закончившегося ближе всего к нему
+    (на разгоне обороты длиннее установившихся - сравнивать с медианой нельзя)"""
+    n, end = cycle
+    pairs = list(zip(nmt, nmt[1:]))
+    a, b = min(pairs, key=lambda ab: abs(ab[1] - end))
+    return n / (b - a)
 
 
 def stage_of(df, s):
@@ -105,10 +117,12 @@ def main():
             ref_turns = 2 * (len(nmt) - 1)
             ot, oc = run_collector(s.records, 0.0)
             nt, nc = run_collector(s.records, args.hyst)
-            o_long = [x / period for x in oc if x > LONG * period]
-            n_long = [x / period for x in nc if x > LONG * period]
-            o_short = [x / period for x in oc if x < SHORT * period]
-            n_short = [x / period for x in nc if x < SHORT * period]
+            orat = [ratio(x, nmt) for x in oc]
+            nrat = [ratio(x, nmt) for x in nc]
+            o_long = [x for x in orat if x > LONG]
+            n_long = [x for x in nrat if x > LONG]
+            o_short = [x for x in orat if x < SHORT]
+            n_short = [x for x in nrat if x < SHORT]
             tot['old_short'] += len(o_short)
             tot['new_short'] += len(n_short)
             tot['sess'] += 1
@@ -121,7 +135,7 @@ def main():
             tot['new_turns'] += nt
             if n_short:
                 print(f'  короткие (новое): {f.name} {st} период {period:.0f}: {[round(x, 2) for x in n_short]}, '
-                      f'длины {[x for x in nc if x < SHORT * period]}')
+                      f'длины {[x[0] for x, r in zip(nc, nrat) if r < SHORT]}')
             if o_long or n_long or args.verbose:
                 bad_sessions.append((f.name, st, round(period), len(nmt) - 1, len(oc), len(o_long),
                                      len(nc), len(n_long), [round(x, 1) for x in (o_long + n_long)][:6]))
