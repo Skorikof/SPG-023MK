@@ -20,6 +20,9 @@ class SearchCombo(QObject):
 
         combo.setEditable(True)
         combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        # поле ввода, появившееся у списка, шрифт списка не наследует, если у списка задан
+        # стиль (цвет фона) - текст становился системным ~9 pt вместо шрифта формы
+        combo.lineEdit().setFont(combo.font())
         completer = combo.completer()
         completer.setFilterMode(Qt.MatchFlag.MatchContains)
         completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)

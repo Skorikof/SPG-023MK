@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QObject, Signal
 
+from app.modified_ui_obj.search_combo import SearchCombo
 from app.ui_py.amorts_ui import Ui_AmortsWindow
 from app.wins.amorts_new import AmortNew
 from scripts.amorts import Amort
@@ -75,6 +76,11 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
         self.btn_ok_quest.clicked.connect(self._ok_question)
         self.btn_cancel_quest.clicked.connect(self._cancel_question)
         self.btn_ok_warning.clicked.connect(self._ok_warning)
+        # подключение один раз: раньше подключалось при каждом обновлении списка,
+        # и выбор вызывал _amort_select столько раз, сколько список обновлялся
+        self.combo_Names.activated[int].connect(self._amort_select)
+        # поиск амортизатора по части названия
+        self.names_search = SearchCombo(self.combo_Names, self._amort_select)
 
     def _amort_init(self):
         try:
@@ -98,7 +104,6 @@ class AmortWin(QMainWindow, Ui_AmortsWindow):
                 self.combo_Names.addItems(self.amorts.names)
                 self.combo_Names.setCurrentIndex(0)
                 self.amorts.current_index = 0
-                self.combo_Names.activated[int].connect(self._amort_select)
                 self._amort_select(0)
                 self.btn_del.setEnabled(True)
                 self.btn_change.setEnabled(True)
