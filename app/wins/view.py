@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import pyqtgraph as pg
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem, QComboBox, QCompleter
-from PySide6.QtCore import Slot, QTimer, Qt, QEvent
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
+from PySide6.QtCore import Slot, QTimer
 
 from app import glob_var
+from app.modified_ui_obj.search_combo import SearchCombo
 from app.ui_py.mainui import Ui_MainWindow
 from app.wins.executors_win import ExecWin
 from app.wins.amorts_win import AmortWin
@@ -105,56 +106,12 @@ class AppWindow(QMainWindow):
         self._init_amort_search()
 
     def _init_amort_search(self):
-        """
-        Поиск амортизатора в списке: в поле выбора можно вводить часть названия (в любом
-        месте, без учёта регистра) - выпадает список совпадений. Выбор из него, Enter с
-        точным названием или стрелка списка - как обычный выбор. Если ввод не совпал ни с
-        одним амортизатором, при уходе из поля возвращается название выбранного
-        """
-        combo = self.ui.specif_choice_comboBox
-        combo.setEditable(True)
-        combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        completer = combo.completer()
-        completer.setFilterMode(Qt.MatchFlag.MatchContains)
-        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-        completer.setMaxVisibleItems(15)
-        completer.popup().setFont(combo.font())
-        completer.activated[str].connect(self._amort_search_selected)
-        combo.lineEdit().editingFinished.connect(self._amort_search_finished)
-        # щелчок в поле выделяет название - ввод сразу заменяет его
-        combo.lineEdit().installEventFilter(self)
-
-    def eventFilter(self, obj, event):
-        if (obj is self.ui.specif_choice_comboBox.lineEdit()
-                and event.type() == QEvent.Type.FocusIn):
-            QTimer.singleShot(0, obj.selectAll)
-        return super().eventFilter(obj, event)
+        """Поиск амортизатора по части названия в списке выбора (app/modified_ui_obj/search_combo.py)"""
+        self.amort_search = SearchCombo(self.ui.specif_choice_comboBox, self._amort_search_select)
 
     def _amort_search_select(self, ind):
-        combo = self.ui.specif_choice_comboBox
-        combo.setCurrentIndex(ind)
         if ind != self.index_amort:
             self.change_index_select_amort(ind)
-
-    def _amort_search_selected(self, text):
-        """Выбор амортизатора из списка совпадений поиска"""
-        ind = self.ui.specif_choice_comboBox.findText(text, Qt.MatchFlag.MatchExactly)
-        if ind >= 0:
-            self._amort_search_select(ind)
-
-    def _amort_search_finished(self):
-        """Ввод в поле закончен: точное название (без учёта регистра) - выбрать его,
-        иначе вернуть название выбранного амортизатора"""
-        combo = self.ui.specif_choice_comboBox
-        if combo.count() == 0:
-            return
-        ind = combo.findText(combo.currentText().strip(), Qt.MatchFlag.MatchFixedString)
-        if ind >= 0:
-            self._amort_search_select(ind)
-        else:
-            combo.setCurrentIndex(self.index_amort)
-            combo.setEditText(combo.itemText(self.index_amort))
 
     def _init_signals(self):
         self.model.signals.connect_ctrl.connect(self._start_page)

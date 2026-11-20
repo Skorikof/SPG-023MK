@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QObject, Signal
 
+from app.modified_ui_obj.search_combo import SearchCombo
 from app.screenshot.save_screen import ScreenSave
 from app.ui_py.archive_ui import Ui_WindowArch
 from scripts.data_calculation import CalcData
@@ -77,6 +78,10 @@ class ArchiveWin(QMainWindow, Ui_WindowArch):
         self.combo_dates.textActivated[str].connect(self._change_index_date)
         self.combo_type_test.activated[int].connect(self._change_index_type_test)
         self.combo_test.activated[int].connect(self._change_index_test)
+        # поиск по части текста: дата (ДД.ММ.ГГГГ) и испытание (время, амортизатор, серийник)
+        self.dates_search = SearchCombo(self.combo_dates,
+                                        lambda ind: self._change_index_date(self.combo_dates.itemText(ind)))
+        self.test_search = SearchCombo(self.combo_test, self._change_index_test)
         self.combo_type.activated[int].connect(self._change_type_graph)
 
     def _read_path_archive(self):
